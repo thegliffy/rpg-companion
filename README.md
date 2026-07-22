@@ -3,7 +3,7 @@
 A self-hosted tabletop RPG companion web app. Fully useful to a single solo player with no
 group at all — campaigns are an optional social layer on top of personal tools.
 
-Live instance: https://ttrpg.gliffy.tv
+
 
 ## Features
 
