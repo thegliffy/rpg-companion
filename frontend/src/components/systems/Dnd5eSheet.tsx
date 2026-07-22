@@ -34,6 +34,7 @@ import {
   armorACFormulaText,
   casterTypeForClass,
   expectedSpellsKnown,
+  expectedCantripsKnown,
   expectedSlots,
   classLevelEntry,
   classHitDie,
@@ -181,6 +182,9 @@ export function Dnd5eSheet({
   const knownExpected = matchedCustomClass
     ? effectiveLevelEntry(sheet.class, sheet.level)?.spellsKnown ?? null
     : expectedSpellsKnown(sheet.class, sheet.level);
+  const cantripsExpected = matchedCustomClass
+    ? effectiveLevelEntry(sheet.class, sheet.level)?.cantripsKnown ?? null
+    : expectedCantripsKnown(sheet.class, sheet.level);
   const slotsExpected = matchedCustomClass
     ? effectiveLevelEntry(sheet.class, sheet.level)?.slots ?? {}
     : expectedSlots(sheet.class, sheet.level);
@@ -1308,17 +1312,28 @@ export function Dnd5eSheet({
 
         <h4>
           Spells known / prepared
-          {casterType === "known" && (
-            <small style={{ marginLeft: "0.5rem", fontWeight: "normal" }}>
-              — Known: {sheet.spells.length} / {knownExpected ?? "—"}
-            </small>
-          )}
-          {casterType === "prepared" && (
-            <small style={{ marginLeft: "0.5rem", fontWeight: "normal" }}>
-              — {sheet.spells.filter((s) => s.level >= 1 && s.prepared).length} / {maxPreparedSpells(sheet)} prepared
-              {isWizardCaster ? " (from spellbook)" : " (from full class list)"} — choose after a long rest
-            </small>
-          )}
+          {(() => {
+            // One "X/Y label" counter per applicable category. A counter is hidden when the
+            // player is exactly at the expected number (X === Y), and shown red when over it.
+            const counter = (label: string, x: number, y: number | null | undefined) => {
+              if (y === null || y === undefined || x === y) return null;
+              return (
+                <small key={label} style={{ marginLeft: "0.6rem", fontWeight: "normal", color: x > y ? "crimson" : undefined }}>
+                  {x}/{y} {label}
+                </small>
+              );
+            };
+            const cantripsCount = sheet.spells.filter((s) => s.level === 0).length;
+            const spellsKnownCount = sheet.spells.filter((s) => s.level >= 1).length;
+            const preparedCount = sheet.spells.filter((s) => s.level >= 1 && s.prepared).length;
+            return (
+              <>
+                {counter("cantrips known", cantripsCount, cantripsExpected)}
+                {counter("spells known", spellsKnownCount, knownExpected)}
+                {casterType === "prepared" && counter("spells prepared", preparedCount, maxPreparedSpells(sheet))}
+              </>
+            );
+          })()}
         </h4>
         {sheet.spells.map((sp, i) => {
           const srdSpell = sp.srdId
