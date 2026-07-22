@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import type { SystemId, Dnd5eAbility } from "shared";
-import type { CustomRaceData, CustomBackgroundData, CustomSubraceData } from "shared";
+import type { CustomRaceData, CustomSubraceData, CustomBackgroundData } from "shared";
 import {
   SYSTEMS,
   DND5E_ABILITIES,
   DND5E_ABILITY_NAMES,
   DND5E_CLASSES,
   DND5E_SKILLS,
+  DND5E_LANGUAGES,
   SRD_RACES,
   SRD_SUBRACES,
   SRD_BACKGROUNDS,
@@ -19,6 +20,7 @@ import {
   emptyPf2eSheet,
   recommendedStatPriority,
   normalizeClassId,
+  customBackgroundDataSchema,
 } from "shared";
 import * as charactersApi from "../api/characters";
 import * as diceApi from "../api/dice";
@@ -156,19 +158,185 @@ export function CharacterCreationWizard({
     return DND5E_SKILLS.find((s) => s.id === trimmed || s.name.toLowerCase() === trimmed)?.id;
   }
 
-  const backgroundSkillIds = useMemo((): string[] => {
-    if (system !== "dnd5e") return [];
+  // Structured grant data for the selected background -- from custom content directly, or
+  // synthesized from the (much sparser) SRD entry so both sources share one resolution path.
+  const resolvedBackgroundData = useMemo((): CustomBackgroundData | null => {
+    if (system !== "dnd5e" || !background.trim()) return null;
     const custom = customBackgrounds.find((b) => b.name.toLowerCase() === background.trim().toLowerCase());
-    const raw = custom
-      ? (custom.data as CustomBackgroundData).skillProficiencies
-      : (SRD_BACKGROUNDS.find((b) => b.name.toLowerCase() === background.trim().toLowerCase())?.skillProficiencies ?? []);
-    return raw.map(resolveSkillId).filter((id): id is string => id !== undefined);
+    if (custom) return customBackgroundDataSchema.parse(custom.data);
+    const srd = SRD_BACKGROUNDS.find((b) => b.name.toLowerCase() === background.trim().toLowerCase());
+    if (srd) {
+      return customBackgroundDataSchema.parse({
+        skills: { fixed: srd.skillProficiencies },
+        feature: { name: srd.feature },
+      });
+    }
+    return null;
   }, [system, background, customBackgrounds]);
 
-  const backgroundSkillNames = useMemo(
-    () => backgroundSkillIds.map((id) => DND5E_SKILLS.find((s) => s.id === id)?.name ?? id),
-    [backgroundSkillIds],
+  const backgroundFixedSkillIds = useMemo(
+    () => (resolvedBackgroundData?.skills.fixed ?? []).map(resolveSkillId).filter((id): id is string => id !== undefined),
+    [resolvedBackgroundData],
   );
+
+  const backgroundSkillNames = useMemo(
+    () => backgroundFixedSkillIds.map((id) => DND5E_SKILLS.find((s) => s.id === id)?.name ?? id),
+    [backgroundFixedSkillIds],
+  );
+
+  // Player selections for each of the background's choice slots -- reset whenever the chosen
+  // background changes so a leftover pick from a previous background can't carry over.
+  const [bgSkillChoiceSel, setBgSkillChoiceSel] = useState<string[][]>([]);
+  const [bgToolChoiceSel, setBgToolChoiceSel] = useState<string[][]>([]);
+  const [bgLanguageSel, setBgLanguageSel] = useState<string[]>([]);
+  const [bgVariantSel, setBgVariantSel] = useState<string[]>([]);
+
+  useEffect(() => {
+    setBgSkillChoiceSel([]);
+    setBgToolChoiceSel([]);
+    setBgLanguageSel([]);
+    setBgVariantSel([]);
+  }, [background]);
+
+  function skillChoiceOptions(choice: NonNullable<typeof resolvedBackgroundData>["skills"]["choices"][number]) {
+    if (choice.from.kind === "list") {
+      return choice.from.skillIds.map(resolveSkillId).filter((id): id is string => id !== undefined);
+    }
+    if (choice.from.kind === "ability") {
+      return DND5E_SKILLS.filter((s) => choice.from.kind === "ability" && choice.from.abilities.includes(s.ability)).map(
+        (s) => s.id,
+      );
+    }
+    return DND5E_SKILLS.map((s) => s.id);
+  }
+
+  function toggleSkillChoice(rowIndex: number, count: number, skillId: string) {
+    setBgSkillChoiceSel((prev) => {
+      const next = prev.slice();
+      const current = next[rowIndex] ?? [];
+      if (current.includes(skillId)) {
+        next[rowIndex] = current.filter((id) => id !== skillId);
+      } else if (current.length < count) {
+        next[rowIndex] = [...current, skillId];
+      } else {
+        next[rowIndex] = current;
+      }
+      return next;
+    });
+  }
+
+  function toggleToolChoice(rowIndex: number, count: number, option: string) {
+    setBgToolChoiceSel((prev) => {
+      const next = prev.slice();
+      const current = next[rowIndex] ?? [];
+      if (current.includes(option)) {
+        next[rowIndex] = current.filter((o) => o !== option);
+      } else if (current.length < count) {
+        next[rowIndex] = [...current, option];
+      } else {
+        next[rowIndex] = current;
+      }
+      return next;
+    });
+  }
+
+  function toggleLanguage(count: number, lang: string) {
+    setBgLanguageSel((prev) => {
+      if (prev.includes(lang)) return prev.filter((l) => l !== lang);
+      if (prev.length < count) return [...prev, lang];
+      return prev;
+    });
+  }
+
+  function toggleVariant(count: number, variantId: string) {
+    setBgVariantSel((prev) => {
+      if (prev.includes(variantId)) return prev.filter((v) => v !== variantId);
+      if (count <= 1) return [variantId];
+      if (prev.length < count) return [...prev, variantId];
+      return prev;
+    });
+  }
+
+  const backgroundChoicesComplete = useMemo(() => {
+    if (!resolvedBackgroundData) return true;
+    const skillOk = resolvedBackgroundData.skills.choices.every(
+      (c, i) => (bgSkillChoiceSel[i]?.length ?? 0) === c.count,
+    );
+    const toolOk = resolvedBackgroundData.tools.choices.every((c, i) => (bgToolChoiceSel[i]?.length ?? 0) === c.count);
+    const langOk = bgLanguageSel.length === resolvedBackgroundData.languages.anyCount;
+    const variantOk =
+      resolvedBackgroundData.variants.length === 0 || bgVariantSel.length === resolvedBackgroundData.variantPickCount;
+    return skillOk && toolOk && langOk && variantOk;
+  }, [resolvedBackgroundData, bgSkillChoiceSel, bgToolChoiceSel, bgLanguageSel, bgVariantSel]);
+
+  const backgroundGrantSkillIds = useMemo(
+    () => Array.from(new Set([...backgroundFixedSkillIds, ...bgSkillChoiceSel.flat()])),
+    [backgroundFixedSkillIds, bgSkillChoiceSel],
+  );
+
+  // Everything from the background that isn't a skill proficiency (tools/languages as text,
+  // the feature + any chosen variants as structured feature entries, equipment as items/gold).
+  function backgroundGrants() {
+    const data = resolvedBackgroundData;
+    if (!data) {
+      return {
+        proficienciesText: "",
+        features: [] as ReturnType<typeof emptyDnd5eSheet>["features"],
+        items: [] as ReturnType<typeof emptyDnd5eSheet>["items"],
+        gold: 0,
+      };
+    }
+
+    const toolNames = [...data.tools.fixed, ...bgToolChoiceSel.flat()];
+    const languageNames = [...data.languages.fixed, ...bgLanguageSel];
+    const profLines: string[] = [];
+    if (toolNames.length) profLines.push(`Tool Proficiencies: ${toolNames.join(", ")}`);
+    if (languageNames.length) profLines.push(`Languages: ${languageNames.join(", ")}`);
+
+    const features: ReturnType<typeof emptyDnd5eSheet>["features"] = [];
+    if (data.feature.name) {
+      features.push({
+        id: `bg-feature-${Date.now()}`,
+        name: data.feature.name,
+        description: data.feature.description,
+        abilityBonuses: {},
+        acBonus: 0,
+        attackBonus: 0,
+        damageBonus: 0,
+        spellDCBonus: 0,
+        spellAttackBonus: 0,
+      });
+    }
+    for (const variantId of bgVariantSel) {
+      const variant = data.variants.find((v) => v.id === variantId);
+      if (!variant) continue;
+      features.push({
+        id: `bg-variant-${variant.id}-${Date.now()}`,
+        name: variant.title,
+        description: variant.description,
+        abilityBonuses: {},
+        acBonus: 0,
+        attackBonus: 0,
+        damageBonus: 0,
+        spellDCBonus: 0,
+        spellAttackBonus: 0,
+      });
+    }
+
+    const items: ReturnType<typeof emptyDnd5eSheet>["items"] = data.equipment.items.map((name, i) => ({
+      id: `bg-item-${Date.now()}-${i}`,
+      name,
+      quantity: 1,
+      weight: 0,
+      notes: "",
+      equipped: false,
+      abilityBonuses: {},
+      acBonus: 0,
+      value: 0,
+    }));
+
+    return { proficienciesText: profLines.join("\n"), features, items, gold: data.equipment.gold };
+  }
 
   // The racial (race + subrace) ability bonuses are applied on top of the base scores from
   // whichever generation method was used — this combined value is what
@@ -253,6 +421,7 @@ export function CharacterCreationWizard({
     try {
       let sheetData: unknown;
       if (system === "dnd5e") {
+        const grants = backgroundGrants();
         sheetData = {
           ...emptyDnd5eSheet(),
           class: charClass,
@@ -261,7 +430,11 @@ export function CharacterCreationWizard({
           background,
           level,
           abilities: finalAbilities,
-          skillProficiencies: backgroundSkillIds,
+          skillProficiencies: backgroundGrantSkillIds,
+          proficienciesText: grants.proficienciesText,
+          features: grants.features,
+          items: grants.items,
+          currency: { ...emptyDnd5eSheet().currency, gp: grants.gold },
           hitDice: hitDieForClass(charClass) !== undefined ? `${level}d${hitDieForClass(charClass)}` : "",
           hitDiceTotal: level,
           hitDiceAvailable: level,
@@ -511,6 +684,105 @@ export function CharacterCreationWizard({
                       </small>
                     </p>
                   )}
+                  {resolvedBackgroundData && resolvedBackgroundData.skills.choices.length > 0 && (
+                    <div style={{ marginTop: "0.5rem" }}>
+                      {resolvedBackgroundData.skills.choices.map((choice, i) => (
+                        <div key={i} style={{ marginBottom: "0.4rem" }}>
+                          <small>
+                            Choose {choice.count} skill{choice.count > 1 ? "s" : ""} ({(bgSkillChoiceSel[i]?.length ?? 0)}/
+                            {choice.count} selected):
+                          </small>
+                          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                            {skillChoiceOptions(choice).map((skillId) => (
+                              <label key={skillId} style={{ fontSize: "0.85rem" }}>
+                                <input
+                                  type="checkbox"
+                                  checked={(bgSkillChoiceSel[i] ?? []).includes(skillId)}
+                                  onChange={() => toggleSkillChoice(i, choice.count, skillId)}
+                                />{" "}
+                                {DND5E_SKILLS.find((s) => s.id === skillId)?.name ?? skillId}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {resolvedBackgroundData && resolvedBackgroundData.tools.choices.length > 0 && (
+                    <div style={{ marginTop: "0.5rem" }}>
+                      {resolvedBackgroundData.tools.choices.map((choice, i) => (
+                        <div key={i} style={{ marginBottom: "0.4rem" }}>
+                          <small>
+                            Choose {choice.count} tool{choice.count > 1 ? "s" : ""} ({(bgToolChoiceSel[i]?.length ?? 0)}/
+                            {choice.count} selected):
+                          </small>
+                          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                            {choice.from.map((option) => (
+                              <label key={option} style={{ fontSize: "0.85rem" }}>
+                                <input
+                                  type="checkbox"
+                                  checked={(bgToolChoiceSel[i] ?? []).includes(option)}
+                                  onChange={() => toggleToolChoice(i, choice.count, option)}
+                                />{" "}
+                                {option}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {resolvedBackgroundData && resolvedBackgroundData.languages.anyCount > 0 && (
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <small>
+                        Choose {resolvedBackgroundData.languages.anyCount} language
+                        {resolvedBackgroundData.languages.anyCount > 1 ? "s" : ""} ({bgLanguageSel.length}/
+                        {resolvedBackgroundData.languages.anyCount} selected):
+                      </small>
+                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                        {DND5E_LANGUAGES.filter((lang) => !resolvedBackgroundData.languages.fixed.includes(lang)).map(
+                          (lang) => (
+                            <label key={lang} style={{ fontSize: "0.85rem" }}>
+                              <input
+                                type="checkbox"
+                                checked={bgLanguageSel.includes(lang)}
+                                onChange={() => toggleLanguage(resolvedBackgroundData.languages.anyCount, lang)}
+                              />{" "}
+                              {lang}
+                            </label>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {resolvedBackgroundData && resolvedBackgroundData.variants.length > 0 && (
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <small>
+                        Choose {resolvedBackgroundData.variantPickCount} ({bgVariantSel.length}/
+                        {resolvedBackgroundData.variantPickCount} selected):
+                      </small>
+                      {resolvedBackgroundData.variants.map((v) => (
+                        <label
+                          key={v.id}
+                          style={{
+                            display: "block",
+                            border: "1px solid #ddd",
+                            borderRadius: 6,
+                            padding: "0.4rem",
+                            marginTop: "0.3rem",
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={bgVariantSel.includes(v.id)}
+                            onChange={() => toggleVariant(resolvedBackgroundData.variantPickCount, v.id)}
+                          />{" "}
+                          <strong>{v.title}</strong>
+                          {v.description && <div style={{ fontSize: "0.8rem", color: "#666" }}>{v.description}</div>}
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </>
               ) : (
                 <input value={background} onChange={(e) => setBackground(e.target.value)} />
@@ -529,9 +801,16 @@ export function CharacterCreationWizard({
               />
             </label>
           </div>
+          {!backgroundChoicesComplete && (
+            <p>
+              <small style={{ color: "crimson" }}>Finish the background's choices above before continuing.</small>
+            </p>
+          )}
           <p>
             <button onClick={() => setStep("system")}>Back</button>{" "}
-            <button onClick={() => setStep("abilities")}>Next: ability scores</button>
+            <button onClick={() => setStep("abilities")} disabled={!backgroundChoicesComplete}>
+              Next: ability scores
+            </button>
           </p>
         </div>
       )}
@@ -768,7 +1047,7 @@ export function CharacterCreationWizard({
           </label>
           <p>
             <button onClick={() => setStep(isStructured ? "abilities" : "system")}>Back</button>{" "}
-            <button onClick={create} disabled={creating}>
+            <button onClick={create} disabled={creating || !backgroundChoicesComplete}>
               {creating ? "Creating…" : "Create character"}
             </button>
           </p>

@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
-import type { CustomContent, CustomContentType, CustomContentSystem, Dnd5eAbility } from "shared";
-import { DND5E_ABILITIES, DND5E_ABILITY_NAMES, CUSTOM_CONTENT_TYPES_BY_SYSTEM, SYSTEM_IDS } from "shared";
+import type { CustomContent, CustomContentType, CustomContentSystem, Dnd5eAbility, CustomBackgroundData } from "shared";
+import {
+  DND5E_ABILITIES,
+  DND5E_ABILITY_NAMES,
+  DND5E_SKILLS,
+  DND5E_LANGUAGES,
+  SRD_BACKGROUNDS,
+  CUSTOM_CONTENT_TYPES_BY_SYSTEM,
+  SYSTEM_IDS,
+  customBackgroundDataSchema,
+  formatBackgroundGrants,
+} from "shared";
 import * as customContentApi from "../api/customContent";
 import { useAuth } from "../context/AuthContext";
 
@@ -179,6 +189,29 @@ function speedToText(speed: Record<string, number | undefined>): string {
     .join(", ");
 }
 
+// Background skill-choice row editor state ("choose N from [a specific list | an ability group
+// | any skill]"). `skillIds`/`abilities` are only meaningful for the matching `kind`.
+interface BgSkillChoiceRow {
+  count: string;
+  kind: "list" | "ability" | "any";
+  skillIds: string[];
+  abilities: Dnd5eAbility[];
+}
+const emptyBgSkillChoiceRow = (): BgSkillChoiceRow => ({ count: "1", kind: "ability", skillIds: [], abilities: [] });
+
+interface BgToolChoiceRow {
+  count: string;
+  from: string; // comma-separated tool names
+}
+const emptyBgToolChoiceRow = (): BgToolChoiceRow => ({ count: "1", from: "" });
+
+interface BgVariantRow {
+  id: string;
+  title: string;
+  description: string;
+}
+const emptyBgVariantRow = (): BgVariantRow => ({ id: `variant-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, title: "", description: "" });
+
 function rowsToLevels(rows: LevelRow[]) {
   return rows
     .filter((r) => r.level.trim() !== "")
@@ -264,10 +297,19 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [levelRows, setLevelRows] = useState<LevelRow[]>([emptyLevelRow(1)]);
 
   // Background fields
-  const [bgSkills, setBgSkills] = useState("");
-  const [bgFeature, setBgFeature] = useState("");
-  const [bgTools, setBgTools] = useState("");
-  const [bgEquipment, setBgEquipment] = useState("");
+  const [bgSkillsFixed, setBgSkillsFixed] = useState<string[]>([]);
+  const [bgSkillChoices, setBgSkillChoices] = useState<BgSkillChoiceRow[]>([]);
+  const [bgToolsFixed, setBgToolsFixed] = useState(""); // comma-separated -- no fixed SRD tool list to check against
+  const [bgToolChoices, setBgToolChoices] = useState<BgToolChoiceRow[]>([]);
+  const [bgLanguagesFixed, setBgLanguagesFixed] = useState<string[]>([]);
+  const [bgLanguagesAnyCount, setBgLanguagesAnyCount] = useState("0");
+  const [bgEquipmentItems, setBgEquipmentItems] = useState(""); // comma-separated
+  const [bgGold, setBgGold] = useState("0");
+  const [bgFeatureName, setBgFeatureName] = useState("");
+  const [bgFeatureDescription, setBgFeatureDescription] = useState("");
+  const [bgVariants, setBgVariants] = useState<BgVariantRow[]>([]);
+  const [bgVariantPickCount, setBgVariantPickCount] = useState("1");
+  const [bgCloneFrom, setBgCloneFrom] = useState("");
 
   // Subrace / subclass parent (ability bonuses, traits, and level rows are reused from above).
   const [parentRace, setParentRace] = useState("");
@@ -354,10 +396,19 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setHitDie("8");
     setCasterType("none");
     setLevelRows([emptyLevelRow(1)]);
-    setBgSkills("");
-    setBgFeature("");
-    setBgTools("");
-    setBgEquipment("");
+    setBgSkillsFixed([]);
+    setBgSkillChoices([]);
+    setBgToolsFixed("");
+    setBgToolChoices([]);
+    setBgLanguagesFixed([]);
+    setBgLanguagesAnyCount("0");
+    setBgEquipmentItems("");
+    setBgGold("0");
+    setBgFeatureName("");
+    setBgFeatureDescription("");
+    setBgVariants([]);
+    setBgVariantPickCount("1");
+    setBgCloneFrom("");
     setParentRace("");
     setParentClass("");
     setFeatDescription("");
@@ -439,11 +490,28 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       setCasterType(d.casterType);
       setLevelRows(levelsToRows(d.levels));
     } else if (item.type === "background") {
-      const d = item.data as { skillProficiencies: string[]; feature: string; toolProficiencies: string[]; equipmentText: string };
-      setBgSkills(d.skillProficiencies.join(", "));
-      setBgFeature(d.feature);
-      setBgTools(d.toolProficiencies.join(", "));
-      setBgEquipment(d.equipmentText);
+      // Normalizes both legacy flat rows and the new structured shape through the same schema
+      // the backend validates against, so the builder never needs its own duplicate shim.
+      const d = customBackgroundDataSchema.parse(item.data);
+      setBgSkillsFixed(d.skills.fixed);
+      setBgSkillChoices(
+        d.skills.choices.map((c) => ({
+          count: String(c.count),
+          kind: c.from.kind,
+          skillIds: c.from.kind === "list" ? c.from.skillIds : [],
+          abilities: c.from.kind === "ability" ? c.from.abilities : [],
+        })),
+      );
+      setBgToolsFixed(d.tools.fixed.join(", "));
+      setBgToolChoices(d.tools.choices.map((c) => ({ count: String(c.count), from: c.from.join(", ") })));
+      setBgLanguagesFixed(d.languages.fixed);
+      setBgLanguagesAnyCount(String(d.languages.anyCount));
+      setBgEquipmentItems(d.equipment.items.join(", "));
+      setBgGold(String(d.equipment.gold));
+      setBgFeatureName(d.feature.name);
+      setBgFeatureDescription(d.feature.description);
+      setBgVariants(d.variants);
+      setBgVariantPickCount(String(d.variantPickCount));
     } else if (item.type === "subrace") {
       const d = item.data as { parentRace: string; abilityBonuses: Partial<Record<Dnd5eAbility, number>>; traits: string[] };
       setParentRace(d.parentRace);
@@ -576,6 +644,50 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     }
   }
 
+  // Builds the structured background payload from the form fields -- shared by handleSubmit
+  // (to save) and the live preview (to render), so the two can never drift apart.
+  function buildBackgroundData(): CustomBackgroundData {
+    return {
+      skills: {
+        fixed: bgSkillsFixed,
+        choices: bgSkillChoices
+          .filter((c) => c.kind === "any" || (c.kind === "list" ? c.skillIds.length > 0 : c.abilities.length > 0))
+          .map((c) => ({
+            count: Number(c.count) || 1,
+            from:
+              c.kind === "list"
+                ? { kind: "list" as const, skillIds: c.skillIds }
+                : c.kind === "ability"
+                  ? { kind: "ability" as const, abilities: c.abilities }
+                  : { kind: "any" as const },
+          })),
+      },
+      tools: {
+        fixed: bgToolsFixed.split(",").map((s) => s.trim()).filter(Boolean),
+        choices: bgToolChoices
+          .filter((c) => c.from.trim() !== "")
+          .map((c) => ({ count: Number(c.count) || 1, from: c.from.split(",").map((s) => s.trim()).filter(Boolean) })),
+      },
+      languages: { fixed: bgLanguagesFixed, anyCount: Number(bgLanguagesAnyCount) || 0 },
+      equipment: {
+        items: bgEquipmentItems.split(",").map((s) => s.trim()).filter(Boolean),
+        gold: Number(bgGold) || 0,
+      },
+      feature: { name: bgFeatureName.trim(), description: bgFeatureDescription.trim() },
+      variants: bgVariants.filter((v) => v.title.trim() !== ""),
+      variantPickCount: Number(bgVariantPickCount) || 1,
+    };
+  }
+
+  // Clones an SRD background's fixed grants into the form fields as a starting point to tweak.
+  function cloneSrdBackground(name: string) {
+    const src = SRD_BACKGROUNDS.find((b) => b.name === name);
+    if (!src) return;
+    setBgSkillsFixed(src.skillProficiencies);
+    setBgSkillChoices([]);
+    setBgFeatureName(src.feature);
+  }
+
   async function handleSubmit() {
     setError(null);
     try {
@@ -596,12 +708,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       } else if (type === "class") {
         data = { hitDie: Number(hitDie), casterType, levels: rowsToLevels(levelRows) };
       } else if (type === "background") {
-        data = {
-          skillProficiencies: bgSkills.split(",").map((s) => s.trim()).filter(Boolean),
-          feature: bgFeature.trim(),
-          toolProficiencies: bgTools.split(",").map((s) => s.trim()).filter(Boolean),
-          equipmentText: bgEquipment.trim(),
-        };
+        data = buildBackgroundData();
       } else if (type === "subrace") {
         data = { parentRace: parentRace.trim(), abilityBonuses: abilityBonusesObj, speed: 0, traits: traitsArr };
       } else if (type === "subclass") {
@@ -906,34 +1013,273 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
           </>
         ) : type === "background" ? (
           <>
-            <div style={{ marginTop: "0.5rem" }}>
-              <label style={{ display: "block" }}>
-                Skill proficiencies granted (comma-separated, e.g. "Deception, Persuasion")
-                <br />
-                <input value={bgSkills} onChange={(e) => setBgSkills(e.target.value)} style={{ width: "100%" }} />
-              </label>
+            {editingId === null && (
+              <div style={{ marginTop: "0.5rem" }}>
+                <label>
+                  Start from an SRD background (optional){" "}
+                  <select
+                    value={bgCloneFrom}
+                    onChange={(e) => {
+                      setBgCloneFrom(e.target.value);
+                      if (e.target.value) cloneSrdBackground(e.target.value);
+                    }}
+                  >
+                    <option value="">— none —</option>
+                    {SRD_BACKGROUNDS.map((b) => (
+                      <option key={b.id} value={b.name}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
+
+            <h4 style={{ marginTop: "1rem" }}>Skill proficiencies</h4>
+            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", fontSize: "0.9rem" }}>
+              {DND5E_SKILLS.map((s) => (
+                <label key={s.id}>
+                  <input
+                    type="checkbox"
+                    checked={bgSkillsFixed.includes(s.id)}
+                    onChange={(e) =>
+                      setBgSkillsFixed((prev) => (e.target.checked ? [...prev, s.id] : prev.filter((id) => id !== s.id)))
+                    }
+                  />{" "}
+                  {s.name}
+                </label>
+              ))}
             </div>
-            <div style={{ marginTop: "0.5rem" }}>
-              <label style={{ display: "block" }}>
-                Feature name
-                <br />
-                <input value={bgFeature} onChange={(e) => setBgFeature(e.target.value)} style={{ width: "100%" }} />
-              </label>
+            {bgSkillChoices.map((row, i) => (
+              <div key={i} style={{ display: "flex", gap: "0.5rem", alignItems: "flex-start", flexWrap: "wrap", marginTop: "0.4rem" }}>
+                <span>Choose</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={row.count}
+                  onChange={(e) => setBgSkillChoices((prev) => prev.map((r, j) => (j === i ? { ...r, count: e.target.value } : r)))}
+                  style={{ width: "3rem" }}
+                />
+                <select
+                  value={row.kind}
+                  onChange={(e) =>
+                    setBgSkillChoices((prev) =>
+                      prev.map((r, j) => (j === i ? { ...r, kind: e.target.value as BgSkillChoiceRow["kind"] } : r)),
+                    )
+                  }
+                >
+                  <option value="ability">from an ability group</option>
+                  <option value="list">from a specific list</option>
+                  <option value="any">any skill</option>
+                </select>
+                {row.kind === "ability" && (
+                  <span style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                    {DND5E_ABILITIES.map((a) => (
+                      <label key={a} style={{ fontSize: "0.85rem" }}>
+                        <input
+                          type="checkbox"
+                          checked={row.abilities.includes(a)}
+                          onChange={(e) =>
+                            setBgSkillChoices((prev) =>
+                              prev.map((r, j) =>
+                                j === i
+                                  ? { ...r, abilities: e.target.checked ? [...r.abilities, a] : r.abilities.filter((x) => x !== a) }
+                                  : r,
+                              ),
+                            )
+                          }
+                        />{" "}
+                        {DND5E_ABILITY_NAMES[a]}
+                      </label>
+                    ))}
+                  </span>
+                )}
+                {row.kind === "list" && (
+                  <span style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", maxWidth: "24rem" }}>
+                    {DND5E_SKILLS.map((s) => (
+                      <label key={s.id} style={{ fontSize: "0.85rem" }}>
+                        <input
+                          type="checkbox"
+                          checked={row.skillIds.includes(s.id)}
+                          onChange={(e) =>
+                            setBgSkillChoices((prev) =>
+                              prev.map((r, j) =>
+                                j === i
+                                  ? { ...r, skillIds: e.target.checked ? [...r.skillIds, s.id] : r.skillIds.filter((x) => x !== s.id) }
+                                  : r,
+                              ),
+                            )
+                          }
+                        />{" "}
+                        {s.name}
+                      </label>
+                    ))}
+                  </span>
+                )}
+                <button type="button" onClick={() => setBgSkillChoices((prev) => prev.filter((_, j) => j !== i))}>
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button type="button" onClick={() => setBgSkillChoices((prev) => [...prev, emptyBgSkillChoiceRow()])} style={{ marginTop: "0.4rem" }}>
+              Add skill choice
+            </button>
+
+            <h4 style={{ marginTop: "1rem" }}>Tool proficiencies</h4>
+            <label style={{ display: "block" }}>
+              Fixed (comma-separated, e.g. "Thieves' tools") — leave blank for "None"
+              <input value={bgToolsFixed} onChange={(e) => setBgToolsFixed(e.target.value)} style={{ width: "100%" }} />
+            </label>
+            {bgToolChoices.map((row, i) => (
+              <div key={i} style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.4rem" }}>
+                <span>Choose</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={row.count}
+                  onChange={(e) => setBgToolChoices((prev) => prev.map((r, j) => (j === i ? { ...r, count: e.target.value } : r)))}
+                  style={{ width: "3rem" }}
+                />
+                <span>from</span>
+                <input
+                  placeholder="comma-separated, e.g. one type of gaming set, one musical instrument"
+                  value={row.from}
+                  onChange={(e) => setBgToolChoices((prev) => prev.map((r, j) => (j === i ? { ...r, from: e.target.value } : r)))}
+                  style={{ flex: 1 }}
+                />
+                <button type="button" onClick={() => setBgToolChoices((prev) => prev.filter((_, j) => j !== i))}>
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button type="button" onClick={() => setBgToolChoices((prev) => [...prev, emptyBgToolChoiceRow()])} style={{ marginTop: "0.4rem" }}>
+              Add tool choice
+            </button>
+
+            <h4 style={{ marginTop: "1rem" }}>Languages</h4>
+            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", fontSize: "0.9rem" }}>
+              {DND5E_LANGUAGES.map((lang) => (
+                <label key={lang}>
+                  <input
+                    type="checkbox"
+                    checked={bgLanguagesFixed.includes(lang)}
+                    onChange={(e) =>
+                      setBgLanguagesFixed((prev) => (e.target.checked ? [...prev, lang] : prev.filter((l) => l !== lang)))
+                    }
+                  />{" "}
+                  {lang}
+                </label>
+              ))}
             </div>
-            <div style={{ marginTop: "0.5rem" }}>
-              <label style={{ display: "block" }}>
-                Tool proficiencies (comma-separated, optional)
-                <br />
-                <input value={bgTools} onChange={(e) => setBgTools(e.target.value)} style={{ width: "100%" }} />
+            <label style={{ marginTop: "0.4rem", display: "inline-block" }}>
+              Plus{" "}
+              <input
+                type="number"
+                min={0}
+                value={bgLanguagesAnyCount}
+                onChange={(e) => setBgLanguagesAnyCount(e.target.value)}
+                style={{ width: "3rem" }}
+              />{" "}
+              of your choice
+            </label>
+
+            <h4 style={{ marginTop: "1rem" }}>Equipment</h4>
+            <label style={{ display: "block" }}>
+              Items (comma-separated)
+              <input value={bgEquipmentItems} onChange={(e) => setBgEquipmentItems(e.target.value)} style={{ width: "100%" }} />
+            </label>
+            <label style={{ marginTop: "0.4rem", display: "inline-block" }}>
+              Starting gold <input type="number" min={0} value={bgGold} onChange={(e) => setBgGold(e.target.value)} style={{ width: "5rem" }} />
+            </label>
+
+            <h4 style={{ marginTop: "1rem" }}>Feature</h4>
+            <label style={{ display: "block" }}>
+              Name
+              <input value={bgFeatureName} onChange={(e) => setBgFeatureName(e.target.value)} style={{ width: "100%" }} />
+            </label>
+            <label style={{ display: "block", marginTop: "0.4rem" }}>
+              Description
+              <textarea value={bgFeatureDescription} onChange={(e) => setBgFeatureDescription(e.target.value)} rows={3} style={{ width: "100%" }} />
+            </label>
+
+            <h4 style={{ marginTop: "1rem" }}>Variants ("lore boxes")</h4>
+            <p>
+              <small>
+                A pick-one (or pick-N) set of themed flavor options -- e.g. which faction, origin, or patron the
+                background attaches to.
+              </small>
+            </p>
+            {bgVariants.map((v, i) => (
+              <div key={v.id} style={{ border: "1px solid #ddd", borderRadius: 6, padding: "0.5rem", marginBottom: "0.4rem" }}>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  <input
+                    placeholder="Title"
+                    value={v.title}
+                    onChange={(e) => setBgVariants((prev) => prev.map((r, j) => (j === i ? { ...r, title: e.target.value } : r)))}
+                    style={{ flex: 1 }}
+                  />
+                  <button type="button" onClick={() => setBgVariants((prev) => prev.filter((_, j) => j !== i))}>
+                    Remove
+                  </button>
+                </div>
+                <textarea
+                  placeholder="Description"
+                  value={v.description}
+                  onChange={(e) => setBgVariants((prev) => prev.map((r, j) => (j === i ? { ...r, description: e.target.value } : r)))}
+                  rows={2}
+                  style={{ width: "100%", marginTop: "0.3rem" }}
+                />
+              </div>
+            ))}
+            <button type="button" onClick={() => setBgVariants((prev) => [...prev, emptyBgVariantRow()])}>
+              Add variant
+            </button>
+            {bgVariants.length > 0 && (
+              <label style={{ marginLeft: "1rem" }}>
+                Player picks{" "}
+                <input
+                  type="number"
+                  min={0}
+                  value={bgVariantPickCount}
+                  onChange={(e) => setBgVariantPickCount(e.target.value)}
+                  style={{ width: "3rem" }}
+                />
               </label>
-            </div>
-            <div style={{ marginTop: "0.5rem" }}>
-              <label style={{ display: "block" }}>
-                Starting equipment (free text, optional)
-                <br />
-                <input value={bgEquipment} onChange={(e) => setBgEquipment(e.target.value)} style={{ width: "100%" }} />
-              </label>
-            </div>
+            )}
+
+            {(() => {
+              const preview = formatBackgroundGrants(buildBackgroundData());
+              return (
+                <div style={{ marginTop: "1rem", background: "#f7f7f7", border: "1px solid #ddd", borderRadius: 6, padding: "0.75rem" }}>
+                  <h4 style={{ marginTop: 0 }}>Preview</h4>
+                  <p style={{ margin: "0.2rem 0" }}>
+                    <strong>Skill Proficiencies:</strong> {preview.skills}
+                  </p>
+                  <p style={{ margin: "0.2rem 0" }}>
+                    <strong>Tool Proficiencies:</strong> {preview.tools}
+                  </p>
+                  <p style={{ margin: "0.2rem 0" }}>
+                    <strong>Languages:</strong> {preview.languages}
+                  </p>
+                  <p style={{ margin: "0.2rem 0" }}>
+                    <strong>Equipment:</strong> {preview.equipment}
+                  </p>
+                  {preview.featureName && (
+                    <p style={{ margin: "0.2rem 0" }}>
+                      <strong>Feature: {preview.featureName}.</strong> {preview.featureDescription}
+                    </p>
+                  )}
+                  {preview.variants.length > 0 && (
+                    <p style={{ margin: "0.2rem 0" }}>
+                      <strong>
+                        Choose {preview.variantPickCount} of {preview.variants.length}:
+                      </strong>{" "}
+                      {preview.variants.map((v) => v.title).join(", ")}
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
           </>
         ) : type === "subrace" ? (
           <>

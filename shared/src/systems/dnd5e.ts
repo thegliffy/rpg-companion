@@ -12,6 +12,27 @@ export const DND5E_ABILITY_NAMES: Record<Dnd5eAbility, string> = {
   cha: "Charisma",
 };
 
+// SRD 5.1 standard languages (CC-BY-4.0) -- names only, used by race data and the background
+// "N languages of your choice" grant.
+export const DND5E_LANGUAGES = [
+  "Common",
+  "Dwarvish",
+  "Elvish",
+  "Giant",
+  "Gnomish",
+  "Goblin",
+  "Halfling",
+  "Orc",
+  "Abyssal",
+  "Celestial",
+  "Draconic",
+  "Deep Speech",
+  "Infernal",
+  "Primordial",
+  "Sylvan",
+  "Undercommon",
+] as const;
+
 // SRD 5.1 skill list (CC-BY-4.0)
 export const DND5E_SKILLS: { id: string; name: string; ability: Dnd5eAbility }[] = [
   { id: "acrobatics", name: "Acrobatics", ability: "dex" },

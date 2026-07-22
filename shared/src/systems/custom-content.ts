@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DND5E_ABILITIES } from "./dnd5e.js";
+import { DND5E_ABILITIES, DND5E_ABILITY_NAMES, DND5E_SKILLS } from "./dnd5e.js";
 import type { ClassLevelEntry, CasterType } from "./class-progression.js";
 import type { SrdSpell } from "./srd-spells.js";
 import type { SrdMonster } from "./srd-monsters.js";
@@ -50,13 +50,173 @@ export const customClassDataSchema = z.object({
 });
 export type CustomClassData = z.infer<typeof customClassDataSchema>;
 
-export const customBackgroundDataSchema = z.object({
-  skillProficiencies: z.array(z.string().trim().max(40)).max(2).default([]),
-  feature: z.string().trim().max(60).default(""),
-  toolProficiencies: z.array(z.string().trim().max(40)).max(10).default([]),
-  equipmentText: z.string().trim().max(300).default(""),
+// A skill grant can come from a fixed choice ("choose from this exact list"), an ability-group
+// choice ("one Int/Wis/Cha skill of your choice"), or a fully open choice ("any skill").
+const skillChoiceSourceSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("list"), skillIds: z.array(z.string().trim().max(40)).max(18) }),
+  z.object({ kind: z.literal("ability"), abilities: z.array(z.enum(DND5E_ABILITIES)).min(1).max(6) }),
+  z.object({ kind: z.literal("any") }),
+]);
+
+const skillChoiceSchema = z.object({
+  count: z.number().int().min(1).max(18),
+  from: skillChoiceSourceSchema,
 });
+
+const toolChoiceSchema = z.object({
+  count: z.number().int().min(1).max(10),
+  from: z.array(z.string().trim().max(40)).max(20),
+});
+
+const backgroundVariantSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().trim().max(60),
+  description: z.string().trim().max(500).default(""),
+});
+
+const rawCustomBackgroundDataSchema = z.object({
+  skills: z
+    .object({
+      fixed: z.array(z.string().trim().max(40)).max(18).default([]),
+      choices: z.array(skillChoiceSchema).max(5).default([]),
+    })
+    .default({}),
+  tools: z
+    .object({
+      fixed: z.array(z.string().trim().max(40)).max(20).default([]),
+      choices: z.array(toolChoiceSchema).max(5).default([]),
+    })
+    .default({}),
+  // "Two of your choice" = anyCount: 2. `fixed` covers a background that also grants a
+  // specific language outright (rare, but some SRD-adjacent backgrounds do this).
+  languages: z
+    .object({
+      fixed: z.array(z.string().trim().max(40)).max(10).default([]),
+      anyCount: z.number().int().min(0).max(10).default(0),
+    })
+    .default({}),
+  equipment: z
+    .object({
+      items: z.array(z.string().trim().max(100)).max(20).default([]),
+      gold: z.number().min(0).max(9999).default(0),
+    })
+    .default({}),
+  feature: z
+    .object({
+      name: z.string().trim().max(60).default(""),
+      description: z.string().trim().max(500).default(""),
+    })
+    .default({}),
+  // "Lore boxes" -- a pick-one (or pick-N) set of themed flavor variants, e.g. which faction/
+  // origin/god the background attaches to. v1 is flavor-only (title + description); a per-variant
+  // mechanical tweak is a natural future extension once a concrete need shows up.
+  variants: z.array(backgroundVariantSchema).max(20).default([]),
+  variantPickCount: z.number().int().min(0).max(5).default(1),
+});
+
+// Upgrades the legacy flat shape ({skillProficiencies, feature, toolProficiencies, equipmentText}
+// -- what every background created before this structured redesign has stored) into the new
+// fixed+choice shape, so old custom-content rows keep parsing without a data migration (the JSON
+// blob in custom_content.data never changes; only how we read it does).
+export const customBackgroundDataSchema = z.preprocess((raw) => {
+  const input = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const isLegacy =
+    !("skills" in input) &&
+    ("skillProficiencies" in input || "feature" in input || "toolProficiencies" in input || "equipmentText" in input);
+  if (!isLegacy) return input;
+
+  const legacy = input as {
+    skillProficiencies?: string[];
+    feature?: string;
+    toolProficiencies?: string[];
+    equipmentText?: string;
+  };
+  return {
+    skills: { fixed: legacy.skillProficiencies ?? [], choices: [] },
+    tools: { fixed: legacy.toolProficiencies ?? [], choices: [] },
+    languages: { fixed: [], anyCount: 0 },
+    equipment: { items: legacy.equipmentText ? [legacy.equipmentText] : [], gold: 0 },
+    feature: { name: legacy.feature ?? "", description: "" },
+    variants: [],
+    variantPickCount: 1,
+  };
+}, rawCustomBackgroundDataSchema);
 export type CustomBackgroundData = z.infer<typeof customBackgroundDataSchema>;
+export type BackgroundSkillChoice = z.infer<typeof skillChoiceSchema>;
+export type BackgroundToolChoice = z.infer<typeof toolChoiceSchema>;
+export type BackgroundVariant = z.infer<typeof backgroundVariantSchema>;
+
+const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+function numberWord(n: number): string {
+  return NUMBER_WORDS[n] ?? String(n);
+}
+
+/** "a, b, and c" -- Oxford-comma English list join, "None" when empty. */
+function joinEnglish(parts: string[], conjunction: "and" | "or" = "and"): string {
+  if (parts.length === 0) return "None";
+  if (parts.length === 1) return parts[0];
+  if (parts.length === 2) return `${parts[0]} ${conjunction} ${parts[1]}`;
+  return `${parts.slice(0, -1).join(", ")}, ${conjunction} ${parts[parts.length - 1]}`;
+}
+
+function skillLabel(id: string): string {
+  return DND5E_SKILLS.find((s) => s.id === id)?.name ?? id;
+}
+
+/**
+ * Renders a background's structured grants as PHB-style lines ("Skill Proficiencies: Insight
+ * and one Intelligence, Wisdom, or Charisma skill of your choice", etc.) -- shared by the
+ * custom-content manager's live preview and any read-only display (character sheet, wizard)
+ * so the two never drift out of sync.
+ */
+export function formatBackgroundGrants(data: CustomBackgroundData): {
+  skills: string;
+  tools: string;
+  languages: string;
+  equipment: string;
+  featureName: string;
+  featureDescription: string;
+  variants: BackgroundVariant[];
+  variantPickCount: number;
+} {
+  const skillParts = data.skills.fixed.map(skillLabel);
+  for (const choice of data.skills.choices) {
+    const n = numberWord(choice.count);
+    if (choice.from.kind === "list") {
+      skillParts.push(`${n} of ${choice.from.skillIds.map(skillLabel).join(", ")} of your choice`);
+    } else if (choice.from.kind === "ability") {
+      const abilities = joinEnglish(choice.from.abilities.map((a) => DND5E_ABILITY_NAMES[a]), "or");
+      skillParts.push(`${n} ${abilities} skill${choice.count > 1 ? "s" : ""} of your choice`);
+    } else {
+      skillParts.push(`${n} skill${choice.count > 1 ? "s" : ""} of your choice`);
+    }
+  }
+
+  const toolParts = [...data.tools.fixed];
+  for (const choice of data.tools.choices) {
+    toolParts.push(`${numberWord(choice.count)} of ${choice.from.join(", ")} of your choice`);
+  }
+
+  const langParts = [...data.languages.fixed];
+  if (data.languages.anyCount > 0) {
+    const n = numberWord(data.languages.anyCount);
+    langParts.push(`${n.charAt(0).toUpperCase()}${n.slice(1)} of your choice`);
+  }
+
+  const equipParts = [...data.equipment.items];
+  if (data.equipment.gold > 0) equipParts.push(`a pouch containing ${data.equipment.gold} gp`);
+
+  return {
+    skills: joinEnglish(skillParts),
+    tools: joinEnglish(toolParts),
+    languages: joinEnglish(langParts),
+    equipment: joinEnglish(equipParts),
+    featureName: data.feature.name,
+    featureDescription: data.feature.description,
+    variants: data.variants,
+    variantPickCount: data.variantPickCount,
+  };
+}
 
 export const customSubraceDataSchema = z.object({
   parentRace: z.string().trim().max(60).default(""),
