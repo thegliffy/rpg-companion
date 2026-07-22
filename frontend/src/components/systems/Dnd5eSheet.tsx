@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   Character,
   Dnd5eSheetData,
@@ -99,9 +99,11 @@ export function Dnd5eSheet({
   const [name, setName] = useState(character.name);
   const [hpCurrent, setHpCurrent] = useState(character.hpCurrent != null ? String(character.hpCurrent) : "");
   const [hpMax, setHpMax] = useState(character.hpMax != null ? String(character.hpMax) : "");
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [savedFlash, setSavedFlash] = useState(false);
+  // Debounced whole-sheet auto-save: "pending" while waiting out the debounce window,
+  // "saving" once the request is in flight, "saved"/"error" after it settles.
+  const [autosaveStatus, setAutosaveStatus] = useState<"idle" | "pending" | "saving" | "saved" | "error">("idle");
+  const [autosaveError, setAutosaveError] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [rollResults, setRollResults] = useState<Record<string, string>>({});
   const [levelUpPending, setLevelUpPending] = useState(false);
@@ -491,25 +493,82 @@ export function Dnd5eSheet({
     }
   }
 
-  async function save() {
-    setSaving(true);
-    setError(null);
+  // Refs mirror the latest values every render so a save triggered by the debounce timer (or a
+  // follow-up save queued while one is in flight) always sends the current state, never a stale
+  // snapshot captured when the timer was scheduled.
+  const sheetRef = useRef(sheet);
+  sheetRef.current = sheet;
+  const nameRef = useRef(name);
+  nameRef.current = name;
+  const hpCurrentRef = useRef(hpCurrent);
+  hpCurrentRef.current = hpCurrent;
+  const hpMaxRef = useRef(hpMax);
+  hpMaxRef.current = hpMax;
+
+  const saveInFlightRef = useRef(false);
+  const pendingSaveRef = useRef(false);
+  const pendingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(false);
+
+  async function persist() {
+    if (saveInFlightRef.current) {
+      pendingSaveRef.current = true;
+      return;
+    }
+    saveInFlightRef.current = true;
+    setAutosaveStatus("saving");
+    setAutosaveError(null);
     try {
       const updated = await charactersApi.updateCharacter(character.id, {
-        name,
-        hpCurrent: hpCurrent === "" ? null : Number(hpCurrent),
-        hpMax: hpMax === "" ? null : Number(hpMax),
-        sheetData: sheet,
+        name: nameRef.current,
+        hpCurrent: hpCurrentRef.current === "" ? null : Number(hpCurrentRef.current),
+        hpMax: hpMaxRef.current === "" ? null : Number(hpMaxRef.current),
+        sheetData: sheetRef.current,
       });
       onSaved(updated);
-      setSavedFlash(true);
-      setTimeout(() => setSavedFlash(false), 1500);
+      setAutosaveStatus("saved");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
+      setAutosaveError(err instanceof Error ? err.message : "Save failed");
+      setAutosaveStatus("error");
     } finally {
-      setSaving(false);
+      saveInFlightRef.current = false;
+      if (pendingSaveRef.current) {
+        pendingSaveRef.current = false;
+        persist();
+      }
     }
   }
+
+  // Debounced auto-save: ~1s after the last change to any of these, persist the whole sheet.
+  // Skips the initial mount (nothing to save yet) and re-arms the timer on every further change.
+  useEffect(() => {
+    if (!mountedRef.current) {
+      mountedRef.current = true;
+      return;
+    }
+    if (readOnly) return;
+    setAutosaveStatus("pending");
+    const t = setTimeout(() => {
+      pendingTimeoutRef.current = null;
+      persist();
+    }, 1000);
+    pendingTimeoutRef.current = t;
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheet, name, hpCurrent, hpMax, readOnly]);
+
+  // Flush a still-pending debounced save on unmount (e.g. navigating away right after a cast
+  // spent a slot) so it isn't silently lost. Empty deps -- this cleanup only runs on true unmount.
+  useEffect(() => {
+    return () => {
+      if (pendingTimeoutRef.current) {
+        clearTimeout(pendingTimeoutRef.current);
+        pendingTimeoutRef.current = null;
+        persist();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function setStatus(status: Dnd5eSheetData["status"]) {
     setSheet((prev) => ({ ...prev, status, statusChangedAt: new Date().toISOString() }));
@@ -1347,9 +1406,26 @@ export function Dnd5eSheet({
           const effectiveAbility = sp.abilityOverride ?? sheet.spellcastingAbility;
           const effectiveAtkBonus = spellAttackBonusForAbility(sheet, effectiveAbility);
           const effectiveSaveDC = spellSaveDCForAbility(sheet, effectiveAbility);
+          // Cantrips have no prepared flag -- always treated as prepared/castable.
+          const preparedOrCantrip = sp.prepared || sp.level === 0;
+          // Ritual-only casts (unprepared wizard spellbook rituals) and cantrips never spend a slot.
+          const consumesSlot = sp.level >= 1 && sp.prepared;
+          const candidateSlots = consumesSlot
+            ? sheet.spellSlots.filter((s) => s.level >= sp.level && s.available > 0).sort((a, b) => a.level - b.level)
+            : [];
+          const hasSlot = candidateSlots.length > 0;
 
           function updateSpell(patch: Partial<Dnd5eSheetData["spells"][number]>) {
             set("spells", sheet.spells.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+          }
+
+          function consumeSlot() {
+            if (candidateSlots.length === 0) return;
+            const target = candidateSlots[0];
+            set(
+              "spellSlots",
+              sheet.spellSlots.map((s) => (s.level === target.level ? { ...s, available: s.available - 1 } : s)),
+            );
           }
 
           return (
@@ -1397,14 +1473,16 @@ export function Dnd5eSheet({
                   </label>
                 )}
 
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={sp.prepared}
-                    onChange={(e) => updateSpell({ prepared: e.target.checked })}
-                  />{" "}
-                  Prepared
-                </label>
+                {sp.level !== 0 && (
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={sp.prepared}
+                      onChange={(e) => updateSpell({ prepared: e.target.checked })}
+                    />{" "}
+                    Prepared
+                  </label>
+                )}
                 <button type="button" onClick={() => set("spells", sheet.spells.filter((_, j) => j !== i))}>
                   Remove
                 </button>
@@ -1430,13 +1508,16 @@ export function Dnd5eSheet({
                   )}
                 </div>
               )}
-              {srdSpell && (sp.prepared || (srdSpell.ritual && isWizardCaster)) && (
+              {srdSpell && (preparedOrCantrip || (srdSpell.ritual && isWizardCaster)) && (
                 <SpellCastControl
                   key={srdSpell.id + effectiveAbility}
                   spell={srdSpell}
                   spellAttackBonus={effectiveAtkBonus}
                   campaignId={character.campaignId}
-                  ritualOnly={!sp.prepared}
+                  ritualOnly={!preparedOrCantrip}
+                  consumesSlot={consumesSlot}
+                  hasSlot={hasSlot}
+                  onConsumeSlot={consumeSlot}
                 />
               )}
             </div>
@@ -2012,11 +2093,18 @@ export function Dnd5eSheet({
 
       {error && <p style={{ color: "crimson" }}>{error}</p>}
       {!readOnly && (
-        <div>
-          <button onClick={save} disabled={saving} style={{ fontSize: "1.1rem", padding: "0.5rem 2rem" }}>
-            {saving ? "Saving…" : "Save sheet"}
-          </button>
-          {savedFlash && <span style={{ marginLeft: "1rem", color: "green" }}>Saved ✓</span>}
+        <div style={{ fontSize: "1.1rem" }}>
+          {autosaveStatus === "saving" && <span style={{ color: "#666" }}>Saving…</span>}
+          {autosaveStatus === "pending" && <span style={{ color: "#666" }}>Unsaved changes…</span>}
+          {autosaveStatus === "saved" && <span style={{ color: "green" }}>All changes saved ✓</span>}
+          {autosaveStatus === "error" && (
+            <span style={{ color: "crimson" }}>
+              Save failed{autosaveError ? `: ${autosaveError}` : ""} —{" "}
+              <button type="button" onClick={persist}>
+                Retry
+              </button>
+            </span>
+          )}
         </div>
       )}
 

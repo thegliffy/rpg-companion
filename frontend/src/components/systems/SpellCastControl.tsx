@@ -9,12 +9,21 @@ export function SpellCastControl({
   spellAttackBonus,
   campaignId,
   ritualOnly = false,
+  consumesSlot = false,
+  hasSlot = true,
+  onConsumeSlot,
 }: {
   spell: SrdSpell;
   spellAttackBonus: number | null;
   campaignId: number | null;
   /** True when this spell isn't prepared and is only castable because it's a ritual (Wizard spellbook). */
   ritualOnly?: boolean;
+  /** True when casting this spell should spend a spell slot (leveled, prepared, non-ritual). */
+  consumesSlot?: boolean;
+  /** True when a slot at or above the spell's level is available to spend. */
+  hasSlot?: boolean;
+  /** Spends the lowest available slot at or above the spell's level. */
+  onConsumeSlot?: () => void;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [attackBreakdown, setAttackBreakdown] = useState<string | null>(null);
@@ -35,6 +44,8 @@ export function SpellCastControl({
     setError(null);
     setAttackBreakdown(null);
     setDamageBreakdown(null);
+
+    if (consumesSlot) onConsumeSlot?.();
 
     if (spell.requiresAttackRoll) {
       setPhase("rolling");
@@ -58,10 +69,18 @@ export function SpellCastControl({
 
   return (
     <div style={{ marginTop: "0.25rem" }}>
-      <button type="button" onClick={cast} disabled={phase === "rolling"}>
+      <button
+        type="button"
+        onClick={cast}
+        disabled={phase === "rolling"}
+        style={consumesSlot && !hasSlot ? { color: "crimson", borderColor: "crimson" } : undefined}
+      >
         {ritualOnly ? "Cast as ritual" : "Cast"}
       </button>
       {ritualOnly && <small style={{ marginLeft: "0.4rem", color: "#666" }}>(no slot used, +10 min)</small>}
+      {consumesSlot && !hasSlot && (
+        <small style={{ marginLeft: "0.4rem", color: "crimson" }}>(no slot available)</small>
+      )}
       {error && <span style={{ color: "crimson", marginLeft: "0.5rem" }}>{error}</span>}
       {attackBreakdown && (
         <div>
