@@ -1,0 +1,1 @@
+ALTER TABLE `characters` ADD `system` text DEFAULT 'generic' NOT NULL;

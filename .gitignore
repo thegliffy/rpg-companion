@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Secrets / environment (root and any workspace, e.g. backend/.env)
+.env
+.env.*
+!.env.example
+
+# Runtime data (SQLite DB + WAL/SHM, user-uploaded portraits) — never commit real user data.
+# Keep the directory structure via .gitkeep files.
+/data/*
+!/data/.gitkeep
+!/data/portraits/
+/data/portraits/*
+!/data/portraits/.gitkeep
+
+# Logs
+*.log
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db

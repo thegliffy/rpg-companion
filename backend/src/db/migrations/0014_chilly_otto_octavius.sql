@@ -1,0 +1,1 @@
+ALTER TABLE `custom_content` ADD `system` text DEFAULT 'dnd5e' NOT NULL;

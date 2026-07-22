@@ -1,0 +1,20 @@
+{
+  "name": "rpg-companion",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "npm run build -w shared && concurrently -n shared,backend,frontend -c yellow,blue,green \"npm run dev -w shared\" \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "build": "npm run build -w shared && npm run build -w frontend && npm run build -w backend",
+    "db:migrate": "npm run db:migrate -w backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "overrides": {
+    "mathjs": "^15.2.0"
+  }
+}

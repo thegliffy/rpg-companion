@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    ports:
+      - "127.0.0.1:8090:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_PATH: /app/data/app.db
+      SESSION_SECRET: ${SESSION_SECRET}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

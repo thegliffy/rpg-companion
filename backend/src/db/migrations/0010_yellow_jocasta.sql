@@ -1,0 +1,1 @@
+ALTER TABLE `characters` ADD `portrait_filename` text;
