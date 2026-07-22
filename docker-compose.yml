@@ -1,5 +1,8 @@
 services:
   app:
+    # Pulled from GHCR (built by .github/workflows/docker-image.yml on push to main).
+    # `build: .` is kept so a local `docker compose build` still works if needed.
+    image: ghcr.io/thegliffy/rpg-companion:latest
     build: .
     ports:
       - "127.0.0.1:8090:3000"

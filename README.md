@@ -50,17 +50,24 @@ npm run dev
 
 The frontend dev server proxies API/socket calls to the backend.
 
-## Production
+## Production / deployment
 
-Build all workspaces and run via Docker:
+Every push to `main` triggers a GitHub Action
+([`.github/workflows/docker-image.yml`](.github/workflows/docker-image.yml)) that builds the
+Docker image and publishes it to the GitHub Container Registry as
+`ghcr.io/thegliffy/rpg-companion:latest`. To deploy on the server:
 
 ```bash
-npm run build
-docker compose build && docker compose up -d
+# one-time, if the GHCR package is private:
+#   docker login ghcr.io -u <github-username>   (paste a PAT with read:packages)
+
+docker compose pull        # fetch the freshly built image
+docker compose up -d       # recreate the container
 ```
 
 Migrations run automatically on container start. Persistent data (SQLite DB, uploaded
-portraits) lives in the `data/` volume and is **not** checked into version control.
+portraits) lives in the `data/` volume and is **not** checked into version control. A
+`.env` file next to `docker-compose.yml` must define `SESSION_SECRET`.
 
 ## Licensing & attribution
 
