@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { CustomContent, Dnd5eSheetData, SrdMonster } from "shared";
+import type { Dnd5eSheetData, SrdMonster } from "shared";
 import {
   SRD_MONSTERS,
   findMonster,
