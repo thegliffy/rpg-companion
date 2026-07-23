@@ -29,6 +29,8 @@ export function SpellPickerModal({
   customSpells,
   onToggle,
   onClose,
+  cantripsOnly = false,
+  maxPicks,
 }: {
   characterClass: string;
   characterLevel: number;
@@ -36,6 +38,11 @@ export function SpellPickerModal({
   customSpells: CustomContent[];
   onToggle: (spell: { id: string; name: string; level: number }, adding: boolean) => void;
   onClose: () => void;
+  // Pact of the Tome: restrict to cantrips, from any class's spell list (no per-class filter).
+  cantripsOnly?: boolean;
+  // Pact of the Tome: caps the Book of Shadows at 3 cantrips -- unchecked boxes past the cap
+  // are disabled, already-checked ones stay togglable so removal still works.
+  maxPicks?: number;
 }) {
   const allSpells = useMemo(
     () => [...SRD_SPELLS, ...customSpells.map(customSpellToSrdShape)],
@@ -49,7 +56,7 @@ export function SpellPickerModal({
   const [selectedClass, setSelectedClass] = useState(defaultClass);
   // A custom/homebrew class has no SRD spell-list association, so default to
   // browsing every spell rather than showing an unrelated built-in class's list.
-  const [overrideAllClasses, setOverrideAllClasses] = useState(!characterClassIsBuiltIn);
+  const [overrideAllClasses, setOverrideAllClasses] = useState(!characterClassIsBuiltIn || cantripsOnly);
 
   const casterType = casterTypeForClass(selectedClass);
   const maxLevel = overrideAllClasses || casterType === "none" ? 9 : maxPreparableSpellLevel(selectedClass, characterLevel);
@@ -57,13 +64,15 @@ export function SpellPickerModal({
   const eligibleSpells = useMemo(() => {
     const classId = selectedClass.toLowerCase();
     return allSpells.filter((s) => {
+      if (cantripsOnly) return s.level === 0;
       const classOk = overrideAllClasses || s.classes.includes(classId);
       const levelOk = s.level === 0 || s.level <= maxLevel;
       return classOk && levelOk;
     });
-  }, [allSpells, selectedClass, overrideAllClasses, maxLevel]);
+  }, [allSpells, selectedClass, overrideAllClasses, maxLevel, cantripsOnly]);
 
   const currentIds = new Set(currentSpells.map((s) => s.srdId).filter(Boolean));
+  const atCap = maxPicks !== undefined && currentIds.size >= maxPicks;
 
   const byLevel = useMemo(() => {
     const groups = new Map<number, typeof eligibleSpells>();
@@ -77,29 +86,38 @@ export function SpellPickerModal({
   return (
     <div style={overlayStyle} onClick={onClose}>
       <div style={dialogStyle} onClick={(e) => e.stopPropagation()}>
-        <h3>Add spells</h3>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap", marginBottom: "0.75rem" }}>
-          <label>
-            Class{" "}
-            <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}>
-              {DND5E_CLASSES.map((c) => (
-                <option key={c.name} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={overrideAllClasses}
-              onChange={(e) => setOverrideAllClasses(e.target.checked)}
-            />{" "}
-            Show all classes' spells
-          </label>
-        </div>
+        <h3>{cantripsOnly ? "Add a cantrip (any class's spell list)" : "Add spells"}</h3>
+        {maxPicks !== undefined && (
+          <p style={{ margin: "0 0 0.5rem" }}>
+            <small>
+              {currentIds.size} / {maxPicks} chosen
+            </small>
+          </p>
+        )}
+        {!cantripsOnly && (
+          <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap", marginBottom: "0.75rem" }}>
+            <label>
+              Class{" "}
+              <select value={selectedClass} onChange={(e) => setSelectedClass(e.target.value)}>
+                {DND5E_CLASSES.map((c) => (
+                  <option key={c.name} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={overrideAllClasses}
+                onChange={(e) => setOverrideAllClasses(e.target.checked)}
+              />{" "}
+              Show all classes' spells
+            </label>
+          </div>
+        )}
 
-        {casterType === "prepared" && (
+        {!cantripsOnly && casterType === "prepared" && (
           <p>
             <small>
               {DND5E_CLASSES.find((c) => c.name === selectedClass)?.name} prepares from its full spell list —
@@ -123,6 +141,7 @@ export function SpellPickerModal({
                 <input
                   type="checkbox"
                   checked={currentIds.has(s.id)}
+                  disabled={atCap && !currentIds.has(s.id)}
                   onChange={(e) => onToggle({ id: s.id, name: s.name, level: s.level }, e.target.checked)}
                 />
                 <span style={{ flex: 1 }}>

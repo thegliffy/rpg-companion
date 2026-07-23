@@ -94,6 +94,12 @@ import { InvocationPickerModal, INVOCATION_PREFIX } from "./InvocationPickerModa
 const box: React.CSSProperties = { border: "1px solid #bbb", borderRadius: 6, padding: "0.75rem" };
 const numInput: React.CSSProperties = { width: "3.5rem", textAlign: "center" };
 
+// Pact of the Blade: a single fixed-id attacks[] row so "Create pact weapon" is idempotent and
+// switching away from Pact of the Blade can find-and-remove it. Pact of the Tome: cantrips added
+// from the Book of Shadows picker are tagged with this id prefix for the same reason.
+const PACT_WEAPON_ATTACK_ID = "pact-weapon";
+const TOME_CANTRIP_PREFIX = "tome-cantrip-";
+
 export function Dnd5eSheet({
   character,
   onSaved,
@@ -124,6 +130,7 @@ export function Dnd5eSheet({
   const [asiMode, setAsiMode] = useState<"single" | "double" | "feat">("single");
   const [featPickerContext, setFeatPickerContext] = useState<"standalone" | "asi" | null>(null);
   const [invocationPickerOpen, setInvocationPickerOpen] = useState(false);
+  const [tomePickerOpen, setTomePickerOpen] = useState(false);
   const [asiChoiceA, setAsiChoiceA] = useState<Dnd5eAbility>("str");
   const [shareToken, setShareToken] = useState<string | null>(null);
   const [shareBusy, setShareBusy] = useState(false);
@@ -194,6 +201,15 @@ export function Dnd5eSheet({
   const isWizardCaster = !matchedCustomClass && normalizeClassId(sheet.class) === "wizard";
   const isDruid = !matchedCustomClass && normalizeClassId(sheet.class) === "druid" && sheet.level >= 2;
   const isWarlock = !matchedCustomClass && normalizeClassId(sheet.class) === "warlock";
+  // Known invocation names, by the same INVOCATION_PREFIX tagging addInvocation uses on
+  // sheet.features -- read here (not just inside the Pact Magic panel) so the Attacks table
+  // can annotate the pact weapon row with Thirsting Blade / Lifedrinker without recomputing.
+  const knownInvocationNames = new Set(
+    sheet.features.filter((f) => f.name.startsWith(INVOCATION_PREFIX)).map((f) => f.name.slice(INVOCATION_PREFIX.length)),
+  );
+  const hasThirstingBlade = knownInvocationNames.has("Thirsting Blade");
+  const hasLifedrinker = knownInvocationNames.has("Lifedrinker");
+  const hasBookOfAncientSecrets = knownInvocationNames.has("Book of Ancient Secrets");
   const knownExpected = matchedCustomClass
     ? effectiveLevelEntry(sheet.class, sheet.level)?.spellsKnown ?? null
     : expectedSpellsKnown(sheet.class, sheet.level);
@@ -470,6 +486,34 @@ export function Dnd5eSheet({
       ...prev,
       mysticArcanum: prev.mysticArcanum.map((a, i) => (i === index ? { ...a, ...patch } : a)),
     }));
+  }
+
+  // Switching Pact Boon away from Blade/Tome cleans up whatever that boon granted -- the pact
+  // weapon attack row and/or the Book of Shadows cantrips -- so choosing a different boon doesn't
+  // leave orphaned content behind (mirrors removeFeat/removeFeature's granted-spell cleanup).
+  function changePactBoon(boon: Dnd5eSheetData["pactBoon"]) {
+    setSheet((prev) => ({
+      ...prev,
+      pactBoon: boon,
+      attacks: boon === "blade" ? prev.attacks : prev.attacks.filter((a) => a.id !== PACT_WEAPON_ATTACK_ID),
+      spells: boon === "tome" ? prev.spells : prev.spells.filter((s) => !s.id.startsWith(TOME_CANTRIP_PREFIX)),
+    }));
+  }
+
+  // Pact of the Blade: seeds a single fixed-id Attacks row (ability/magic bonus/damage left for
+  // the player to fill in, since the pact weapon can be any weapon they're proficient with).
+  function createPactWeapon() {
+    setSheet((prev) => ({
+      ...prev,
+      attacks: [
+        ...prev.attacks,
+        { id: PACT_WEAPON_ATTACK_ID, name: "Pact Weapon", ability: "str", magicBonus: 0, damageDice: "", damageType: "" },
+      ],
+    }));
+  }
+
+  function removeTomeCantrip(id: string) {
+    setSheet((prev) => ({ ...prev, spells: prev.spells.filter((s) => s.id !== id) }));
   }
 
   async function resolveLevelUpHp(method: "roll" | "average") {
@@ -1420,6 +1464,13 @@ export function Dnd5eSheet({
                   Remove
                 </button>
               </div>
+              {atk.id === PACT_WEAPON_ATTACK_ID && (hasThirstingBlade || hasLifedrinker) && (
+                <p style={{ fontSize: "0.8rem", color: "#555", margin: "0.15rem 0" }}>
+                  {hasThirstingBlade && "Thirsting Blade: attacks twice with the Attack action. "}
+                  {hasLifedrinker &&
+                    `Lifedrinker: +${Math.max(1, abilityModifier(effectiveAbilityScore(sheet, "cha")))} necrotic damage on hit.`}
+                </p>
+              )}
               <AttackRollControl
                 name={atk.name}
                 attackBonus={bonus}
@@ -2001,9 +2052,7 @@ export function Dnd5eSheet({
           <div style={{ marginBottom: "0.75rem" }}>
             <h4 style={{ marginBottom: "0.25rem" }}>Eldritch Invocations</h4>
             {(() => {
-              const knownNames = new Set(
-                sheet.features.filter((f) => f.name.startsWith(INVOCATION_PREFIX)).map((f) => f.name.slice(INVOCATION_PREFIX.length)),
-              );
+              const knownNames = knownInvocationNames;
               const knownIds = new Set(SRD_INVOCATIONS.filter((inv) => knownNames.has(inv.name)).map((inv) => inv.id));
               const expected = expectedInvocationsKnown(sheet.level);
               const sensesLines = SRD_INVOCATIONS.filter((inv) => knownIds.has(inv.id) && inv.grants?.sensesText).map(
@@ -2087,7 +2136,7 @@ export function Dnd5eSheet({
               <p style={{ color: "#888" }}>Unlocks at level 3.</p>
             ) : (
               <>
-                <select value={sheet.pactBoon} onChange={(e) => set("pactBoon", e.target.value as Dnd5eSheetData["pactBoon"])}>
+                <select value={sheet.pactBoon} onChange={(e) => changePactBoon(e.target.value as Dnd5eSheetData["pactBoon"])}>
                   <option value="">Not chosen</option>
                   <option value="chain">Pact of the Chain</option>
                   <option value="blade">Pact of the Blade</option>
@@ -2099,14 +2148,84 @@ export function Dnd5eSheet({
                   </p>
                 )}
                 {sheet.pactBoon === "blade" && (
-                  <p style={{ fontSize: "0.85rem", color: "#555" }}>
-                    You can use your action to create a pact weapon in your empty hand, which counts as magical for overcoming resistance.
-                  </p>
+                  <div>
+                    <p style={{ fontSize: "0.85rem", color: "#555" }}>
+                      You can use your action to create a pact weapon in your empty hand, which counts as magical for overcoming
+                      resistance.
+                    </p>
+                    {sheet.attacks.some((a) => a.id === PACT_WEAPON_ATTACK_ID) ? (
+                      <p style={{ fontSize: "0.85rem", color: "#555" }}>
+                        Pact weapon created — set its damage dice/type in Attacks above.
+                        {hasThirstingBlade && " Thirsting Blade: attacks twice."}
+                        {hasLifedrinker && " Lifedrinker: bonus necrotic damage on hit."}
+                      </p>
+                    ) : (
+                      <button type="button" onClick={createPactWeapon}>
+                        Create pact weapon
+                      </button>
+                    )}
+                  </div>
                 )}
                 {sheet.pactBoon === "tome" && (
-                  <p style={{ fontSize: "0.85rem", color: "#555" }}>
-                    Your patron gives you a Book of Shadows containing three cantrips of your choice from any class's spell list.
-                  </p>
+                  <div>
+                    <p style={{ fontSize: "0.85rem", color: "#555" }}>
+                      Your patron gives you a Book of Shadows containing three cantrips of your choice from any class's spell list.
+                    </p>
+                    {(() => {
+                      const tomeCantrips = sheet.spells.filter((s) => s.id.startsWith(TOME_CANTRIP_PREFIX));
+                      return (
+                        <>
+                          <p style={{ margin: "0.25rem 0" }}>
+                            Book of Shadows: <strong>{tomeCantrips.length}</strong> / 3
+                          </p>
+                          {tomeCantrips.length > 0 && (
+                            <ul style={{ margin: "0.25rem 0" }}>
+                              {tomeCantrips.map((c) => (
+                                <li key={c.id}>
+                                  {c.name}{" "}
+                                  <button type="button" onClick={() => removeTomeCantrip(c.id)}>
+                                    Remove
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          <button type="button" onClick={() => setTomePickerOpen(true)} disabled={tomeCantrips.length >= 3}>
+                            Add cantrip
+                          </button>
+                          {hasBookOfAncientSecrets && (
+                            <p style={{ fontSize: "0.85rem", color: "#555" }}>
+                              Book of Ancient Secrets: ritual spells in your book are castable as rituals.
+                            </p>
+                          )}
+                          {tomePickerOpen && (
+                            <SpellPickerModal
+                              characterClass={sheet.class}
+                              characterLevel={sheet.level}
+                              currentSpells={tomeCantrips}
+                              customSpells={customSpells}
+                              cantripsOnly
+                              maxPicks={3}
+                              onToggle={(spell, adding) => {
+                                if (adding) {
+                                  set("spells", [
+                                    ...sheet.spells,
+                                    { id: `${TOME_CANTRIP_PREFIX}${Date.now()}`, srdId: spell.id, name: spell.name, level: spell.level, prepared: false, atWill: false },
+                                  ]);
+                                } else {
+                                  set(
+                                    "spells",
+                                    sheet.spells.filter((s) => !(s.id.startsWith(TOME_CANTRIP_PREFIX) && s.srdId === spell.id)),
+                                  );
+                                }
+                              }}
+                              onClose={() => setTomePickerOpen(false)}
+                            />
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
                 )}
               </>
             )}
