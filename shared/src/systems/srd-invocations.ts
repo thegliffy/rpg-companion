@@ -1,14 +1,19 @@
-import type { Dnd5eAbility } from "./dnd5e.js";
+import type { Dnd5eAbility, Dnd5eSheetData } from "./dnd5e.js";
+import { abilityModifier, effectiveAbilityScore } from "./dnd5e.js";
+import { eldritchBlastBeams } from "./class-progression.js";
 
 // SRD 5.1 Eldritch Invocations (CC-BY-4.0), sourced from the open 5e-bits/5e-database project.
 // Warlock-only. prereqLevel/prereqPact/prereqSpell mirror the SRD's own prerequisites -- shown as
 // a hint in the picker, not hard-enforced (a DM may waive prerequisites at the table).
 
+// A picked invocation becomes a features[] entry named `${INVOCATION_PREFIX}${name}` -- the prefix
+// lets the sheet find its known invocations again (e.g. to resolve Eldritch Blast modifiers).
+export const INVOCATION_PREFIX = "Invocation: ";
+
 // The mechanical payload an invocation applies on pick, beyond description text. Numeric fields
 // mirror effectEntrySchema (dnd5e.ts) since a picked invocation becomes a features[] entry;
 // skillProficiencies/grantedSpells are the two grant kinds effectEntrySchema/spellSchema now
-// support. The eb* fields are read by the dedicated Eldritch Blast cast control (not yet built --
-// #69) rather than applied here.
+// support. The eb* fields are read by eldritchBlastProfile() below.
 export interface InvocationGrants {
   skillProficiencies?: string[];
   grantedSpells?: { name: string; srdId?: string; level: number; atWill?: boolean }[];
@@ -74,4 +79,45 @@ export const SRD_INVOCATIONS: SrdInvocation[] = [
 
 export function findInvocation(id: string): SrdInvocation | undefined {
   return SRD_INVOCATIONS.find((i) => i.id === id);
+}
+
+/** The grants of every invocation the sheet currently knows (matched by the features[] entries the
+ * invocation picker adds, named `${INVOCATION_PREFIX}${name}`). */
+export function knownInvocationGrants(sheet: Dnd5eSheetData): InvocationGrants[] {
+  return sheet.features
+    .filter((f) => f.name.startsWith(INVOCATION_PREFIX))
+    .map((f) => SRD_INVOCATIONS.find((inv) => inv.name === f.name.slice(INVOCATION_PREFIX.length))?.grants)
+    .filter((g): g is InvocationGrants => g !== undefined);
+}
+
+// Resolved Eldritch Blast profile for a sheet, folding in the beam count (by level) and the
+// Agonizing Blast / Eldritch Spear / Repelling Blast invocation modifiers.
+export interface EldritchBlastProfile {
+  beams: number;
+  damageDice: string; // per beam, e.g. "1d10" or "1d10+4" with Agonizing Blast
+  damagePerBeamBonus: number;
+  rangeFeet: number;
+  push: boolean;
+  agonizing: boolean;
+  eldritchSpear: boolean;
+}
+
+/** Resolves Eldritch Blast's beams/damage/range from level + known invocations, so the sheet's
+ * dedicated EB cast control can roll each beam correctly (Agonizing Blast adds the caster's
+ * Charisma modifier to every beam's damage; Eldritch Spear extends the range to 300 ft). */
+export function eldritchBlastProfile(sheet: Dnd5eSheetData): EldritchBlastProfile {
+  const grants = knownInvocationGrants(sheet);
+  const agonizingAbility = grants.find((g) => g.ebDamagePerBeamAbility)?.ebDamagePerBeamAbility;
+  const spearRange = grants.find((g) => g.ebRangeFeet)?.ebRangeFeet;
+  const push = grants.some((g) => g.ebPush);
+  const bonus = agonizingAbility ? Math.max(0, abilityModifier(effectiveAbilityScore(sheet, agonizingAbility))) : 0;
+  return {
+    beams: eldritchBlastBeams(sheet.level),
+    damageDice: bonus > 0 ? `1d10+${bonus}` : "1d10",
+    damagePerBeamBonus: bonus,
+    rangeFeet: spearRange ?? 120,
+    push,
+    agonizing: agonizingAbility !== undefined,
+    eldritchSpear: spearRange !== undefined,
+  };
 }

@@ -1,5 +1,9 @@
 import type { SrdInvocation } from "shared";
-import { SRD_INVOCATIONS } from "shared";
+import { SRD_INVOCATIONS, INVOCATION_PREFIX } from "shared";
+
+// Re-exported so existing importers (Dnd5eSheet) keep working while the constant now lives in
+// shared as the single source of truth (used by eldritchBlastProfile's invocation lookup).
+export { INVOCATION_PREFIX };
 
 const overlayStyle: React.CSSProperties = {
   position: "fixed",
@@ -20,8 +24,6 @@ const dialogStyle: React.CSSProperties = {
   maxHeight: "85vh",
   overflowY: "auto",
 };
-
-export const INVOCATION_PREFIX = "Invocation: ";
 
 /** Picks an Eldritch Invocation (SRD-only) and hands back the full invocation (including its
  * `grants` payload) for the caller to apply -- see Dnd5eSheet's addInvocation. */

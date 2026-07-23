@@ -71,6 +71,7 @@ import {
   expectedInvocationsKnown,
   unlockedArcanumTiers,
   SRD_INVOCATIONS,
+  eldritchBlastProfile,
   customSpellToSrdShape,
   customItemNotesText,
 } from "shared";
@@ -81,6 +82,7 @@ import { useCustomContent } from "../../hooks/useCustomContent";
 import { CharacterPortrait } from "../CharacterPortrait";
 import { DiceRoller } from "../DiceRoller";
 import { SpellCastControl } from "./SpellCastControl";
+import { EldritchBlastControl } from "./EldritchBlastControl";
 import { AttackRollControl } from "./AttackRollControl";
 import { SpellPickerModal } from "./SpellPickerModal";
 import { WizardSpellbookPicker } from "./WizardSpellbookPicker";
@@ -1675,17 +1677,27 @@ export function Dnd5eSheet({
                   )}
                 </div>
               )}
-              {srdSpell && (preparedOrCantrip || (srdSpell.ritual && isWizardCaster)) && (
-                <SpellCastControl
-                  key={srdSpell.id + effectiveAbility}
-                  spell={srdSpell}
+              {srdSpell?.id === "eldritch-blast" ? (
+                <EldritchBlastControl
+                  key={`eb-${effectiveAbility}`}
+                  profile={eldritchBlastProfile(sheet)}
                   spellAttackBonus={effectiveAtkBonus}
                   campaignId={character.campaignId}
-                  ritualOnly={!preparedOrCantrip}
-                  consumesSlot={consumesSlot}
-                  hasSlot={hasSlot}
-                  onConsumeSlot={consumeSlot}
                 />
+              ) : (
+                srdSpell &&
+                (preparedOrCantrip || (srdSpell.ritual && isWizardCaster)) && (
+                  <SpellCastControl
+                    key={srdSpell.id + effectiveAbility}
+                    spell={srdSpell}
+                    spellAttackBonus={effectiveAtkBonus}
+                    campaignId={character.campaignId}
+                    ritualOnly={!preparedOrCantrip}
+                    consumesSlot={consumesSlot}
+                    hasSlot={hasSlot}
+                    onConsumeSlot={consumeSlot}
+                  />
+                )
               )}
             </div>
           );

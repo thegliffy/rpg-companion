@@ -543,6 +543,14 @@ export function unlockedArcanumTiers(level: number): number[] {
   return MYSTIC_ARCANUM_TIERS.filter((t) => level >= t.charLevel).map((t) => t.spellLevel);
 }
 
+/** Number of Eldritch Blast beams by character level: 1 at 1-4, 2 at 5-10, 3 at 11-16, 4 at 17+. */
+export function eldritchBlastBeams(level: number): number {
+  if (level >= 17) return 4;
+  if (level >= 11) return 3;
+  if (level >= 5) return 2;
+  return 1;
+}
+
 export function casterTypeForClass(className: string): CasterType {
   const id = normalizeClassId(className);
   if (PACT_CASTER_CLASSES.includes(id)) return "pact";
