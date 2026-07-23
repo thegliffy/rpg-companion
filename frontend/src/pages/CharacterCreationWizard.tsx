@@ -23,6 +23,7 @@ import {
   customBackgroundDataSchema,
   expectedCantripsKnown,
   expectedSlots,
+  classProficiencies,
 } from "shared";
 import * as charactersApi from "../api/characters";
 import * as diceApi from "../api/dice";
@@ -208,6 +209,13 @@ export function CharacterCreationWizard({
     setBgVariantSel([]);
   }, [background]);
 
+  // Class-granted skill proficiencies the player chooses (SRD "choose N from list"); reset when
+  // the class changes so a leftover pick from a different class can't carry over.
+  const [classSkillSel, setClassSkillSel] = useState<string[]>([]);
+  useEffect(() => {
+    setClassSkillSel([]);
+  }, [charClass]);
+
   function skillChoiceOptions(choice: NonNullable<typeof resolvedBackgroundData>["skills"]["choices"][number]) {
     if (choice.from.kind === "list") {
       return choice.from.skillIds.map(resolveSkillId).filter((id): id is string => id !== undefined);
@@ -283,6 +291,37 @@ export function CharacterCreationWizard({
     () => Array.from(new Set([...backgroundFixedSkillIds, ...bgSkillChoiceSel.flat()])),
     [backgroundFixedSkillIds, bgSkillChoiceSel],
   );
+
+  // Class proficiencies (SRD) for the chosen class -- null for custom/homebrew classes.
+  const classProfs = useMemo(() => (system === "dnd5e" ? classProficiencies(charClass) : null), [system, charClass]);
+
+  // Class skill options exclude anything the background already grants (RAW: a class and
+  // background that would overlap force a different choice), so the player can't double up.
+  const classSkillOptions = useMemo(
+    () => (classProfs ? classProfs.skillChoices.filter((id) => !backgroundGrantSkillIds.includes(id)) : []),
+    [classProfs, backgroundGrantSkillIds],
+  );
+
+  function toggleClassSkill(skillId: string) {
+    if (!classProfs) return;
+    setClassSkillSel((prev) => {
+      if (prev.includes(skillId)) return prev.filter((id) => id !== skillId);
+      if (prev.length < classProfs.skillChoiceCount) return [...prev, skillId];
+      return prev;
+    });
+  }
+
+  const classChoicesComplete = !classProfs || classSkillSel.length === classProfs.skillChoiceCount;
+
+  // Text lines for the class's fixed (non-skill, non-save) proficiencies, for proficienciesText.
+  function classProficiencyLines(): string[] {
+    if (!classProfs) return [];
+    const lines: string[] = [];
+    if (classProfs.armor.length) lines.push(`Armor: ${classProfs.armor.join(", ")}`);
+    if (classProfs.weapons.length) lines.push(`Weapons: ${classProfs.weapons.join(", ")}`);
+    if (classProfs.tools.length) lines.push(`Tools: ${classProfs.tools.join(", ")}`);
+    return lines;
+  }
 
   // Everything from the background that isn't a skill proficiency (tools/languages as text,
   // the feature + any chosen variants as structured feature entries, equipment as items/gold).
@@ -436,6 +475,12 @@ export function CharacterCreationWizard({
       let sheetData: unknown;
       if (system === "dnd5e") {
         const grants = backgroundGrants();
+        // Merge class + background grants: skill proficiencies (deduped), and class armor/weapon/
+        // tool lines above the background's tool/language lines in proficienciesText.
+        const mergedSkillIds = Array.from(new Set([...backgroundGrantSkillIds, ...classSkillSel]));
+        const proficienciesText = [...classProficiencyLines(), grants.proficienciesText]
+          .filter((s) => s.length > 0)
+          .join("\n");
         sheetData = {
           ...emptyDnd5eSheet(),
           class: charClass,
@@ -444,8 +489,9 @@ export function CharacterCreationWizard({
           background,
           level,
           abilities: finalAbilities,
-          skillProficiencies: backgroundGrantSkillIds,
-          proficienciesText: grants.proficienciesText,
+          saveProficiencies: classProfs?.savingThrows ?? [],
+          skillProficiencies: mergedSkillIds,
+          proficienciesText,
           features: grants.features,
           items: grants.items,
           currency: { ...emptyDnd5eSheet().currency, gp: grants.gold },
@@ -595,6 +641,35 @@ export function CharacterCreationWizard({
                       onChange={(e) => setCharClass(e.target.value)}
                       style={{ marginLeft: "0.4rem" }}
                     />
+                  )}
+                  {classProfs && (
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <p style={{ margin: "0.2rem 0" }}>
+                        <small>
+                          <strong>{charClass}</strong> grants: saving throws in{" "}
+                          {classProfs.savingThrows.map((a) => DND5E_ABILITY_NAMES[a]).join(" & ")}
+                          {[...classProfs.armor, ...classProfs.weapons].length > 0 &&
+                            `; proficiency with ${[...classProfs.armor, ...classProfs.weapons].join(", ")}`}
+                          {classProfs.tools.length > 0 && `; ${classProfs.tools.join(", ")}`} — applied automatically.
+                        </small>
+                      </p>
+                      <small>
+                        Choose {classProfs.skillChoiceCount} class skill{classProfs.skillChoiceCount > 1 ? "s" : ""} (
+                        {classSkillSel.length}/{classProfs.skillChoiceCount} selected):
+                      </small>
+                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                        {classSkillOptions.map((skillId) => (
+                          <label key={skillId} style={{ fontSize: "0.85rem" }}>
+                            <input
+                              type="checkbox"
+                              checked={classSkillSel.includes(skillId)}
+                              onChange={() => toggleClassSkill(skillId)}
+                            />{" "}
+                            {DND5E_SKILLS.find((s) => s.id === skillId)?.name ?? skillId}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </>
               ) : (
@@ -834,14 +909,14 @@ export function CharacterCreationWizard({
               />
             </label>
           </div>
-          {!backgroundChoicesComplete && (
+          {(!backgroundChoicesComplete || !classChoicesComplete) && (
             <p>
-              <small style={{ color: "crimson" }}>Finish the background's choices above before continuing.</small>
+              <small style={{ color: "crimson" }}>Finish the class and background choices above before continuing.</small>
             </p>
           )}
           <p>
             <button onClick={() => setStep("system")}>Back</button>{" "}
-            <button onClick={() => setStep("abilities")} disabled={!backgroundChoicesComplete}>
+            <button onClick={() => setStep("abilities")} disabled={!backgroundChoicesComplete || !classChoicesComplete}>
               Next: ability scores
             </button>
           </p>
@@ -1135,7 +1210,7 @@ export function CharacterCreationWizard({
           </label>
           <p>
             <button onClick={() => setStep(isStructured ? "abilities" : "system")}>Back</button>{" "}
-            <button onClick={create} disabled={creating || !backgroundChoicesComplete}>
+            <button onClick={create} disabled={creating || !backgroundChoicesComplete || !classChoicesComplete}>
               {creating ? "Creating…" : "Create character"}
             </button>
           </p>
