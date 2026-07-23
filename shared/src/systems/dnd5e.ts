@@ -270,6 +270,18 @@ export const dnd5eSheetSchema = z.object({
       usesAvailable: z.number().int().min(0).max(10).default(2),
     })
     .default({}),
+  // Find familiar (any class that learns the spell) / Pact of the Chain: the summoned familiar's
+  // form (a monster id, empty = none summoned) and its separate HP pool. `dismissed` temporarily
+  // banishes it without losing the chosen form -- resummonable rather than consuming a use, since
+  // a familiar returns after being dismissed. Pact of the Chain widens the selectable forms.
+  familiar: z
+    .object({
+      monsterId: z.string().max(80).default(""),
+      hpCurrent: z.number().int().min(0).max(999).default(0),
+      hpMax: z.number().int().min(0).max(999).default(0),
+      dismissed: z.boolean().default(false),
+    })
+    .default({}),
   // Warlock: one spell per unlocked tier (6th/7th/8th/9th at levels 11/13/15/17), castable once
   // per long rest without a Pact Magic slot. Entries are added on demand as tiers unlock (see
   // unlockedArcanumTiers in class-progression.ts); `used` resets to false on a long rest.

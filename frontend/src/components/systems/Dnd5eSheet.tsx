@@ -89,6 +89,7 @@ import { WizardSpellbookPicker } from "./WizardSpellbookPicker";
 import { PrepareSpellsModal } from "./PrepareSpellsModal";
 import { FeatPickerModal } from "./FeatPickerModal";
 import { WildShapePanel } from "./WildShapePanel";
+import { FamiliarPanel } from "./FamiliarPanel";
 import { InvocationPickerModal, INVOCATION_PREFIX } from "./InvocationPickerModal";
 
 const box: React.CSSProperties = { border: "1px solid #bbb", borderRadius: 6, padding: "0.75rem" };
@@ -210,6 +211,13 @@ export function Dnd5eSheet({
   const hasThirstingBlade = knownInvocationNames.has("Thirsting Blade");
   const hasLifedrinker = knownInvocationNames.has("Lifedrinker");
   const hasBookOfAncientSecrets = knownInvocationNames.has("Book of Ancient Secrets");
+  const hasChainMasterVoice = knownInvocationNames.has("Voice of the Chain Master");
+  // The Familiar panel is class-agnostic: it appears for anyone who knows find familiar (wizard by
+  // default, or any class via Ritual Caster / Magic Initiate), and for a Pact of the Chain warlock
+  // whose pact grants it. Chain pact also widens the selectable forms inside the panel.
+  const isChainPact = sheet.pactBoon === "chain";
+  const knowsFindFamiliar = sheet.spells.some((s) => s.srdId === "find-familiar");
+  const showFamiliar = knowsFindFamiliar || isChainPact;
   const knownExpected = matchedCustomClass
     ? effectiveLevelEntry(sheet.class, sheet.level)?.spellsKnown ?? null
     : expectedSpellsKnown(sheet.class, sheet.level);
@@ -2044,6 +2052,17 @@ export function Dnd5eSheet({
       {/* Wild Shape (Druid) */}
       {isDruid && <WildShapePanel sheet={sheet} setSheet={setSheet} campaignId={character.campaignId} />}
 
+      {/* Familiar (any class that knows find familiar; Pact of the Chain widens the form list) */}
+      {showFamiliar && (
+        <FamiliarPanel
+          sheet={sheet}
+          setSheet={setSheet}
+          campaignId={character.campaignId}
+          chainPact={isChainPact}
+          chainMasterVoice={hasChainMasterVoice}
+        />
+      )}
+
       {/* Pact Magic (Warlock): invocations, Mystic Arcanum, Pact Boon */}
       {isWarlock && (
         <div style={box}>
@@ -2145,6 +2164,7 @@ export function Dnd5eSheet({
                 {sheet.pactBoon === "chain" && (
                   <p style={{ fontSize: "0.85rem", color: "#555" }}>
                     You learn the find familiar spell and can cast it as a ritual, with an expanded choice of familiar forms.
+                    Summon and manage your familiar in the <strong>Familiar</strong> section above.
                   </p>
                 )}
                 {sheet.pactBoon === "blade" && (

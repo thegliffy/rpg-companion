@@ -12,6 +12,7 @@ export * from "./srd-subclasses.js";
 export * from "./srd-feats.js";
 export * from "./srd-monsters.js";
 export * from "./srd-beasts.js";
+export * from "./srd-familiars.js";
 export * from "./srd-invocations.js";
 export * from "./custom-content.js";
 
