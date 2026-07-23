@@ -1,4 +1,4 @@
-import type { CustomContent, CustomFeatData, Dnd5eSheetData } from "shared";
+import type { CustomContent, CustomFeatData, Dnd5eSheetData, GrantedSpell } from "shared";
 import { SRD_FEATS } from "shared";
 
 const overlayStyle: React.CSSProperties = {
@@ -30,35 +30,41 @@ const BLANK_BONUSES = {
   damageBonus: 0,
   spellDCBonus: 0,
   spellAttackBonus: 0,
+  skillProficiencies: [] as string[],
 };
 
-/** Picks a feat (SRD, approved/own-pending custom, or a blank custom) and hands back a sheet FeatEntry. */
+/** Picks a feat (SRD, approved/own-pending custom, or a blank custom) and hands back a sheet
+ * FeatEntry plus any spells it grants (SRD feats grant nothing structured -- description only). */
 export function FeatPickerModal({
   customFeats,
   onPick,
   onClose,
 }: {
   customFeats: CustomContent[];
-  onPick: (feat: FeatEntry) => void;
+  onPick: (feat: FeatEntry, grantedSpells: GrantedSpell[]) => void;
   onClose: () => void;
 }) {
   function pickSrd(name: string) {
-    onPick({ id: `feat-${Date.now()}`, name, description: "", ...BLANK_BONUSES });
+    onPick({ id: `feat-${Date.now()}`, name, description: "", ...BLANK_BONUSES }, []);
   }
 
   function pickCustom(item: CustomContent) {
     const d = item.data as CustomFeatData;
-    onPick({
-      id: `feat-${Date.now()}`,
-      name: item.name,
-      description: d.description,
-      abilityBonuses: d.abilityBonuses,
-      acBonus: d.acBonus,
-      attackBonus: d.attackBonus,
-      damageBonus: d.damageBonus,
-      spellDCBonus: d.spellDCBonus,
-      spellAttackBonus: d.spellAttackBonus,
-    });
+    onPick(
+      {
+        id: `feat-${Date.now()}`,
+        name: item.name,
+        description: d.description,
+        abilityBonuses: d.abilityBonuses,
+        acBonus: d.acBonus,
+        attackBonus: d.attackBonus,
+        damageBonus: d.damageBonus,
+        spellDCBonus: d.spellDCBonus,
+        spellAttackBonus: d.spellAttackBonus,
+        skillProficiencies: d.skillProficiencies,
+      },
+      d.grantedSpells,
+    );
   }
 
   const rowStyle: React.CSSProperties = { display: "block", width: "100%", textAlign: "left", padding: "0.3rem 0" };
@@ -85,7 +91,7 @@ export function FeatPickerModal({
           </>
         )}
         <div style={{ marginTop: "0.75rem" }}>
-          <button type="button" onClick={() => onPick({ id: `feat-${Date.now()}`, name: "", description: "", ...BLANK_BONUSES })}>
+          <button type="button" onClick={() => onPick({ id: `feat-${Date.now()}`, name: "", description: "", ...BLANK_BONUSES }, [])}>
             Blank custom feat
           </button>{" "}
           <button type="button" onClick={onClose}>

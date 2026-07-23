@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { characters, users, campaigns } from "../db/schema.js";
@@ -58,6 +59,12 @@ export function listCharactersForOwner(ownerUserId: number): Character[] {
 
 export function getCharacterRow(id: number) {
   return db.select().from(characters).where(eq(characters.id, id)).get();
+}
+
+/** Raw row lookup by share token -- used by the public portrait endpoint, which needs
+ * portraitFilename (not part of the public Character shape). */
+export function getCharacterRowByShareToken(token: string) {
+  return db.select().from(characters).where(eq(characters.shareToken, token)).get();
 }
 
 export function getCharacter(id: number): Character | null {
@@ -134,4 +141,39 @@ export async function setCharacterPortrait(id: number, filename: string | null) 
     .update(characters)
     .set({ portraitFilename: filename, updatedAt: new Date().toISOString() })
     .where(eq(characters.id, id));
+}
+
+/** Mints a share token if the character doesn't already have one (idempotent -- re-minting
+ * returns the existing token rather than rotating it, so an already-distributed link stays valid). */
+export async function mintShareToken(id: number): Promise<string> {
+  const row = db.select({ shareToken: characters.shareToken }).from(characters).where(eq(characters.id, id)).get();
+  if (row?.shareToken) return row.shareToken;
+
+  const token = randomBytes(24).toString("base64url");
+  await db.update(characters).set({ shareToken: token }).where(eq(characters.id, id));
+  return token;
+}
+
+/** Revoking sets share_token back to null -- any outstanding link 404s on its next request. */
+export async function revokeShareToken(id: number): Promise<void> {
+  await db.update(characters).set({ shareToken: null }).where(eq(characters.id, id));
+}
+
+export function getShareToken(id: number): string | null {
+  const row = db.select({ shareToken: characters.shareToken }).from(characters).where(eq(characters.id, id)).get();
+  return row?.shareToken ?? null;
+}
+
+/** Public lookup by share token -- the only way an anonymous request can resolve a character.
+ * Deliberately a read (Character), never anything with a write path. */
+export function getCharacterByShareToken(token: string): Character | null {
+  const row = db
+    .select(characterSelect)
+    .from(characters)
+    .innerJoin(users, eq(characters.ownerUserId, users.id))
+    .leftJoin(campaigns, eq(characters.campaignId, campaigns.id))
+    .where(eq(characters.shareToken, token))
+    .get();
+
+  return row ? toCharacter(row.character, row.ownerUsername, row.campaignName) : null;
 }

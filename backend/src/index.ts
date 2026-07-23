@@ -14,6 +14,7 @@ import { encountersRouter } from "./routes/encounters.routes.js";
 import { rollsRouter } from "./routes/rolls.routes.js";
 import { adminRouter } from "./routes/admin.routes.js";
 import { customContentRouter } from "./routes/customContent.routes.js";
+import { sharedCharactersRouter } from "./routes/sharedCharacters.routes.js";
 import { createSocketServer } from "./sockets/index.js";
 
 const app = express();
@@ -29,11 +30,13 @@ app.use(express.json());
 app.use(sessionMiddleware);
 
 app.get("/api/health", (_req, res) => {
+  const version = process.env.APP_VERSION ?? "dev";
+  const commit = process.env.GIT_SHA ?? "dev";
   try {
     db.run(sql`select 1`);
-    res.json({ status: "ok", db: "ok" });
+    res.json({ status: "ok", db: "ok", version, commit });
   } catch (err) {
-    res.status(500).json({ status: "error", error: String(err) });
+    res.status(500).json({ status: "error", error: String(err), version, commit });
   }
 });
 
@@ -45,6 +48,8 @@ app.use("/api/encounters", encountersRouter);
 app.use("/api/rolls", rollsRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/custom-content", customContentRouter);
+// Deliberately NOT behind requireAuth -- see sharedCharacters.routes.ts for why this is safe.
+app.use("/api/shared/characters", sharedCharactersRouter);
 
 if (process.env.NODE_ENV === "production") {
   const __dirname = path.dirname(fileURLToPath(import.meta.url));

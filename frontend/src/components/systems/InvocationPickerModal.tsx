@@ -1,4 +1,4 @@
-import type { Dnd5eSheetData } from "shared";
+import type { SrdInvocation } from "shared";
 import { SRD_INVOCATIONS } from "shared";
 
 const overlayStyle: React.CSSProperties = {
@@ -21,11 +21,10 @@ const dialogStyle: React.CSSProperties = {
   overflowY: "auto",
 };
 
-type FeatureEntry = Dnd5eSheetData["features"][number];
-
 export const INVOCATION_PREFIX = "Invocation: ";
 
-/** Picks an Eldritch Invocation (SRD-only) and hands back a blank-bonus sheet feature entry. */
+/** Picks an Eldritch Invocation (SRD-only) and hands back the full invocation (including its
+ * `grants` payload) for the caller to apply -- see Dnd5eSheet's addInvocation. */
 export function InvocationPickerModal({
   level,
   alreadyKnownIds,
@@ -34,23 +33,9 @@ export function InvocationPickerModal({
 }: {
   level: number;
   alreadyKnownIds: Set<string>;
-  onPick: (feature: FeatureEntry) => void;
+  onPick: (invocation: SrdInvocation) => void;
   onClose: () => void;
 }) {
-  function pick(inv: (typeof SRD_INVOCATIONS)[number]) {
-    onPick({
-      id: `invocation-${Date.now()}`,
-      name: `${INVOCATION_PREFIX}${inv.name}`,
-      description: inv.description,
-      abilityBonuses: {},
-      acBonus: 0,
-      attackBonus: 0,
-      damageBonus: 0,
-      spellDCBonus: 0,
-      spellAttackBonus: 0,
-    });
-  }
-
   const rowStyle: React.CSSProperties = { display: "block", width: "100%", textAlign: "left", padding: "0.4rem 0" };
 
   return (
@@ -66,7 +51,7 @@ export function InvocationPickerModal({
               type="button"
               style={{ ...rowStyle, opacity: known ? 0.5 : 1, borderBottom: "1px solid #eee" }}
               disabled={known}
-              onClick={() => pick(inv)}
+              onClick={() => onPick(inv)}
             >
               <strong>{inv.name}</strong>{" "}
               <small style={{ color: belowLevel ? "crimson" : "#888" }}>

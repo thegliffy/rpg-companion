@@ -245,8 +245,26 @@ export const effectBonusesSchema = z.object({
 });
 export type EffectBonuses = z.infer<typeof effectBonusesSchema>;
 
+// A spell granted by a feat (e.g. Magic Initiate) -- mirrors InvocationGrants' grantedSpells
+// (srd-invocations.ts) since a granted spell is pushed onto sheet.spells the same way regardless
+// of whether it came from an invocation or a feat.
+export const grantedSpellSchema = z.object({
+  name: z.string().trim().max(100),
+  srdId: z.string().trim().max(80).optional(),
+  level: z.number().int().min(0).max(9),
+  atWill: z.boolean().default(false),
+});
+export type GrantedSpell = z.infer<typeof grantedSpellSchema>;
+
 export const customFeatDataSchema = effectBonusesSchema.extend({
   description: z.string().trim().max(500).default(""),
+  // Skill ids this feat grants proficiency in (e.g. Skilled) -- aggregated via
+  // effectSkillProficiencies (dnd5e.ts) rather than merged into skillProficiencies, so removing
+  // the feat automatically un-grants it.
+  skillProficiencies: z.array(z.string().trim().max(40)).default([]),
+  // Spells this feat grants (e.g. Magic Initiate) -- pushed onto sheet.spells on pick, tagged
+  // with the feat entry's id so removing the feat also removes the granted spells.
+  grantedSpells: z.array(grantedSpellSchema).max(10).default([]),
 });
 export type CustomFeatData = z.infer<typeof customFeatDataSchema>;
 

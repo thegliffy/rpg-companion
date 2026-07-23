@@ -107,6 +107,7 @@ export function PrepareSpellsModal({
         name: c.name,
         level: c.level,
         prepared: true,
+        atWill: false,
       }));
       onConfirm([...cantrips, ...rest]);
     }

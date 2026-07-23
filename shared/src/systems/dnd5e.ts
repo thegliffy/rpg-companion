@@ -125,6 +125,9 @@ const spellSchema = z.object({
   // Overrides sheet.spellcastingAbility for this spell only (multiclass casters,
   // feats keying off a different ability). Falls back to the sheet default when unset.
   abilityOverride: z.enum(DND5E_ABILITIES).optional(),
+  // Granted "at will" by a feat/invocation (e.g. Armor of Shadows -> mage armor at will) --
+  // always castable without spending a slot, same as a cantrip (see consumesSlot in the sheet).
+  atWill: z.boolean().default(false),
 });
 
 // Structured armor data copied from SRD_ARMOR/CustomItemData onto an inventory item when picked
@@ -184,6 +187,10 @@ export const effectEntrySchema = z.object({
   damageBonus: z.number().int().min(-10).max(10).default(0),
   spellDCBonus: z.number().int().min(-10).max(10).default(0),
   spellAttackBonus: z.number().int().min(-10).max(10).default(0),
+  // Skill ids this feat/feature/invocation grants proficiency in (e.g. Beguiling Influence ->
+  // deception+persuasion) -- aggregated alongside sheet.skillProficiencies rather than merged
+  // into it, so removing the entry (e.g. swapping invocations) automatically un-grants it.
+  skillProficiencies: z.array(z.string().max(40)).default([]),
 });
 
 export type EffectEntry = z.infer<typeof effectEntrySchema>;
@@ -320,6 +327,19 @@ export function featBonusTotal(
   return allEffectEntries(sheet).reduce((sum, entry) => sum + entry[key], 0);
 }
 
+/** Skill ids granted by any feat/feature (e.g. an invocation like Beguiling Influence) --
+ * deduped, kept separate from sheet.skillProficiencies so removing the granting entry
+ * automatically un-grants the skill instead of leaving an orphaned proficiency. */
+export function effectSkillProficiencies(sheet: Dnd5eSheetData): string[] {
+  return [...new Set(allEffectEntries(sheet).flatMap((entry) => entry.skillProficiencies))];
+}
+
+/** True when a skill is proficient either directly (sheet.skillProficiencies) or via a granting
+ * feat/feature/invocation (effectSkillProficiencies) -- the two sources are additive. */
+export function isSkillProficient(sheet: Dnd5eSheetData, skillId: string): boolean {
+  return sheet.skillProficiencies.includes(skillId) || effectSkillProficiencies(sheet).includes(skillId);
+}
+
 /** Base ability score plus bonuses from every equipped item and every feat. */
 export function effectiveAbilityScore(sheet: Dnd5eSheetData, ability: Dnd5eAbility): number {
   return sheet.abilities[ability] + equippedAbilityBonus(sheet, ability) + featAbilityBonus(sheet, ability);
@@ -400,7 +420,7 @@ export function skillBonus(sheet: Dnd5eSheetData, skillId: string): number {
   const skill = DND5E_SKILLS.find((s) => s.id === skillId);
   if (!skill) return 0;
   const mod = abilityModifier(effectiveAbilityScore(sheet, skill.ability));
-  return sheet.skillProficiencies.includes(skillId) ? mod + proficiencyBonus(sheet.level) : mod;
+  return isSkillProficient(sheet, skillId) ? mod + proficiencyBonus(sheet.level) : mod;
 }
 
 export function formatModifier(value: number): string {

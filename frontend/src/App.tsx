@@ -9,6 +9,10 @@ import { AdminPanel } from "./pages/AdminPanel";
 import { CustomContentManager } from "./pages/CustomContentManager";
 import { BestiaryPage } from "./pages/BestiaryPage";
 import { ArenaPage } from "./pages/ArenaPage";
+import { SharedCharacterPage } from "./pages/SharedCharacterPage";
+
+const APP_VERSION = import.meta.env.VITE_APP_VERSION ?? "dev";
+const GIT_SHA = import.meta.env.VITE_GIT_SHA ?? "dev";
 
 export type View =
   | { name: "home" }
@@ -23,6 +27,11 @@ export type View =
 function App() {
   const { user, loading, logout } = useAuth();
   const [view, setView] = useState<View>({ name: "home" });
+
+  // Public share links (/c/:token) bypass auth entirely -- checked before the loading/auth gates
+  // below so an anonymous visitor never sees (or needs) the login page.
+  const shareMatch = window.location.pathname.match(/^\/c\/([^/]+)\/?$/);
+  if (shareMatch) return <SharedCharacterPage token={shareMatch[1]} />;
 
   if (loading) return <p>Loading…</p>;
   if (!user) return <AuthPage />;
@@ -90,6 +99,10 @@ function App() {
       {view.name === "custom-content" && <CustomContentManager onBack={() => setView({ name: "home" })} />}
       {view.name === "bestiary" && <BestiaryPage onBack={() => setView({ name: "home" })} />}
       {view.name === "arena" && <ArenaPage onBack={() => setView({ name: "home" })} />}
+
+      <footer style={{ padding: "0.75rem 2rem", textAlign: "center", fontSize: "0.75rem", color: "#999" }}>
+        RPG Companion v{APP_VERSION} · {GIT_SHA}
+      </footer>
     </div>
   );
 }

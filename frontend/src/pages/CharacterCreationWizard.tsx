@@ -305,6 +305,7 @@ export function CharacterCreationWizard({
         damageBonus: 0,
         spellDCBonus: 0,
         spellAttackBonus: 0,
+        skillProficiencies: [],
       });
     }
     for (const variantId of bgVariantSel) {
@@ -315,6 +316,7 @@ export function CharacterCreationWizard({
         name: variant.title,
         description: variant.description,
         abilityBonuses: {},
+        skillProficiencies: [],
         acBonus: 0,
         attackBonus: 0,
         damageBonus: 0,

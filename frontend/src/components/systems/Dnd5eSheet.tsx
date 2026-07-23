@@ -9,6 +9,8 @@ import type {
   CustomSubraceData,
   CustomSubclassData,
   CustomItemData,
+  SrdInvocation,
+  GrantedSpell,
 } from "shared";
 import {
   dnd5eSheetSchema,
@@ -61,6 +63,7 @@ import {
   formatModifier,
   attackBonus,
   featBonusTotal,
+  effectSkillProficiencies,
   normalizeClassId,
   maxPreparableSpellLevel,
   maxPreparedSpells,
@@ -120,6 +123,9 @@ export function Dnd5eSheet({
   const [featPickerContext, setFeatPickerContext] = useState<"standalone" | "asi" | null>(null);
   const [invocationPickerOpen, setInvocationPickerOpen] = useState(false);
   const [asiChoiceA, setAsiChoiceA] = useState<Dnd5eAbility>("str");
+  const [shareToken, setShareToken] = useState<string | null>(null);
+  const [shareBusy, setShareBusy] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const [asiChoiceB, setAsiChoiceB] = useState<Dnd5eAbility>("con");
   const [restDiceCount, setRestDiceCount] = useState(1);
   const [restBusy, setRestBusy] = useState(false);
@@ -333,6 +339,7 @@ export function Dnd5eSheet({
           damageBonus: 0,
           spellDCBonus: 0,
           spellAttackBonus: 0,
+          skillProficiencies: [],
         }));
 
       return {
@@ -385,17 +392,68 @@ export function Dnd5eSheet({
     setAsiPending(false);
   }
 
-  function addFeat(feat: Dnd5eSheetData["feats"][number]) {
-    setSheet((prev) => ({ ...prev, feats: [...prev.feats, feat] }));
+  function addFeat(feat: Dnd5eSheetData["feats"][number], grantedSpells: GrantedSpell[] = []) {
+    const spells: Dnd5eSheetData["spells"] = grantedSpells.map((gs, i) => ({
+      id: `feat-spell-${feat.id}-${i}`,
+      srdId: gs.srdId,
+      name: gs.name,
+      level: gs.level,
+      prepared: false,
+      atWill: gs.atWill ?? false,
+    }));
+    setSheet((prev) => ({ ...prev, feats: [...prev.feats, feat], spells: [...prev.spells, ...spells] }));
     if (featPickerContext === "asi") {
       setLevelUpMessage((prev) => `${prev ?? ""} Feat gained${feat.name ? `: ${feat.name}` : ""}.`);
     }
     setFeatPickerContext(null);
   }
 
-  function addInvocation(feature: Dnd5eSheetData["features"][number]) {
-    setSheet((prev) => ({ ...prev, features: [...prev.features, feature] }));
+  // Removing a feat also drops any spells it granted (tagged with the feat's id), mirroring
+  // removeFeature's cleanup for invocation-granted spells.
+  function removeFeat(feat: Dnd5eSheetData["feats"][number]) {
+    setSheet((prev) => ({
+      ...prev,
+      feats: prev.feats.filter((f) => f.id !== feat.id),
+      spells: prev.spells.filter((s) => !s.id.startsWith(`feat-spell-${feat.id}-`)),
+    }));
+  }
+
+  function addInvocation(inv: SrdInvocation) {
+    const featureId = `invocation-${Date.now()}`;
+    const grants = inv.grants;
+    const feature: Dnd5eSheetData["features"][number] = {
+      id: featureId,
+      name: `${INVOCATION_PREFIX}${inv.name}`,
+      description: inv.description,
+      abilityBonuses: grants?.abilityBonuses ?? {},
+      acBonus: grants?.acBonus ?? 0,
+      attackBonus: grants?.attackBonus ?? 0,
+      damageBonus: grants?.damageBonus ?? 0,
+      spellDCBonus: grants?.spellDCBonus ?? 0,
+      spellAttackBonus: grants?.spellAttackBonus ?? 0,
+      skillProficiencies: grants?.skillProficiencies ?? [],
+    };
+    const grantedSpells: Dnd5eSheetData["spells"] = (grants?.grantedSpells ?? []).map((gs, i) => ({
+      id: `invocation-spell-${featureId}-${i}`,
+      srdId: gs.srdId,
+      name: gs.name,
+      level: gs.level,
+      prepared: false,
+      atWill: gs.atWill ?? false,
+    }));
+    setSheet((prev) => ({ ...prev, features: [...prev.features, feature], spells: [...prev.spells, ...grantedSpells] }));
     setInvocationPickerOpen(false);
+  }
+
+  // Removing an invocation's feature entry also drops any spells it granted (tagged with the
+  // feature's id) -- skill-proficiency grants need no such cleanup since they're aggregated live
+  // from the still-present features[] array (effectSkillProficiencies), not copied anywhere.
+  function removeFeature(feature: Dnd5eSheetData["features"][number]) {
+    setSheet((prev) => ({
+      ...prev,
+      features: prev.features.filter((f) => f.id !== feature.id),
+      spells: prev.spells.filter((s) => !s.id.startsWith(`invocation-spell-${feature.id}-`)),
+    }));
   }
 
   function addArcanumTier(spellLevel: 6 | 7 | 8 | 9) {
@@ -595,6 +653,49 @@ export function Dnd5eSheet({
     }
   }
 
+  useEffect(() => {
+    if (readOnly) return;
+    charactersApi.getShareToken(character.id).then(setShareToken).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [character.id, readOnly]);
+
+  async function createShareLink() {
+    setShareBusy(true);
+    setError(null);
+    try {
+      setShareToken(await charactersApi.mintShareToken(character.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create share link");
+    } finally {
+      setShareBusy(false);
+    }
+  }
+
+  async function revokeShareLink() {
+    if (!confirm("Revoke this share link? Anyone using it will lose access immediately.")) return;
+    setShareBusy(true);
+    setError(null);
+    try {
+      await charactersApi.revokeShareToken(character.id);
+      setShareToken(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to revoke share link");
+    } finally {
+      setShareBusy(false);
+    }
+  }
+
+  function shareUrl(token: string) {
+    return `${window.location.origin}/c/${token}`;
+  }
+
+  function copyShareLink(token: string) {
+    navigator.clipboard.writeText(shareUrl(token)).then(() => {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 1500);
+    });
+  }
+
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: "1rem" }}>
       {/* Status: always interactive even in read-only mode, so Reactivate can escape it */}
@@ -621,6 +722,30 @@ export function Dnd5eSheet({
           </div>
         )}
       </div>
+
+      {!readOnly && (
+        <div style={box}>
+          <h3>Share</h3>
+          {shareToken ? (
+            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+              <input readOnly value={shareUrl(shareToken)} style={{ flex: "1 1 300px" }} onFocus={(e) => e.target.select()} />
+              <button type="button" onClick={() => copyShareLink(shareToken)}>
+                {shareCopied ? "Copied!" : "Copy link"}
+              </button>
+              <button type="button" onClick={revokeShareLink} disabled={shareBusy}>
+                Revoke
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={createShareLink} disabled={shareBusy}>
+              {shareBusy ? "Creating…" : "Create a read-only share link"}
+            </button>
+          )}
+          <p style={{ fontSize: "0.8rem", color: "#666", margin: "0.4rem 0 0" }}>
+            Anyone with this link can view (but never edit) this character without signing in.
+          </p>
+        </div>
+      )}
 
       <fieldset disabled={readOnly} style={{ border: "none", margin: 0, padding: 0, display: "contents" }}>
       {/* Header */}
@@ -904,6 +1029,7 @@ export function Dnd5eSheet({
                   name: s.name,
                   level: s.level,
                   prepared: false,
+                  atWill: false,
                 })),
               ],
             }));
@@ -983,47 +1109,62 @@ export function Dnd5eSheet({
         <div style={{ ...box, flex: "1 1 300px" }}>
           <h3>Skills</h3>
           <div style={{ columnCount: 2, columnGap: "1.5rem" }}>
-            {DND5E_ABILITIES.map((a) => {
-              const skillsForAbility = DND5E_SKILLS.filter((s) => s.ability === a);
-              if (skillsForAbility.length === 0) return null;
-              return (
-                <div key={a} style={{ breakInside: "avoid", marginBottom: "0.6rem" }}>
-                  <div style={{ fontWeight: "bold", fontSize: "0.85rem", color: "#666" }}>
-                    {DND5E_ABILITY_NAMES[a]}
-                  </div>
-                  {skillsForAbility.map((s) => (
-                    <div key={s.id}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                        <input
-                          type="checkbox"
-                          checked={sheet.skillProficiencies.includes(s.id)}
-                          onChange={() => toggleSkillProf(s.id)}
-                        />
-                        <span
-                          style={{ flex: 1, cursor: "pointer", textDecoration: "underline dotted" }}
-                          title="Click to roll"
-                          onClick={() => rollCheck(`skill-${s.id}`, skillBonus(sheet, s.id), `${s.name} check`)}
-                        >
-                          {s.name}
-                          {s.id === "stealth" && hasArmorStealthDisadvantage(sheet) && (
-                            <small style={{ color: "crimson" }} title="Equipped armor imposes Stealth disadvantage">
-                              {" "}
-                              (disadv.)
-                            </small>
-                          )}
-                        </span>
-                        <strong>{formatModifier(skillBonus(sheet, s.id))}</strong>
-                      </div>
-                      {rollResults[`skill-${s.id}`] && (
-                        <div style={{ marginLeft: "1.7rem" }}>
-                          <small style={{ color: "#555" }}>{rollResults[`skill-${s.id}`]}</small>
-                        </div>
-                      )}
+            {(() => {
+              const grantedSkillIds = effectSkillProficiencies(sheet);
+              return DND5E_ABILITIES.map((a) => {
+                const skillsForAbility = DND5E_SKILLS.filter((s) => s.ability === a);
+                if (skillsForAbility.length === 0) return null;
+                return (
+                  <div key={a} style={{ breakInside: "avoid", marginBottom: "0.6rem" }}>
+                    <div style={{ fontWeight: "bold", fontSize: "0.85rem", color: "#666" }}>
+                      {DND5E_ABILITY_NAMES[a]}
                     </div>
-                  ))}
-                </div>
-              );
-            })}
+                    {skillsForAbility.map((s) => {
+                      const manuallyChecked = sheet.skillProficiencies.includes(s.id);
+                      const effectGranted = grantedSkillIds.includes(s.id);
+                      return (
+                        <div key={s.id}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                            <input
+                              type="checkbox"
+                              checked={manuallyChecked || effectGranted}
+                              disabled={effectGranted && !manuallyChecked}
+                              onChange={() => toggleSkillProf(s.id)}
+                              title={effectGranted && !manuallyChecked ? "Granted by a feat/feature/invocation" : undefined}
+                            />
+                            <span
+                              style={{ flex: 1, cursor: "pointer", textDecoration: "underline dotted" }}
+                              title="Click to roll"
+                              onClick={() => rollCheck(`skill-${s.id}`, skillBonus(sheet, s.id), `${s.name} check`)}
+                            >
+                              {s.name}
+                              {effectGranted && !manuallyChecked && (
+                                <small style={{ color: "#666" }} title="Granted by a feat/feature/invocation">
+                                  {" "}
+                                  (granted)
+                                </small>
+                              )}
+                              {s.id === "stealth" && hasArmorStealthDisadvantage(sheet) && (
+                                <small style={{ color: "crimson" }} title="Equipped armor imposes Stealth disadvantage">
+                                  {" "}
+                                  (disadv.)
+                                </small>
+                              )}
+                            </span>
+                            <strong>{formatModifier(skillBonus(sheet, s.id))}</strong>
+                          </div>
+                          {rollResults[`skill-${s.id}`] && (
+                            <div style={{ marginLeft: "1.7rem" }}>
+                              <small style={{ color: "#555" }}>{rollResults[`skill-${s.id}`]}</small>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              });
+            })()}
           </div>
           <hr />
           <div style={{ fontSize: "0.9rem" }}>
@@ -1429,10 +1570,12 @@ export function Dnd5eSheet({
           const effectiveAbility = sp.abilityOverride ?? sheet.spellcastingAbility;
           const effectiveAtkBonus = spellAttackBonusForAbility(sheet, effectiveAbility);
           const effectiveSaveDC = spellSaveDCForAbility(sheet, effectiveAbility);
-          // Cantrips have no prepared flag -- always treated as prepared/castable.
-          const preparedOrCantrip = sp.prepared || sp.level === 0;
-          // Ritual-only casts (unprepared wizard spellbook rituals) and cantrips never spend a slot.
-          const consumesSlot = sp.level >= 1 && sp.prepared;
+          // Cantrips and at-will granted spells (e.g. an invocation's mage armor) have no prepared
+          // flag -- always treated as prepared/castable.
+          const preparedOrCantrip = sp.prepared || sp.level === 0 || sp.atWill;
+          // Ritual-only casts (unprepared wizard spellbook rituals), cantrips, and at-will grants
+          // never spend a slot.
+          const consumesSlot = sp.level >= 1 && sp.prepared && !sp.atWill;
           const candidateSlots = consumesSlot
             ? sheet.spellSlots.filter((s) => s.level >= sp.level && s.available > 0).sort((a, b) => a.level - b.level)
             : [];
@@ -1496,7 +1639,7 @@ export function Dnd5eSheet({
                   </label>
                 )}
 
-                {sp.level !== 0 && (
+                {sp.level !== 0 && !sp.atWill && (
                   <label>
                     <input
                       type="checkbox"
@@ -1506,6 +1649,7 @@ export function Dnd5eSheet({
                     Prepared
                   </label>
                 )}
+                {sp.atWill && <small style={{ color: "#666" }}>(at will)</small>}
                 <button type="button" onClick={() => set("spells", sheet.spells.filter((_, j) => j !== i))}>
                   Remove
                 </button>
@@ -1552,7 +1696,7 @@ export function Dnd5eSheet({
         <button
           type="button"
           onClick={() =>
-            set("spells", [...sheet.spells, { id: `spell-${Date.now()}`, name: "", level: 0, prepared: false }])
+            set("spells", [...sheet.spells, { id: `spell-${Date.now()}`, name: "", level: 0, prepared: false, atWill: false }])
           }
         >
           Add custom spell
@@ -1568,7 +1712,7 @@ export function Dnd5eSheet({
               if (adding) {
                 set("spells", [
                   ...sheet.spells,
-                  { id: `spell-${Date.now()}`, srdId: spell.id, name: spell.name, level: spell.level, prepared: false },
+                  { id: `spell-${Date.now()}`, srdId: spell.id, name: spell.name, level: spell.level, prepared: false, atWill: false },
                 ]);
               } else {
                 set("spells", sheet.spells.filter((s) => s.srdId !== spell.id));
@@ -1850,11 +1994,19 @@ export function Dnd5eSheet({
               );
               const knownIds = new Set(SRD_INVOCATIONS.filter((inv) => knownNames.has(inv.name)).map((inv) => inv.id));
               const expected = expectedInvocationsKnown(sheet.level);
+              const sensesLines = SRD_INVOCATIONS.filter((inv) => knownIds.has(inv.id) && inv.grants?.sensesText).map(
+                (inv) => inv.grants!.sensesText!,
+              );
               return (
                 <>
                   <p style={{ margin: "0.25rem 0" }}>
                     Known: <strong>{knownNames.size}</strong> (expected {expected} at level {sheet.level})
                   </p>
+                  {sensesLines.length > 0 && (
+                    <p style={{ margin: "0.25rem 0" }}>
+                      Senses: <strong>{sensesLines.join(", ")}</strong>
+                    </p>
+                  )}
                   <button type="button" onClick={() => setInvocationPickerOpen(true)}>
                     Add invocation
                   </button>{" "}
@@ -1966,7 +2118,7 @@ export function Dnd5eSheet({
                   onChange={(e) => updateFeat({ name: e.target.value })}
                   style={{ flex: 1 }}
                 />
-                <button type="button" onClick={() => set("feats", sheet.feats.filter((_, j) => j !== i))}>
+                <button type="button" onClick={() => removeFeat(feat)}>
                   Remove
                 </button>
               </div>
@@ -2049,7 +2201,7 @@ export function Dnd5eSheet({
                   onChange={(e) => updateFeature({ name: e.target.value })}
                   style={{ flex: 1 }}
                 />
-                <button type="button" onClick={() => set("features", sheet.features.filter((_, j) => j !== i))}>
+                <button type="button" onClick={() => removeFeature(feature)}>
                   Remove
                 </button>
               </div>
@@ -2123,6 +2275,7 @@ export function Dnd5eSheet({
                 damageBonus: 0,
                 spellDCBonus: 0,
                 spellAttackBonus: 0,
+                skillProficiencies: [],
               },
             ])
           }

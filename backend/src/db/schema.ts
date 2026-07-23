@@ -56,6 +56,10 @@ export const characters = sqliteTable("characters", {
   hpMax: integer("hp_max"),
   notes: text("notes"),
   sheetData: text("sheet_data").notNull().default("[]"),
+  // Nullable, unique -- null means "not shared". A URL-safe random token that grants an
+  // anonymous, read-only, redacted view of this one character (see the public shared-characters
+  // router). It's a lookup key, never an auth credential -- it carries zero write capability.
+  shareToken: text("share_token").unique(),
   createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
   updatedAt: text("updated_at").notNull().default(sql`(current_timestamp)`),
 });

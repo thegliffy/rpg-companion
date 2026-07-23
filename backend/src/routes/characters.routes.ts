@@ -17,6 +17,9 @@ import {
   listCharactersForOwner,
   setCharacterCampaign,
   setCharacterPortrait,
+  mintShareToken,
+  revokeShareToken,
+  getShareToken,
 } from "../services/characters.service.js";
 import { getMembership } from "../services/campaigns.service.js";
 import { isGlobalAdmin } from "../services/users.service.js";
@@ -207,6 +210,22 @@ charactersRouter.post(
     res.status(201).json({ ok: true });
   },
 );
+
+// Share-link management -- owner/DM only. Minting/revoking never touches the public router;
+// it only flips the shareToken column that the public router reads.
+charactersRouter.post("/:id/share", requireCharacterOwnerOrDM, async (req, res) => {
+  const token = await mintShareToken(req.characterRow!.id);
+  res.json({ shareToken: token });
+});
+
+charactersRouter.get("/:id/share", requireCharacterOwnerOrDM, (req, res) => {
+  res.json({ shareToken: getShareToken(req.characterRow!.id) });
+});
+
+charactersRouter.delete("/:id/share", requireCharacterOwnerOrDM, async (req, res) => {
+  await revokeShareToken(req.characterRow!.id);
+  res.status(204).send();
+});
 
 charactersRouter.get("/:id/portrait", requireCharacterViewable, (req, res) => {
   const filename = req.characterRow!.portraitFilename;

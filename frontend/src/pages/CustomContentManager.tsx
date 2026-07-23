@@ -6,6 +6,7 @@ import {
   DND5E_SKILLS,
   DND5E_LANGUAGES,
   SRD_BACKGROUNDS,
+  SRD_SPELLS,
   CUSTOM_CONTENT_TYPES_BY_SYSTEM,
   SYSTEM_IDS,
   customBackgroundDataSchema,
@@ -212,6 +213,13 @@ interface BgVariantRow {
 }
 const emptyBgVariantRow = (): BgVariantRow => ({ id: `variant-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, title: "", description: "" });
 
+interface FeatGrantedSpellRow {
+  name: string;
+  level: string;
+  atWill: boolean;
+}
+const emptyFeatGrantedSpellRow = (): FeatGrantedSpellRow => ({ name: "", level: "0", atWill: true });
+
 function rowsToLevels(rows: LevelRow[]) {
   return rows
     .filter((r) => r.level.trim() !== "")
@@ -322,6 +330,8 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [featDmg, setFeatDmg] = useState("0");
   const [featDC, setFeatDC] = useState("0");
   const [featSpellAtk, setFeatSpellAtk] = useState("0");
+  const [featSkillProficiencies, setFeatSkillProficiencies] = useState<string[]>([]);
+  const [featGrantedSpells, setFeatGrantedSpells] = useState<FeatGrantedSpellRow[]>([]);
 
   // Spell fields
   const [spellLevel, setSpellLevel] = useState("0");
@@ -418,6 +428,8 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setFeatDmg("0");
     setFeatDC("0");
     setFeatSpellAtk("0");
+    setFeatSkillProficiencies([]);
+    setFeatGrantedSpells([]);
     setSpellLevel("0");
     setSpellSchool("");
     setSpellCastingTime("1 action");
@@ -526,7 +538,17 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       setParentClass(d.parentClass);
       setLevelRows(levelsToRows(d.levels));
     } else if (item.type === "feat") {
-      const d = item.data as { description: string; abilityBonuses: Partial<Record<Dnd5eAbility, number>>; acBonus: number; attackBonus: number; damageBonus: number; spellDCBonus: number; spellAttackBonus: number };
+      const d = item.data as {
+        description: string;
+        abilityBonuses: Partial<Record<Dnd5eAbility, number>>;
+        acBonus: number;
+        attackBonus: number;
+        damageBonus: number;
+        spellDCBonus: number;
+        spellAttackBonus: number;
+        skillProficiencies?: string[];
+        grantedSpells?: { name: string; level: number; atWill: boolean }[];
+      };
       setFeatDescription(d.description);
       const bonuses: Partial<Record<Dnd5eAbility, string>> = {};
       for (const [k, v] of Object.entries(d.abilityBonuses)) bonuses[k as Dnd5eAbility] = String(v);
@@ -536,6 +558,10 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       setFeatDmg(String(d.damageBonus));
       setFeatDC(String(d.spellDCBonus));
       setFeatSpellAtk(String(d.spellAttackBonus));
+      setFeatSkillProficiencies(d.skillProficiencies ?? []);
+      setFeatGrantedSpells(
+        (d.grantedSpells ?? []).map((gs) => ({ name: gs.name, level: String(gs.level), atWill: gs.atWill })),
+      );
     } else if (item.type === "spell") {
       const d = item.data as {
         level: number;
@@ -726,6 +752,18 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
           damageBonus: Number(featDmg) || 0,
           spellDCBonus: Number(featDC) || 0,
           spellAttackBonus: Number(featSpellAtk) || 0,
+          skillProficiencies: featSkillProficiencies,
+          grantedSpells: featGrantedSpells
+            .filter((r) => r.name.trim() !== "")
+            .map((r) => {
+              const srdSpell = SRD_SPELLS.find((s) => s.name.toLowerCase() === r.name.trim().toLowerCase());
+              return {
+                name: r.name.trim(),
+                srdId: srdSpell?.id,
+                level: srdSpell?.level ?? (Number(r.level) || 0),
+                atWill: r.atWill,
+              };
+            }),
         };
       } else if (type === "spell") {
         data = {
@@ -1410,6 +1448,77 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                 Spell attack <input type="number" style={{ width: "3rem" }} value={featSpellAtk} onChange={(e) => setFeatSpellAtk(e.target.value)} />
               </label>
             </div>
+
+            <h4>Skill proficiencies granted</h4>
+            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", fontSize: "0.9rem" }}>
+              {DND5E_SKILLS.map((s) => (
+                <label key={s.id}>
+                  <input
+                    type="checkbox"
+                    checked={featSkillProficiencies.includes(s.id)}
+                    onChange={(e) =>
+                      setFeatSkillProficiencies((prev) =>
+                        e.target.checked ? [...prev, s.id] : prev.filter((id) => id !== s.id),
+                      )
+                    }
+                  />{" "}
+                  {s.name}
+                </label>
+              ))}
+            </div>
+
+            <h4 style={{ marginTop: "1rem" }}>Spells granted</h4>
+            <datalist id="srd-spells-list-feat">
+              {SRD_SPELLS.map((sp) => (
+                <option key={sp.id} value={sp.name} />
+              ))}
+            </datalist>
+            {featGrantedSpells.map((row, i) => (
+              <div key={i} style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.4rem" }}>
+                <input
+                  placeholder="Spell name (matches an SRD spell if spelled exactly)"
+                  list="srd-spells-list-feat"
+                  value={row.name}
+                  onChange={(e) =>
+                    setFeatGrantedSpells((prev) => prev.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))
+                  }
+                  style={{ flex: 1 }}
+                />
+                <label>
+                  Level{" "}
+                  <input
+                    type="number"
+                    min={0}
+                    max={9}
+                    value={row.level}
+                    onChange={(e) =>
+                      setFeatGrantedSpells((prev) => prev.map((r, j) => (j === i ? { ...r, level: e.target.value } : r)))
+                    }
+                    style={{ width: "2.8rem" }}
+                  />
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={row.atWill}
+                    onChange={(e) =>
+                      setFeatGrantedSpells((prev) => prev.map((r, j) => (j === i ? { ...r, atWill: e.target.checked } : r)))
+                    }
+                  />{" "}
+                  At will (no slot)
+                </label>
+                <button type="button" onClick={() => setFeatGrantedSpells((prev) => prev.filter((_, j) => j !== i))}>
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setFeatGrantedSpells((prev) => [...prev, emptyFeatGrantedSpellRow()])}
+              style={{ marginTop: "0.4rem" }}
+            >
+              Add granted spell
+            </button>
           </>
         ) : type === "spell" ? (
           <>
