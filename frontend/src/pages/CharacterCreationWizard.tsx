@@ -21,6 +21,8 @@ import {
   recommendedStatPriority,
   normalizeClassId,
   customBackgroundDataSchema,
+  expectedCantripsKnown,
+  expectedSlots,
 } from "shared";
 import * as charactersApi from "../api/characters";
 import * as diceApi from "../api/dice";
@@ -42,7 +44,7 @@ export function CharacterCreationWizard({
   campaignId: number | null;
   onDone: (characterId: number | null) => void;
 }) {
-  const [step, setStep] = useState<"system" | "basics" | "abilities" | "spellbook" | "review">("system");
+  const [step, setStep] = useState<"system" | "basics" | "abilities" | "spellbook" | "warlock" | "review">("system");
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const {
@@ -74,6 +76,12 @@ export function CharacterCreationWizard({
   // spellbook (Wizard only)
   const [spellbookSpells, setSpellbookSpells] = useState<PickedSpell[]>([]);
   const [spellbookPickerOpen, setSpellbookPickerOpen] = useState(false);
+
+  // warlock (Warlock only): starting cantrips (player choice, count from expectedCantripsKnown)
+  // and Pact Boon (only relevant when starting at level >= 3, when the feature is already known).
+  const [warlockCantrips, setWarlockCantrips] = useState<PickedSpell[]>([]);
+  const [warlockCantripPickerOpen, setWarlockCantripPickerOpen] = useState(false);
+  const [pactBoon, setPactBoon] = useState<"" | "chain" | "blade" | "tome">("");
 
   // review
   const [hpMax, setHpMax] = useState<string>("");
@@ -150,6 +158,8 @@ export function CharacterCreationWizard({
   );
 
   const isWizardClass = system === "dnd5e" && normalizeClassId(charClass) === "wizard";
+  const isWarlockClass = system === "dnd5e" && normalizeClassId(charClass) === "warlock";
+  const warlockCantripsExpected = expectedCantripsKnown("Warlock", level) ?? 2;
 
   // Background entries store skill proficiencies either as ids (SRD data) or as
   // human-typed names (custom content) -- resolve either against the skill list.
@@ -446,7 +456,7 @@ export function CharacterCreationWizard({
           // seeds computeHpMax() for later level-ups; starting above level 1 doesn't backfill
           // history for the skipped levels, same simplification already made for suggestedHp.
           hpDiceHistory: hitDieForClass(charClass) !== undefined ? [hitDieForClass(charClass)!] : [],
-          spellcastingAbility: isWizardClass ? "int" : "",
+          spellcastingAbility: isWizardClass ? "int" : isWarlockClass ? "cha" : "",
           spells: isWizardClass
             ? spellbookSpells.map((s, i) => ({
                 id: `spell-${Date.now()}-${i}`,
@@ -455,7 +465,26 @@ export function CharacterCreationWizard({
                 level: s.level,
                 prepared: i < wizardPrepCap,
               }))
+            : isWarlockClass
+              ? warlockCantrips.map((s, i) => ({
+                  id: `spell-${Date.now()}-${i}`,
+                  srdId: s.id,
+                  name: s.name,
+                  level: 0,
+                  prepared: false,
+                }))
+              : [],
+          // Pact Magic slots are fixed by level (no player choice, unlike which cantrips/spells
+          // are known) -- seed them from the same table the sheet's "Set to expected" button uses,
+          // so a Warlock isn't created with an empty Spell slots block.
+          spellSlots: isWarlockClass
+            ? Object.entries(expectedSlots("Warlock", level)).map(([lvl, total]) => ({
+                level: Number(lvl),
+                total,
+                available: total,
+              }))
             : [],
+          pactBoon: isWarlockClass && level >= 3 ? pactBoon : "",
         };
       } else if (system === "pf2e") {
         sheetData = {
@@ -947,13 +976,13 @@ export function CharacterCreationWizard({
           <p>
             <button onClick={() => setStep("basics")}>Back</button>{" "}
             <button
-              onClick={() => setStep(isWizardClass ? "spellbook" : "review")}
+              onClick={() => setStep(isWizardClass ? "spellbook" : isWarlockClass ? "warlock" : "review")}
               disabled={
                 (method === "roll" || method === "array") ? !assignmentComplete :
                 method === "pointbuy" ? pointsSpent > DND5E_POINT_BUY_BUDGET : false
               }
             >
-              {isWizardClass ? "Next: spellbook" : "Next: review"}
+              {isWizardClass ? "Next: spellbook" : isWarlockClass ? "Next: warlock" : "Next: review"}
             </button>
           </p>
         </div>
@@ -992,6 +1021,61 @@ export function CharacterCreationWizard({
           <p>
             <button onClick={() => setStep("abilities")}>Back</button>{" "}
             <button onClick={() => setStep("review")} disabled={spellbookSpells.length !== 6}>
+              Next: review
+            </button>
+          </p>
+        </div>
+      )}
+
+      {step === "warlock" && (
+        <div style={box}>
+          <h3>Warlock</h3>
+          <p>
+            <small>
+              Choose {warlockCantripsExpected} cantrip{warlockCantripsExpected === 1 ? "" : "s"} from the Warlock spell list.
+            </small>
+          </p>
+          <p>
+            {warlockCantrips.length} / {warlockCantripsExpected} chosen
+            {warlockCantrips.length > 0 && ": " + warlockCantrips.map((s) => s.name).join(", ")}
+          </p>
+          <button type="button" onClick={() => setWarlockCantripPickerOpen(true)}>
+            {warlockCantrips.length > 0 ? "Change cantrips" : "Choose cantrips"}
+          </button>
+          {warlockCantripPickerOpen && (
+            <WizardSpellbookPicker
+              title={`Choose ${warlockCantripsExpected} Warlock cantrip${warlockCantripsExpected === 1 ? "" : "s"}`}
+              requiredCount={warlockCantripsExpected}
+              maxLevel={0}
+              onlyLevel={0}
+              classId="warlock"
+              excludeIds={[]}
+              onConfirm={(spells) => {
+                setWarlockCantrips(spells);
+                setWarlockCantripPickerOpen(false);
+              }}
+              onClose={() => setWarlockCantripPickerOpen(false)}
+            />
+          )}
+
+          {level >= 3 && (
+            <div style={{ marginTop: "1rem" }}>
+              <h4 style={{ marginBottom: "0.25rem" }}>Pact Boon</h4>
+              <p>
+                <small>Starting at level 3 or higher, choose the boon your patron grants (can also be set later on the sheet).</small>
+              </p>
+              <select value={pactBoon} onChange={(e) => setPactBoon(e.target.value as typeof pactBoon)}>
+                <option value="">Not chosen yet</option>
+                <option value="chain">Pact of the Chain</option>
+                <option value="blade">Pact of the Blade</option>
+                <option value="tome">Pact of the Tome</option>
+              </select>
+            </div>
+          )}
+
+          <p>
+            <button onClick={() => setStep("abilities")}>Back</button>{" "}
+            <button onClick={() => setStep("review")} disabled={warlockCantrips.length !== warlockCantripsExpected}>
               Next: review
             </button>
           </p>

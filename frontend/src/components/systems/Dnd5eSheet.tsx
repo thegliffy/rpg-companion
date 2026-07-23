@@ -145,6 +145,8 @@ export function Dnd5eSheet({
   const [deathSaveMessage, setDeathSaveMessage] = useState<string | null>(null);
   const [wizardSpellbookPending, setWizardSpellbookPending] = useState(false);
   const [wizardSpellbookPickerOpen, setWizardSpellbookPickerOpen] = useState(false);
+  const [invocationLevelUpPending, setInvocationLevelUpPending] = useState(false);
+  const [pactBoonLevelUpPending, setPactBoonLevelUpPending] = useState(false);
   const [prepareSpellsOpen, setPrepareSpellsOpen] = useState(false);
 
   const {
@@ -337,6 +339,12 @@ export function Dnd5eSheet({
     const newKnown = newEntry?.spellsKnown ?? null;
     const oldCantrips = oldEntry?.cantripsKnown ?? null;
     const newCantrips = newEntry?.cantripsKnown ?? null;
+    // Warlock-only: invocations known increases by exactly one at each unlock level (2/5/7/9/12/15/18),
+    // so a single level-up never crosses more than one threshold. Pact Boon unlocks at level 3.
+    const oldInvocationsExpected = isWarlock ? expectedInvocationsKnown(sheet.level) : 0;
+    const newInvocationsExpected = isWarlock ? expectedInvocationsKnown(newLevel) : 0;
+    const invocationUnlocked = newInvocationsExpected > oldInvocationsExpected;
+    const pactBoonUnlocked = isWarlock && newLevel === 3 && sheet.pactBoon === "";
 
     setSheet((prev) => {
       const spellSlots =
@@ -385,11 +393,19 @@ export function Dnd5eSheet({
     if (newCantrips !== null && newCantrips !== oldCantrips) {
       reminders.push(`Cantrips known: ${oldCantrips ?? 0} → ${newCantrips}.`);
     }
+    if (invocationUnlocked) {
+      reminders.push(`Invocations known: ${oldInvocationsExpected} → ${newInvocationsExpected} — choose a new invocation below.`);
+    }
+    if (pactBoonUnlocked) {
+      reminders.push("Pact Boon unlocked — choose one below.");
+    }
     setLevelUpReminders(reminders);
     setLevelUpMessage(null);
     setLevelUpPending(true);
     setAsiPending(featureNames.some((f) => f.toLowerCase().includes("ability score improvement")));
     setAsiMode("single");
+    setInvocationLevelUpPending(invocationUnlocked);
+    setPactBoonLevelUpPending(pactBoonUnlocked);
     setWizardSpellbookPending(isWizardCaster);
   }
 
@@ -469,6 +485,7 @@ export function Dnd5eSheet({
     }));
     setSheet((prev) => ({ ...prev, features: [...prev.features, feature], spells: [...prev.spells, ...grantedSpells] }));
     setInvocationPickerOpen(false);
+    setInvocationLevelUpPending(false);
   }
 
   // Removing an invocation's feature entry also drops any spells it granted (tagged with the
@@ -506,6 +523,7 @@ export function Dnd5eSheet({
       attacks: boon === "blade" ? prev.attacks : prev.attacks.filter((a) => a.id !== PACT_WEAPON_ATTACK_ID),
       spells: boon === "tome" ? prev.spells : prev.spells.filter((s) => !s.id.startsWith(TOME_CANTRIP_PREFIX)),
     }));
+    if (boon !== "") setPactBoonLevelUpPending(false);
   }
 
   // Pact of the Blade: seeds a single fixed-id Attacks row (ability/magic bonus/damage left for
@@ -1093,6 +1111,25 @@ export function Dnd5eSheet({
           }}
           onClose={() => setWizardSpellbookPickerOpen(false)}
         />
+      )}
+      {!levelUpPending && invocationLevelUpPending && (
+        <div style={box}>
+          <div style={{ marginBottom: "0.4rem" }}>New Eldritch Invocation available (level {sheet.level}).</div>
+          <button type="button" onClick={() => setInvocationPickerOpen(true)}>
+            Choose invocation
+          </button>
+        </div>
+      )}
+      {!levelUpPending && pactBoonLevelUpPending && (
+        <div style={box}>
+          <div style={{ marginBottom: "0.4rem" }}>Pact Boon unlocked (level 3) — choose one:</div>
+          <select value={sheet.pactBoon} onChange={(e) => changePactBoon(e.target.value as Dnd5eSheetData["pactBoon"])}>
+            <option value="">Not chosen</option>
+            <option value="chain">Pact of the Chain</option>
+            <option value="blade">Pact of the Blade</option>
+            <option value="tome">Pact of the Tome</option>
+          </select>
+        </div>
       )}
       {levelUpMessage && (
         <div style={box}>

@@ -27,13 +27,16 @@ export interface PickedSpell {
   level: number;
 }
 
-/** Modal for choosing an exact number of new Wizard spells for the spellbook (creation or level-up growth). */
+/** Modal for choosing an exact number of new spells for a class-restricted known list (creation or
+ * level-up growth) -- originally Wizard-only (spellbook), generalized with `classId` so the same
+ * exact-count picker also drives a Warlock's starting cantrip choice. */
 export function WizardSpellbookPicker({
   title,
   requiredCount,
   maxLevel,
   onlyLevel,
   excludeIds,
+  classId = "wizard",
   onConfirm,
   onClose,
 }: {
@@ -42,6 +45,7 @@ export function WizardSpellbookPicker({
   maxLevel: number;
   onlyLevel?: number;
   excludeIds: string[];
+  classId?: string;
   onConfirm: (spells: PickedSpell[]) => void;
   onClose: () => void;
 }) {
@@ -51,12 +55,12 @@ export function WizardSpellbookPicker({
   const eligible = useMemo(
     () =>
       SRD_SPELLS.filter((s) => {
-        if (!s.classes.includes("wizard")) return false;
+        if (!s.classes.includes(classId)) return false;
         if (excludeSet.has(s.id)) return false;
         if (onlyLevel !== undefined) return s.level === onlyLevel;
         return s.level >= 1 && s.level <= maxLevel;
       }),
-    [maxLevel, onlyLevel, excludeSet],
+    [maxLevel, onlyLevel, excludeSet, classId],
   );
 
   const byLevel = useMemo(() => {
@@ -92,7 +96,7 @@ export function WizardSpellbookPicker({
         </p>
         {byLevel.map(([level, spells]) => (
           <div key={level} style={{ marginBottom: "0.75rem" }}>
-            <div style={{ fontWeight: "bold", borderBottom: "1px solid #ddd" }}>Level {level}</div>
+            <div style={{ fontWeight: "bold", borderBottom: "1px solid #ddd" }}>{level === 0 ? "Cantrips" : `Level ${level}`}</div>
             {spells.map((s) => (
               <label key={s.id} style={{ display: "flex", alignItems: "center", gap: "0.4rem", padding: "0.15rem 0" }}>
                 <input
