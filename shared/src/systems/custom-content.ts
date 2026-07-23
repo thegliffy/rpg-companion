@@ -304,11 +304,14 @@ export const customItemDataSchema = z.object({
   damageDice: z.string().trim().max(30).default(""),
   damageType: z.string().trim().max(30).default(""),
   properties: z.array(z.string().trim().max(40)).max(10).default([]),
-  // Armor fields
+  // Armor fields. armorCategory distinguishes a shield (stacks with body armor) from body armor
+  // (light/medium/heavy, one equipped counts toward AC) -- needed so effectiveAC() (dnd5e.ts) can
+  // tell a custom shield apart from a custom breastplate; defaults to "medium" for legacy rows.
   baseAC: z.number().int().min(0).max(30).default(0),
   dexBonus: z.boolean().default(false),
   maxDexBonus: z.number().int().min(0).max(10).optional(),
   stealthDisadvantage: z.boolean().default(false),
+  armorCategory: z.enum(["light", "medium", "heavy", "shield"]).default("medium"),
   // Magic item reference fields (informational, like SrdMagicItem)
   category: z.string().trim().max(30).default(""),
   rarity: z.string().trim().max(30).default(""),
@@ -331,6 +334,24 @@ export function customItemNotesText(item: CustomContent): string {
     return `Base AC ${d.baseAC} + Dex modifier`;
   }
   return "";
+}
+
+/** Converts a custom armor item's data into the structured `armor` payload an inventory item
+ * stores, mirroring srdArmorToInventoryArmor (srd-equipment.ts) for the custom-content source. */
+export function customItemArmorPayload(d: CustomItemData): {
+  baseAC: number;
+  addDex: boolean;
+  maxDex?: number;
+  category: "light" | "medium" | "heavy" | "shield";
+  stealthDisadvantage: boolean;
+} {
+  return {
+    baseAC: d.baseAC,
+    addDex: d.dexBonus,
+    maxDex: d.maxDexBonus,
+    category: d.armorCategory,
+    stealthDisadvantage: d.stealthDisadvantage,
+  };
 }
 
 const monsterActionSchema = z.object({

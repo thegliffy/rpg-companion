@@ -347,6 +347,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [itemDexBonus, setItemDexBonus] = useState(false);
   const [itemMaxDexBonus, setItemMaxDexBonus] = useState("");
   const [itemStealthDisadvantage, setItemStealthDisadvantage] = useState(false);
+  const [itemArmorCategory, setItemArmorCategory] = useState<"light" | "medium" | "heavy" | "shield">("medium");
   const [itemCategory, setItemCategory] = useState("");
   const [itemRarity, setItemRarity] = useState("");
   const [itemAcBonus, setItemAcBonus] = useState("0");
@@ -438,6 +439,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setItemDexBonus(false);
     setItemMaxDexBonus("");
     setItemStealthDisadvantage(false);
+    setItemArmorCategory("medium");
     setItemCategory("");
     setItemRarity("");
     setItemAcBonus("0");
@@ -571,6 +573,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         dexBonus: boolean;
         maxDexBonus?: number;
         stealthDisadvantage: boolean;
+        armorCategory?: "light" | "medium" | "heavy" | "shield";
         category: string;
         rarity: string;
         abilityBonuses: Partial<Record<Dnd5eAbility, number>>;
@@ -586,6 +589,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       setItemDexBonus(d.dexBonus);
       setItemMaxDexBonus(d.maxDexBonus !== undefined ? String(d.maxDexBonus) : "");
       setItemStealthDisadvantage(d.stealthDisadvantage);
+      setItemArmorCategory(d.armorCategory ?? "medium");
       setItemCategory(d.category);
       setItemRarity(d.rarity);
       const bonuses: Partial<Record<Dnd5eAbility, string>> = {};
@@ -749,6 +753,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
           dexBonus: itemDexBonus,
           maxDexBonus: itemMaxDexBonus.trim() ? Number(itemMaxDexBonus) : undefined,
           stealthDisadvantage: itemStealthDisadvantage,
+          armorCategory: itemArmorCategory,
           category: itemCategory.trim(),
           rarity: itemRarity.trim(),
           abilityBonuses: abilityBonusesObj,
@@ -1509,6 +1514,18 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
 
             {itemKind === "armor" && (
               <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "0.5rem", alignItems: "center" }}>
+                <label>
+                  Category{" "}
+                  <select
+                    value={itemArmorCategory}
+                    onChange={(e) => setItemArmorCategory(e.target.value as typeof itemArmorCategory)}
+                  >
+                    <option value="light">Light armor</option>
+                    <option value="medium">Medium armor</option>
+                    <option value="heavy">Heavy armor</option>
+                    <option value="shield">Shield</option>
+                  </select>
+                </label>
                 <label>
                   Base AC <input type="number" style={{ width: "3rem" }} value={itemBaseAC} onChange={(e) => setItemBaseAC(e.target.value)} />
                 </label>

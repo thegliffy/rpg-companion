@@ -119,6 +119,8 @@ export async function buyItem(campaignId: number, characterId: number, shopItemI
         equipped: false,
         abilityBonuses: {},
         acBonus: 0,
+        requiresAttunement: false,
+        attuned: false,
         value: itemRow.basePrice,
       },
     ],

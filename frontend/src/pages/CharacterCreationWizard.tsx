@@ -332,6 +332,8 @@ export function CharacterCreationWizard({
       equipped: false,
       abilityBonuses: {},
       acBonus: 0,
+      requiresAttunement: false,
+      attuned: false,
       value: 0,
     }));
 

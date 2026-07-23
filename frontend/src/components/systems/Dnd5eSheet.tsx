@@ -32,6 +32,11 @@ import {
   findSrdGear,
   weaponDamageText,
   armorACFormulaText,
+  srdArmorToInventoryArmor,
+  customItemArmorPayload,
+  acBreakdownText,
+  hasArmorStealthDisadvantage,
+  armorOverlapWarning,
   casterTypeForClass,
   expectedSpellsKnown,
   expectedCantripsKnown,
@@ -1000,6 +1005,12 @@ export function Dnd5eSheet({
                           onClick={() => rollCheck(`skill-${s.id}`, skillBonus(sheet, s.id), `${s.name} check`)}
                         >
                           {s.name}
+                          {s.id === "stealth" && hasArmorStealthDisadvantage(sheet) && (
+                            <small style={{ color: "crimson" }} title="Equipped armor imposes Stealth disadvantage">
+                              {" "}
+                              (disadv.)
+                            </small>
+                          )}
                         </span>
                         <strong>{formatModifier(skillBonus(sheet, s.id))}</strong>
                       </div>
@@ -1046,11 +1057,23 @@ export function Dnd5eSheet({
           <div style={{ display: "grid", gridTemplateColumns: "auto auto", gap: "0.4rem 0.8rem", alignItems: "center" }}>
             <span>AC</span>
             <span>
-              <input type="number" value={sheet.ac} onChange={(e) => set("ac", Number(e.target.value) || 0)} style={numInput} />{" "}
-              {effectiveAC(sheet) !== sheet.ac && (
-                <small style={{ color: "#666" }} title="Effective AC including equipped items">
-                  → {effectiveAC(sheet)}
-                </small>
+              {acBreakdownText(sheet) ? (
+                <>
+                  <strong style={{ fontSize: "1.1rem" }}>{effectiveAC(sheet)}</strong>{" "}
+                  <small style={{ color: "#666" }}>({acBreakdownText(sheet)})</small>
+                </>
+              ) : (
+                <>
+                  <input type="number" value={sheet.ac} onChange={(e) => set("ac", Number(e.target.value) || 0)} style={numInput} />{" "}
+                  {effectiveAC(sheet) !== sheet.ac && (
+                    <small style={{ color: "#666" }} title="Effective AC including equipped items">
+                      → {effectiveAC(sheet)}
+                    </small>
+                  )}
+                </>
+              )}
+              {armorOverlapWarning(sheet) && (
+                <div style={{ color: "crimson", fontSize: "0.8rem" }}>{armorOverlapWarning(sheet)}</div>
               )}
             </span>
             <span>Initiative</span>
@@ -1568,7 +1591,17 @@ export function Dnd5eSheet({
 
       {/* Inventory */}
       <div style={box}>
-        <h3>Inventory</h3>
+        <h3>
+          Inventory{" "}
+          {(() => {
+            const attunedCount = sheet.items.filter((item) => item.attuned).length;
+            return (
+              <small style={{ fontWeight: "normal", color: attunedCount > 3 ? "crimson" : "#666" }}>
+                Attuned: {attunedCount} / 3
+              </small>
+            );
+          })()}
+        </h3>
         <datalist id="srd-magic-items-list">
           {SRD_MAGIC_ITEMS.map((mi) => (
             <option key={mi.id} value={mi.name} />
@@ -1596,11 +1629,16 @@ export function Dnd5eSheet({
             const gear = findSrdGear(newName);
             const customItem = customItems.find((ci) => ci.name.toLowerCase() === newName.trim().toLowerCase());
             if (weapon) {
-              updateItem({ name: newName, weight: weapon.weight, notes: weaponDamageText(weapon) });
+              updateItem({ name: newName, weight: weapon.weight, notes: weaponDamageText(weapon), armor: undefined });
             } else if (armor) {
-              updateItem({ name: newName, weight: armor.weight, notes: armorACFormulaText(armor) });
+              updateItem({
+                name: newName,
+                weight: armor.weight,
+                notes: armorACFormulaText(armor),
+                armor: srdArmorToInventoryArmor(armor),
+              });
             } else if (gear) {
-              updateItem({ name: newName, weight: gear.weight });
+              updateItem({ name: newName, weight: gear.weight, armor: undefined });
             } else if (customItem) {
               const d = customItem.data as CustomItemData;
               updateItem({
@@ -1610,12 +1648,14 @@ export function Dnd5eSheet({
                 notes: customItemNotesText(customItem),
                 abilityBonuses: d.abilityBonuses,
                 acBonus: d.acBonus,
+                armor: d.kind === "armor" ? customItemArmorPayload(d) : undefined,
               });
             } else {
-              updateItem({ name: newName });
+              updateItem({ name: newName, armor: undefined });
             }
           }
-          const hasBonuses = item.equipped || item.acBonus !== 0 || Object.values(item.abilityBonuses).some((v) => v);
+          const hasBonuses =
+            item.equipped || item.acBonus !== 0 || item.requiresAttunement || Object.values(item.abilityBonuses).some((v) => v);
           return (
             <div key={item.id} style={{ marginBottom: "0.5rem" }}>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
@@ -1661,6 +1701,13 @@ export function Dnd5eSheet({
                   <input type="checkbox" checked={item.equipped} onChange={(e) => updateItem({ equipped: e.target.checked })} />
                   Equipped
                 </label>
+                <label
+                  style={{ display: "flex", alignItems: "center", gap: "0.2rem", whiteSpace: "nowrap" }}
+                  title="Only grants this item's bonuses once attuned (if it requires attunement)"
+                >
+                  <input type="checkbox" checked={item.attuned} onChange={(e) => updateItem({ attuned: e.target.checked })} />
+                  Attuned
+                </label>
                 <button
                   type="button"
                   title="Add a row to Attacks pre-filled with this item's name"
@@ -1704,6 +1751,14 @@ export function Dnd5eSheet({
                 >
                   <span>When equipped:</span>
                   <label>
+                    <input
+                      type="checkbox"
+                      checked={item.requiresAttunement}
+                      onChange={(e) => updateItem({ requiresAttunement: e.target.checked })}
+                    />{" "}
+                    Requires attunement
+                  </label>
+                  <label>
                     AC{" "}
                     <input
                       type="number"
@@ -1737,7 +1792,19 @@ export function Dnd5eSheet({
           onClick={() =>
             set("items", [
               ...sheet.items,
-              { id: `item-${Date.now()}`, name: "", quantity: 1, weight: 0, notes: "", equipped: false, abilityBonuses: {}, acBonus: 0, value: 0 },
+              {
+                id: `item-${Date.now()}`,
+                name: "",
+                quantity: 1,
+                weight: 0,
+                notes: "",
+                equipped: false,
+                abilityBonuses: {},
+                acBonus: 0,
+                requiresAttunement: false,
+                attuned: false,
+                value: 0,
+              },
             ])
           }
         >

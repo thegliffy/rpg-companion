@@ -127,6 +127,17 @@ const spellSchema = z.object({
   abilityOverride: z.enum(DND5E_ABILITIES).optional(),
 });
 
+// Structured armor data copied from SRD_ARMOR/CustomItemData onto an inventory item when picked
+// from the armor dropdown -- lets effectiveAC() compute real 5e AC (base + capped Dex, one body
+// armor + one shield) instead of flat-adding a manually-entered acBonus.
+const inventoryArmorSchema = z.object({
+  baseAC: z.number().int().min(0).max(30),
+  addDex: z.boolean(),
+  maxDex: z.number().int().min(0).max(10).optional(),
+  category: z.enum(["light", "medium", "heavy", "shield"]),
+  stealthDisadvantage: z.boolean(),
+});
+
 const inventoryItemSchema = z.object({
   id: z.string().min(1),
   name: z.string().max(100),
@@ -139,6 +150,13 @@ const inventoryItemSchema = z.object({
   equipped: z.boolean().default(false),
   abilityBonuses: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(-10).max(10)).default({}),
   acBonus: z.number().int().min(-10).max(10).default(0),
+  // Present only for armor/shield items (from the SRD or custom armor picker) -- drives
+  // effectiveAC()'s real AC formula instead of the flat acBonus above.
+  armor: inventoryArmorSchema.optional(),
+  // requiresAttunement is a manual flag -- SRD magic item data (SrdMagicItem) is names/category/
+  // rarity only, no attunement info, so it can't be auto-derived from the picked name.
+  requiresAttunement: z.boolean().default(false),
+  attuned: z.boolean().default(false),
   // Sell value in gp, manually entered -- used by the campaign shop's "sell" transaction.
   value: z.number().min(0).max(999999).default(0),
 });
@@ -273,9 +291,15 @@ export function proficiencyBonus(level: number): number {
   return 2 + Math.floor((level - 1) / 4);
 }
 
-/** Sum of abilityBonuses from every equipped item, for the given ability. */
+/** An item's equip/ability/AC bonuses apply only when equipped, and (if it requires attunement)
+ * only once attuned -- so an unattuned magic item sits in inventory inert, same as unequipped. */
+export function itemBonusesActive(item: Dnd5eSheetData["items"][number]): boolean {
+  return item.equipped && (!item.requiresAttunement || item.attuned);
+}
+
+/** Sum of abilityBonuses from every active (equipped + attuned-if-required) item, for the given ability. */
 export function equippedAbilityBonus(sheet: Dnd5eSheetData, ability: Dnd5eAbility): number {
-  return sheet.items.reduce((sum, item) => (item.equipped ? sum + (item.abilityBonuses[ability] ?? 0) : sum), 0);
+  return sheet.items.reduce((sum, item) => (itemBonusesActive(item) ? sum + (item.abilityBonuses[ability] ?? 0) : sum), 0);
 }
 
 /** Every feat and feature/trait entry, combined -- both arrays feed the same bonus totals. */
@@ -301,10 +325,70 @@ export function effectiveAbilityScore(sheet: Dnd5eSheetData, ability: Dnd5eAbili
   return sheet.abilities[ability] + equippedAbilityBonus(sheet, ability) + featAbilityBonus(sheet, ability);
 }
 
-/** Base AC plus acBonus from every equipped item and every feat. */
+/** The equipped (and attuned-if-required) body armor and shield, if any -- only one of each
+ * counts toward AC, so armorPieces() picks the first found and the UI warns about the rest. */
+function armorPieces(sheet: Dnd5eSheetData) {
+  const active = sheet.items.filter((item) => itemBonusesActive(item) && item.armor);
+  return {
+    body: active.find((item) => item.armor!.category !== "shield"),
+    shield: active.find((item) => item.armor!.category === "shield"),
+    bodyCount: active.filter((item) => item.armor!.category !== "shield").length,
+    shieldCount: active.filter((item) => item.armor!.category === "shield").length,
+  };
+}
+
+/**
+ * AC = equipped body armor's base + capped Dex (or 10 + Dex if no body armor equipped) + an
+ * equipped shield's bonus + every active item's flat acBonus + feat acBonus. When no structured
+ * armor is equipped, falls back to the manual `sheet.ac` field (unarmored defense, mage armor,
+ * natural armor, etc. have no physical item to equip) plus the same item/feat bonuses -- so
+ * existing characters and characters without a modeled armor item behave exactly as before.
+ */
 export function effectiveAC(sheet: Dnd5eSheetData): number {
-  const itemAc = sheet.items.reduce((sum, item) => (item.equipped ? sum + item.acBonus : sum), 0);
-  return sheet.ac + itemAc + featBonusTotal(sheet, "acBonus");
+  const { body, shield } = armorPieces(sheet);
+  const dexMod = abilityModifier(effectiveAbilityScore(sheet, "dex"));
+  const itemAcBonus = sheet.items.reduce((sum, item) => (itemBonusesActive(item) ? sum + item.acBonus : sum), 0);
+  const base = body
+    ? body.armor!.baseAC + (body.armor!.addDex ? Math.min(dexMod, body.armor!.maxDex ?? Infinity) : 0)
+    : shield
+      ? 10 + dexMod
+      : sheet.ac;
+  const shieldBonus = shield ? shield.armor!.baseAC : 0;
+  return base + shieldBonus + itemAcBonus + featBonusTotal(sheet, "acBonus");
+}
+
+/** A human-readable AC breakdown ("Chain Shirt 13 + Dex +2 + Shield +2"), or null when no
+ * structured armor is equipped (AC is just the plain manual/override number in that case). */
+export function acBreakdownText(sheet: Dnd5eSheetData): string | null {
+  const { body, shield } = armorPieces(sheet);
+  if (!body && !shield) return null;
+  const dexMod = abilityModifier(effectiveAbilityScore(sheet, "dex"));
+  const parts: string[] = [];
+  if (body) {
+    parts.push(`${body.name || "Armor"} ${body.armor!.baseAC}`);
+    if (body.armor!.addDex) parts.push(`Dex ${formatModifier(Math.min(dexMod, body.armor!.maxDex ?? Infinity))}`);
+  } else {
+    parts.push(`${10 + dexMod}`);
+  }
+  if (shield) parts.push(`${shield.name || "Shield"} +${shield.armor!.baseAC}`);
+  return parts.join(" + ");
+}
+
+/** True when equipped, active body armor imposes Stealth disadvantage. */
+export function hasArmorStealthDisadvantage(sheet: Dnd5eSheetData): boolean {
+  return sheet.items.some(
+    (item) => itemBonusesActive(item) && item.armor && item.armor.category !== "shield" && item.armor.stealthDisadvantage,
+  );
+}
+
+/** Warns when more than one body armor or more than one shield is equipped -- only the first of
+ * each counts toward AC (armorPieces()), so the rest are silently doing nothing. */
+export function armorOverlapWarning(sheet: Dnd5eSheetData): string | null {
+  const { bodyCount, shieldCount } = armorPieces(sheet);
+  const parts: string[] = [];
+  if (bodyCount > 1) parts.push(`${bodyCount} body armor pieces`);
+  if (shieldCount > 1) parts.push(`${shieldCount} shields`);
+  return parts.length > 0 ? `${parts.join(" and ")} equipped -- only one of each counts toward AC.` : null;
 }
 
 export function saveBonus(sheet: Dnd5eSheetData, ability: Dnd5eAbility): number {

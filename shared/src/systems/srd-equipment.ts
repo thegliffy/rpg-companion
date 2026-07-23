@@ -230,3 +230,21 @@ export function armorACFormulaText(armor: SrdArmor): string {
   if (armor.maxDexBonus !== undefined) return `Base AC ${armor.baseAC} + Dex modifier (max ${armor.maxDexBonus})`;
   return `Base AC ${armor.baseAC} + Dex modifier`;
 }
+
+/** Converts an SrdArmor into the structured `armor` payload an inventory item stores, so
+ * effectiveAC() (dnd5e.ts) can compute real AC instead of reading the formula out of notes text. */
+export function srdArmorToInventoryArmor(armor: SrdArmor): {
+  baseAC: number;
+  addDex: boolean;
+  maxDex?: number;
+  category: "light" | "medium" | "heavy" | "shield";
+  stealthDisadvantage: boolean;
+} {
+  return {
+    baseAC: armor.baseAC,
+    addDex: armor.dexBonus,
+    maxDex: armor.maxDexBonus,
+    category: armor.category.toLowerCase() as "light" | "medium" | "heavy" | "shield",
+    stealthDisadvantage: armor.stealthDisadvantage,
+  };
+}
