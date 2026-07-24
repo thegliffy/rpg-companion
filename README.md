@@ -55,7 +55,33 @@ The frontend dev server proxies API/socket calls to the backend.
 Every push to `main` triggers a GitHub Action
 ([`.github/workflows/docker-image.yml`](.github/workflows/docker-image.yml)) that builds the
 Docker image and publishes it to the GitHub Container Registry as
-`ghcr.io/thegliffy/rpg-companion:latest`. To deploy on the server:
+`ghcr.io/thegliffy/rpg-companion:latest`.
+
+The repo's [`docker-compose.yml`](./docker-compose.yml) is a ready-to-use example — pulls the
+published image (falling back to a local `docker compose build` via `build: .` if you'd rather
+build it yourself), persists the SQLite database and uploaded portraits in a bind-mounted
+`data/` volume, and binds to `127.0.0.1` only so it's meant to sit behind a reverse proxy
+(Caddy, nginx, etc.) rather than being exposed directly:
+
+```yaml
+services:
+  app:
+    image: ghcr.io/thegliffy/rpg-companion:latest
+    build: .
+    ports:
+      - "127.0.0.1:8090:3000"   # adjust the host port/binding to taste
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_PATH: /app/data/app.db
+      SESSION_SECRET: ${SESSION_SECRET}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+```
+
+Copy [`.env.example`](./.env.example) to `.env` next to `docker-compose.yml` and set
+`SESSION_SECRET` to a long random string, then deploy:
 
 ```bash
 # one-time, if the GHCR package is private:
@@ -66,8 +92,7 @@ docker compose up -d       # recreate the container
 ```
 
 Migrations run automatically on container start. Persistent data (SQLite DB, uploaded
-portraits) lives in the `data/` volume and is **not** checked into version control. A
-`.env` file next to `docker-compose.yml` must define `SESSION_SECRET`.
+portraits) lives in the `data/` volume and is **not** checked into version control.
 
 ## Licensing & attribution
 
