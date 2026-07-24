@@ -11,6 +11,8 @@ import type {
   CustomItemData,
   SrdInvocation,
   GrantedSpell,
+  MartialResourcePool,
+  MartialResourceKey,
 } from "shared";
 import {
   dnd5eSheetSchema,
@@ -47,6 +49,9 @@ import {
   classHitDie,
   customClassLevelEntry,
   martialFeatureLines,
+  martialResourcePools,
+  martialResourceAvailable,
+  martialResetKeys,
   abilityModifier,
   effectiveAbilityScore,
   equippedAbilityBonus,
@@ -231,6 +236,7 @@ export function Dnd5eSheet({
     : expectedSlots(sheet.class, sheet.level);
 
   const martialLines = martialFeatureLines(effectiveLevelEntry(sheet.class, sheet.level)?.martial);
+  const martialPools = martialResourcePools(effectiveLevelEntry(sheet.class, sheet.level)?.martial);
 
   const pb = proficiencyBonus(sheet.level);
   const saveDC = spellSaveDC(sheet);
@@ -252,6 +258,37 @@ export function Dnd5eSheet({
 
   function set<K extends keyof Dnd5eSheetData>(key: K, value: Dnd5eSheetData[K]) {
     setSheet((prev) => ({ ...prev, [key]: value }));
+  }
+
+  // "Add to Attacks" default ability, RAW: ranged weapons use DEX; finesse weapons use whichever
+  // of STR/DEX is currently higher; everything else defaults to STR. Avoids every dagger/rapier
+  // silently defaulting to a STR-based attack bonus until the player notices and flips it.
+  function weaponDefaultAbility(properties: string[], range: string): Dnd5eAbility {
+    if (range === "Ranged") return "dex";
+    const isFinesse = properties.some((p) => p.toLowerCase() === "finesse");
+    if (isFinesse) {
+      const strMod = abilityModifier(effectiveAbilityScore(sheet, "str"));
+      const dexMod = abilityModifier(effectiveAbilityScore(sheet, "dex"));
+      return dexMod > strMod ? "dex" : "str";
+    }
+    return "str";
+  }
+
+  // Spends one use of a limited martial resource (Rage, Action Surge, Indomitable, Ki Points) --
+  // no-op past the derived max (unlimited pools never reach here, see the render guard).
+  function useMartialResource(pool: MartialResourcePool) {
+    const used = sheet.martialUsed[pool.key] ?? 0;
+    if (pool.max !== -1 && used >= pool.max) return;
+    setSheet((prev) => ({ ...prev, martialUsed: { ...prev.martialUsed, [pool.key]: (prev.martialUsed[pool.key] ?? 0) + 1 } }));
+  }
+
+  // Manually restores a single martial resource to full, independent of resting.
+  function resetMartialResource(key: MartialResourceKey) {
+    setSheet((prev) => {
+      const martialUsed = { ...prev.martialUsed };
+      delete martialUsed[key];
+      return { ...prev, martialUsed };
+    });
   }
 
   function setAbility(ability: Dnd5eAbility, raw: string) {
@@ -585,10 +622,16 @@ export function Dnd5eSheet({
         hitDiceAvailable: Math.min(prev.hitDiceTotal, prev.hitDiceAvailable + bonusDice),
         wildShape: { ...prev.wildShape, usesAvailable: 2 },
         mysticArcanum: prev.mysticArcanum.map((a) => ({ ...a, used: false })),
+        // Every martial resource (Rage, Action Surge, Indomitable, Ki) recovers on a long rest.
+        martialUsed: {},
       };
     });
     if (hpMax !== "") setHpCurrent(hpMax);
-    setRestMessage("Long rest: HP and spell slots restored, exhaustion -1, hit dice recovered.");
+    setRestMessage(
+      `Long rest: HP and spell slots restored, exhaustion -1, hit dice recovered.${
+        martialPools.length > 0 ? " Martial resources restored." : ""
+      }`,
+    );
     if (casterType === "prepared") setPrepareSpellsOpen(true);
   }
 
@@ -604,11 +647,15 @@ export function Dnd5eSheet({
       const healed = Math.max(0, roll.total);
 
       const isPact = casterTypeForClass(sheet.class) === "pact";
+      const shortRestKeys = new Set(martialResetKeys(martialPools, "short"));
       setSheet((prev) => ({
         ...prev,
         hitDiceAvailable: Math.max(0, prev.hitDiceAvailable - n),
         spellSlots: isPact ? prev.spellSlots.map((s) => ({ ...s, available: s.total })) : prev.spellSlots,
         wildShape: { ...prev.wildShape, usesAvailable: 2 },
+        martialUsed: Object.fromEntries(
+          Object.entries(prev.martialUsed).filter(([key]) => !shortRestKeys.has(key as MartialResourceKey)),
+        ),
       }));
       setHpCurrent((prevHp) => {
         const cur = prevHp === "" ? 0 : Number(prevHp);
@@ -619,7 +666,7 @@ export function Dnd5eSheet({
       setRestMessage(
         `Short rest: spent ${n} hit die${n > 1 ? "s" : ""}, healed ${healed} HP (${roll.breakdown}).${
           isPact ? " Pact Magic slots restored." : ""
-        }`,
+        }${shortRestKeys.size > 0 ? " Martial resources restored." : ""}`,
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Rest failed");
@@ -1272,14 +1319,42 @@ export function Dnd5eSheet({
         </div>
 
         {/* Martial features */}
-        {martialLines.length > 0 && (
+        {(martialLines.length > 0 || martialPools.length > 0) && (
           <div style={{ ...box, flex: "0 0 auto" }}>
             <h3>Martial features</h3>
-            <div style={{ fontSize: "0.9rem" }}>
-              {martialLines.map((line) => (
-                <div key={line}>{line}</div>
-              ))}
-            </div>
+            {martialPools.length > 0 && (
+              <div style={{ fontSize: "0.9rem", marginBottom: martialLines.length > 0 ? "0.5rem" : 0 }}>
+                {martialPools.map((pool) => {
+                  const available = martialResourceAvailable(sheet, pool);
+                  const unlimited = available === -1;
+                  return (
+                    <div key={pool.key} style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.3rem" }}>
+                      <span>
+                        {pool.label}: <strong>{unlimited ? "Unlimited" : `${available} / ${pool.max}`}</strong>
+                        {pool.note ? ` (${pool.note})` : ""}
+                      </span>
+                      {!unlimited && (
+                        <>
+                          <button type="button" onClick={() => useMartialResource(pool)} disabled={available <= 0}>
+                            Use
+                          </button>
+                          <button type="button" onClick={() => resetMartialResource(pool.key)} disabled={available >= pool.max}>
+                            Reset
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {martialLines.length > 0 && (
+              <div style={{ fontSize: "0.9rem" }}>
+                {martialLines.map((line) => (
+                  <div key={line}>{line}</div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -1469,6 +1544,10 @@ export function Dnd5eSheet({
             set("attacks", sheet.attacks.map((x, j) => (j === i ? { ...x, ...patch } : x)));
           }
           const bonus = attackBonus(sheet, atk);
+          // Ability modifier applies to weapon damage too (RAW), not just the attack roll --
+          // AttackRollControl's "magicBonus" prop is really "everything added to the damage
+          // roll besides the dice", so it carries ability + the item's magic bonus + feat bonuses.
+          const damageBonus = abilityModifier(effectiveAbilityScore(sheet, atk.ability)) + atk.magicBonus + featBonusTotal(sheet, "damageBonus");
           return (
             <div key={atk.id} style={{ marginBottom: "0.5rem" }}>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -1505,6 +1584,12 @@ export function Dnd5eSheet({
                   onChange={(e) => updateAttack({ damageType: e.target.value })}
                   style={{ width: "7rem" }}
                 />
+                {atk.damageDice && (
+                  <small style={{ color: "#666" }}>
+                    Damage: {atk.damageDice}
+                    {damageBonus !== 0 ? ` ${formatModifier(damageBonus)}` : ""} {atk.damageType.toLowerCase()}
+                  </small>
+                )}
                 <button type="button" onClick={() => set("attacks", sheet.attacks.filter((_, j) => j !== i))}>
                   Remove
                 </button>
@@ -1519,7 +1604,7 @@ export function Dnd5eSheet({
               <AttackRollControl
                 name={atk.name}
                 attackBonus={bonus}
-                magicBonus={atk.magicBonus + featBonusTotal(sheet, "damageBonus")}
+                magicBonus={damageBonus}
                 damageDice={atk.damageDice}
                 damageType={atk.damageType}
                 campaignId={character.campaignId}
@@ -1969,12 +2054,19 @@ export function Dnd5eSheet({
                       (ci) => ci.name.toLowerCase() === item.name.trim().toLowerCase() && (ci.data as CustomItemData).kind === "weapon",
                     );
                     const customWeaponData = customWeapon?.data as CustomItemData | undefined;
+                    // CustomItemData has no melee/ranged distinction -- only its Finesse property
+                    // (if set) can inform the default, so pass an empty range (never "Ranged").
+                    const ability = weapon
+                      ? weaponDefaultAbility(weapon.properties, weapon.range)
+                      : customWeaponData
+                        ? weaponDefaultAbility(customWeaponData.properties, "")
+                        : "str";
                     set("attacks", [
                       ...sheet.attacks,
                       {
                         id: `atk-${Date.now()}`,
                         name: item.name,
-                        ability: "str",
+                        ability,
                         magicBonus: 0,
                         damageDice: weapon?.damageDice ?? customWeaponData?.damageDice ?? "",
                         damageType: weapon?.damageType ?? customWeaponData?.damageType ?? "",

@@ -298,6 +298,12 @@ export const dnd5eSheetSchema = z.object({
   // Warlock: chosen at level 3 ("Pact Boon" feature). Purely a labeled choice in v1 -- no
   // mechanical hooks (e.g. a Pact of the Blade weapon or Pact of the Chain familiar).
   pactBoon: z.enum(["", "chain", "blade", "tome"]).default(""),
+  // Limited-use martial resources (Rage, Action Surge, Indomitable, Ki Points) -- uses *spent*,
+  // not remaining, keyed by MartialResourceKey. Storing spent (not available) means a fresh or
+  // just-leveled character is automatically at full: available = derivedMax(level) - used, so a
+  // level-up's max increasing needs no migration of this field. A rest just zeroes the relevant
+  // keys (see martialRestKeys in class-progression.ts for which keys clear on which rest).
+  martialUsed: z.record(z.string(), z.number().int().min(0).max(99)).default({}),
 });
 
 export type Dnd5eSheetData = z.infer<typeof dnd5eSheetSchema>;

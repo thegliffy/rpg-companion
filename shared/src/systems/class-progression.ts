@@ -636,24 +636,65 @@ export function expectedCantripsKnown(className: string, level: number): number 
   return entry?.cantripsKnown ?? null;
 }
 
-/** Human-readable lines for the sheet's derived "Martial features" panel. Empty for non-martial classes/levels. */
+/** Human-readable lines for the sheet's derived "Martial features" panel -- passive/informational
+ * features only. Limited-use resources (Rage, Action Surge, Indomitable, Ki) are surfaced instead
+ * by martialResourcePools() as trackable counters, not text lines, so they aren't shown twice. */
 export function martialFeatureLines(martial: MartialLevelEntry | null | undefined): string[] {
   if (!martial) return [];
   const lines: string[] = [];
   if (martial.extraAttacks) lines.push(`Extra Attacks: ${martial.extraAttacks}`);
-  if (martial.actionSurges) lines.push(`Action Surge: ${martial.actionSurges}/rest`);
-  if (martial.indomitableUses) lines.push(`Indomitable: ${martial.indomitableUses}/rest`);
-  if (martial.rageCount) {
-    const count = martial.rageCount === -1 ? "Unlimited" : `${martial.rageCount}/day`;
-    lines.push(`Rage: ${count}${martial.rageDamageBonus ? ` (+${martial.rageDamageBonus} dmg)` : ""}`);
-  }
   if (martial.brutalCriticalDice) lines.push(`Brutal Critical: +${martial.brutalCriticalDice} dice`);
   if (martial.sneakAttack) lines.push(`Sneak Attack: ${martial.sneakAttack.diceCount}d${martial.sneakAttack.diceValue}`);
   if (martial.martialArts) lines.push(`Martial Arts: ${martial.martialArts.diceCount}d${martial.martialArts.diceValue}`);
-  if (martial.kiPoints) lines.push(`Ki Points: ${martial.kiPoints}`);
   if (martial.unarmoredMovement) lines.push(`Unarmored Movement: +${martial.unarmoredMovement} ft`);
   if (martial.auraRange) lines.push(`Aura Range: ${martial.auraRange} ft`);
   if (martial.favoredEnemies) lines.push(`Favored Enemies: ${martial.favoredEnemies}`);
   if (martial.favoredTerrain) lines.push(`Favored Terrains: ${martial.favoredTerrain}`);
   return lines;
+}
+
+// The martialUsed record on the sheet is keyed by these strings.
+export type MartialResourceKey = "rage" | "actionSurge" | "indomitable" | "ki";
+
+export interface MartialResourcePool {
+  key: MartialResourceKey;
+  label: string;
+  // -1 = unlimited (level-20 Barbarian's Rage) -- no counter shown, just "Unlimited".
+  max: number;
+  // "short" resources also clear on a long rest (a long rest is a superset of a short rest's
+  // recovery); "long" resources need a full long rest.
+  resetOn: "short" | "long";
+  note?: string;
+}
+
+/** Limited-use martial resources for the sheet's Use/Reset counters. Empty for non-martial
+ * classes/levels or a level-20 Barbarian's unlimited Rage (shown as text, not a counter). */
+export function martialResourcePools(martial: MartialLevelEntry | null | undefined): MartialResourcePool[] {
+  if (!martial) return [];
+  const pools: MartialResourcePool[] = [];
+  if (martial.rageCount) {
+    pools.push({
+      key: "rage",
+      label: "Rage",
+      max: martial.rageCount,
+      resetOn: "long",
+      note: martial.rageDamageBonus ? `+${martial.rageDamageBonus} dmg` : undefined,
+    });
+  }
+  if (martial.actionSurges) pools.push({ key: "actionSurge", label: "Action Surge", max: martial.actionSurges, resetOn: "short" });
+  if (martial.indomitableUses) pools.push({ key: "indomitable", label: "Indomitable", max: martial.indomitableUses, resetOn: "long" });
+  if (martial.kiPoints) pools.push({ key: "ki", label: "Ki Points", max: martial.kiPoints, resetOn: "short" });
+  return pools;
+}
+
+/** Available uses for a pool: derived max minus spent (floored at 0); -1 (unlimited) passes through. */
+export function martialResourceAvailable(sheet: Dnd5eSheetData, pool: MartialResourcePool): number {
+  if (pool.max === -1) return -1;
+  return Math.max(0, pool.max - (sheet.martialUsed[pool.key] ?? 0));
+}
+
+/** Keys that clear on the given rest type -- "long" clears everything, "short" clears only the
+ * short-rest-recovering pools. Used by longRest()/shortRest() to reset sheet.martialUsed. */
+export function martialResetKeys(pools: MartialResourcePool[], restType: "short" | "long"): MartialResourceKey[] {
+  return pools.filter((p) => restType === "long" || p.resetOn === "short").map((p) => p.key);
 }
