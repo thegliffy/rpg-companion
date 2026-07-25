@@ -96,6 +96,7 @@ import { FeatPickerModal } from "./FeatPickerModal";
 import { WildShapePanel } from "./WildShapePanel";
 import { FamiliarPanel } from "./FamiliarPanel";
 import { InvocationPickerModal, INVOCATION_PREFIX } from "./InvocationPickerModal";
+import { CollapsibleSection } from "./CollapsibleSection";
 
 const box: React.CSSProperties = { border: "1px solid #bbb", borderRadius: 6, padding: "0.75rem" };
 const numInput: React.CSSProperties = { width: "3.5rem", textAlign: "center" };
@@ -206,6 +207,13 @@ export function Dnd5eSheet({
   }
 
   const casterType = matchedCustomClass ? (matchedCustomClass.data as CustomClassData).casterType : casterTypeForClass(sheet.class);
+  const spellcastingRelevant =
+    casterType !== "none" || sheet.spells.length > 0 || Boolean(sheet.spellcastingAbility);
+  const featsRelevant = sheet.feats.length > 0;
+  const featuresRelevant = sheet.features.length > 0 || Boolean(sheet.featuresText.trim());
+  const notesRelevant =
+    Boolean(sheet.personalityText.trim()) || Boolean(sheet.privateNotes.trim()) || Boolean((character.notes ?? "").trim());
+
   const isWizardCaster = !matchedCustomClass && normalizeClassId(sheet.class) === "wizard";
   const isDruid = !matchedCustomClass && normalizeClassId(sheet.class) === "druid" && sheet.level >= 2;
   const isWarlock = !matchedCustomClass && normalizeClassId(sheet.class) === "warlock";
@@ -401,7 +409,7 @@ export function Dnd5eSheet({
       const newFeatureEntries: Dnd5eSheetData["features"][number][] = featureNames
         .filter((name) => !existingNames.has(name))
         .map((name) => ({
-          id: `feature-${newLevel}-${name}-${Date.now()}`,
+          id: `feature-${newLevel}-${name}-${crypto.randomUUID()}`,
           name,
           description: "",
           abilityBonuses: {},
@@ -498,7 +506,7 @@ export function Dnd5eSheet({
   }
 
   function addInvocation(inv: SrdInvocation) {
-    const featureId = `invocation-${Date.now()}`;
+    const featureId = `invocation-${crypto.randomUUID()}`;
     const grants = inv.grants;
     const feature: Dnd5eSheetData["features"][number] = {
       id: featureId,
@@ -692,6 +700,9 @@ export function Dnd5eSheet({
   const pendingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(false);
 
+  const updatedAtRef = useRef(character.updatedAt);
+  updatedAtRef.current = character.updatedAt;
+
   async function persist() {
     if (saveInFlightRef.current) {
       pendingSaveRef.current = true;
@@ -706,11 +717,17 @@ export function Dnd5eSheet({
         hpCurrent: hpCurrentRef.current === "" ? null : Number(hpCurrentRef.current),
         hpMax: hpMaxRef.current === "" ? null : Number(hpMaxRef.current),
         sheetData: sheetRef.current,
+        expectedUpdatedAt: updatedAtRef.current,
       });
+      updatedAtRef.current = updated.updatedAt;
       onSaved(updated);
       setAutosaveStatus("saved");
     } catch (err) {
-      setAutosaveError(err instanceof Error ? err.message : "Save failed");
+      if (err instanceof charactersApi.ApiError && err.status === 409) {
+        setAutosaveError("Sheet changed elsewhere — reload the page to continue editing");
+      } else {
+        setAutosaveError(err instanceof Error ? err.message : "Save failed");
+      }
       setAutosaveStatus("error");
     } finally {
       saveInFlightRef.current = false;
@@ -762,6 +779,7 @@ export function Dnd5eSheet({
     try {
       const updated = await charactersApi.updateCharacter(character.id, {
         sheetData: { ...sheet, status: "active", statusChangedAt: null },
+        expectedUpdatedAt: character.updatedAt,
       });
       setSheet((prev) => ({ ...prev, status: "active", statusChangedAt: null }));
       onSaved(updated);
@@ -1143,7 +1161,7 @@ export function Dnd5eSheet({
               spells: [
                 ...prev.spells,
                 ...spells.map((s, i) => ({
-                  id: `spell-${Date.now()}-${i}`,
+                  id: `spell-${crypto.randomUUID()}-${i}`,
                   srdId: s.id,
                   name: s.name,
                   level: s.level,
@@ -1617,7 +1635,7 @@ export function Dnd5eSheet({
           onClick={() =>
             set("attacks", [
               ...sheet.attacks,
-              { id: `atk-${Date.now()}`, name: "", ability: "str", magicBonus: 0, damageDice: "", damageType: "" },
+              { id: `atk-${crypto.randomUUID()}`, name: "", ability: "str", magicBonus: 0, damageDice: "", damageType: "" },
             ])
           }
         >
@@ -1626,8 +1644,14 @@ export function Dnd5eSheet({
       </div>
 
       {/* Spellcasting */}
-      <div style={box}>
-        <h3>Spellcasting</h3>
+      <CollapsibleSection
+        characterId={character.id}
+        sectionId="spellcasting"
+        title="Spellcasting"
+        relevant={spellcastingRelevant}
+        summary="not used"
+        style={box}
+      >
         <div style={{ display: "flex", gap: "1.5rem", alignItems: "center", flexWrap: "wrap", marginBottom: "0.75rem" }}>
           <label>
             Spellcasting ability{" "}
@@ -1889,7 +1913,7 @@ export function Dnd5eSheet({
         <button
           type="button"
           onClick={() =>
-            set("spells", [...sheet.spells, { id: `spell-${Date.now()}`, name: "", level: 0, prepared: false, atWill: false }])
+            set("spells", [...sheet.spells, { id: `spell-${crypto.randomUUID()}`, name: "", level: 0, prepared: false, atWill: false }])
           }
         >
           Add custom spell
@@ -1905,7 +1929,7 @@ export function Dnd5eSheet({
               if (adding) {
                 set("spells", [
                   ...sheet.spells,
-                  { id: `spell-${Date.now()}`, srdId: spell.id, name: spell.name, level: spell.level, prepared: false, atWill: false },
+                  { id: `spell-${crypto.randomUUID()}`, srdId: spell.id, name: spell.name, level: spell.level, prepared: false, atWill: false },
                 ]);
               } else {
                 set("spells", sheet.spells.filter((s) => s.srdId !== spell.id));
@@ -1924,21 +1948,28 @@ export function Dnd5eSheet({
             onClose={() => setPrepareSpellsOpen(false)}
           />
         )}
-      </div>
+      </CollapsibleSection>
 
       {/* Inventory */}
-      <div style={box}>
-        <h3>
-          Inventory{" "}
-          {(() => {
-            const attunedCount = sheet.items.filter((item) => item.attuned).length;
-            return (
-              <small style={{ fontWeight: "normal", color: attunedCount > 3 ? "crimson" : "#666" }}>
-                Attuned: {attunedCount} / 3
-              </small>
-            );
-          })()}
-        </h3>
+      <CollapsibleSection
+        characterId={character.id}
+        sectionId="inventory"
+        title={
+          <>
+            Inventory{" "}
+            {(() => {
+              const attunedCount = sheet.items.filter((item) => item.attuned).length;
+              return (
+                <small style={{ fontWeight: "normal", color: attunedCount > 3 ? "crimson" : "#666" }}>
+                  Attuned: {attunedCount} / 3
+                </small>
+              );
+            })()}
+          </>
+        }
+        relevant
+        style={box}
+      >
         <datalist id="srd-magic-items-list">
           {SRD_MAGIC_ITEMS.map((mi) => (
             <option key={mi.id} value={mi.name} />
@@ -2064,7 +2095,7 @@ export function Dnd5eSheet({
                     set("attacks", [
                       ...sheet.attacks,
                       {
-                        id: `atk-${Date.now()}`,
+                        id: `atk-${crypto.randomUUID()}`,
                         name: item.name,
                         ability,
                         magicBonus: 0,
@@ -2137,7 +2168,7 @@ export function Dnd5eSheet({
             set("items", [
               ...sheet.items,
               {
-                id: `item-${Date.now()}`,
+                id: `item-${crypto.randomUUID()}`,
                 name: "",
                 quantity: 1,
                 weight: 0,
@@ -2176,7 +2207,7 @@ export function Dnd5eSheet({
 
         <h4>Other equipment notes</h4>
         <textarea value={sheet.equipmentText} onChange={(e) => set("equipmentText", e.target.value)} rows={3} style={{ width: "100%" }} />
-      </div>
+      </CollapsibleSection>
 
       {/* Wild Shape (Druid) */}
       {isDruid && <WildShapePanel sheet={sheet} setSheet={setSheet} campaignId={character.campaignId} />}
@@ -2359,7 +2390,7 @@ export function Dnd5eSheet({
                                 if (adding) {
                                   set("spells", [
                                     ...sheet.spells,
-                                    { id: `${TOME_CANTRIP_PREFIX}${Date.now()}`, srdId: spell.id, name: spell.name, level: spell.level, prepared: false, atWill: false },
+                                    { id: `${TOME_CANTRIP_PREFIX}${crypto.randomUUID()}`, srdId: spell.id, name: spell.name, level: spell.level, prepared: false, atWill: false },
                                   ]);
                                 } else {
                                   set(
@@ -2383,8 +2414,14 @@ export function Dnd5eSheet({
       )}
 
       {/* Feats */}
-      <div style={box}>
-        <h3>Feats</h3>
+      <CollapsibleSection
+        characterId={character.id}
+        sectionId="feats"
+        title="Feats"
+        relevant={featsRelevant}
+        summary="none"
+        style={box}
+      >
         {sheet.feats.map((feat, i) => {
           function updateFeat(patch: Partial<Dnd5eSheetData["feats"][number]>) {
             set("feats", sheet.feats.map((x, j) => (j === i ? { ...x, ...patch } : x)));
@@ -2463,11 +2500,17 @@ export function Dnd5eSheet({
         {featPickerContext !== null && (
           <FeatPickerModal customFeats={customFeats} onPick={addFeat} onClose={() => setFeatPickerContext(null)} />
         )}
-      </div>
+      </CollapsibleSection>
 
       {/* Features & traits */}
-      <div style={box}>
-        <h3>Features &amp; traits</h3>
+      <CollapsibleSection
+        characterId={character.id}
+        sectionId="features"
+        title="Features & traits"
+        relevant={featuresRelevant}
+        summary="none"
+        style={box}
+      >
         {sheet.features.map((feature, i) => {
           function updateFeature(patch: Partial<Dnd5eSheetData["features"][number]>) {
             set("features", sheet.features.map((x, j) => (j === i ? { ...x, ...patch } : x)));
@@ -2546,7 +2589,7 @@ export function Dnd5eSheet({
             set("features", [
               ...sheet.features,
               {
-                id: `feature-${Date.now()}`,
+                id: `feature-${crypto.randomUUID()}`,
                 name: "",
                 description: "",
                 abilityBonuses: {},
@@ -2562,33 +2605,42 @@ export function Dnd5eSheet({
         >
           Add feature
         </button>
-      </div>
+        <h4 style={{ marginTop: "0.75rem" }}>
+          Other notes / history <small style={{ color: "#777", fontWeight: "normal" }}>(freeform — the structured list above is now the source of truth)</small>
+        </h4>
+        <textarea value={sheet.featuresText} onChange={(e) => set("featuresText", e.target.value)} rows={5} style={{ width: "100%" }} />
+      </CollapsibleSection>
 
       {/* Text sections */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
         <label style={box}>
-          Other notes / history <small style={{ color: "#777" }}>(freeform — the structured list above is now the source of truth)</small>
-          <textarea value={sheet.featuresText} onChange={(e) => set("featuresText", e.target.value)} rows={5} style={{ width: "100%" }} />
-        </label>
-        <label style={box}>
           Proficiencies &amp; languages
           <textarea value={sheet.proficienciesText} onChange={(e) => set("proficienciesText", e.target.value)} rows={5} style={{ width: "100%" }} />
         </label>
-        <label style={{ ...box, gridColumn: "1 / -1" }}>
-          Personality, ideals, bonds &amp; flaws
-          <textarea value={sheet.personalityText} onChange={(e) => set("personalityText", e.target.value)} rows={5} style={{ width: "100%" }} />
-        </label>
-        {isOwner && (
-          <label style={{ ...box, gridColumn: "1 / -1" }}>
-            Personal notes <small style={{ color: "#777" }}>(private — never visible to your DM)</small>
-            <textarea
-              value={sheet.privateNotes}
-              onChange={(e) => set("privateNotes", e.target.value)}
-              rows={5}
-              style={{ width: "100%" }}
-            />
+        <CollapsibleSection
+          characterId={character.id}
+          sectionId="notes"
+          title="Personality & notes"
+          relevant={notesRelevant}
+          summary="empty"
+          style={{ ...box, gridColumn: "1 / -1" }}
+        >
+          <label style={{ display: "block", marginBottom: isOwner ? "0.75rem" : 0 }}>
+            Personality, ideals, bonds &amp; flaws
+            <textarea value={sheet.personalityText} onChange={(e) => set("personalityText", e.target.value)} rows={5} style={{ width: "100%" }} />
           </label>
-        )}
+          {isOwner && (
+            <label style={{ display: "block" }}>
+              Personal notes <small style={{ color: "#777" }}>(private — never visible to your DM)</small>
+              <textarea
+                value={sheet.privateNotes}
+                onChange={(e) => set("privateNotes", e.target.value)}
+                rows={5}
+                style={{ width: "100%" }}
+              />
+            </label>
+          )}
+        </CollapsibleSection>
       </div>
 
       {error && <p style={{ color: "crimson" }}>{error}</p>}

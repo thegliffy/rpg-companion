@@ -5,14 +5,32 @@ import { rawDb } from "../db/client.js";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEFAULT_MAX_AGE_MS = 7 * DAY_MS;
 
+const PRUNE_INTERVAL_MS = 60 * 60 * 1000;
+let lastPruneAt = 0;
+
+function pruneExpiredSessions() {
+  const now = Date.now();
+  if (now - lastPruneAt < PRUNE_INTERVAL_MS) return;
+  lastPruneAt = now;
+  try {
+    rawDb.prepare("DELETE FROM sessions WHERE expires_at < ?").run(now);
+  } catch {
+    // Best-effort cleanup; ignore prune failures.
+  }
+}
+
 class SqliteSessionStore extends session.Store {
   get(sid: string, callback: (err: unknown, session?: session.SessionData | null) => void) {
     try {
+      pruneExpiredSessions();
       const row = rawDb
         .prepare("SELECT sess, expires_at FROM sessions WHERE sid = ?")
         .get(sid) as { sess: string; expires_at: number } | undefined;
 
       if (!row || row.expires_at < Date.now()) {
+        if (row) {
+          rawDb.prepare("DELETE FROM sessions WHERE sid = ?").run(sid);
+        }
         callback(null, null);
         return;
       }

@@ -102,7 +102,7 @@ export function PrepareSpellsModal({
       // Divine casters re-derive their day's preparation list from the full class list.
       const chosen = candidates.filter((c) => selected.has(keyFor(c)));
       const rest = chosen.map((c, i) => ({
-        id: `spell-${Date.now()}-${i}`,
+        id: `spell-${crypto.randomUUID()}-${i}`,
         srdId: c.srdId,
         name: c.name,
         level: c.level,

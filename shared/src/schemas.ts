@@ -64,6 +64,8 @@ export const updateCharacterSchema = z.object({
   hpMax: z.number().int().nullable().optional(),
   notes: z.string().max(4000).optional(),
   sheetData: z.unknown().optional(),
+  /** When set, the update fails with 409 if the stored `updatedAt` does not match (optimistic concurrency). */
+  expectedUpdatedAt: z.string().min(1).optional(),
 });
 
 export type CreateCharacterInput = z.infer<typeof createCharacterSchema>;

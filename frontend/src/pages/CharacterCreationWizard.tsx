@@ -345,7 +345,7 @@ export function CharacterCreationWizard({
     const features: ReturnType<typeof emptyDnd5eSheet>["features"] = [];
     if (data.feature.name) {
       features.push({
-        id: `bg-feature-${Date.now()}`,
+        id: `bg-feature-${crypto.randomUUID()}`,
         name: data.feature.name,
         description: data.feature.description,
         abilityBonuses: {},
@@ -361,7 +361,7 @@ export function CharacterCreationWizard({
       const variant = data.variants.find((v) => v.id === variantId);
       if (!variant) continue;
       features.push({
-        id: `bg-variant-${variant.id}-${Date.now()}`,
+        id: `bg-variant-${variant.id}-${crypto.randomUUID()}`,
         name: variant.title,
         description: variant.description,
         abilityBonuses: {},
@@ -375,7 +375,7 @@ export function CharacterCreationWizard({
     }
 
     const items: ReturnType<typeof emptyDnd5eSheet>["items"] = data.equipment.items.map((name, i) => ({
-      id: `bg-item-${Date.now()}-${i}`,
+      id: `bg-item-${crypto.randomUUID()}-${i}`,
       name,
       quantity: 1,
       weight: 0,
@@ -505,7 +505,7 @@ export function CharacterCreationWizard({
           spellcastingAbility: isWizardClass ? "int" : isWarlockClass ? "cha" : "",
           spells: isWizardClass
             ? spellbookSpells.map((s, i) => ({
-                id: `spell-${Date.now()}-${i}`,
+                id: `spell-${crypto.randomUUID()}-${i}`,
                 srdId: s.id,
                 name: s.name,
                 level: s.level,
@@ -513,7 +513,7 @@ export function CharacterCreationWizard({
               }))
             : isWarlockClass
               ? warlockCantrips.map((s, i) => ({
-                  id: `spell-${Date.now()}-${i}`,
+                  id: `spell-${crypto.randomUUID()}-${i}`,
                   srdId: s.id,
                   name: s.name,
                   level: 0,

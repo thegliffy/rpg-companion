@@ -1,9 +1,18 @@
 import type { Character } from "shared";
 
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 async function parseOrThrow(res: Response) {
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(body.error ?? "Request failed");
+    throw new ApiError(body.error ?? "Request failed", res.status);
   }
   if (res.status === 204) return null;
   return res.json();
@@ -17,6 +26,7 @@ export interface CharacterInput {
   hpMax?: number | null;
   notes?: string;
   sheetData?: unknown;
+  expectedUpdatedAt?: string;
 }
 
 export async function getCharacter(id: number): Promise<Character> {

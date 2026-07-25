@@ -45,14 +45,14 @@ export function FeatPickerModal({
   onClose: () => void;
 }) {
   function pickSrd(name: string) {
-    onPick({ id: `feat-${Date.now()}`, name, description: "", ...BLANK_BONUSES }, []);
+    onPick({ id: `feat-${crypto.randomUUID()}`, name, description: "", ...BLANK_BONUSES }, []);
   }
 
   function pickCustom(item: CustomContent) {
     const d = item.data as CustomFeatData;
     onPick(
       {
-        id: `feat-${Date.now()}`,
+        id: `feat-${crypto.randomUUID()}`,
         name: item.name,
         description: d.description,
         abilityBonuses: d.abilityBonuses,
@@ -91,7 +91,7 @@ export function FeatPickerModal({
           </>
         )}
         <div style={{ marginTop: "0.75rem" }}>
-          <button type="button" onClick={() => onPick({ id: `feat-${Date.now()}`, name: "", description: "", ...BLANK_BONUSES }, [])}>
+          <button type="button" onClick={() => onPick({ id: `feat-${crypto.randomUUID()}`, name: "", description: "", ...BLANK_BONUSES }, [])}>
             Blank custom feat
           </button>{" "}
           <button type="button" onClick={onClose}>

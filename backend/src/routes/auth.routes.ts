@@ -8,10 +8,33 @@ import {
   toPublicUser,
   UsernameTakenError,
 } from "../services/users.service.js";
+import { rateLimit } from "../middleware/rateLimit.js";
 
 export const authRouter = Router();
 
-authRouter.post("/register", async (req, res) => {
+const registerLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: "Too many registration attempts, try again later",
+});
+
+const loginIpLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  message: "Too many login attempts, try again later",
+});
+
+const loginUserLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  key: (req) => {
+    const username = typeof req.body?.username === "string" ? req.body.username.trim().toLowerCase() : "";
+    return `login-user:${username || req.ip || "unknown"}`;
+  },
+  message: "Too many login attempts for this username, try again later",
+});
+
+authRouter.post("/register", registerLimit, async (req, res) => {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });
@@ -31,7 +54,7 @@ authRouter.post("/register", async (req, res) => {
   }
 });
 
-authRouter.post("/login", async (req, res) => {
+authRouter.post("/login", loginIpLimit, loginUserLimit, async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });

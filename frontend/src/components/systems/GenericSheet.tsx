@@ -20,7 +20,10 @@ export function GenericSheet({
       <CharacterSheetForm
         initial={character}
         onSubmit={async (input) => {
-          const updated = await charactersApi.updateCharacter(character.id, input);
+          const updated = await charactersApi.updateCharacter(character.id, {
+            ...input,
+            expectedUpdatedAt: character.updatedAt,
+          });
           onSaved(updated);
         }}
       />

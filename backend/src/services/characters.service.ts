@@ -1,9 +1,16 @@
 import { randomBytes } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { characters, users, campaigns } from "../db/schema.js";
 import type { Character } from "shared";
 import { removePortraitFile } from "../lib/portraits.js";
+
+export class CharacterConflictError extends Error {
+  constructor(message = "Character was modified elsewhere — reload and try again") {
+    super(message);
+    this.name = "CharacterConflictError";
+  }
+}
 
 function toCharacter(
   row: typeof characters.$inferSelect,
@@ -111,6 +118,7 @@ export async function createCharacter(
 export async function updateCharacter(
   id: number,
   updates: { name?: string; hpCurrent?: number | null; hpMax?: number | null; notes?: string; sheetData?: unknown },
+  options?: { expectedUpdatedAt?: string },
 ) {
   const dbUpdates: Record<string, unknown> = { updatedAt: new Date().toISOString() };
   if (updates.name !== undefined) dbUpdates.name = updates.name;
@@ -119,7 +127,25 @@ export async function updateCharacter(
   if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
   if (updates.sheetData !== undefined) dbUpdates.sheetData = JSON.stringify(updates.sheetData);
 
-  await db.update(characters).set(dbUpdates).where(eq(characters.id, id));
+  const conditions = [eq(characters.id, id)];
+  if (options?.expectedUpdatedAt !== undefined) {
+    conditions.push(eq(characters.updatedAt, options.expectedUpdatedAt));
+  }
+
+  const updated = db
+    .update(characters)
+    .set(dbUpdates)
+    .where(and(...conditions))
+    .returning({ id: characters.id })
+    .get();
+
+  if (!updated) {
+    if (options?.expectedUpdatedAt !== undefined && getCharacter(id)) {
+      throw new CharacterConflictError();
+    }
+    throw new Error("Character not found");
+  }
+
   return getCharacter(id)!;
 }
 

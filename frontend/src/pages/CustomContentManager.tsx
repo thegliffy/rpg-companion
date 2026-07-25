@@ -211,7 +211,7 @@ interface BgVariantRow {
   title: string;
   description: string;
 }
-const emptyBgVariantRow = (): BgVariantRow => ({ id: `variant-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, title: "", description: "" });
+const emptyBgVariantRow = (): BgVariantRow => ({ id: `variant-${crypto.randomUUID()}`, title: "", description: "" });
 
 interface FeatGrantedSpellRow {
   name: string;

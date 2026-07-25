@@ -40,6 +40,8 @@ import {
 } from "../services/encounters.service.js";
 import { createRoll, listRecentRolls } from "../services/dice.service.js";
 import { InvalidDiceFormulaError } from "../lib/dice.js";
+import { parseLimit } from "../lib/pagination.js";
+import { rateLimit } from "../middleware/rateLimit.js";
 import { isGlobalAdmin } from "../services/users.service.js";
 import {
   getShop,
@@ -79,28 +81,36 @@ campaignsRouter.get("/", (req, res) => {
   res.json({ campaigns });
 });
 
-campaignsRouter.post("/join", async (req, res) => {
-  const parsed = joinCampaignSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });
-    return;
-  }
+campaignsRouter.post(
+  "/join",
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    message: "Too many join attempts, try again later",
+  }),
+  async (req, res) => {
+    const parsed = joinCampaignSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });
+      return;
+    }
 
-  try {
-    const campaign = await joinCampaignByInviteCode(req.session.userId!, parsed.data.inviteCode);
-    res.status(200).json({ campaign });
-  } catch (err) {
-    if (err instanceof InviteCodeNotFoundError) {
-      res.status(404).json({ error: err.message });
-      return;
+    try {
+      const campaign = await joinCampaignByInviteCode(req.session.userId!, parsed.data.inviteCode);
+      res.status(200).json({ campaign });
+    } catch (err) {
+      if (err instanceof InviteCodeNotFoundError) {
+        res.status(404).json({ error: err.message });
+        return;
+      }
+      if (err instanceof AlreadyMemberError) {
+        res.status(409).json({ error: err.message });
+        return;
+      }
+      throw err;
     }
-    if (err instanceof AlreadyMemberError) {
-      res.status(409).json({ error: err.message });
-      return;
-    }
-    throw err;
-  }
-});
+  },
+);
 
 campaignsRouter.get("/:id", requireCampaignMember, (req, res) => {
   const detail = getCampaignDetail(req.campaignMembership!.campaignId, req.session.userId!, {
@@ -232,7 +242,7 @@ campaignsRouter.post("/:id/encounter/combatants", requireDM, async (req, res) =>
 });
 
 campaignsRouter.get("/:id/rolls", requireCampaignMember, (req, res) => {
-  const limit = Math.min(Number(req.query.limit) || 50, 200);
+  const limit = parseLimit(req.query.limit);
   const rolls = listRecentRolls(req.campaignMembership!.campaignId, limit);
   res.json({ rolls });
 });
@@ -294,8 +304,16 @@ campaignsRouter.patch("/:id/shop/items/:itemId", requireDM, async (req, res) => 
     res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });
     return;
   }
-  const shop = await updateShopItem(req.campaignMembership!.campaignId, itemId, parsed.data);
-  res.json({ shop });
+  try {
+    const shop = await updateShopItem(req.campaignMembership!.campaignId, itemId, parsed.data);
+    res.json({ shop });
+  } catch (err) {
+    if (err instanceof ShopItemNotFoundError) {
+      res.status(404).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
 });
 
 campaignsRouter.delete("/:id/shop/items/:itemId", requireDM, async (req, res) => {
@@ -304,8 +322,16 @@ campaignsRouter.delete("/:id/shop/items/:itemId", requireDM, async (req, res) =>
     res.status(400).json({ error: "Invalid item id" });
     return;
   }
-  const shop = await deleteShopItem(req.campaignMembership!.campaignId, itemId);
-  res.json({ shop });
+  try {
+    const shop = await deleteShopItem(req.campaignMembership!.campaignId, itemId);
+    res.json({ shop });
+  } catch (err) {
+    if (err instanceof ShopItemNotFoundError) {
+      res.status(404).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
 });
 
 campaignsRouter.post("/:id/shop/buy", requireCampaignMember, async (req, res) => {

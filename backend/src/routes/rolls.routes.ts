@@ -3,13 +3,14 @@ import { createRollSchema } from "shared";
 import { requireAuth } from "../middleware/auth.js";
 import { createRoll, listPersonalRolls } from "../services/dice.service.js";
 import { InvalidDiceFormulaError } from "../lib/dice.js";
+import { parseLimit } from "../lib/pagination.js";
 
 export const rollsRouter = Router();
 
 rollsRouter.use(requireAuth);
 
 rollsRouter.get("/", (req, res) => {
-  const limit = Math.min(Number(req.query.limit) || 50, 200);
+  const limit = parseLimit(req.query.limit);
   const rolls = listPersonalRolls(req.session.userId!, limit);
   res.json({ rolls });
 });

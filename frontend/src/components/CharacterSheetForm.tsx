@@ -95,7 +95,7 @@ export function CharacterSheetForm({
       <button
         type="button"
         onClick={() =>
-          append({ id: `field-${Date.now()}-${nextFieldId++}`, label: "", type: "text" as SheetFieldType, value: "" })
+          append({ id: `field-${crypto.randomUUID()}-${nextFieldId++}`, label: "", type: "text" as SheetFieldType, value: "" })
         }
       >
         Add field

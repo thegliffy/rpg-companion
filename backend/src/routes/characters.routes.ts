@@ -20,6 +20,7 @@ import {
   mintShareToken,
   revokeShareToken,
   getShareToken,
+  CharacterConflictError,
 } from "../services/characters.service.js";
 import { getMembership } from "../services/campaigns.service.js";
 import { isGlobalAdmin } from "../services/users.service.js";
@@ -144,7 +145,17 @@ charactersRouter.patch("/:id", requireCharacterOwnerOrDM, async (req, res) => {
     }
   }
 
-  const character = await updateCharacter(req.characterRow!.id, updates);
+  const { expectedUpdatedAt, ...patch } = updates;
+  let character;
+  try {
+    character = await updateCharacter(req.characterRow!.id, patch, { expectedUpdatedAt });
+  } catch (err) {
+    if (err instanceof CharacterConflictError) {
+      res.status(409).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
 
   // One-way sync: if this 5e character is currently a combatant in its
   // campaign's active encounter, push its condition tags onto that combatant.

@@ -16,6 +16,46 @@ function toCombatant(row: typeof combatants.$inferSelect): Combatant {
   };
 }
 
+function sortedCombatantIds(encounterId: number): number[] {
+  return db
+    .select({ id: combatants.id })
+    .from(combatants)
+    .where(eq(combatants.encounterId, encounterId))
+    .orderBy(desc(combatants.initiative), asc(combatants.sortOrder))
+    .all()
+    .map((c) => c.id);
+}
+
+/** Combatant currently pointed at by `currentTurnIndex`, if any. */
+function combatantIdAtTurn(encounterId: number, turnIndex: number): number | null {
+  const ids = sortedCombatantIds(encounterId);
+  if (ids.length === 0) return null;
+  const clamped = Math.min(Math.max(turnIndex, 0), ids.length - 1);
+  return ids[clamped] ?? null;
+}
+
+/** After reorder/add/remove, keep the turn on the same combatant when possible. */
+function remappedTurnIndex(
+  encounterId: number,
+  previousCombatantId: number | null,
+  fallbackIndex: number,
+): number {
+  const ids = sortedCombatantIds(encounterId);
+  if (ids.length === 0) return 0;
+  if (previousCombatantId != null) {
+    const idx = ids.indexOf(previousCombatantId);
+    if (idx >= 0) return idx;
+  }
+  return Math.min(Math.max(fallbackIndex, 0), ids.length - 1);
+}
+
+function persistTurnIndexIfNeeded(encounterId: number, previousCombatantId: number | null, fallbackIndex: number) {
+  const nextIndex = remappedTurnIndex(encounterId, previousCombatantId, fallbackIndex);
+  if (nextIndex !== fallbackIndex) {
+    db.update(encounters).set({ currentTurnIndex: nextIndex }).where(eq(encounters.id, encounterId)).run();
+  }
+}
+
 export function getEncounterSnapshot(encounterId: number): EncounterSnapshot | null {
   const encounter = db.select().from(encounters).where(eq(encounters.id, encounterId)).get();
   if (!encounter) return null;
@@ -54,15 +94,18 @@ export function getEncounterRow(id: number) {
 }
 
 export async function startEncounter(campaignId: number, name?: string) {
-  await db
-    .update(encounters)
-    .set({ isActive: false })
-    .where(and(eq(encounters.campaignId, campaignId), eq(encounters.isActive, true)));
+  const created = db.transaction((tx) => {
+    tx.update(encounters)
+      .set({ isActive: false })
+      .where(and(eq(encounters.campaignId, campaignId), eq(encounters.isActive, true)))
+      .run();
 
-  const [created] = await db
-    .insert(encounters)
-    .values({ campaignId, name: name ?? "Encounter" })
-    .returning();
+    return tx
+      .insert(encounters)
+      .values({ campaignId, name: name ?? "Encounter" })
+      .returning()
+      .get()!;
+  });
 
   return getEncounterSnapshot(created.id)!;
 }
@@ -84,21 +127,24 @@ export function getActiveEncounterForOwner(ownerUserId: number): EncounterSnapsh
 }
 
 export async function startPersonalEncounter(ownerUserId: number, name?: string) {
-  await db
-    .update(encounters)
-    .set({ isActive: false })
-    .where(
-      and(
-        eq(encounters.ownerUserId, ownerUserId),
-        isNull(encounters.campaignId),
-        eq(encounters.isActive, true),
-      ),
-    );
+  const created = db.transaction((tx) => {
+    tx.update(encounters)
+      .set({ isActive: false })
+      .where(
+        and(
+          eq(encounters.ownerUserId, ownerUserId),
+          isNull(encounters.campaignId),
+          eq(encounters.isActive, true),
+        ),
+      )
+      .run();
 
-  const [created] = await db
-    .insert(encounters)
-    .values({ campaignId: null, ownerUserId, name: name ?? "Encounter" })
-    .returning();
+    return tx
+      .insert(encounters)
+      .values({ campaignId: null, ownerUserId, name: name ?? "Encounter" })
+      .returning()
+      .get()!;
+  });
 
   return getEncounterSnapshot(created.id)!;
 }
@@ -119,6 +165,10 @@ export async function addCombatant(
     conditions?: string[];
   },
 ) {
+  const encounter = getEncounterRow(encounterId);
+  if (!encounter) throw new Error("Encounter not found");
+  const previousCombatantId = combatantIdAtTurn(encounterId, encounter.currentTurnIndex);
+
   const existing = db
     .select()
     .from(combatants)
@@ -137,6 +187,7 @@ export async function addCombatant(
     sortOrder: nextSortOrder,
   });
 
+  persistTurnIndexIfNeeded(encounterId, previousCombatantId, encounter.currentTurnIndex);
   return getEncounterSnapshot(encounterId)!;
 }
 
@@ -175,6 +226,10 @@ export async function updateCombatant(
   const combatant = getCombatantRow(id);
   if (!combatant) throw new Error("Combatant not found");
 
+  const encounter = getEncounterRow(combatant.encounterId);
+  if (!encounter) throw new Error("Encounter not found");
+  const previousCombatantId = combatantIdAtTurn(combatant.encounterId, encounter.currentTurnIndex);
+
   const dbUpdates: Record<string, unknown> = {};
   if (updates.name !== undefined) dbUpdates.name = updates.name;
   if (updates.initiative !== undefined) dbUpdates.initiative = updates.initiative;
@@ -183,6 +238,7 @@ export async function updateCombatant(
   if (updates.conditions !== undefined) dbUpdates.conditions = JSON.stringify(updates.conditions);
 
   await db.update(combatants).set(dbUpdates).where(eq(combatants.id, id));
+  persistTurnIndexIfNeeded(combatant.encounterId, previousCombatantId, encounter.currentTurnIndex);
   return getEncounterSnapshot(combatant.encounterId)!;
 }
 
@@ -190,7 +246,14 @@ export async function removeCombatant(id: number) {
   const combatant = getCombatantRow(id);
   if (!combatant) throw new Error("Combatant not found");
 
+  const encounter = getEncounterRow(combatant.encounterId);
+  if (!encounter) throw new Error("Encounter not found");
+  const previousCombatantId = combatantIdAtTurn(combatant.encounterId, encounter.currentTurnIndex);
+  // If we're removing the current combatant, fall back by index after delete.
+  const keepId = previousCombatantId === id ? null : previousCombatantId;
+
   await db.delete(combatants).where(eq(combatants.id, id));
+  persistTurnIndexIfNeeded(combatant.encounterId, keepId, encounter.currentTurnIndex);
   return getEncounterSnapshot(combatant.encounterId)!;
 }
 

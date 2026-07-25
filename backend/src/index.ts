@@ -36,7 +36,8 @@ app.get("/api/health", (_req, res) => {
     db.run(sql`select 1`);
     res.json({ status: "ok", db: "ok", version, commit });
   } catch (err) {
-    res.status(500).json({ status: "error", error: String(err), version, commit });
+    console.error("Health check DB error:", err);
+    res.status(500).json({ status: "error", error: "database unavailable", version, commit });
   }
 });
 

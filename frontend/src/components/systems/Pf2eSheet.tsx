@@ -63,6 +63,7 @@ export function Pf2eSheet({
         hpCurrent: hpCurrent === "" ? null : Number(hpCurrent),
         hpMax: hpMax === "" ? null : Number(hpMax),
         sheetData: sheet,
+        expectedUpdatedAt: character.updatedAt,
       });
       onSaved(updated);
       setSavedFlash(true);
@@ -221,7 +222,7 @@ export function Pf2eSheet({
         ))}
         <button
           type="button"
-          onClick={() => set("attacks", [...sheet.attacks, { id: `atk-${Date.now()}`, name: "", bonus: "", damage: "" }])}
+          onClick={() => set("attacks", [...sheet.attacks, { id: `atk-${crypto.randomUUID()}`, name: "", bonus: "", damage: "" }])}
         >
           Add attack
         </button>

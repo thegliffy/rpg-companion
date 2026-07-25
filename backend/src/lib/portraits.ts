@@ -16,11 +16,45 @@ function ensureDir() {
   fs.mkdirSync(PORTRAITS_DIR, { recursive: true });
 }
 
-export function savePortrait(characterId: number, buffer: Buffer, mimetype: string): string {
-  const ext = ALLOWED_PORTRAIT_MIME_TYPES[mimetype];
-  if (!ext) {
-    throw new Error(`Unsupported image type: ${mimetype}`);
+/** Detect image type from magic bytes; ignores client-declared MIME. */
+export function detectImageMime(buffer: Buffer): string | null {
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return "image/jpeg";
   }
+  if (
+    buffer.length >= 8 &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47 &&
+    buffer[4] === 0x0d &&
+    buffer[5] === 0x0a &&
+    buffer[6] === 0x1a &&
+    buffer[7] === 0x0a
+  ) {
+    return "image/png";
+  }
+  if (
+    buffer.length >= 12 &&
+    buffer.toString("ascii", 0, 4) === "RIFF" &&
+    buffer.toString("ascii", 8, 12) === "WEBP"
+  ) {
+    return "image/webp";
+  }
+  if (buffer.length >= 6) {
+    const header = buffer.toString("ascii", 0, 6);
+    if (header === "GIF87a" || header === "GIF89a") return "image/gif";
+  }
+  return null;
+}
+
+export function savePortrait(characterId: number, buffer: Buffer, _mimetype?: string): string {
+  // Prefer magic-byte detection over the client-declared MIME type.
+  const detected = detectImageMime(buffer);
+  if (!detected) {
+    throw new Error("Unsupported or invalid image file");
+  }
+  const ext = ALLOWED_PORTRAIT_MIME_TYPES[detected];
 
   ensureDir();
   removePortraitFile(characterId);

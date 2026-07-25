@@ -66,6 +66,13 @@ body {
   margin: 0;
 }
 
+/* Shared print helper — traditional sheet and app chrome use this class. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
 h1,
 h2 {
   font-family: var(--heading);

@@ -371,3 +371,69 @@ Goal: let a player hand someone a read-only view of a character without that per
     - **Rest wiring:** `longRest()` clears **all** martial pools (`martialUsed: {}`); `shortRest()` clears **only** Action Surge + Ki (RAW). Both functions already reset spell slots / wild shape / mystic arcanum, so this slots in alongside; mention it in the rest message.
     - **Scope decisions:** reset timing is RAW-accurate (Rage/Indomitable long-rest only; Action Surge/Ki short-or-long); **Ki "Use" = −1 point** (multi-click for costlier abilities — a "spend N" input is a later nicety); a level-20 Barbarian (`rageCount: -1`, unlimited) shows "Unlimited" with no counter; works for **custom classes** too since `effectiveLevelEntry` already surfaces custom martial data (#58). **Out of scope:** Bardic Inspiration and Battle Master superiority dice (not in the martial data model — separate features).
     - **Verify (done):** Barbarian (level 3) → Rage 3/3 → Use twice → 1/3, Reset button correctly disabled at full and enabled once spent, Use correctly disabled at 0/3 (no overspend past max, confirmed via `martialUsed: {rage: 3}` persisted server-side); short rest leaves Rage at 0/3 with no "Martial resources restored" note (Barbarian has no short-reset pools); long rest refills to 3/3, message says "Martial resources restored.", persisted `martialUsed: {}`. Fighter (level 2) → Action Surge 1/1 → Use → 0/1 → short rest refills to 1/1 with the note present (unlike Rage). Monk (level 2) → Ki Points render as a 2/2 counter alongside Martial Arts/Unarmored Movement staying as passive text (no double-render). Level-20 Barbarian → Rage shows "Unlimited (+4 dmg)" with zero buttons, Brutal Critical stays passive text.
+
+## Theme: hardening from 2026-07-24 code review
+
+Bugs, concurrency, and security gaps found in a static review of `main` @ `ca7b01f`. Ordered by severity; #82 is the urgent authz defect.
+
+82. ✅ **Fix cross-campaign shop item modification (Critical).** (done locally 2026-07-24) `updateShopItem` / `deleteShopItem` now resolve the campaign shop then mutate with `WHERE id = ? AND shop_id = ?`, throwing `ShopItemNotFoundError` (404) when the item is not in that shop. Routes catch and return 404.
+
+83. ✅ **Close the first-registration admin race (High).** (done locally 2026-07-24) bcrypt stays outside the critical section; `count(*)` + insert run inside a SQLite transaction so only the true first user becomes admin. Unique-username races map back to `UsernameTakenError`.
+
+84. ✅ **Prevent lost sheet updates and incomplete shop transfers (High).** (done locally 2026-07-24)
+    - **Character sheets:** `updateCharacter` accepts optional `expectedUpdatedAt`; mismatch → `CharacterConflictError` / HTTP 409. Shared schema + 5e/PF2e/generic sheets send it; 5e autosave shows a reload message on conflict.
+    - **Shop buy/sell:** buy/sell run character sheet + stock updates inside `db.transaction` with fresh reads.
+
+85. ✅ **Enforce a single active encounter (Medium).** (done locally 2026-07-24) `startEncounter` / `startPersonalEncounter` deactivate-then-insert inside a transaction. (DB partial unique index still optional follow-on.)
+
+86. ✅ **Clamp roll-history pagination (Medium).** (done locally 2026-07-24) Shared `parseLimit()` rejects ≤0 / non-finite and caps at 200; used by personal and campaign roll list routes. Covered by `pagination.test.ts`.
+
+87. ✅ **Keep initiative turn on the same combatant when order changes (Medium).** (done locally 2026-07-24) Add/update/remove combatant remaps `currentTurnIndex` to the previous current combatant's id after re-sort (falls back to a clamped index if that combatant was removed).
+
+88. ✅ **Rate-limit auth and invite joins (Medium).** (done locally 2026-07-24) In-memory sliding-window limiter on register (per IP), login (per IP + per username), and campaign join (per IP).
+
+89. ✅ **Ops / maintainability follow-ups (Lower).** (done locally 2026-07-24; integration tests still open as #90)
+    - ✅ Prune expired SQLite sessions hourly on read (+ delete expired row on get miss).
+    - ✅ Portrait uploads validated by magic bytes (`detectImageMime`); client MIME is no longer trusted for storage type. Unit tests added.
+    - ✅ `/api/health` returns a generic `"database unavailable"` instead of raw DB error strings.
+    - ✅ Backend `npm test` harness (`tsx --test`) with pagination + portrait unit tests.
+    - ✅ Lazy-load system sheets on `CharacterSheetPage` — initial JS chunk ~413 KB (was ~1.28 MB monolithic); SRD data still a large async chunk.
+    - ✅ Sheet entity ids use `crypto.randomUUID()` / shared `newEntityId()` instead of `Date.now()`.
+
+90. ✅ **Integration / regression tests.** (done locally 2026-07-24) Added `resetDbForTests` + temp-DB harness and `hardening.integration.test.ts` covering: #82 shop scoping, #83 first-admin race, #84 sheet 409 + shop buy transaction, #85 single active encounter, #77 share-token anonymous GET + unauthenticated PATCH 401. Run via `npm test -w backend`. Full breakup of `Dnd5eSheet.tsx` remains a follow-on (partially helped by `CollapsibleSection` in #92).
+
+## Theme: traditional sheet view
+
+Goal: offer a dense, paper-like **view** of a D&D 5e character that reads like a classic sheet, without replacing the existing editable form. Editing stays in `Dnd5eSheet`; the traditional view is presentational only, plus browser print/PDF.
+
+91. ✅ **Traditional 5e character sheet view + print.** (done locally 2026-07-24) View-only alternate layout toggled from the character page.
+    - **Toggle:** on the authenticated 5e character page (`CharacterSheetPage`), **Edit** | **Sheet**. Persist choice in `sessionStorage` so refresh keeps the mode. PF2e/generic keep the existing editor only.
+    - **Component:** new presentational `TraditionalDnd5eSheet` (not a restyle of the editor) fed by the same `Character` / `Dnd5eSheetData`. No autosave, no dice API calls, no inputs that mutate.
+    - **Layout (CSS Grid, approximates a classic 5e sheet):**
+      - Header: portrait, name, class/level, race/subrace, background, alignment, proficiency bonus
+      - Left: ability scores + modifiers, saving throws (proficiency marks)
+      - Center: combat (AC + breakdown, initiative, speed, HP, hit dice), attacks table, conditions
+      - Right: skills (proficiency marks + bonuses), passive Perception/Investigation/Insight, proficiencies & languages
+      - Below: spellcasting summary (ability, DC, attack, slots, prepared/known list), feats & features, inventory/currency/weight, personality, freeform notes; **private notes only when the viewer is the owner** (same redaction rule as elsewhere)
+    - **Math:** reuse shared helpers (`effectiveAbilityScore`, `saveBonus`, `skillBonus`, `effectiveAC`, `attackBonus`, `spellSaveDC`, etc.) so the Sheet view stays in sync with the editor.
+    - **Print:** **Print** button on Sheet view calls `window.print()`; `@media print` hides app chrome (header/footer), Back/Edit/Sheet controls, and any non-sheet UI; page-break hints for long spell/inventory blocks. Browser "Save as PDF" is the export path — no PDF library.
+    - **Out of scope:** editable traditional layout; PF2e/generic traditional views; dedicated PDF generation; new URL routing (in-page toggle only); wiring into the public share page (can reuse the component later).
+    - **Verify:** open a 5e character → Sheet shows dense layout with correct AC/skills/saves vs Edit; toggle persists across refresh; Print preview hides chrome and is readable; private notes absent when viewing another player's sheet as DM.
+
+## Theme: collapsible edit-sheet sections
+
+Goal: declutter the Edit 5e sheet by collapsing big blocks that do not matter for the character (e.g. Spellcasting on a pure martial), while always leaving a one-line **Show** control so nothing is unreachable. Traditional Sheet view (#91) is unchanged.
+
+92. ✅ **Collapsible Edit-sheet sections with smart defaults.** (done locally 2026-07-24) On [`Dnd5eSheet.tsx`](frontend/src/components/systems/Dnd5eSheet.tsx) only (not Traditional/PF2e/generic):
+    - **UX:** each target section gets a header with **Show** / **Hide**. Collapsed = one-line bar (title + short reason/count, e.g. "Spellcasting — not used · Show"). Expanded = existing full content.
+    - **Smart default (A):** start **collapsed when irrelevant**; start **expanded when relevant**. Manual expand/collapse overrides and is remembered per character in `sessionStorage` (e.g. `rpg-companion:sheet-sections:{characterId}`). If content becomes relevant mid-session (add a spell/feat), auto-expand that section even if previously collapsed.
+    - **Sections:**
+      - **Spellcasting** — irrelevant when `casterTypeForClass(class) === "none"` AND no spells AND no spellcasting ability (Eldritch Knight / Arcane Trickster / Magic Initiate with ability or spells → expanded).
+      - **Feats** — collapsed when `feats.length === 0`.
+      - **Features & traits** — collapsed when `features.length === 0` and `featuresText` empty.
+      - **Personality & notes** — collapsed when personality, private notes, and owner notes are all empty.
+      - **Inventory** — collapsible for declutter but **default expanded** (opt-in hide only).
+    - **Already gated (no change required):** Martial features, Wild Shape, Familiar, Pact Magic keep their existing show-when-relevant behavior.
+    - **Implementation sketch:** small `CollapsibleSection` helper (`id`, `title`, `defaultCollapsed`, `forceExpanded`, `summary`, children); relevance helpers using existing `casterTypeForClass` from [`class-progression.ts`](shared/src/systems/class-progression.ts); wrap the five blocks without moving their inner logic. Same rules in `readOnly` memorial view.
+    - **Out of scope:** Traditional view collapse; PF2e/generic; server-persisted prefs; removing sections entirely (always recoverable via Show).
+    - **Verify:** Fighter with no spells sees Spellcasting collapsed with Show; expanding sticks across refresh; adding a spell or setting spellcasting ability auto-expands; Wizard sees Spellcasting expanded by default; Hide on Inventory works but defaults open.

@@ -18,17 +18,25 @@ export async function createUser(username: string, password: string) {
     throw new UsernameTakenError(`Username "${username}" is already taken`);
   }
 
-  // Bootstrap: the very first account ever registered on this server becomes admin.
-  const { count } = db.select({ count: sql<number>`count(*)` }).from(users).get()!;
-  const role: GlobalRole = count === 0 ? "admin" : "player";
-
+  // Hash outside the transaction — bcrypt is slow. Count+insert must be atomic so two
+  // concurrent first registrations cannot both observe an empty table and both become admin.
   const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-  const [created] = await db
-    .insert(users)
-    .values({ username, passwordHash, role })
-    .returning();
 
-  return created;
+  try {
+    return db.transaction((tx) => {
+      const { count } = tx.select({ count: sql<number>`count(*)` }).from(users).get()!;
+      const role: GlobalRole = count === 0 ? "admin" : "player";
+      const created = tx.insert(users).values({ username, passwordHash, role }).returning().get();
+      return created!;
+    });
+  } catch (err) {
+    // Unique username race: another request inserted the same name between our check and insert.
+    const again = db.select().from(users).where(eq(users.username, username)).get();
+    if (again) {
+      throw new UsernameTakenError(`Username "${username}" is already taken`);
+    }
+    throw err;
+  }
 }
 
 export function listUsers() {

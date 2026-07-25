@@ -1,9 +1,9 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { shops, shopItems } from "../db/schema.js";
+import { characters, shops, shopItems } from "../db/schema.js";
 import type { Shop, ShopItem, Dnd5eSheetData } from "shared";
-import { currencyToCopper, copperToCurrency } from "shared";
-import { getCharacter, updateCharacter } from "./characters.service.js";
+import { currencyToCopper, copperToCurrency, newEntityId } from "shared";
+import { getCharacter } from "./characters.service.js";
 
 export class ShopClosedError extends Error {}
 export class ShopItemNotFoundError extends Error {}
@@ -76,12 +76,25 @@ export async function updateShopItem(
   itemId: number,
   updates: { name?: string; basePrice?: number; quantity?: number },
 ): Promise<Shop> {
-  await db.update(shopItems).set(updates).where(eq(shopItems.id, itemId));
+  const shopRow = await getOrCreateShopRow(campaignId);
+  const updated = db
+    .update(shopItems)
+    .set(updates)
+    .where(and(eq(shopItems.id, itemId), eq(shopItems.shopId, shopRow.id)))
+    .returning()
+    .get();
+  if (!updated) throw new ShopItemNotFoundError("Shop item not found");
   return getShop(campaignId);
 }
 
 export async function deleteShopItem(campaignId: number, itemId: number): Promise<Shop> {
-  await db.delete(shopItems).where(eq(shopItems.id, itemId));
+  const shopRow = await getOrCreateShopRow(campaignId);
+  const deleted = db
+    .delete(shopItems)
+    .where(and(eq(shopItems.id, itemId), eq(shopItems.shopId, shopRow.id)))
+    .returning()
+    .get();
+  if (!deleted) throw new ShopItemNotFoundError("Shop item not found");
   return getShop(campaignId);
 }
 
@@ -90,44 +103,61 @@ export async function buyItem(campaignId: number, characterId: number, shopItemI
   const shopRow = await getOrCreateShopRow(campaignId);
   if (!shopRow.isOpen) throw new ShopClosedError("The shop is closed");
 
-  const itemRow = db.select().from(shopItems).where(eq(shopItems.id, shopItemId)).get();
-  if (!itemRow || itemRow.shopId !== shopRow.id) throw new ShopItemNotFoundError("Shop item not found");
-  if (itemRow.quantity <= 0) throw new OutOfStockError("Out of stock");
+  db.transaction((tx) => {
+    const itemRow = tx
+      .select()
+      .from(shopItems)
+      .where(and(eq(shopItems.id, shopItemId), eq(shopItems.shopId, shopRow.id)))
+      .get();
+    if (!itemRow) throw new ShopItemNotFoundError("Shop item not found");
+    if (itemRow.quantity <= 0) throw new OutOfStockError("Out of stock");
 
-  const character = getCharacter(characterId);
-  if (!character || character.system !== "dnd5e" || character.campaignId !== campaignId) {
-    throw new CharacterNotEligibleError("Character not eligible to use this shop");
-  }
-  const sheet = character.sheetData as Dnd5eSheetData;
+    const characterRow = tx.select().from(characters).where(eq(characters.id, characterId)).get();
+    if (
+      !characterRow ||
+      characterRow.system !== "dnd5e" ||
+      characterRow.campaignId !== campaignId
+    ) {
+      throw new CharacterNotEligibleError("Character not eligible to use this shop");
+    }
+    const sheet = JSON.parse(characterRow.sheetData) as Dnd5eSheetData;
 
-  const costGp = Math.ceil((itemRow.basePrice * shopRow.buyRatePercent) / 100);
-  const costCopper = costGp * 100;
-  const currentCopper = currencyToCopper(sheet.currency);
-  if (currentCopper < costCopper) throw new InsufficientFundsError("Not enough currency");
+    const costGp = Math.ceil((itemRow.basePrice * shopRow.buyRatePercent) / 100);
+    const costCopper = costGp * 100;
+    const currentCopper = currencyToCopper(sheet.currency);
+    if (currentCopper < costCopper) throw new InsufficientFundsError("Not enough currency");
 
-  const updatedSheet: Dnd5eSheetData = {
-    ...sheet,
-    currency: copperToCurrency(currentCopper - costCopper),
-    items: [
-      ...sheet.items,
-      {
-        id: `item-${Date.now()}`,
-        name: itemRow.name,
-        quantity: 1,
-        weight: 0,
-        notes: "",
-        equipped: false,
-        abilityBonuses: {},
-        acBonus: 0,
-        requiresAttunement: false,
-        attuned: false,
-        value: itemRow.basePrice,
-      },
-    ],
-  };
+    const updatedSheet: Dnd5eSheetData = {
+      ...sheet,
+      currency: copperToCurrency(currentCopper - costCopper),
+      items: [
+        ...sheet.items,
+        {
+          id: newEntityId("item"),
+          name: itemRow.name,
+          quantity: 1,
+          weight: 0,
+          notes: "",
+          equipped: false,
+          abilityBonuses: {},
+          acBonus: 0,
+          requiresAttunement: false,
+          attuned: false,
+          value: itemRow.basePrice,
+        },
+      ],
+    };
 
-  await updateCharacter(characterId, { sheetData: updatedSheet });
-  await db.update(shopItems).set({ quantity: itemRow.quantity - 1 }).where(eq(shopItems.id, shopItemId));
+    const now = new Date().toISOString();
+    tx.update(characters)
+      .set({ sheetData: JSON.stringify(updatedSheet), updatedAt: now })
+      .where(eq(characters.id, characterId))
+      .run();
+    tx.update(shopItems)
+      .set({ quantity: itemRow.quantity - 1 })
+      .where(eq(shopItems.id, shopItemId))
+      .run();
+  });
 
   return { character: getCharacter(characterId)!, shop: await getShop(campaignId) };
 }
@@ -137,30 +167,40 @@ export async function sellItem(campaignId: number, characterId: number, itemId: 
   const shopRow = await getOrCreateShopRow(campaignId);
   if (!shopRow.isOpen) throw new ShopClosedError("The shop is closed");
 
-  const character = getCharacter(characterId);
-  if (!character || character.system !== "dnd5e" || character.campaignId !== campaignId) {
-    throw new CharacterNotEligibleError("Character not eligible to use this shop");
-  }
-  const sheet = character.sheetData as Dnd5eSheetData;
-  const item = sheet.items.find((i) => i.id === itemId);
-  if (!item) throw new InventoryItemNotFoundError("Inventory item not found");
+  db.transaction((tx) => {
+    const characterRow = tx.select().from(characters).where(eq(characters.id, characterId)).get();
+    if (
+      !characterRow ||
+      characterRow.system !== "dnd5e" ||
+      characterRow.campaignId !== campaignId
+    ) {
+      throw new CharacterNotEligibleError("Character not eligible to use this shop");
+    }
+    const sheet = JSON.parse(characterRow.sheetData) as Dnd5eSheetData;
+    const item = sheet.items.find((i) => i.id === itemId);
+    if (!item) throw new InventoryItemNotFoundError("Inventory item not found");
 
-  const payoutGp = Math.ceil((item.value * shopRow.sellRatePercent) / 100);
-  const payoutCopper = payoutGp * 100;
-  const currentCopper = currencyToCopper(sheet.currency);
+    const payoutGp = Math.ceil((item.value * shopRow.sellRatePercent) / 100);
+    const payoutCopper = payoutGp * 100;
+    const currentCopper = currencyToCopper(sheet.currency);
 
-  const items =
-    item.quantity > 1
-      ? sheet.items.map((i) => (i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i))
-      : sheet.items.filter((i) => i.id !== itemId);
+    const items =
+      item.quantity > 1
+        ? sheet.items.map((i) => (i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i))
+        : sheet.items.filter((i) => i.id !== itemId);
 
-  const updatedSheet: Dnd5eSheetData = {
-    ...sheet,
-    currency: copperToCurrency(currentCopper + payoutCopper),
-    items,
-  };
+    const updatedSheet: Dnd5eSheetData = {
+      ...sheet,
+      currency: copperToCurrency(currentCopper + payoutCopper),
+      items,
+    };
 
-  await updateCharacter(characterId, { sheetData: updatedSheet });
+    const now = new Date().toISOString();
+    tx.update(characters)
+      .set({ sheetData: JSON.stringify(updatedSheet), updatedAt: now })
+      .where(eq(characters.id, characterId))
+      .run();
+  });
 
   return { character: getCharacter(characterId)!, shop: await getShop(campaignId) };
 }

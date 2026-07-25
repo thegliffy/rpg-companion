@@ -38,7 +38,7 @@ function App() {
 
   return (
     <div>
-      <header style={{ display: "flex", justifyContent: "space-between", padding: "1rem 2rem" }}>
+      <header className="no-print" style={{ display: "flex", justifyContent: "space-between", padding: "1rem 2rem" }}>
         <span>Signed in as {user.username}</span>
         <span>
           {view.name !== "bestiary" && (
@@ -100,7 +100,7 @@ function App() {
       {view.name === "bestiary" && <BestiaryPage onBack={() => setView({ name: "home" })} />}
       {view.name === "arena" && <ArenaPage onBack={() => setView({ name: "home" })} />}
 
-      <footer style={{ padding: "0.75rem 2rem", textAlign: "center", fontSize: "0.75rem", color: "#999" }}>
+      <footer className="no-print" style={{ padding: "0.75rem 2rem", textAlign: "center", fontSize: "0.75rem", color: "#999" }}>
         RPG Companion v{APP_VERSION} · {GIT_SHA}
       </footer>
     </div>
