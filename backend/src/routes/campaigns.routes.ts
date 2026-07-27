@@ -84,6 +84,7 @@ campaignsRouter.get("/", (req, res) => {
 campaignsRouter.post(
   "/join",
   rateLimit({
+    name: "campaign-join",
     windowMs: 15 * 60 * 1000,
     max: 20,
     message: "Too many join attempts, try again later",

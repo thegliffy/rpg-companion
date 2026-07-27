@@ -287,3 +287,104 @@ describe("campaign character list redaction (#93)", () => {
     });
   });
 });
+
+describe("rate limiter fixes (#98)", () => {
+  let server: Server;
+  let baseUrl: string;
+
+  before(async () => {
+    setupTestDatabase();
+    const app = express();
+    // Mirrors index.ts's production config -- required for X-Forwarded-For to drive req.ip below.
+    app.set("trust proxy", true);
+    app.use(express.json());
+    app.use(createSessionMiddleware());
+    app.use("/api/auth", authRouter);
+    app.use("/api/campaigns", campaignsRouter);
+    server = await new Promise<Server>((resolve) => {
+      const s = app.listen(0, "127.0.0.1", () => resolve(s));
+    });
+    const addr = server.address();
+    if (!addr || typeof addr === "string") throw new Error("no port");
+    baseUrl = `http://127.0.0.1:${addr.port}`;
+  });
+
+  it("scopes the per-username login limiter to (username, requester IP), not username alone", async () => {
+    const suffix = Date.now();
+    const username = `victim-${suffix}`;
+    await createUser(username, "correct-password-1");
+
+    async function loginAttempt(password: string, attackerIp: string) {
+      return fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Forwarded-For": attackerIp },
+        body: JSON.stringify({ username, password }),
+      });
+    }
+
+    // Attacker at one IP burns the per-(username, ip) budget with wrong passwords.
+    let lastStatus = 0;
+    for (let i = 0; i < 10; i++) {
+      const res = await loginAttempt("wrong-password", "10.0.0.1");
+      lastStatus = res.status;
+    }
+    assert.equal(lastStatus, 401, "the 10th wrong attempt should still be a normal auth failure");
+    const blockedRes = await loginAttempt("wrong-password", "10.0.0.1");
+    assert.equal(blockedRes.status, 429, "the 11th attempt from the same attacker IP should be rate-limited");
+
+    // The real user, logging in correctly from their own (different) IP, must be unaffected.
+    const realUserRes = await loginAttempt("correct-password-1", "10.0.0.2");
+    assert.equal(realUserRes.status, 200, "a login for the same username from a different IP must not be blocked");
+  });
+
+  it("does not let unrelated endpoints share a rate-limit bucket", async () => {
+    const attackerIp = "10.0.1.1";
+
+    // POST /campaigns/join sits behind requireAuth, so exercising its rate limiter needs a real
+    // session -- log in over HTTP (not just createUser) to get one, same as the redaction test.
+    const suffix = Date.now();
+    const joinUsername = `join-limit-${suffix}`;
+    await fetch(`${baseUrl}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: joinUsername, password: "join-password-1" }),
+    });
+    const loginRes = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: joinUsername, password: "join-password-1" }),
+    });
+    const sessionCookie = loginRes.headers.get("set-cookie")?.split(";")[0];
+    if (!sessionCookie) throw new Error("login did not set a cookie");
+
+    // Exhaust the campaign-join limiter (max 20) from this IP with invalid invite codes.
+    for (let i = 0; i < 20; i++) {
+      await fetch(`${baseUrl}/api/campaigns/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Forwarded-For": attackerIp, Cookie: sessionCookie },
+        body: JSON.stringify({ inviteCode: "NOPE" }),
+      });
+    }
+    const joinBlockedRes = await fetch(`${baseUrl}/api/campaigns/join`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Forwarded-For": attackerIp, Cookie: sessionCookie },
+      body: JSON.stringify({ inviteCode: "NOPE" }),
+    });
+    assert.equal(joinBlockedRes.status, 429, "the join limiter's own budget should now be exhausted");
+
+    // A registration from the SAME IP must still work -- it has its own budget (max 10), untouched
+    // by the 20+ requests that went through the join limiter's bucket.
+    const registerRes = await fetch(`${baseUrl}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Forwarded-For": attackerIp },
+      body: JSON.stringify({ username: `fresh-${Date.now()}`, password: "some-password-1" }),
+    });
+    assert.equal(registerRes.status, 201, "registration must not be blocked by an unrelated endpoint's rate limit");
+  });
+
+  it("closes the test server", async () => {
+    await new Promise<void>((resolve, reject) => {
+      server.close((err) => (err ? reject(err) : resolve()));
+    });
+  });
+});

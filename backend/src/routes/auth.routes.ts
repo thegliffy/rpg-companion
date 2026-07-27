@@ -13,23 +13,32 @@ import { rateLimit } from "../middleware/rateLimit.js";
 export const authRouter = Router();
 
 const registerLimit = rateLimit({
+  name: "register",
   windowMs: 15 * 60 * 1000,
   max: 10,
   message: "Too many registration attempts, try again later",
 });
 
 const loginIpLimit = rateLimit({
+  name: "login-ip",
   windowMs: 15 * 60 * 1000,
   max: 30,
   message: "Too many login attempts, try again later",
 });
 
+// Keyed on (username, requester IP) rather than username alone: an unauthenticated attacker
+// could otherwise lock any named user out for the whole window by sending a handful of wrong
+// passwords from anywhere -- scoping to the attacker's own IP means the real user, logging in
+// from their own IP, is unaffected. Username is compared exactly as typed (no case-folding),
+// matching findUserByUsername's case-sensitive lookup -- lowercasing here would let one bucket
+// throttle multiple distinct case-variant accounts ("Alice" vs "alice").
 const loginUserLimit = rateLimit({
+  name: "login-user",
   windowMs: 15 * 60 * 1000,
   max: 10,
   key: (req) => {
-    const username = typeof req.body?.username === "string" ? req.body.username.trim().toLowerCase() : "";
-    return `login-user:${username || req.ip || "unknown"}`;
+    const username = typeof req.body?.username === "string" ? req.body.username.trim() : "";
+    return `login-user:${username || "unknown"}:${req.ip ?? "unknown"}`;
   },
   message: "Too many login attempts for this username, try again later",
 });
