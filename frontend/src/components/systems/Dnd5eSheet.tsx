@@ -562,6 +562,14 @@ export function Dnd5eSheet({
   // weapon attack row and/or the Book of Shadows cantrips -- so choosing a different boon doesn't
   // leave orphaned content behind (mirrors removeFeat/removeFeature's granted-spell cleanup).
   function changePactBoon(boon: Dnd5eSheetData["pactBoon"]) {
+    const losesPactWeapon = boon !== "blade" && sheet.attacks.some((a) => a.id === PACT_WEAPON_ATTACK_ID);
+    const losesTomeCantrips = boon !== "tome" && sheet.spells.some((s) => s.id.startsWith(TOME_CANTRIP_PREFIX));
+    if (losesPactWeapon || losesTomeCantrips) {
+      const what = [losesPactWeapon && "your pact weapon", losesTomeCantrips && "your Book of Shadows cantrips"]
+        .filter(Boolean)
+        .join(" and ");
+      if (!confirm(`Changing your Pact Boon will permanently remove ${what}. Continue?`)) return;
+    }
     setSheet((prev) => ({
       ...prev,
       pactBoon: boon,
@@ -1923,7 +1931,12 @@ export function Dnd5eSheet({
           <SpellPickerModal
             characterClass={sheet.class}
             characterLevel={sheet.level}
-            currentSpells={sheet.spells}
+            // Book of Shadows (Pact of the Tome) cantrips are a separate pool managed only by
+            // their own picker below -- excluded here so they don't show pre-checked (which would
+            // let un-checking them here silently delete a tome slot) and so a player can still add
+            // the same cantrip as a normal known spell alongside its tome copy, per RAW ("don't
+            // count against the number of spells you know").
+            currentSpells={sheet.spells.filter((s) => !s.id.startsWith(TOME_CANTRIP_PREFIX))}
             customSpells={customSpells}
             onToggle={(spell, adding) => {
               if (adding) {
@@ -1932,7 +1945,9 @@ export function Dnd5eSheet({
                   { id: `spell-${crypto.randomUUID()}`, srdId: spell.id, name: spell.name, level: spell.level, prepared: false, atWill: false },
                 ]);
               } else {
-                set("spells", sheet.spells.filter((s) => s.srdId !== spell.id));
+                // Keep every tome-tagged entry regardless of srdId match -- only remove a
+                // non-tome spell with this srdId, mirroring the tome picker's own scoping.
+                set("spells", sheet.spells.filter((s) => s.id.startsWith(TOME_CANTRIP_PREFIX) || s.srdId !== spell.id));
               }
             }}
             onClose={() => setPickerOpen(false)}
