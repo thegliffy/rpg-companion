@@ -302,6 +302,15 @@ export function CharacterCreationWizard({
     [classProfs, backgroundGrantSkillIds],
   );
 
+  // If a background change (picked after class skills were already chosen) newly overlaps with
+  // one of those picks, its checkbox disappears from classSkillOptions above -- prune it from the
+  // selection too, or it stays silently counted toward classChoicesComplete while invisible, and
+  // create()'s merge with backgroundGrantSkillIds would then dedupe it away, granting the
+  // character fewer skills than the class actually allows.
+  useEffect(() => {
+    setClassSkillSel((prev) => prev.filter((id) => classSkillOptions.includes(id)));
+  }, [classSkillOptions]);
+
   function toggleClassSkill(skillId: string) {
     if (!classProfs) return;
     setClassSkillSel((prev) => {
@@ -311,7 +320,11 @@ export function CharacterCreationWizard({
     });
   }
 
-  const classChoicesComplete = !classProfs || classSkillSel.length === classProfs.skillChoiceCount;
+  // Clamped to the options actually available: an over-eager custom background can grant enough
+  // fixed skills to shrink classSkillOptions below skillChoiceCount, and requiring the full count
+  // in that case would be unsatisfiable -- deadlocking the wizard with no way to proceed.
+  const classSkillRequiredCount = classProfs ? Math.min(classProfs.skillChoiceCount, classSkillOptions.length) : 0;
+  const classChoicesComplete = !classProfs || classSkillSel.length === classSkillRequiredCount;
 
   // Text lines for the class's fixed (non-skill, non-save) proficiencies, for proficienciesText.
   function classProficiencyLines(): string[] {
@@ -654,8 +667,10 @@ export function CharacterCreationWizard({
                         </small>
                       </p>
                       <small>
-                        Choose {classProfs.skillChoiceCount} class skill{classProfs.skillChoiceCount > 1 ? "s" : ""} (
-                        {classSkillSel.length}/{classProfs.skillChoiceCount} selected):
+                        Choose {classSkillRequiredCount} class skill{classSkillRequiredCount === 1 ? "" : "s"} (
+                        {classSkillSel.length}/{classSkillRequiredCount} selected):
+                        {classSkillRequiredCount < classProfs.skillChoiceCount &&
+                          ` (background overlap reduced this from ${classProfs.skillChoiceCount})`}
                       </small>
                       <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
                         {classSkillOptions.map((skillId) => (
