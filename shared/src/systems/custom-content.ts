@@ -304,6 +304,11 @@ export const customFeatDataSchema = effectBonusesSchema.extend({
   // Spells this feat grants (e.g. Magic Initiate) -- pushed onto sheet.spells on pick, tagged
   // with the feat entry's id so removing the feat also removes the granted spells.
   grantedSpells: z.array(grantedSpellSchema).max(10).default([]),
+  // Prerequisites -- shown as a hint in FeatPickerModal (red when unmet), never enforced, same
+  // house rule as SRD_INVOCATIONS' prereqLevel/prereqPact (srd-invocations.ts).
+  prereqAbility: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(1).max(30)).default({}),
+  prereqLevel: z.number().int().min(0).max(20).default(0),
+  prereqText: z.string().trim().max(120).default(""),
 });
 export type CustomFeatData = z.infer<typeof customFeatDataSchema>;
 

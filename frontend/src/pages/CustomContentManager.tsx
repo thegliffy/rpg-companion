@@ -358,6 +358,9 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [featSpellAtk, setFeatSpellAtk] = useState("0");
   const [featSkillProficiencies, setFeatSkillProficiencies] = useState<string[]>([]);
   const [featGrantedSpells, setFeatGrantedSpells] = useState<FeatGrantedSpellRow[]>([]);
+  const [featPrereqAbility, setFeatPrereqAbility] = useState<Partial<Record<Dnd5eAbility, string>>>({});
+  const [featPrereqLevel, setFeatPrereqLevel] = useState("0");
+  const [featPrereqText, setFeatPrereqText] = useState("");
 
   // Spell fields
   const [spellLevel, setSpellLevel] = useState("0");
@@ -455,6 +458,9 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setFeatSpellAtk("0");
     setFeatSkillProficiencies([]);
     setFeatGrantedSpells([]);
+    setFeatPrereqAbility({});
+    setFeatPrereqLevel("0");
+    setFeatPrereqText("");
     setSpellLevel("0");
     setSpellSchool("");
     setSpellCastingTime("1 action");
@@ -586,6 +592,9 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         spellAttackBonus: number;
         skillProficiencies?: string[];
         grantedSpells?: { name: string; level: number; atWill: boolean }[];
+        prereqAbility?: Partial<Record<Dnd5eAbility, number>>;
+        prereqLevel?: number;
+        prereqText?: string;
       };
       setFeatDescription(d.description);
       const bonuses: Partial<Record<Dnd5eAbility, string>> = {};
@@ -600,6 +609,11 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       setFeatGrantedSpells(
         (d.grantedSpells ?? []).map((gs) => ({ name: gs.name, level: String(gs.level), atWill: gs.atWill })),
       );
+      const prereqBonuses: Partial<Record<Dnd5eAbility, string>> = {};
+      for (const [k, v] of Object.entries(d.prereqAbility ?? {})) prereqBonuses[k as Dnd5eAbility] = String(v);
+      setFeatPrereqAbility(prereqBonuses);
+      setFeatPrereqLevel(String(d.prereqLevel ?? 0));
+      setFeatPrereqText(d.prereqText ?? "");
     } else if (item.type === "spell") {
       const d = item.data as {
         level: number;
@@ -818,6 +832,11 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                 atWill: r.atWill,
               };
             }),
+          prereqAbility: Object.fromEntries(
+            Object.entries(featPrereqAbility).map(([k, v]) => [k, Number(v) || 0]).filter(([, v]) => v !== 0),
+          ),
+          prereqLevel: Number(featPrereqLevel) || 0,
+          prereqText: featPrereqText.trim(),
         };
       } else if (type === "spell") {
         data = {
@@ -1605,6 +1624,39 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                 Spell attack <input type="number" style={{ width: "3rem" }} value={featSpellAtk} onChange={(e) => setFeatSpellAtk(e.target.value)} />
               </label>
             </div>
+
+            <h4>Prerequisites (shown as a hint, not enforced)</h4>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+              {DND5E_ABILITIES.map((a) => (
+                <label key={a}>
+                  {DND5E_ABILITY_NAMES[a]} min{" "}
+                  <input
+                    type="number"
+                    style={{ width: "3rem" }}
+                    value={featPrereqAbility[a] ?? ""}
+                    onChange={(e) => setFeatPrereqAbility((prev) => ({ ...prev, [a]: e.target.value }))}
+                  />
+                </label>
+              ))}
+              <label>
+                Level{" "}
+                <input
+                  type="number"
+                  style={{ width: "3rem" }}
+                  value={featPrereqLevel}
+                  onChange={(e) => setFeatPrereqLevel(e.target.value)}
+                />
+              </label>
+            </div>
+            <label style={{ display: "block", marginTop: "0.4rem" }}>
+              Other prerequisite text (e.g. "Proficiency with heavy armor")
+              <br />
+              <input
+                value={featPrereqText}
+                onChange={(e) => setFeatPrereqText(e.target.value)}
+                style={{ width: "100%" }}
+              />
+            </label>
 
             <h4>Skill proficiencies granted</h4>
             <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", fontSize: "0.9rem" }}>

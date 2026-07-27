@@ -2521,7 +2521,7 @@ export function Dnd5eSheet({
           at a first ASI's "take a feat" pick, which would otherwise silently consume the ASI with
           no modal ever mounting to resolve it. */}
       {featPickerContext !== null && (
-        <FeatPickerModal customFeats={customFeats} onPick={addFeat} onClose={() => setFeatPickerContext(null)} />
+        <FeatPickerModal sheet={sheet} customFeats={customFeats} onPick={addFeat} onClose={() => setFeatPickerContext(null)} />
       )}
 
       {/* Features & traits */}
