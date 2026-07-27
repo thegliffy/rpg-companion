@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import type { Character, CampaignRole, Dnd5eSheetData } from "shared";
-import { characterIsActive } from "shared";
+import type { Character, CampaignRole } from "shared";
+import { characterIsActive, dnd5eSheetSchema } from "shared";
 import * as shopsApi from "../api/shops";
 import * as charactersApi from "../api/characters";
 
@@ -32,7 +32,9 @@ export function ShopSection({
 
   const eligibleCharacters = role === "dm" ? characters : characters.filter((c) => c.ownerUserId === currentUserId);
   const selectedCharacter = characters.find((c) => c.id === selectedCharacterId) ?? null;
-  const selectedSheet = selectedCharacter ? (selectedCharacter.sheetData as Dnd5eSheetData) : null;
+  // Parsed (not cast) so a row stored before a schema field existed still gets that field's
+  // default instead of leaving e.g. .items/.currency undefined below.
+  const selectedSheet = selectedCharacter ? dnd5eSheetSchema.parse(selectedCharacter.sheetData ?? {}) : null;
 
   async function guard(action: () => Promise<unknown>) {
     setError(null);

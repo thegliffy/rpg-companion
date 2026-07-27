@@ -205,7 +205,16 @@ charactersRouter.post(
       return;
     }
 
-    const filename = savePortrait(req.characterRow!.id, req.file.buffer, req.file.mimetype);
+    let filename: string;
+    try {
+      filename = savePortrait(req.characterRow!.id, req.file.buffer, req.file.mimetype);
+    } catch (err) {
+      // Magic-byte detection failed -- the client declared an allowed MIME type but the actual
+      // bytes aren't a supported image (mislabeled/truncated/corrupt file), so this is bad input,
+      // not a server error.
+      res.status(400).json({ error: err instanceof Error ? err.message : "Invalid image upload" });
+      return;
+    }
     await setCharacterPortrait(req.characterRow!.id, filename);
     // setCharacterPortrait bumps updatedAt -- return the fresh character so the sheet's
     // optimistic-concurrency token stays in sync instead of every later autosave 409ing.

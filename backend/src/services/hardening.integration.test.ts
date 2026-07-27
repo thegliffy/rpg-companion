@@ -388,3 +388,91 @@ describe("rate limiter fixes (#98)", () => {
     });
   });
 });
+
+describe("empty shop-item PATCH and bad portrait upload return 4xx, not 500 (#99a, #99b)", () => {
+  let server: Server;
+  let baseUrl: string;
+
+  before(async () => {
+    setupTestDatabase();
+    const app = express();
+    app.use(express.json());
+    app.use(createSessionMiddleware());
+    app.use("/api/auth", authRouter);
+    app.use("/api/campaigns", campaignsRouter);
+    app.use("/api/characters", charactersRouter);
+    server = await new Promise<Server>((resolve) => {
+      const s = app.listen(0, "127.0.0.1", () => resolve(s));
+    });
+    const addr = server.address();
+    if (!addr || typeof addr === "string") throw new Error("no port");
+    baseUrl = `http://127.0.0.1:${addr.port}`;
+  });
+
+  async function loginCookie(username: string, password: string): Promise<string> {
+    const res = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    assert.equal(res.status, 200);
+    const cookie = res.headers.get("set-cookie");
+    if (!cookie) throw new Error("login did not set a cookie");
+    return cookie.split(";")[0];
+  }
+
+  it("99a: an empty shop-item PATCH body is a 400, not a 500, and a real patch still works", async () => {
+    const suffix = Date.now();
+    const dm = await createUser(`shopfix-dm-${suffix}`, "password-sf-1");
+    const campaign = await createCampaign(dm.id, "Shop Fix Test Campaign");
+    const shop = await addShopItem(campaign.id, { name: "Test Sword", basePrice: 10, quantity: 5 });
+    const item = shop.items[shop.items.length - 1];
+
+    const cookie = await loginCookie(`shopfix-dm-${suffix}`, "password-sf-1");
+
+    const emptyRes = await fetch(`${baseUrl}/api/campaigns/${campaign.id}/shop/items/${item.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Cookie: cookie },
+      body: JSON.stringify({}),
+    });
+    assert.equal(emptyRes.status, 400, "an empty patch body must be rejected with a normal 400");
+
+    const realRes = await fetch(`${baseUrl}/api/campaigns/${campaign.id}/shop/items/${item.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Cookie: cookie },
+      body: JSON.stringify({ quantity: 3 }),
+    });
+    assert.equal(realRes.status, 200, "a non-empty patch must still succeed");
+    const realBody = (await realRes.json()) as { shop: { items: { id: number; quantity: number }[] } };
+    assert.equal(realBody.shop.items.find((i) => i.id === item.id)?.quantity, 3);
+  });
+
+  it("99b: an image upload that fails magic-byte detection is a 400, not a 500", async () => {
+    const suffix = Date.now();
+    const user = await createUser(`portraitfix-${suffix}`, "password-pf-1");
+    const sheet = emptyDnd5eSheet();
+    const character = await createCharacter(user.id, { name: "Portrait Fix Test", system: "dnd5e", sheetData: sheet });
+
+    const cookie = await loginCookie(`portraitfix-${suffix}`, "password-pf-1");
+
+    // multer's fileFilter only checks the client-declared Content-Type, so a text file declared
+    // as image/png reaches savePortrait's magic-byte check and fails it.
+    const form = new FormData();
+    form.append("portrait", new Blob([new TextEncoder().encode("not actually a png")], { type: "image/png" }), "fake.png");
+
+    const res = await fetch(`${baseUrl}/api/characters/${character.id}/portrait`, {
+      method: "POST",
+      headers: { Cookie: cookie },
+      body: form,
+    });
+    assert.equal(res.status, 400, "a mislabeled/corrupt image must be rejected with a 400, not crash into a 500");
+    const body = (await res.json()) as { error: string };
+    assert.match(body.error, /unsupported|invalid/i);
+  });
+
+  it("closes the test server", async () => {
+    await new Promise<void>((resolve, reject) => {
+      server.close((err) => (err ? reject(err) : resolve()));
+    });
+  });
+});

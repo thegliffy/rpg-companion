@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Character, Dnd5eSheetData, Dnd5eAbility } from "shared";
 import {
+  dnd5eSheetSchema,
   DND5E_ABILITIES,
   DND5E_ABILITY_NAMES,
   DND5E_SKILLS,
@@ -32,7 +33,10 @@ export function TraditionalDnd5eSheet({
   /** When false, omit private notes (DM viewing someone else's sheet). */
   showPrivateNotes: boolean;
 }) {
-  const sheet = character.sheetData as Dnd5eSheetData;
+  // Parsed (not just cast) so a row stored before a schema field existed still gets that field's
+  // default -- the sheet's own edit view (Dnd5eSheet.tsx) already does this; a raw cast left every
+  // array/object field `undefined` on an old row, throwing on the very first .map()/spread below.
+  const sheet = dnd5eSheetSchema.parse(character.sheetData ?? {});
   const [portraitOk, setPortraitOk] = useState(true);
   const prof = proficiencyBonus(sheet.level);
   const ac = effectiveAC(sheet);

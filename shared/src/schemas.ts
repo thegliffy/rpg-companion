@@ -129,11 +129,16 @@ export const createShopItemSchema = z.object({
   quantity: z.number().int().min(0).max(999999).default(0),
 });
 
-export const updateShopItemSchema = z.object({
-  name: z.string().trim().min(1).max(100).optional(),
-  basePrice: z.number().int().min(0).max(999999).optional(),
-  quantity: z.number().int().min(0).max(999999).optional(),
-});
+export const updateShopItemSchema = z
+  .object({
+    name: z.string().trim().min(1).max(100).optional(),
+    basePrice: z.number().int().min(0).max(999999).optional(),
+    quantity: z.number().int().min(0).max(999999).optional(),
+  })
+  // Every field is individually optional (a partial patch), but an empty body would reach
+  // drizzle's .set({}) and throw "No values to set" before any DB access -- reject it here with a
+  // normal 400 instead, and stop it from masking the not-found check behind that unhandled throw.
+  .refine((v) => Object.keys(v).length > 0, { message: "At least one field must be provided" });
 
 export const buyShopItemSchema = z.object({
   characterId: z.number().int(),

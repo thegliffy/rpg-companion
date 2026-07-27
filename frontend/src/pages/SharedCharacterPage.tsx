@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import type { Character, Dnd5eSheetData } from "shared";
+import type { Character } from "shared";
 import {
+  dnd5eSheetSchema,
   DND5E_ABILITIES,
   DND5E_ABILITY_NAMES,
   DND5E_SKILLS,
@@ -68,7 +69,9 @@ export function SharedCharacterPage({ token }: { token: string }) {
 }
 
 function SharedDnd5e({ character, token }: { character: Character; token: string }) {
-  const sheet = character.sheetData as Dnd5eSheetData;
+  // Parsed (not cast) so a row stored before a schema field existed still gets that field's
+  // default instead of throwing on the first .map()/spread over an undefined array below.
+  const sheet = dnd5eSheetSchema.parse(character.sheetData ?? {});
   const saveDC = spellSaveDC(sheet);
   const atkBonus = spellAttackBonus(sheet);
   const breakdown = acBreakdownText(sheet);
