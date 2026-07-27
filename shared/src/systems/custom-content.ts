@@ -4,6 +4,20 @@ import type { ClassLevelEntry, CasterType } from "./class-progression.js";
 import type { SrdSpell } from "./srd-spells.js";
 import type { SrdMonster } from "./srd-monsters.js";
 import type { CustomContentType, CustomContentSystem, CustomContent } from "../types.js";
+import { newEntityId } from "../id.js";
+
+// Structured effect bonuses shared by feats and background features (#100). All manually
+// entered; summed into the sheet's derived ability/AC/attack/spell values when active. Defined
+// early since both customFeatDataSchema and the background feature schema below extend it.
+export const effectBonusesSchema = z.object({
+  abilityBonuses: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(-10).max(10)).default({}),
+  acBonus: z.number().int().min(-10).max(10).default(0),
+  attackBonus: z.number().int().min(-10).max(10).default(0),
+  damageBonus: z.number().int().min(-10).max(10).default(0),
+  spellDCBonus: z.number().int().min(-10).max(10).default(0),
+  spellAttackBonus: z.number().int().min(-10).max(10).default(0),
+});
+export type EffectBonuses = z.infer<typeof effectBonusesSchema>;
 
 export const customRaceDataSchema = z.object({
   abilityBonuses: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(-4).max(4)).default({}),
@@ -74,6 +88,17 @@ const backgroundVariantSchema = z.object({
   description: z.string().trim().max(500).default(""),
 });
 
+// A background feature (#100) -- some SRD-parity backgrounds grant more than one distinct
+// feature, so this is a repeatable array rather than the single {name, description} pair it
+// used to be. Carries the same effect-bonus row a feat does, so a homebrew feature can grant a
+// real mechanical bonus, not just reference text.
+const backgroundFeatureSchema = effectBonusesSchema.extend({
+  id: z.string().min(1),
+  name: z.string().trim().max(60),
+  description: z.string().trim().max(500).default(""),
+});
+export type BackgroundFeature = z.infer<typeof backgroundFeatureSchema>;
+
 const rawCustomBackgroundDataSchema = z.object({
   skills: z
     .object({
@@ -101,12 +126,9 @@ const rawCustomBackgroundDataSchema = z.object({
       gold: z.number().min(0).max(9999).default(0),
     })
     .default({}),
-  feature: z
-    .object({
-      name: z.string().trim().max(60).default(""),
-      description: z.string().trim().max(500).default(""),
-    })
-    .default({}),
+  // #100: repeatable so a background can grant more than one distinct feature, each with its own
+  // effect bonuses -- was a single {name, description} pair (see the preprocess migration below).
+  features: z.array(backgroundFeatureSchema).max(5).default([]),
   // "Lore boxes" -- a pick-one (or pick-N) set of themed flavor variants, e.g. which faction/
   // origin/god the background attaches to. v1 is flavor-only (title + description); a per-variant
   // mechanical tweak is a natural future extension once a concrete need shows up.
@@ -114,32 +136,63 @@ const rawCustomBackgroundDataSchema = z.object({
   variantPickCount: z.number().int().min(0).max(5).default(1),
 });
 
-// Upgrades the legacy flat shape ({skillProficiencies, feature, toolProficiencies, equipmentText}
-// -- what every background created before this structured redesign has stored) into the new
-// fixed+choice shape, so old custom-content rows keep parsing without a data migration (the JSON
-// blob in custom_content.data never changes; only how we read it does).
+/** A legacy or pre-#100 singular {name, description} feature, upgraded into a one-element
+ * features[] array; blank name upgrades to an empty array (nothing to migrate). */
+function upgradeSingularFeature(feature: { name?: string; description?: string } | undefined): unknown[] {
+  const name = feature?.name?.trim();
+  if (!name) return [];
+  return [
+    {
+      id: newEntityId("bg-feature-migrated"),
+      name,
+      description: feature?.description ?? "",
+      abilityBonuses: {},
+      acBonus: 0,
+      attackBonus: 0,
+      damageBonus: 0,
+      spellDCBonus: 0,
+      spellAttackBonus: 0,
+    },
+  ];
+}
+
+// Upgrades two prior shapes into the current one, so old custom-content rows keep parsing
+// without a data migration (the JSON blob in custom_content.data never changes; only how we
+// read it does):
+//   1. The legacy flat shape ({skillProficiencies, feature: string, toolProficiencies,
+//      equipmentText}) -- what every background created before the structured redesign stored.
+//   2. The structured-but-pre-#100 shape (singular `feature: {name, description}` instead of
+//      `features: [...]`) -- what every background created between the structured redesign and
+//      #100 stored, including the SRD Acolyte background synthesized on the fly by the wizard.
 export const customBackgroundDataSchema = z.preprocess((raw) => {
   const input = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
-  const isLegacy =
+  const isLegacyFlat =
     !("skills" in input) &&
     ("skillProficiencies" in input || "feature" in input || "toolProficiencies" in input || "equipmentText" in input);
-  if (!isLegacy) return input;
+  if (isLegacyFlat) {
+    const legacy = input as {
+      skillProficiencies?: string[];
+      feature?: string;
+      toolProficiencies?: string[];
+      equipmentText?: string;
+    };
+    return {
+      skills: { fixed: legacy.skillProficiencies ?? [], choices: [] },
+      tools: { fixed: legacy.toolProficiencies ?? [], choices: [] },
+      languages: { fixed: [], anyCount: 0 },
+      equipment: { items: legacy.equipmentText ? [legacy.equipmentText] : [], gold: 0 },
+      features: upgradeSingularFeature(legacy.feature ? { name: legacy.feature } : undefined),
+      variants: [],
+      variantPickCount: 1,
+    };
+  }
 
-  const legacy = input as {
-    skillProficiencies?: string[];
-    feature?: string;
-    toolProficiencies?: string[];
-    equipmentText?: string;
-  };
-  return {
-    skills: { fixed: legacy.skillProficiencies ?? [], choices: [] },
-    tools: { fixed: legacy.toolProficiencies ?? [], choices: [] },
-    languages: { fixed: [], anyCount: 0 },
-    equipment: { items: legacy.equipmentText ? [legacy.equipmentText] : [], gold: 0 },
-    feature: { name: legacy.feature ?? "", description: "" },
-    variants: [],
-    variantPickCount: 1,
-  };
+  if ("feature" in input && !("features" in input)) {
+    const { feature, ...rest } = input as { feature?: { name?: string; description?: string } };
+    return { ...rest, features: upgradeSingularFeature(feature) };
+  }
+
+  return input;
 }, rawCustomBackgroundDataSchema);
 export type CustomBackgroundData = z.infer<typeof customBackgroundDataSchema>;
 export type BackgroundSkillChoice = z.infer<typeof skillChoiceSchema>;
@@ -174,8 +227,7 @@ export function formatBackgroundGrants(data: CustomBackgroundData): {
   tools: string;
   languages: string;
   equipment: string;
-  featureName: string;
-  featureDescription: string;
+  features: BackgroundFeature[];
   variants: BackgroundVariant[];
   variantPickCount: number;
 } {
@@ -211,8 +263,7 @@ export function formatBackgroundGrants(data: CustomBackgroundData): {
     tools: joinEnglish(toolParts),
     languages: joinEnglish(langParts),
     equipment: joinEnglish(equipParts),
-    featureName: data.feature.name,
-    featureDescription: data.feature.description,
+    features: data.features,
     variants: data.variants,
     variantPickCount: data.variantPickCount,
   };
@@ -232,18 +283,6 @@ export const customSubclassDataSchema = z.object({
   levels: z.array(classLevelEntrySchema).max(20).default([]),
 });
 export type CustomSubclassData = z.infer<typeof customSubclassDataSchema>;
-
-// Structured effect bonuses shared by feats (and, later, #45's features). All manually
-// entered; summed into the sheet's derived ability/AC/attack/spell values when active.
-export const effectBonusesSchema = z.object({
-  abilityBonuses: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(-10).max(10)).default({}),
-  acBonus: z.number().int().min(-10).max(10).default(0),
-  attackBonus: z.number().int().min(-10).max(10).default(0),
-  damageBonus: z.number().int().min(-10).max(10).default(0),
-  spellDCBonus: z.number().int().min(-10).max(10).default(0),
-  spellAttackBonus: z.number().int().min(-10).max(10).default(0),
-});
-export type EffectBonuses = z.infer<typeof effectBonusesSchema>;
 
 // A spell granted by a feat (e.g. Magic Initiate) -- mirrors InvocationGrants' grantedSpells
 // (srd-invocations.ts) since a granted spell is pushed onto sheet.spells the same way regardless

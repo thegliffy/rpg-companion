@@ -11,6 +11,7 @@ import {
   SYSTEM_IDS,
   customBackgroundDataSchema,
   formatBackgroundGrants,
+  formatModifier,
 } from "shared";
 import * as customContentApi from "../api/customContent";
 import { useAuth } from "../context/AuthContext";
@@ -213,6 +214,32 @@ interface BgVariantRow {
 }
 const emptyBgVariantRow = (): BgVariantRow => ({ id: `variant-${crypto.randomUUID()}`, title: "", description: "" });
 
+// #100: a background can grant more than one feature, each carrying the same effect-bonus row a
+// feat does. Numbers are kept as form-input strings, same convention as every other numeric field
+// in this manager (parsed with Number(...) || 0 at submit time in buildBackgroundData()).
+interface BgFeatureRow {
+  id: string;
+  name: string;
+  description: string;
+  abilityBonuses: Partial<Record<Dnd5eAbility, string>>;
+  acBonus: string;
+  attackBonus: string;
+  damageBonus: string;
+  spellDCBonus: string;
+  spellAttackBonus: string;
+}
+const emptyBgFeatureRow = (): BgFeatureRow => ({
+  id: `bg-feature-${crypto.randomUUID()}`,
+  name: "",
+  description: "",
+  abilityBonuses: {},
+  acBonus: "0",
+  attackBonus: "0",
+  damageBonus: "0",
+  spellDCBonus: "0",
+  spellAttackBonus: "0",
+});
+
 interface FeatGrantedSpellRow {
   name: string;
   level: string;
@@ -313,8 +340,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [bgLanguagesAnyCount, setBgLanguagesAnyCount] = useState("0");
   const [bgEquipmentItems, setBgEquipmentItems] = useState(""); // comma-separated
   const [bgGold, setBgGold] = useState("0");
-  const [bgFeatureName, setBgFeatureName] = useState("");
-  const [bgFeatureDescription, setBgFeatureDescription] = useState("");
+  const [bgFeatures, setBgFeatures] = useState<BgFeatureRow[]>([]);
   const [bgVariants, setBgVariants] = useState<BgVariantRow[]>([]);
   const [bgVariantPickCount, setBgVariantPickCount] = useState("1");
   const [bgCloneFrom, setBgCloneFrom] = useState("");
@@ -415,8 +441,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setBgLanguagesAnyCount("0");
     setBgEquipmentItems("");
     setBgGold("0");
-    setBgFeatureName("");
-    setBgFeatureDescription("");
+    setBgFeatures([]);
     setBgVariants([]);
     setBgVariantPickCount("1");
     setBgCloneFrom("");
@@ -522,8 +547,21 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       setBgLanguagesAnyCount(String(d.languages.anyCount));
       setBgEquipmentItems(d.equipment.items.join(", "));
       setBgGold(String(d.equipment.gold));
-      setBgFeatureName(d.feature.name);
-      setBgFeatureDescription(d.feature.description);
+      setBgFeatures(
+        d.features.map((f) => ({
+          id: f.id,
+          name: f.name,
+          description: f.description,
+          abilityBonuses: Object.fromEntries(
+            Object.entries(f.abilityBonuses).map(([k, v]) => [k, String(v)]),
+          ) as Partial<Record<Dnd5eAbility, string>>,
+          acBonus: String(f.acBonus),
+          attackBonus: String(f.attackBonus),
+          damageBonus: String(f.damageBonus),
+          spellDCBonus: String(f.spellDCBonus),
+          spellAttackBonus: String(f.spellAttackBonus),
+        })),
+      );
       setBgVariants(d.variants);
       setBgVariantPickCount(String(d.variantPickCount));
     } else if (item.type === "subrace") {
@@ -703,7 +741,23 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         items: bgEquipmentItems.split(",").map((s) => s.trim()).filter(Boolean),
         gold: Number(bgGold) || 0,
       },
-      feature: { name: bgFeatureName.trim(), description: bgFeatureDescription.trim() },
+      features: bgFeatures
+        .filter((f) => f.name.trim() !== "")
+        .map((f) => ({
+          id: f.id,
+          name: f.name.trim(),
+          description: f.description.trim(),
+          abilityBonuses: Object.fromEntries(
+            Object.entries(f.abilityBonuses)
+              .map(([k, v]) => [k, Number(v) || 0])
+              .filter(([, v]) => v !== 0),
+          ),
+          acBonus: Number(f.acBonus) || 0,
+          attackBonus: Number(f.attackBonus) || 0,
+          damageBonus: Number(f.damageBonus) || 0,
+          spellDCBonus: Number(f.spellDCBonus) || 0,
+          spellAttackBonus: Number(f.spellAttackBonus) || 0,
+        })),
       variants: bgVariants.filter((v) => v.title.trim() !== ""),
       variantPickCount: Number(bgVariantPickCount) || 1,
     };
@@ -715,7 +769,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     if (!src) return;
     setBgSkillsFixed(src.skillProficiencies);
     setBgSkillChoices([]);
-    setBgFeatureName(src.feature);
+    setBgFeatures([{ ...emptyBgFeatureRow(), name: src.feature }]);
   }
 
   async function handleSubmit() {
@@ -1235,15 +1289,107 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
               Starting gold <input type="number" min={0} value={bgGold} onChange={(e) => setBgGold(e.target.value)} style={{ width: "5rem" }} />
             </label>
 
-            <h4 style={{ marginTop: "1rem" }}>Feature</h4>
-            <label style={{ display: "block" }}>
-              Name
-              <input value={bgFeatureName} onChange={(e) => setBgFeatureName(e.target.value)} style={{ width: "100%" }} />
-            </label>
-            <label style={{ display: "block", marginTop: "0.4rem" }}>
-              Description
-              <textarea value={bgFeatureDescription} onChange={(e) => setBgFeatureDescription(e.target.value)} rows={3} style={{ width: "100%" }} />
-            </label>
+            <h4 style={{ marginTop: "1rem" }}>Features</h4>
+            <p>
+              <small>Some backgrounds grant more than one distinct feature -- add a row per feature. Bonuses are optional.</small>
+            </p>
+            {bgFeatures.map((f, i) => (
+              <div key={f.id} style={{ border: "1px solid #ddd", borderRadius: 6, padding: "0.5rem", marginBottom: "0.4rem" }}>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  <input
+                    placeholder="Name"
+                    value={f.name}
+                    onChange={(e) => setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))}
+                    style={{ flex: 1 }}
+                  />
+                  <button type="button" onClick={() => setBgFeatures((prev) => prev.filter((_, j) => j !== i))}>
+                    Remove
+                  </button>
+                </div>
+                <textarea
+                  placeholder="Description"
+                  value={f.description}
+                  onChange={(e) => setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, description: e.target.value } : r)))}
+                  rows={2}
+                  style={{ width: "100%", marginTop: "0.3rem" }}
+                />
+                <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.85rem" }}>
+                  {DND5E_ABILITIES.map((a) => (
+                    <label key={a}>
+                      {a.toUpperCase()}{" "}
+                      <input
+                        type="number"
+                        style={{ width: "2.6rem" }}
+                        value={f.abilityBonuses[a] ?? ""}
+                        onChange={(e) =>
+                          setBgFeatures((prev) =>
+                            prev.map((r, j) =>
+                              j === i ? { ...r, abilityBonuses: { ...r.abilityBonuses, [a]: e.target.value } } : r,
+                            ),
+                          )
+                        }
+                      />
+                    </label>
+                  ))}
+                  <label>
+                    AC{" "}
+                    <input
+                      type="number"
+                      style={{ width: "2.6rem" }}
+                      value={f.acBonus}
+                      onChange={(e) => setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, acBonus: e.target.value } : r)))}
+                    />
+                  </label>
+                  <label>
+                    Attack{" "}
+                    <input
+                      type="number"
+                      style={{ width: "2.6rem" }}
+                      value={f.attackBonus}
+                      onChange={(e) =>
+                        setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, attackBonus: e.target.value } : r)))
+                      }
+                    />
+                  </label>
+                  <label>
+                    Damage{" "}
+                    <input
+                      type="number"
+                      style={{ width: "2.6rem" }}
+                      value={f.damageBonus}
+                      onChange={(e) =>
+                        setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, damageBonus: e.target.value } : r)))
+                      }
+                    />
+                  </label>
+                  <label>
+                    Spell DC{" "}
+                    <input
+                      type="number"
+                      style={{ width: "2.6rem" }}
+                      value={f.spellDCBonus}
+                      onChange={(e) =>
+                        setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, spellDCBonus: e.target.value } : r)))
+                      }
+                    />
+                  </label>
+                  <label>
+                    Spell attack{" "}
+                    <input
+                      type="number"
+                      style={{ width: "2.6rem" }}
+                      value={f.spellAttackBonus}
+                      onChange={(e) =>
+                        setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, spellAttackBonus: e.target.value } : r)))
+                      }
+                    />
+                  </label>
+                </div>
+              </div>
+            ))}
+            <button type="button" onClick={() => setBgFeatures((prev) => [...prev, emptyBgFeatureRow()])}>
+              Add feature
+            </button>
 
             <h4 style={{ marginTop: "1rem" }}>Variants ("lore boxes")</h4>
             <p>
@@ -1307,11 +1453,22 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                   <p style={{ margin: "0.2rem 0" }}>
                     <strong>Equipment:</strong> {preview.equipment}
                   </p>
-                  {preview.featureName && (
-                    <p style={{ margin: "0.2rem 0" }}>
-                      <strong>Feature: {preview.featureName}.</strong> {preview.featureDescription}
-                    </p>
-                  )}
+                  {preview.features.map((f) => {
+                    const bonusParts = [
+                      ...DND5E_ABILITIES.filter((a) => f.abilityBonuses[a]).map((a) => `${formatModifier(f.abilityBonuses[a]!)} ${a.toUpperCase()}`),
+                      f.acBonus !== 0 && `${formatModifier(f.acBonus)} AC`,
+                      f.attackBonus !== 0 && `${formatModifier(f.attackBonus)} attack`,
+                      f.damageBonus !== 0 && `${formatModifier(f.damageBonus)} damage`,
+                      f.spellDCBonus !== 0 && `${formatModifier(f.spellDCBonus)} spell DC`,
+                      f.spellAttackBonus !== 0 && `${formatModifier(f.spellAttackBonus)} spell attack`,
+                    ].filter(Boolean);
+                    return (
+                      <p key={f.id} style={{ margin: "0.2rem 0" }}>
+                        <strong>Feature: {f.name}.</strong> {f.description}
+                        {bonusParts.length > 0 && <em> ({bonusParts.join(", ")})</em>}
+                      </p>
+                    );
+                  })}
                   {preview.variants.length > 0 && (
                     <p style={{ margin: "0.2rem 0" }}>
                       <strong>

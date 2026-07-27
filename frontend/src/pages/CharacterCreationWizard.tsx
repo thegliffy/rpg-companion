@@ -356,17 +356,17 @@ export function CharacterCreationWizard({
     if (languageNames.length) profLines.push(`Languages: ${languageNames.join(", ")}`);
 
     const features: ReturnType<typeof emptyDnd5eSheet>["features"] = [];
-    if (data.feature.name) {
+    for (const feature of data.features) {
       features.push({
-        id: `bg-feature-${crypto.randomUUID()}`,
-        name: data.feature.name,
-        description: data.feature.description,
-        abilityBonuses: {},
-        acBonus: 0,
-        attackBonus: 0,
-        damageBonus: 0,
-        spellDCBonus: 0,
-        spellAttackBonus: 0,
+        id: `bg-feature-${feature.id}-${crypto.randomUUID()}`,
+        name: feature.name,
+        description: feature.description,
+        abilityBonuses: feature.abilityBonuses,
+        acBonus: feature.acBonus,
+        attackBonus: feature.attackBonus,
+        damageBonus: feature.damageBonus,
+        spellDCBonus: feature.spellDCBonus,
+        spellAttackBonus: feature.spellAttackBonus,
         skillProficiencies: [],
       });
     }
