@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import type { CustomContent, CustomContentType, CustomContentSystem, Dnd5eAbility, CustomBackgroundData } from "shared";
+import type { CustomContent, CustomContentType, CustomContentSystem, Dnd5eAbility, CustomBackgroundData, SpellChoice } from "shared";
 import {
   DND5E_ABILITIES,
   DND5E_ABILITY_NAMES,
+  DND5E_CLASSES,
   DND5E_SKILLS,
   DND5E_LANGUAGES,
   SRD_BACKGROUNDS,
@@ -247,6 +248,28 @@ interface FeatGrantedSpellRow {
 }
 const emptyFeatGrantedSpellRow = (): FeatGrantedSpellRow => ({ name: "", level: "0", atWill: true });
 
+// A spellChoices row (e.g. Magic Initiate's "2 cantrips from a class you choose"), edited as
+// form-input strings same as everything else here. `kind` picks which of `classId`/`srdIdsText`
+// is used to build the schema's discriminated-union `from` field on save.
+interface FeatSpellChoiceRow {
+  id: string;
+  count: string;
+  kind: "class" | "list" | "any";
+  classId: string;
+  srdIdsText: string; // comma-separated SRD spell ids, only used when kind === "list"
+  maxLevel: string;
+  atWill: boolean;
+}
+const emptyFeatSpellChoiceRow = (): FeatSpellChoiceRow => ({
+  id: `feat-spell-choice-${crypto.randomUUID()}`,
+  count: "1",
+  kind: "class",
+  classId: "wizard",
+  srdIdsText: "",
+  maxLevel: "0",
+  atWill: false,
+});
+
 function rowsToLevels(rows: LevelRow[]) {
   return rows
     .filter((r) => r.level.trim() !== "")
@@ -358,6 +381,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [featSpellAtk, setFeatSpellAtk] = useState("0");
   const [featSkillProficiencies, setFeatSkillProficiencies] = useState<string[]>([]);
   const [featGrantedSpells, setFeatGrantedSpells] = useState<FeatGrantedSpellRow[]>([]);
+  const [featSpellChoices, setFeatSpellChoices] = useState<FeatSpellChoiceRow[]>([]);
   const [featPrereqAbility, setFeatPrereqAbility] = useState<Partial<Record<Dnd5eAbility, string>>>({});
   const [featPrereqLevel, setFeatPrereqLevel] = useState("0");
   const [featPrereqText, setFeatPrereqText] = useState("");
@@ -458,6 +482,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setFeatSpellAtk("0");
     setFeatSkillProficiencies([]);
     setFeatGrantedSpells([]);
+    setFeatSpellChoices([]);
     setFeatPrereqAbility({});
     setFeatPrereqLevel("0");
     setFeatPrereqText("");
@@ -592,6 +617,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         spellAttackBonus: number;
         skillProficiencies?: string[];
         grantedSpells?: { name: string; level: number; atWill: boolean }[];
+        spellChoices?: SpellChoice[];
         prereqAbility?: Partial<Record<Dnd5eAbility, number>>;
         prereqLevel?: number;
         prereqText?: string;
@@ -608,6 +634,17 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       setFeatSkillProficiencies(d.skillProficiencies ?? []);
       setFeatGrantedSpells(
         (d.grantedSpells ?? []).map((gs) => ({ name: gs.name, level: String(gs.level), atWill: gs.atWill })),
+      );
+      setFeatSpellChoices(
+        (d.spellChoices ?? []).map((sc) => ({
+          id: `feat-spell-choice-${crypto.randomUUID()}`,
+          count: String(sc.count),
+          kind: sc.from.kind,
+          classId: sc.from.kind === "class" ? sc.from.classId : "wizard",
+          srdIdsText: sc.from.kind === "list" ? sc.from.srdIds.join(", ") : "",
+          maxLevel: String(sc.maxLevel),
+          atWill: sc.atWill,
+        })),
       );
       const prereqBonuses: Partial<Record<Dnd5eAbility, string>> = {};
       for (const [k, v] of Object.entries(d.prereqAbility ?? {})) prereqBonuses[k as Dnd5eAbility] = String(v);
@@ -832,6 +869,25 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                 atWill: r.atWill,
               };
             }),
+          spellChoices: featSpellChoices
+            .filter((r) => Number(r.count) > 0 && (r.kind !== "list" || r.srdIdsText.trim() !== ""))
+            .map((r) => ({
+              count: Number(r.count) || 1,
+              from:
+                r.kind === "class"
+                  ? { kind: "class" as const, classId: r.classId.trim().toLowerCase() }
+                  : r.kind === "list"
+                    ? {
+                        kind: "list" as const,
+                        srdIds: r.srdIdsText
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter((s) => s !== ""),
+                      }
+                    : { kind: "any" as const },
+              maxLevel: Number(r.maxLevel) || 0,
+              atWill: r.atWill,
+            })),
           prereqAbility: Object.fromEntries(
             Object.entries(featPrereqAbility).map(([k, v]) => [k, Number(v) || 0]).filter(([, v]) => v !== 0),
           ),
@@ -1727,6 +1783,94 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
               style={{ marginTop: "0.4rem" }}
             >
               Add granted spell
+            </button>
+
+            <h4 style={{ marginTop: "1rem" }}>Spell choices (e.g. Magic Initiate)</h4>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+              A row the player resolves when taking the feat -- e.g. "2 cantrips from a class you choose". Add one row
+              per distinct pick (a cantrip row and a separate 1st-level-spell row for Magic Initiate).
+            </p>
+            {featSpellChoices.map((row, i) => (
+              <div key={row.id} style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap", marginTop: "0.4rem" }}>
+                <label>
+                  Count{" "}
+                  <input
+                    type="number"
+                    min={1}
+                    max={6}
+                    value={row.count}
+                    onChange={(e) => setFeatSpellChoices((prev) => prev.map((r, j) => (j === i ? { ...r, count: e.target.value } : r)))}
+                    style={{ width: "2.8rem" }}
+                  />
+                </label>
+                <label>
+                  From{" "}
+                  <select
+                    value={row.kind}
+                    onChange={(e) =>
+                      setFeatSpellChoices((prev) =>
+                        prev.map((r, j) => (j === i ? { ...r, kind: e.target.value as FeatSpellChoiceRow["kind"] } : r)),
+                      )
+                    }
+                  >
+                    <option value="class">A class's spell list</option>
+                    <option value="list">A specific list</option>
+                    <option value="any">Any spell</option>
+                  </select>
+                </label>
+                {row.kind === "class" && (
+                  <label>
+                    Class{" "}
+                    <select
+                      value={row.classId}
+                      onChange={(e) => setFeatSpellChoices((prev) => prev.map((r, j) => (j === i ? { ...r, classId: e.target.value } : r)))}
+                    >
+                      {DND5E_CLASSES.map((c) => (
+                        <option key={c.name} value={c.name.toLowerCase()}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {row.kind === "list" && (
+                  <input
+                    placeholder="Spell ids, comma-separated (e.g. fire-bolt, mage-hand)"
+                    value={row.srdIdsText}
+                    onChange={(e) => setFeatSpellChoices((prev) => prev.map((r, j) => (j === i ? { ...r, srdIdsText: e.target.value } : r)))}
+                    style={{ flex: 1, minWidth: "12rem" }}
+                  />
+                )}
+                <label>
+                  Level{" "}
+                  <input
+                    type="number"
+                    min={0}
+                    max={9}
+                    value={row.maxLevel}
+                    onChange={(e) => setFeatSpellChoices((prev) => prev.map((r, j) => (j === i ? { ...r, maxLevel: e.target.value } : r)))}
+                    style={{ width: "2.8rem" }}
+                  />
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={row.atWill}
+                    onChange={(e) => setFeatSpellChoices((prev) => prev.map((r, j) => (j === i ? { ...r, atWill: e.target.checked } : r)))}
+                  />{" "}
+                  At will (no slot)
+                </label>
+                <button type="button" onClick={() => setFeatSpellChoices((prev) => prev.filter((_, j) => j !== i))}>
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setFeatSpellChoices((prev) => [...prev, emptyFeatSpellChoiceRow()])}
+              style={{ marginTop: "0.4rem" }}
+            >
+              Add spell choice
             </button>
           </>
         ) : type === "spell" ? (

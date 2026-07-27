@@ -37,6 +37,8 @@ export function WizardSpellbookPicker({
   onlyLevel,
   excludeIds,
   classId = "wizard",
+  anyClass = false,
+  srdIds,
   onConfirm,
   onClose,
 }: {
@@ -46,21 +48,31 @@ export function WizardSpellbookPicker({
   onlyLevel?: number;
   excludeIds: string[];
   classId?: string;
+  // A feat's spellChoices "any" kind -- skip the class filter entirely.
+  anyClass?: boolean;
+  // A feat's spellChoices "list" kind -- restrict eligible spells to this exact id set (also
+  // skips the class filter, since the list is already curated).
+  srdIds?: string[];
   onConfirm: (spells: PickedSpell[]) => void;
   onClose: () => void;
 }) {
   const [selected, setSelected] = useState<Record<string, PickedSpell>>({});
   const excludeSet = useMemo(() => new Set(excludeIds), [excludeIds]);
+  const srdIdSet = useMemo(() => (srdIds ? new Set(srdIds) : undefined), [srdIds]);
 
   const eligible = useMemo(
     () =>
       SRD_SPELLS.filter((s) => {
-        if (!s.classes.includes(classId)) return false;
+        if (srdIdSet) {
+          if (!srdIdSet.has(s.id)) return false;
+        } else if (!anyClass && !s.classes.includes(classId)) {
+          return false;
+        }
         if (excludeSet.has(s.id)) return false;
         if (onlyLevel !== undefined) return s.level === onlyLevel;
         return s.level >= 1 && s.level <= maxLevel;
       }),
-    [maxLevel, onlyLevel, excludeSet, classId],
+    [maxLevel, onlyLevel, excludeSet, classId, anyClass, srdIdSet],
   );
 
   const byLevel = useMemo(() => {

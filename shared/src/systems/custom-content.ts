@@ -295,6 +295,21 @@ export const grantedSpellSchema = z.object({
 });
 export type GrantedSpell = z.infer<typeof grantedSpellSchema>;
 
+// A feat's spell choice slot (e.g. Magic Initiate's "2 cantrips + 1 1st-level spell from a class
+// you choose") -- resolved in FeatPickerModal via WizardSpellbookPicker before the feat is added,
+// separately from the fixed grantedSpells above (several feats grant both).
+export const spellChoiceSchema = z.object({
+  count: z.number().int().min(1).max(6),
+  from: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("class"), classId: z.string().trim().toLowerCase().max(30) }),
+    z.object({ kind: z.literal("list"), srdIds: z.array(z.string().trim().max(80)).min(1).max(20) }),
+    z.object({ kind: z.literal("any") }),
+  ]),
+  maxLevel: z.number().int().min(0).max(9),
+  atWill: z.boolean().default(false),
+});
+export type SpellChoice = z.infer<typeof spellChoiceSchema>;
+
 export const customFeatDataSchema = effectBonusesSchema.extend({
   description: z.string().trim().max(500).default(""),
   // Skill ids this feat grants proficiency in (e.g. Skilled) -- aggregated via
@@ -304,6 +319,8 @@ export const customFeatDataSchema = effectBonusesSchema.extend({
   // Spells this feat grants (e.g. Magic Initiate) -- pushed onto sheet.spells on pick, tagged
   // with the feat entry's id so removing the feat also removes the granted spells.
   grantedSpells: z.array(grantedSpellSchema).max(10).default([]),
+  // Spell choice slots resolved at pick time (alongside the fixed grantedSpells above).
+  spellChoices: z.array(spellChoiceSchema).max(3).default([]),
   // Prerequisites -- shown as a hint in FeatPickerModal (red when unmet), never enforced, same
   // house rule as SRD_INVOCATIONS' prereqLevel/prereqPact (srd-invocations.ts).
   prereqAbility: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(1).max(30)).default({}),
