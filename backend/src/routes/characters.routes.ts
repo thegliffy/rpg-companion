@@ -207,7 +207,10 @@ charactersRouter.post(
 
     const filename = savePortrait(req.characterRow!.id, req.file.buffer, req.file.mimetype);
     await setCharacterPortrait(req.characterRow!.id, filename);
-    res.status(201).json({ ok: true });
+    // setCharacterPortrait bumps updatedAt -- return the fresh character so the sheet's
+    // optimistic-concurrency token stays in sync instead of every later autosave 409ing.
+    const character = getCharacter(req.characterRow!.id)!;
+    res.status(201).json({ character: redactPrivateNotesIfNotOwner(character, req.session.userId!) });
   },
 );
 

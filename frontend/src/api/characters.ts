@@ -92,11 +92,12 @@ export function portraitUrl(id: number, version: number): string {
   return `/api/characters/${id}/portrait?v=${version}`;
 }
 
-export async function uploadPortrait(id: number, file: File): Promise<void> {
+export async function uploadPortrait(id: number, file: File): Promise<Character> {
   const formData = new FormData();
   formData.append("portrait", file);
   const res = await fetch(`/api/characters/${id}/portrait`, { method: "POST", body: formData });
-  await parseOrThrow(res);
+  const data = await parseOrThrow(res);
+  return data.character;
 }
 
 export async function getShareToken(id: number): Promise<string | null> {

@@ -887,7 +887,7 @@ export function Dnd5eSheet({
       <fieldset disabled={readOnly} style={{ border: "none", margin: 0, padding: 0, display: "contents" }}>
       {/* Header */}
       <div style={{ ...box, display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "end" }}>
-        <CharacterPortrait characterId={character.id} canEdit={!readOnly} />
+        <CharacterPortrait characterId={character.id} canEdit={!readOnly} onSaved={onSaved} />
         <label>
           Character name
           <br />

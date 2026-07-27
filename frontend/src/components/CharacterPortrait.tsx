@@ -1,14 +1,20 @@
 import { useRef, useState } from "react";
+import type { Character } from "shared";
 import * as charactersApi from "../api/characters";
 
 export function CharacterPortrait({
   characterId,
   canEdit,
   size = 128,
+  onSaved,
 }: {
   characterId: number;
   canEdit: boolean;
   size?: number;
+  // The upload bumps the character's updatedAt server-side; callers holding an
+  // optimistic-concurrency token (e.g. the sheet's autosave) need the fresh value or every
+  // later save 409s as "changed elsewhere".
+  onSaved?: (character: Character) => void;
 }) {
   const [version, setVersion] = useState(0);
   const [hasImage, setHasImage] = useState(true);
@@ -22,9 +28,10 @@ export function CharacterPortrait({
     setUploading(true);
     setError(null);
     try {
-      await charactersApi.uploadPortrait(characterId, file);
+      const character = await charactersApi.uploadPortrait(characterId, file);
       setHasImage(true);
       setVersion((v) => v + 1);
+      onSaved?.(character);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
