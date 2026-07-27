@@ -28,7 +28,7 @@ import {
   InviteCodeNotFoundError,
   AlreadyMemberError,
 } from "../services/campaigns.service.js";
-import { listCharactersForCampaign, getCharacter } from "../services/characters.service.js";
+import { listCharactersForCampaign, getCharacter, redactForCampaignMember } from "../services/characters.service.js";
 import { createNote, listNotesForCampaign } from "../services/notes.service.js";
 import { emitToCampaign } from "../sockets/index.js";
 import {
@@ -156,7 +156,9 @@ campaignsRouter.post("/:id/invite/regenerate", requireDM, async (req, res) => {
 });
 
 campaignsRouter.get("/:id/characters", requireCampaignMember, (req, res) => {
-  const characters = listCharactersForCampaign(req.campaignMembership!.campaignId);
+  const characters = listCharactersForCampaign(req.campaignMembership!.campaignId).map((c) =>
+    redactForCampaignMember(c, req.session.userId!, req.campaignMembership!.role),
+  );
   res.json({ characters });
 });
 

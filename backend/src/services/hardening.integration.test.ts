@@ -5,7 +5,7 @@ import type { Server } from "node:http";
 import { emptyDnd5eSheet, type Dnd5eSheetData } from "shared";
 import { setupTestDatabase } from "../test/harness.js";
 import { createUser } from "./users.service.js";
-import { createCampaign } from "./campaigns.service.js";
+import { createCampaign, joinCampaignByInviteCode } from "./campaigns.service.js";
 import {
   CharacterConflictError,
   createCharacter,
@@ -30,6 +30,8 @@ import {
 } from "./encounters.service.js";
 import { charactersRouter } from "../routes/characters.routes.js";
 import { sharedCharactersRouter } from "../routes/sharedCharacters.routes.js";
+import { campaignsRouter } from "../routes/campaigns.routes.js";
+import { authRouter } from "../routes/auth.routes.js";
 import { createSessionMiddleware } from "../middleware/session.js";
 import { db } from "../db/client.js";
 import { eq } from "drizzle-orm";
@@ -189,6 +191,94 @@ describe("share token is read-only (#77)", () => {
 
     const still = getCharacter(character.id)!;
     assert.equal(still.name, "Shared Hero");
+  });
+
+  it("closes the test server", async () => {
+    await new Promise<void>((resolve, reject) => {
+      server.close((err) => (err ? reject(err) : resolve()));
+    });
+  });
+});
+
+describe("campaign character list redaction (#93)", () => {
+  let server: Server;
+  let baseUrl: string;
+
+  before(async () => {
+    setupTestDatabase();
+    const app = express();
+    app.use(express.json());
+    app.use(createSessionMiddleware());
+    app.use("/api/auth", authRouter);
+    app.use("/api/campaigns", campaignsRouter);
+    server = await new Promise<Server>((resolve) => {
+      const s = app.listen(0, "127.0.0.1", () => resolve(s));
+    });
+    const addr = server.address();
+    if (!addr || typeof addr === "string") throw new Error("no port");
+    baseUrl = `http://127.0.0.1:${addr.port}`;
+  });
+
+  async function loginCookie(username: string, password: string): Promise<string> {
+    const res = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    assert.equal(res.status, 200);
+    const cookie = res.headers.get("set-cookie");
+    if (!cookie) throw new Error("login did not set a cookie");
+    return cookie.split(";")[0];
+  }
+
+  it("hides privateNotes from everyone but the owner, and notes from non-DM peers", async () => {
+    const suffix = Date.now();
+    // The first user ever created in a fresh test DB is auto-promoted to global admin (bootstrap
+    // rule), and an admin legitimately bypasses all redaction -- burn that slot first so `dm`
+    // below is an ordinary campaign DM, not a site admin, matching the scenario under test.
+    await createUser(`redact-zeroth-${suffix}`, "password-zz-1");
+    const dm = await createUser(`redact-dm-${suffix}`, "password-dm-1");
+    const owner = await createUser(`redact-owner-${suffix}`, "password-ow-1");
+    const peer = await createUser(`redact-peer-${suffix}`, "password-pe-1");
+    const campaign = await createCampaign(dm.id, "Redaction Test Campaign");
+
+    // Owner and peer both join as plain players; dm is already a member (campaign creator).
+    await joinCampaignByInviteCode(owner.id, campaign.inviteCode);
+    await joinCampaignByInviteCode(peer.id, campaign.inviteCode);
+
+    const sheet = emptyDnd5eSheet();
+    sheet.privateNotes = "secret diary";
+    await createCharacter(owner.id, {
+      campaignId: campaign.id,
+      name: "Redaction Hero",
+      system: "dnd5e",
+      notes: "owner's character notes",
+      sheetData: sheet,
+    });
+
+    async function listAs(cookie: string) {
+      const res = await fetch(`${baseUrl}/api/campaigns/${campaign.id}/characters`, {
+        headers: { Cookie: cookie },
+      });
+      assert.equal(res.status, 200);
+      const body = (await res.json()) as { characters: { notes: string | null; sheetData: Dnd5eSheetData }[] };
+      return body.characters[0];
+    }
+
+    const ownerCookie = await loginCookie(`redact-owner-${suffix}`, "password-ow-1");
+    const asOwner = await listAs(ownerCookie);
+    assert.equal(asOwner.sheetData.privateNotes, "secret diary");
+    assert.equal(asOwner.notes, "owner's character notes");
+
+    const dmCookie = await loginCookie(`redact-dm-${suffix}`, "password-dm-1");
+    const asDm = await listAs(dmCookie);
+    assert.equal(asDm.sheetData.privateNotes, "", "DM must never see privateNotes");
+    assert.equal(asDm.notes, "owner's character notes", "DM should still see the general notes field");
+
+    const peerCookie = await loginCookie(`redact-peer-${suffix}`, "password-pe-1");
+    const asPeer = await listAs(peerCookie);
+    assert.equal(asPeer.sheetData.privateNotes, "", "peer player must never see privateNotes");
+    assert.equal(asPeer.notes, null, "peer player (not owner, not DM) must not see notes either");
   });
 
   it("closes the test server", async () => {

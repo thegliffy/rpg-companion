@@ -2,14 +2,42 @@ import { randomBytes } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { characters, users, campaigns } from "../db/schema.js";
-import type { Character } from "shared";
+import type { Character, Dnd5eSheetData } from "shared";
 import { removePortraitFile } from "../lib/portraits.js";
+import { isGlobalAdmin } from "./users.service.js";
 
 export class CharacterConflictError extends Error {
   constructor(message = "Character was modified elsewhere — reload and try again") {
     super(message);
     this.name = "CharacterConflictError";
   }
+}
+
+// The DM (not the owner) never sees the owner's private notes — a global admin is a deliberate
+// exception ("admin sees everything"). Used on any single-character read (GET/PATCH /:id).
+export function redactPrivateNotesIfNotOwner<T extends { system: string; ownerUserId: number; sheetData: unknown }>(
+  character: T,
+  requesterId: number,
+): T {
+  if (character.system === "dnd5e" && character.ownerUserId !== requesterId && !isGlobalAdmin(requesterId)) {
+    return { ...character, sheetData: { ...(character.sheetData as Dnd5eSheetData), privateNotes: "" } };
+  }
+  return character;
+}
+
+// The campaign character list is read by every member (not just owner-or-DM the way GET /:id is),
+// so it needs a stricter redaction than a single-character read: privateNotes stays owner/admin-
+// only as always, and the general `notes` field (meant to be visible to the DM running the
+// character, same as the sheet itself) is now also hidden from plain co-players who are neither
+// the owner nor the campaign's DM.
+export function redactForCampaignMember<
+  T extends { system: string; ownerUserId: number; sheetData: unknown; notes: string | null },
+>(character: T, requesterId: number, requesterRole: "dm" | "player"): T {
+  const result = redactPrivateNotesIfNotOwner(character, requesterId);
+  if (result.ownerUserId !== requesterId && requesterRole !== "dm" && !isGlobalAdmin(requesterId)) {
+    return { ...result, notes: null };
+  }
+  return result;
 }
 
 function toCharacter(

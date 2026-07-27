@@ -14,8 +14,8 @@ import { portraitFilePath, mimeTypeForFilename } from "../lib/portraits.js";
 export const sharedCharactersRouter = Router();
 
 /** Anonymous viewers never see the owner's private notes or the freeform owner notes field --
- * unlike redactPrivateNotesIfNotOwner (characters.routes.ts) there's no "is this the owner"
- * check to make since there's no authenticated requester at all. */
+ * unlike redactPrivateNotesIfNotOwner/redactForCampaignMember (characters.service.ts) there's no
+ * "is this the owner" check to make since there's no authenticated requester at all. */
 function redactForPublicView<T extends { system: string; sheetData: unknown; notes: string | null }>(character: T): T {
   const redacted = { ...character, notes: null };
   if (redacted.system === "dnd5e") {

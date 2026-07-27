@@ -20,6 +20,7 @@ import {
   mintShareToken,
   revokeShareToken,
   getShareToken,
+  redactPrivateNotesIfNotOwner,
   CharacterConflictError,
 } from "../services/characters.service.js";
 import { getMembership } from "../services/campaigns.service.js";
@@ -41,18 +42,6 @@ const portraitUpload = multer({
     cb(null, Object.prototype.hasOwnProperty.call(ALLOWED_PORTRAIT_MIME_TYPES, file.mimetype));
   },
 });
-
-// The DM (not the owner) never sees the owner's private notes — but a global
-// admin is a deliberate exception to that, per "admin sees everything".
-function redactPrivateNotesIfNotOwner<T extends { system: string; ownerUserId: number; sheetData: unknown }>(
-  character: T,
-  requesterId: number,
-): T {
-  if (character.system === "dnd5e" && character.ownerUserId !== requesterId && !isGlobalAdmin(requesterId)) {
-    return { ...character, sheetData: { ...(character.sheetData as Dnd5eSheetData), privateNotes: "" } };
-  }
-  return character;
-}
 
 export const charactersRouter = Router();
 

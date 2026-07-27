@@ -1938,17 +1938,20 @@ export function Dnd5eSheet({
             onClose={() => setPickerOpen(false)}
           />
         )}
-        {prepareSpellsOpen && (
-          <PrepareSpellsModal
-            sheet={sheet}
-            onConfirm={(spells) => {
-              set("spells", spells);
-              setPrepareSpellsOpen(false);
-            }}
-            onClose={() => setPrepareSpellsOpen(false)}
-          />
-        )}
       </CollapsibleSection>
+      {/* Rendered outside the Spellcasting CollapsibleSection above: a prepared caster who hid
+          that section would otherwise get no modal when longRest() sets prepareSpellsOpen, since
+          the section unmounts its children while collapsed. */}
+      {prepareSpellsOpen && (
+        <PrepareSpellsModal
+          sheet={sheet}
+          onConfirm={(spells) => {
+            set("spells", spells);
+            setPrepareSpellsOpen(false);
+          }}
+          onClose={() => setPrepareSpellsOpen(false)}
+        />
+      )}
 
       {/* Inventory */}
       <CollapsibleSection
@@ -2497,10 +2500,14 @@ export function Dnd5eSheet({
         <button type="button" onClick={() => setFeatPickerContext("standalone")}>
           Add feat
         </button>
-        {featPickerContext !== null && (
-          <FeatPickerModal customFeats={customFeats} onPick={addFeat} onClose={() => setFeatPickerContext(null)} />
-        )}
       </CollapsibleSection>
+      {/* Rendered outside the Feats CollapsibleSection above: that section defaults collapsed
+          (unmounting its children) whenever the character has no feats yet -- exactly the state
+          at a first ASI's "take a feat" pick, which would otherwise silently consume the ASI with
+          no modal ever mounting to resolve it. */}
+      {featPickerContext !== null && (
+        <FeatPickerModal customFeats={customFeats} onPick={addFeat} onClose={() => setFeatPickerContext(null)} />
+      )}
 
       {/* Features & traits */}
       <CollapsibleSection
