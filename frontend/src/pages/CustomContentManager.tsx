@@ -1,5 +1,15 @@
 import { useEffect, useState } from "react";
-import type { CustomContent, CustomContentType, CustomContentSystem, Dnd5eAbility, CustomBackgroundData, SpellChoice } from "shared";
+import type {
+  CustomContent,
+  CustomContentType,
+  CustomContentSystem,
+  Dnd5eAbility,
+  CustomBackgroundData,
+  SpellChoice,
+  SubclassFeature,
+  SubclassSpell,
+  SubclassResource,
+} from "shared";
 import {
   DND5E_ABILITIES,
   DND5E_ABILITY_NAMES,
@@ -260,6 +270,75 @@ interface FeatSpellChoiceRow {
   maxLevel: string;
   atWill: boolean;
 }
+const splitCsv = (text: string): string[] => text.split(",").map((s) => s.trim()).filter(Boolean);
+
+// Subclass sub-editors (#103-105). Same form-input-strings convention as every other row type
+// here; numbers are parsed on save.
+interface SubclassFeatureRow {
+  id: string;
+  level: string;
+  name: string;
+  description: string;
+  abilityBonuses: Partial<Record<Dnd5eAbility, string>>;
+  acBonus: string;
+  attackBonus: string;
+  damageBonus: string;
+  spellDCBonus: string;
+  spellAttackBonus: string;
+  skillProficiencies: string[];
+  armorText: string; // comma-separated -- appended to the sheet's free-text proficiencies line
+  weaponText: string;
+  toolText: string;
+}
+const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
+  id: `subclass-feature-${crypto.randomUUID()}`,
+  level: String(level),
+  name: "",
+  description: "",
+  abilityBonuses: {},
+  acBonus: "0",
+  attackBonus: "0",
+  damageBonus: "0",
+  spellDCBonus: "0",
+  spellAttackBonus: "0",
+  skillProficiencies: [],
+  armorText: "",
+  weaponText: "",
+  toolText: "",
+});
+
+interface SubclassSpellRow {
+  id: string;
+  level: string; // character level the spell becomes available
+  name: string; // matched to an SRD spell by exact name, same as a feat's granted spells
+  mode: "list" | "granted";
+  atWill: boolean;
+}
+const emptySubclassSpellRow = (level: number): SubclassSpellRow => ({
+  id: `subclass-spell-${crypto.randomUUID()}`,
+  level: String(level),
+  name: "",
+  mode: "list",
+  atWill: false,
+});
+
+interface SubclassResourceRow {
+  id: string;
+  name: string;
+  level: string;
+  uses: string;
+  recharge: "short" | "long";
+  note: string;
+}
+const emptySubclassResourceRow = (): SubclassResourceRow => ({
+  id: `subclass-resource-${crypto.randomUUID()}`,
+  name: "",
+  level: "1",
+  uses: "1",
+  recharge: "long",
+  note: "",
+});
+
 const emptyFeatSpellChoiceRow = (): FeatSpellChoiceRow => ({
   id: `feat-spell-choice-${crypto.randomUUID()}`,
   count: "1",
@@ -371,6 +450,9 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   // Subrace / subclass parent (ability bonuses, traits, and level rows are reused from above).
   const [parentRace, setParentRace] = useState("");
   const [parentClass, setParentClass] = useState("");
+  const [subclassFeatureRows, setSubclassFeatureRows] = useState<SubclassFeatureRow[]>([]);
+  const [subclassSpellRows, setSubclassSpellRows] = useState<SubclassSpellRow[]>([]);
+  const [subclassResourceRows, setSubclassResourceRows] = useState<SubclassResourceRow[]>([]);
 
   // Feat fields (ability bonuses reused from above).
   const [featDescription, setFeatDescription] = useState("");
@@ -474,6 +556,9 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setBgCloneFrom("");
     setParentRace("");
     setParentClass("");
+    setSubclassFeatureRows([]);
+    setSubclassSpellRows([]);
+    setSubclassResourceRows([]);
     setFeatDescription("");
     setFeatAc("0");
     setFeatAtk("0");
@@ -603,9 +688,54 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       setAbilityBonuses(bonuses);
       setTraits(d.traits.join(", "));
     } else if (item.type === "subclass") {
-      const d = item.data as { parentClass: string; levels: { level: number; features?: string[]; martial?: ParsedMartial }[] };
+      const d = item.data as {
+        parentClass: string;
+        levels: { level: number; features?: string[]; martial?: ParsedMartial }[];
+        features?: SubclassFeature[];
+        spells?: SubclassSpell[];
+        resources?: SubclassResource[];
+      };
       setParentClass(d.parentClass);
       setLevelRows(levelsToRows(d.levels));
+      setSubclassFeatureRows(
+        (d.features ?? []).map((f) => ({
+          id: f.id,
+          level: String(f.level),
+          name: f.name,
+          description: f.description,
+          abilityBonuses: Object.fromEntries(
+            Object.entries(f.abilityBonuses).map(([k, v]) => [k, String(v)]),
+          ) as Partial<Record<Dnd5eAbility, string>>,
+          acBonus: String(f.acBonus),
+          attackBonus: String(f.attackBonus),
+          damageBonus: String(f.damageBonus),
+          spellDCBonus: String(f.spellDCBonus),
+          spellAttackBonus: String(f.spellAttackBonus),
+          skillProficiencies: f.skillProficiencies,
+          armorText: f.armorProficiencies.join(", "),
+          weaponText: f.weaponProficiencies.join(", "),
+          toolText: f.toolProficiencies.join(", "),
+        })),
+      );
+      setSubclassSpellRows(
+        (d.spells ?? []).map((s) => ({
+          id: s.id,
+          level: String(s.level),
+          name: s.name,
+          mode: s.mode,
+          atWill: s.atWill,
+        })),
+      );
+      setSubclassResourceRows(
+        (d.resources ?? []).map((r) => ({
+          id: r.id,
+          name: r.name,
+          level: String(r.level),
+          uses: String(r.uses),
+          recharge: r.recharge,
+          note: r.note,
+        })),
+      );
     } else if (item.type === "feat") {
       const d = item.data as {
         description: string;
@@ -847,7 +977,56 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       } else if (type === "subrace") {
         data = { parentRace: parentRace.trim(), abilityBonuses: abilityBonusesObj, speed: 0, traits: traitsArr };
       } else if (type === "subclass") {
-        data = { parentClass: parentClass.trim(), levels: rowsToLevels(levelRows) };
+        data = {
+          parentClass: parentClass.trim(),
+          levels: rowsToLevels(levelRows),
+          features: subclassFeatureRows
+            .filter((f) => f.name.trim() !== "")
+            .map((f) => ({
+              id: f.id,
+              level: Number(f.level) || 1,
+              name: f.name.trim(),
+              description: f.description.trim(),
+              abilityBonuses: Object.fromEntries(
+                Object.entries(f.abilityBonuses)
+                  .map(([k, v]) => [k, Number(v) || 0])
+                  .filter(([, v]) => v !== 0),
+              ),
+              acBonus: Number(f.acBonus) || 0,
+              attackBonus: Number(f.attackBonus) || 0,
+              damageBonus: Number(f.damageBonus) || 0,
+              spellDCBonus: Number(f.spellDCBonus) || 0,
+              spellAttackBonus: Number(f.spellAttackBonus) || 0,
+              skillProficiencies: f.skillProficiencies,
+              armorProficiencies: splitCsv(f.armorText),
+              weaponProficiencies: splitCsv(f.weaponText),
+              toolProficiencies: splitCsv(f.toolText),
+            })),
+          spells: subclassSpellRows
+            .filter((s) => s.name.trim() !== "")
+            .map((s) => {
+              const srdSpell = SRD_SPELLS.find((sp) => sp.name.toLowerCase() === s.name.trim().toLowerCase());
+              return {
+                id: s.id,
+                level: Number(s.level) || 1,
+                srdId: srdSpell?.id ?? "",
+                name: s.name.trim(),
+                spellLevel: srdSpell?.level ?? 0,
+                mode: s.mode,
+                atWill: s.atWill,
+              };
+            }),
+          resources: subclassResourceRows
+            .filter((r) => r.name.trim() !== "")
+            .map((r) => ({
+              id: r.id,
+              name: r.name.trim(),
+              level: Number(r.level) || 1,
+              uses: Number(r.uses) || 1,
+              recharge: r.recharge,
+              note: r.note.trim(),
+            })),
+        };
       } else if (type === "feat") {
         data = {
           description: featDescription.trim(),
@@ -1637,6 +1816,273 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
               }}
             >
               Add level
+            </button>
+
+            <h4 style={{ marginTop: "1.2rem" }}>Features with rules text</h4>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+              Use these instead of the bare names above when a feature needs its actual rules text, a mechanical bonus,
+              or a proficiency grant. A name listed both here and above is only added once.
+            </p>
+            {subclassFeatureRows.map((row, i) => (
+              <div key={row.id} style={{ border: "1px solid #ddd", borderRadius: 6, padding: "0.5rem", marginTop: "0.5rem" }}>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  <label>
+                    Lvl{" "}
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={row.level}
+                      onChange={(e) =>
+                        setSubclassFeatureRows((prev) => prev.map((r, j) => (j === i ? { ...r, level: e.target.value } : r)))
+                      }
+                      style={{ width: "3rem" }}
+                    />
+                  </label>
+                  <input
+                    placeholder="Feature name (e.g. Hexblade's Curse)"
+                    value={row.name}
+                    onChange={(e) =>
+                      setSubclassFeatureRows((prev) => prev.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))
+                    }
+                    style={{ flex: 1 }}
+                  />
+                  <button type="button" onClick={() => setSubclassFeatureRows((prev) => prev.filter((_, j) => j !== i))}>
+                    Remove
+                  </button>
+                </div>
+                <textarea
+                  placeholder="Rules text"
+                  value={row.description}
+                  onChange={(e) =>
+                    setSubclassFeatureRows((prev) => prev.map((r, j) => (j === i ? { ...r, description: e.target.value } : r)))
+                  }
+                  rows={3}
+                  style={{ width: "100%", marginTop: "0.4rem" }}
+                />
+                <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.9rem" }}>
+                  {DND5E_ABILITIES.map((a) => (
+                    <label key={a}>
+                      {DND5E_ABILITY_NAMES[a]}{" "}
+                      <input
+                        type="number"
+                        style={{ width: "2.6rem" }}
+                        value={row.abilityBonuses[a] ?? ""}
+                        onChange={(e) =>
+                          setSubclassFeatureRows((prev) =>
+                            prev.map((r, j) => (j === i ? { ...r, abilityBonuses: { ...r.abilityBonuses, [a]: e.target.value } } : r)),
+                          )
+                        }
+                      />
+                    </label>
+                  ))}
+                  {(
+                    [
+                      ["AC", "acBonus"],
+                      ["Attack", "attackBonus"],
+                      ["Damage", "damageBonus"],
+                      ["Spell DC", "spellDCBonus"],
+                      ["Spell atk", "spellAttackBonus"],
+                    ] as const
+                  ).map(([label, key]) => (
+                    <label key={key}>
+                      {label}{" "}
+                      <input
+                        type="number"
+                        style={{ width: "2.6rem" }}
+                        value={row[key]}
+                        onChange={(e) =>
+                          setSubclassFeatureRows((prev) => prev.map((r, j) => (j === i ? { ...r, [key]: e.target.value } : r)))
+                        }
+                      />
+                    </label>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
+                  <input
+                    placeholder="Armor proficiencies (comma-separated)"
+                    value={row.armorText}
+                    onChange={(e) =>
+                      setSubclassFeatureRows((prev) => prev.map((r, j) => (j === i ? { ...r, armorText: e.target.value } : r)))
+                    }
+                    style={{ flex: 1, minWidth: "10rem" }}
+                  />
+                  <input
+                    placeholder="Weapon proficiencies"
+                    value={row.weaponText}
+                    onChange={(e) =>
+                      setSubclassFeatureRows((prev) => prev.map((r, j) => (j === i ? { ...r, weaponText: e.target.value } : r)))
+                    }
+                    style={{ flex: 1, minWidth: "10rem" }}
+                  />
+                  <input
+                    placeholder="Tool proficiencies"
+                    value={row.toolText}
+                    onChange={(e) =>
+                      setSubclassFeatureRows((prev) => prev.map((r, j) => (j === i ? { ...r, toolText: e.target.value } : r)))
+                    }
+                    style={{ flex: 1, minWidth: "10rem" }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.85rem" }}>
+                  {DND5E_SKILLS.map((s) => (
+                    <label key={s.id}>
+                      <input
+                        type="checkbox"
+                        checked={row.skillProficiencies.includes(s.id)}
+                        onChange={(e) =>
+                          setSubclassFeatureRows((prev) =>
+                            prev.map((r, j) =>
+                              j === i
+                                ? {
+                                    ...r,
+                                    skillProficiencies: e.target.checked
+                                      ? [...r.skillProficiencies, s.id]
+                                      : r.skillProficiencies.filter((id) => id !== s.id),
+                                  }
+                                : r,
+                            ),
+                          )
+                        }
+                      />{" "}
+                      {s.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setSubclassFeatureRows((prev) => [...prev, emptySubclassFeatureRow(1)])}
+              style={{ marginTop: "0.4rem" }}
+            >
+              Add feature
+            </button>
+
+            <h4 style={{ marginTop: "1.2rem" }}>Spell list</h4>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+              <strong>Added to list</strong> makes the spell selectable for this character (a Warlock expanded spell
+              list — options, not handouts). <strong>Granted</strong> puts it straight on the sheet at that level.
+            </p>
+            <datalist id="srd-spells-list-subclass">
+              {SRD_SPELLS.map((sp) => (
+                <option key={sp.id} value={sp.name} />
+              ))}
+            </datalist>
+            {subclassSpellRows.map((row, i) => (
+              <div key={row.id} style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap", marginTop: "0.4rem" }}>
+                <label>
+                  Lvl{" "}
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={row.level}
+                    onChange={(e) => setSubclassSpellRows((prev) => prev.map((r, j) => (j === i ? { ...r, level: e.target.value } : r)))}
+                    style={{ width: "3rem" }}
+                  />
+                </label>
+                <input
+                  placeholder="Spell name (matches an SRD spell if spelled exactly)"
+                  list="srd-spells-list-subclass"
+                  value={row.name}
+                  onChange={(e) => setSubclassSpellRows((prev) => prev.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))}
+                  style={{ flex: 1, minWidth: "12rem" }}
+                />
+                <select
+                  value={row.mode}
+                  onChange={(e) =>
+                    setSubclassSpellRows((prev) =>
+                      prev.map((r, j) => (j === i ? { ...r, mode: e.target.value as SubclassSpellRow["mode"] } : r)),
+                    )
+                  }
+                >
+                  <option value="list">Added to list</option>
+                  <option value="granted">Granted</option>
+                </select>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={row.atWill}
+                    onChange={(e) => setSubclassSpellRows((prev) => prev.map((r, j) => (j === i ? { ...r, atWill: e.target.checked } : r)))}
+                  />{" "}
+                  At will
+                </label>
+                <button type="button" onClick={() => setSubclassSpellRows((prev) => prev.filter((_, j) => j !== i))}>
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setSubclassSpellRows((prev) => [...prev, emptySubclassSpellRow(1)])}
+              style={{ marginTop: "0.4rem" }}
+            >
+              Add spell
+            </button>
+
+            <h4 style={{ marginTop: "1.2rem" }}>Limited-use resources</h4>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+              Gets a spend/reset counter on the sheet that clears on the matching rest, alongside Rage and Ki.
+            </p>
+            {subclassResourceRows.map((row, i) => (
+              <div key={row.id} style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap", marginTop: "0.4rem" }}>
+                <label>
+                  Lvl{" "}
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={row.level}
+                    onChange={(e) => setSubclassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, level: e.target.value } : r)))}
+                    style={{ width: "3rem" }}
+                  />
+                </label>
+                <input
+                  placeholder="Resource name (e.g. Hexblade's Curse)"
+                  value={row.name}
+                  onChange={(e) => setSubclassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))}
+                  style={{ flex: 1, minWidth: "10rem" }}
+                />
+                <label>
+                  Uses{" "}
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={row.uses}
+                    onChange={(e) => setSubclassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, uses: e.target.value } : r)))}
+                    style={{ width: "3rem" }}
+                  />
+                </label>
+                <select
+                  value={row.recharge}
+                  onChange={(e) =>
+                    setSubclassResourceRows((prev) =>
+                      prev.map((r, j) => (j === i ? { ...r, recharge: e.target.value as SubclassResourceRow["recharge"] } : r)),
+                    )
+                  }
+                >
+                  <option value="short">Per short rest</option>
+                  <option value="long">Per long rest</option>
+                </select>
+                <input
+                  placeholder="Note (optional)"
+                  value={row.note}
+                  onChange={(e) => setSubclassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, note: e.target.value } : r)))}
+                  style={{ flex: 1, minWidth: "8rem" }}
+                />
+                <button type="button" onClick={() => setSubclassResourceRows((prev) => prev.filter((_, j) => j !== i))}>
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setSubclassResourceRows((prev) => [...prev, emptySubclassResourceRow()])}
+              style={{ marginTop: "0.4rem" }}
+            >
+              Add resource
             </button>
           </>
         ) : type === "feat" ? (

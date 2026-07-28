@@ -526,3 +526,61 @@ independent; #102 depends on #101's form work being in place and should land aft
     - **Critical detail:** chosen spells MUST use the same `feat-spell-${feat.id}-${i}` id tagging as fixed grants — `removeFeat` cleans up granted spells by that prefix, so anything tagged differently silently leaks onto the sheet when the feat is removed.
     - **Ordering dependency:** this makes the feat picker multi-step, which makes **#94a** (FeatPickerModal is unmounted when the Feats section is collapsed — the default state at a character's *first* ASI) both more likely to be hit and harder to debug. **Fix #94a first or in the same batch.** (#94a was already fixed earlier in this session, so no extra work needed here.)
     - **Verify (done):** authored "Magic Initiate (Wizard)" with two `spellChoices` rows (2 Wizard cantrips at-will, 1 Wizard level-1 spell) plus the existing prereq/bonus fields. Took it via the standalone "Add feat" control: the picker chained two `WizardSpellbookPicker` steps (caught and fixed a real bug along the way — the picker wasn't remounting between steps, so its internal selection count leaked from step 1 into step 2; fixed by keying it on `stepIndex`). Confirmed via the raw character API response that all 3 chosen spells landed with `feat-spell-${feat.id}-{0,1,2}` ids and the right `atWill`/level values. Removed the feat and confirmed `sheetData.spells` went back to `[]` while the unrelated "Powerful Build" feat and the #100 background features were untouched. Full backend suite (21 tests) still green throughout.
+
+## Theme: subclasses deep enough for a real published subclass
+
+The subclass creator stores `parentClass` + `levels[{ level, features: string[] }]` — feature
+**names only** (≤60 chars), which become blank sheet entries on level-up. Hexblade
+(dnd5e.wikidot.com/warlock:hexblade) is the benchmark: it needs rules text, an expanded spell
+list, proficiency grants, and two per-rest resources, none of which the schema can express.
+
+**Licensing note:** Hexblade is Xanathar's Guide, *not* SRD 5.1 CC-BY. Every `srd-*.ts` file
+carries a CC-BY provenance header, so Hexblade's text must **not** be committed as repo data.
+The goal is a creator capable enough that a DM authors it in their own instance.
+
+**Decisions taken (both by the user):** subclass spells carry a **per-row list/granted mode**
+(expanded lists add options; domain-style spells are handed over outright); resources get a
+**real tracked counter**, not description text.
+
+103. ✅ **Subclass features carry rules text and mechanics, not just a name.** `classLevelEntrySchema.features` is `string[]` and is shared with `customClassDataSchema` *and* the SRD `ClassLevelEntry` type — so widen nothing there; add a parallel rich array on the subclass schema instead.
+    - **Schema:** `features: [{ id, level, name, description (≤1000), ...effectBonusesSchema, skillProficiencies, armorProficiencies, weaponProficiencies, toolProficiencies }]` on `customSubclassDataSchema`. Reuse `effectBonusesSchema` exactly as #100 did for background features.
+    - **Legacy merge, no migration:** `subclassFeatureNames()` ([Dnd5eSheet.tsx](frontend/src/components/systems/Dnd5eSheet.tsx)) becomes `subclassFeaturesAt(subclass, level)` returning rich entries, merging the new array with legacy `levels[].features` names (mapped to empty-description entries). SRD subclasses keep working untouched through the same path.
+    - **Level-up:** the blank-entry builder in `levelUp()` stops hardcoding `description: ""` / zero bonuses and carries the real values through — same shape change #100 made to the wizard's `backgroundGrants()`.
+    - **Armor/weapon/tool proficiency is cosmetic in this app** (`proficienciesText` is free text, nothing computes off it), so granting them = appending to `proficienciesText` on level-up. Skill proficiencies use the existing structured `skillProficiencies` path that `effectSkillProficiencies` already aggregates.
+    - **Verify:** author Hex Warrior with medium armor/shields/martial weapons + rules text; level a Warlock into it; the sheet shows the text and the proficiency line, and removing it doesn't strand the text.
+
+104. ✅ **Subclass spell lists, per-row list-vs-granted.** Nothing today lets a subclass touch spells at all.
+    - **Schema:** `spells: [{ id, level (character level it applies), srdId, name, spellLevel, mode: "list" | "granted", atWill }]`. `"list"` = added to what the pickers offer; `"granted"` = pushed onto `sheet.spells` at that level, tagged `subclass-spell-${id}` so it can be cleaned up the same way feat grants are.
+    - **Pickers:** [`SpellPickerModal`](frontend/src/components/systems/SpellPickerModal.tsx) already has the escape hatch — `overrideAllClasses || s.classes.includes(classId)`; add an `extraSpellIds: Set<string>` alongside it. [`PrepareSpellsModal`](frontend/src/components/systems/PrepareSpellsModal.tsx) filters the same way and needs the same set.
+    - **Verify:** Hexblade's 10-spell expanded list (Shield/Wrathful Smite … Banishing Smite/Cone of Cold) shows up as *selectable* for a Hexblade warlock at the right levels and is absent for a Fiend warlock; a `"granted"` row lands on the sheet instead.
+
+105. ✅ **Generic per-rest tracked resources (generalizes the martial pools).** Hexblade's Curse is 1/short rest, Accursed Specter 1/long rest. `sheet.martialUsed` is already `z.record(z.string(), …)` so **no data migration is needed** — only `MartialResourceKey` ([class-progression.ts](shared/src/systems/class-progression.ts)) is a hardcoded `"rage"|"actionSurge"|"indomitable"|"ki"` union.
+    - **Schema:** `resources: [{ id, name, level, uses (fixed int), recharge: "short"|"long", note }]` on the subclass. Fixed int is deliberate — it covers Hexblade exactly; proficiency-bonus/ability-mod scaling is a later extension, not v1.
+    - **Generalize:** widen `MartialResourceKey` to `string`, and add a builder that maps subclass resources into the existing `MartialResourcePool` shape (`{key, label, max, resetOn, note}`) under a namespaced key (`subclass:${id}`) to avoid colliding with `rage`/`ki`. Concatenate into the pools the sheet already renders.
+    - **Rest handling then needs no new code:** `longRest`/`shortRest` already reset via `martialResetKeys(pools, restType)`, so pools from a subclass clear on the right rest automatically. This is the payoff for generalizing rather than special-casing.
+    - **Verify:** Hexblade's Curse counter appears at level 1, spends and resets on a short rest; Accursed Specter resets only on a long rest; a Barbarian's Rage is unaffected.
+
+106. ✅ **Manager UI for all of the above.** The subclass editor is currently two inputs per level row (comma-separated names + `key:value` martial text) — not enough surface for any of #103-105.
+    - Rebuild it as three repeatable card lists (features / spells / resources), matching the card pattern #100 established for background features and #102 for feat spell choices, and keep the existing level-row grid for the martial/slot progression.
+    - **Verify:** author the whole Hexblade subclass end to end, save, reload, and confirm every field round-trips through the schema.
+
+**Verified (#103-106, done):** authored the full Hexblade in the manager — 5 features with rules
+text (Hex Warrior carrying medium armor/shields/martial weapons), the 10-spell expanded list, and
+both resources — saved and confirmed every field round-trips through the schema on re-edit.
+On a level-1 Warlock: selecting Hexblade granted Hexblade's Curse (253 chars) and Hex Warrior
+(259 chars), and appended `Hex Warrior — Armor: Medium armor, Shields; Weapons: Martial weapons`
+to proficienciesText without clobbering the base Warlock line. `Shield` (not a Warlock spell)
+appears in the spell picker while `Fire Bolt` does not and `Blur`/`Cone of Cold` stay hidden until
+their unlock levels. The Hexblade's Curse counter spends to 0/1 and returns to 1/1 on a short
+rest; at level 6 Accursed Specter appears as a separate long-rest pool. Full backend suite (21)
+green throughout.
+
+**Two things found while verifying, both fixed:**
+- Selecting a subclass granted nothing at levels already reached — subclasses are chosen *after*
+  character creation, so a level-1 Hexblade silently got no features at all. Fixed by extracting
+  `mergeGrants()` and having both `levelUp()` and the new `chooseSubclass()` go through it, so
+  the two paths can't drift.
+- 4 of Hexblade's 10 expanded spells (Wrathful Smite, Elemental Weapon, Staggering Smite,
+  Banishing Smite) aren't in the SRD 5.1 dataset at all. Subclass spell rows now fall back to
+  resolving against the author's own custom spells by name, so an expanded list isn't silently
+  truncated to whatever the SRD happens to include.

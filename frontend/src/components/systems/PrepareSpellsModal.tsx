@@ -34,10 +34,15 @@ export function PrepareSpellsModal({
   sheet,
   onConfirm,
   onClose,
+  extraSpellIds = new Set<string>(),
 }: {
   sheet: Dnd5eSheetData;
   onConfirm: (spells: Dnd5eSheetData["spells"]) => void;
   onClose: () => void;
+  // Subclass expanded spell list (#104) -- on-list for this character despite the spell's own
+  // `classes` not naming the class. Ignored for spellbook casters, whose candidates are their
+  // own book rather than the class list.
+  extraSpellIds?: Set<string>;
 }) {
   const cap = maxPreparedSpells(sheet);
   const isSpellbookCaster = usesSpellbook(sheet.class);
@@ -55,13 +60,15 @@ export function PrepareSpellsModal({
     if (isSpellbookCaster) {
       return sheet.spells.filter((s) => s.level >= 1).map((s) => ({ id: s.id, srdId: s.srdId, name: s.name, level: s.level }));
     }
-    return SRD_SPELLS.filter((s) => s.level >= 1 && s.level <= maxLevel && s.classes.includes(classId)).map((s) => ({
+    return SRD_SPELLS.filter(
+      (s) => s.level >= 1 && s.level <= maxLevel && (s.classes.includes(classId) || extraSpellIds.has(s.id)),
+    ).map((s) => ({
       id: s.id,
       srdId: s.id,
       name: s.name,
       level: s.level,
     }));
-  }, [isSpellbookCaster, sheet.spells, classId, maxLevel]);
+  }, [isSpellbookCaster, sheet.spells, classId, maxLevel, extraSpellIds]);
 
   const alreadyPrepared = new Set(
     sheet.spells.filter((s) => s.level >= 1 && s.prepared).map((s) => (isSpellbookCaster ? s.id : (s.srdId ?? s.id))),

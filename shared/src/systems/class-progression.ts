@@ -653,8 +653,11 @@ export function martialFeatureLines(martial: MartialLevelEntry | null | undefine
   return lines;
 }
 
-// The martialUsed record on the sheet is keyed by these strings.
-export type MartialResourceKey = "rage" | "actionSurge" | "indomitable" | "ki";
+// The martialUsed record on the sheet is keyed by these strings. The four base-class pools are
+// named explicitly for readability, but the type is open (#105): a custom subclass contributes
+// pools under a namespaced `subclass:${id}` key through the same tracker, and sheet.martialUsed
+// is already z.record(z.string(), ...) so widening this needs no data migration.
+export type MartialResourceKey = "rage" | "actionSurge" | "indomitable" | "ki" | (string & {});
 
 export interface MartialResourcePool {
   key: MartialResourceKey;

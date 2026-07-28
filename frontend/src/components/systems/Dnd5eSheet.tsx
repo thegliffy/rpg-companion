@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   Character,
   Dnd5eSheetData,
@@ -8,6 +8,9 @@ import type {
   CustomClassData,
   CustomSubraceData,
   CustomSubclassData,
+  SubclassFeature,
+  SubclassSpell,
+  CustomSpellData,
   CustomItemData,
   SrdInvocation,
   GrantedSpell,
@@ -50,6 +53,10 @@ import {
   customClassLevelEntry,
   martialFeatureLines,
   martialResourcePools,
+  subclassFeaturesAt,
+  subclassResourcePools,
+  subclassSpellsUpTo,
+  blankSubclassFeature,
   martialResourceAvailable,
   martialResetKeys,
   abilityModifier,
@@ -166,6 +173,24 @@ export function Dnd5eSheet({
   } = useCustomContent();
   const matchedCustomClass = customClasses.find((c) => c.name.toLowerCase() === sheet.class.trim().toLowerCase());
   const matchedCustomRace = customRaces.find((r) => r.name.toLowerCase() === sheet.race.trim().toLowerCase());
+  const matchedCustomSubclass = customSubclasses.find((s) => s.name.toLowerCase() === sheet.subclass.trim().toLowerCase());
+  const subclassData = matchedCustomSubclass ? (matchedCustomSubclass.data as CustomSubclassData) : null;
+  // Expanded-spell-list ids unlocked so far (#104) -- widens what the spell pickers offer without
+  // granting anything. Memoized because the pickers take it as a Set in a useMemo dependency.
+  // A row whose name isn't in the SRD (several Hexblade-list spells are PHB-only) resolves
+  // against the author's custom spells by name instead, so the list isn't silently truncated.
+  const subclassExtraSpellIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const s of subclassSpellsUpTo(subclassData?.spells ?? [], sheet.level, "list")) {
+      if (s.srdId) {
+        ids.add(s.srdId);
+        continue;
+      }
+      const match = customSpells.find((c) => c.name.trim().toLowerCase() === s.name.trim().toLowerCase());
+      if (match) ids.add(`custom-${match.id}`);
+    }
+    return ids;
+  }, [subclassData, sheet.level, customSpells]);
 
   function effectiveLevelEntry(className: string, level: number) {
     if (matchedCustomClass && className.trim().toLowerCase() === matchedCustomClass.name.toLowerCase()) {
@@ -196,14 +221,19 @@ export function Dnd5eSheet({
       .map((s) => ({ name: s.name, pending: s.status === "pending" })),
   ];
 
-  // Subclass features granted at a given level (SRD + custom), for the Level Up flow.
-  function subclassFeatureNames(subclassName: string, level: number): string[] {
+  // Subclass features granted at a given level (SRD + custom), for the Level Up flow. Returns
+  // rich entries (#103): a custom subclass can carry rules text, bonuses and proficiency grants,
+  // while SRD subclasses and pre-#103 custom ones come back as name-only entries via the same
+  // merge, so callers need no special-casing.
+  function subclassFeaturesAtLevel(subclassName: string, level: number): SubclassFeature[] {
     if (!subclassName.trim()) return [];
     const custom = customSubclasses.find((s) => s.name.toLowerCase() === subclassName.trim().toLowerCase());
-    const levels = custom
-      ? (custom.data as CustomSubclassData).levels
-      : (SRD_SUBCLASSES.find((s) => s.name.toLowerCase() === subclassName.trim().toLowerCase())?.levels ?? []);
-    return levels.find((e) => e.level === level)?.features ?? [];
+    if (custom) {
+      const d = custom.data as CustomSubclassData;
+      return subclassFeaturesAt(d.levels, d.features, level);
+    }
+    const srdLevels = SRD_SUBCLASSES.find((s) => s.name.toLowerCase() === subclassName.trim().toLowerCase())?.levels ?? [];
+    return subclassFeaturesAt(srdLevels, [], level);
   }
 
   const casterType = matchedCustomClass ? (matchedCustomClass.data as CustomClassData).casterType : casterTypeForClass(sheet.class);
@@ -244,7 +274,13 @@ export function Dnd5eSheet({
     : expectedSlots(sheet.class, sheet.level);
 
   const martialLines = martialFeatureLines(effectiveLevelEntry(sheet.class, sheet.level)?.martial);
-  const martialPools = martialResourcePools(effectiveLevelEntry(sheet.class, sheet.level)?.martial);
+  // Base-class pools (Rage/Action Surge/Indomitable/Ki) plus any the subclass contributes (#105).
+  // Both use the same MartialResourcePool shape, so the counters render and the rest handlers
+  // reset them without either needing to know where a pool came from.
+  const martialPools = [
+    ...martialResourcePools(effectiveLevelEntry(sheet.class, sheet.level)?.martial),
+    ...subclassResourcePools(subclassData?.resources ?? [], sheet.level),
+  ];
 
   const pb = proficiencyBonus(sheet.level);
   const saveDC = spellSaveDC(sheet);
@@ -370,16 +406,110 @@ export function Dnd5eSheet({
     }
   }
 
+  /** Merges granted subclass features, spells and proficiency lines into a sheet, skipping
+   * anything already present. Shared by levelUp() and chooseSubclass() so picking a subclass at
+   * a level you have already reached grants exactly what levelling into it would have -- without
+   * this, a subclass chosen after character creation silently drops its level-1 features. */
+  function mergeGrants(
+    prev: Dnd5eSheetData,
+    grantedFeatures: SubclassFeature[],
+    grantedSubclassSpells: SubclassSpell[],
+    atLevel: number,
+  ): Pick<Dnd5eSheetData, "features" | "spells" | "proficienciesText"> {
+    const existingNames = new Set(prev.features.map((f) => f.name));
+    const newFeatureEntries: Dnd5eSheetData["features"] = grantedFeatures
+      .filter((f) => !existingNames.has(f.name))
+      .map((f) => ({
+        id: `feature-${atLevel}-${f.name}-${crypto.randomUUID()}`,
+        name: f.name,
+        description: f.description,
+        abilityBonuses: f.abilityBonuses,
+        acBonus: f.acBonus,
+        attackBonus: f.attackBonus,
+        damageBonus: f.damageBonus,
+        spellDCBonus: f.spellDCBonus,
+        spellAttackBonus: f.spellAttackBonus,
+        skillProficiencies: f.skillProficiencies,
+      }));
+
+    const existingSpellIds = new Set(prev.spells.map((s) => s.id));
+    const newGrantedSpells = grantedSubclassSpells
+      .filter((s) => !existingSpellIds.has(`subclass-spell-${s.id}`))
+      .map((s) => {
+        // SRD first, then the author's custom spells by name -- several PHB spells on a
+        // published expanded list simply aren't in the SRD 5.1 dataset.
+        const custom = s.srdId
+          ? undefined
+          : customSpells.find((c) => c.name.trim().toLowerCase() === s.name.trim().toLowerCase());
+        return {
+          id: `subclass-spell-${s.id}`,
+          srdId: s.srdId || (custom ? `custom-${custom.id}` : undefined),
+          name: s.name,
+          level: custom ? (custom.data as CustomSpellData).level : s.spellLevel,
+          prepared: false,
+          atWill: s.atWill,
+        };
+      });
+
+    // Armor/weapon/tool proficiency is free text on the sheet, so a granting feature appends to
+    // proficienciesText rather than to a structured field.
+    const lines = newFeatureEntries.flatMap((entry) => {
+      const f = grantedFeatures.find((g) => g.name === entry.name);
+      if (!f) return [];
+      const parts: string[] = [];
+      if (f.armorProficiencies.length > 0) parts.push(`Armor: ${f.armorProficiencies.join(", ")}`);
+      if (f.weaponProficiencies.length > 0) parts.push(`Weapons: ${f.weaponProficiencies.join(", ")}`);
+      if (f.toolProficiencies.length > 0) parts.push(`Tools: ${f.toolProficiencies.join(", ")}`);
+      return parts.length > 0 ? [`${f.name} — ${parts.join("; ")}`] : [];
+    });
+    const proficienciesText =
+      lines.length > 0
+        ? [prev.proficienciesText.trim(), ...lines.filter((line) => !prev.proficienciesText.includes(line))]
+            .filter(Boolean)
+            .join("\n")
+        : prev.proficienciesText;
+
+    return {
+      features: [...prev.features, ...newFeatureEntries],
+      spells: [...prev.spells, ...newGrantedSpells],
+      proficienciesText,
+    };
+  }
+
+  /** Selecting a subclass grants everything it would have handed over at or below the current
+   * level -- subclasses are usually chosen after character creation, so the levels already
+   * passed would otherwise never be applied. */
+  function chooseSubclass(name: string) {
+    const custom = customSubclasses.find((s) => s.name.toLowerCase() === name.trim().toLowerCase());
+    if (!custom) {
+      set("subclass", name);
+      return;
+    }
+    const d = custom.data as CustomSubclassData;
+    const earned: SubclassFeature[] = [];
+    for (let lvl = 1; lvl <= sheet.level; lvl++) earned.push(...subclassFeaturesAt(d.levels, d.features, lvl));
+    const grantedSpells = subclassSpellsUpTo(d.spells, sheet.level, "granted");
+    setSheet((prev) => ({ ...prev, subclass: name, ...mergeGrants(prev, earned, grantedSpells, sheet.level) }));
+  }
+
   function levelUp() {
     const newLevel = sheet.level + 1;
     const newEntry = effectiveLevelEntry(sheet.class, newLevel);
     const oldEntry = effectiveLevelEntry(sheet.class, sheet.level);
     const newSlots = newEntry?.slots ?? {};
-    // Class features plus this level's subclass features (if a subclass is chosen), de-duplicated
-    // since some base-class progression entries already list the default subclass's feature names.
-    const featureNames = [
-      ...new Set([...(newEntry?.features ?? []), ...subclassFeatureNames(sheet.subclass, newLevel)]),
+    // Class features plus this level's subclass features (if a subclass is chosen). Subclass
+    // entries are rich (#103) and may carry rules text, bonuses and proficiency grants; base-class
+    // progression gives names only. De-duplicated by name, subclass entry winning, since some
+    // base-class progression entries already list the default subclass's feature names.
+    const subclassFeatures = subclassFeaturesAtLevel(sheet.subclass, newLevel);
+    const subclassNames = new Set(subclassFeatures.map((f) => f.name.trim().toLowerCase()));
+    const grantedFeatures = [
+      ...subclassFeatures,
+      ...(newEntry?.features ?? [])
+        .filter((name) => !subclassNames.has(name.trim().toLowerCase()))
+        .map((name) => blankSubclassFeature(name, newLevel)),
     ];
+    const featureNames = grantedFeatures.map((f) => f.name);
     const oldKnown = oldEntry?.spellsKnown ?? null;
     const newKnown = newEntry?.spellsKnown ?? null;
     const oldCantrips = oldEntry?.cantripsKnown ?? null;
@@ -402,32 +532,16 @@ export function Dnd5eSheet({
               .sort((a, b) => a.level - b.level)
           : prev.spellSlots;
 
-      // One blank-bonus structured entry per newly-granted feature name, deduped against
-      // names already on the sheet (a re-run of level-up, or a name also listed by the base
-      // class progression and the subclass lookup, shouldn't create duplicates).
-      const existingNames = new Set(prev.features.map((f) => f.name));
-      const newFeatureEntries: Dnd5eSheetData["features"][number][] = featureNames
-        .filter((name) => !existingNames.has(name))
-        .map((name) => ({
-          id: `feature-${newLevel}-${name}-${crypto.randomUUID()}`,
-          name,
-          description: "",
-          abilityBonuses: {},
-          acBonus: 0,
-          attackBonus: 0,
-          damageBonus: 0,
-          spellDCBonus: 0,
-          spellAttackBonus: 0,
-          skillProficiencies: [],
-        }));
-
+      // Features, granted spells and proficiency lines all go through the same merge
+      // chooseSubclass() uses, so the two paths can't drift apart. "list" spells are not granted
+      // here -- they only widen what the pickers offer.
       return {
         ...prev,
         level: newLevel,
         hitDiceTotal: prev.hitDiceTotal + 1,
         hitDiceAvailable: prev.hitDiceAvailable + 1,
         spellSlots,
-        features: [...prev.features, ...newFeatureEntries],
+        ...mergeGrants(prev, grantedFeatures, subclassSpellsUpTo(subclassData?.spells ?? [], newLevel, "granted"), newLevel),
       };
     });
 
@@ -947,7 +1061,7 @@ export function Dnd5eSheet({
           <label>
             Subclass
             <br />
-            <select value={sheet.subclass} onChange={(e) => set("subclass", e.target.value)}>
+            <select value={sheet.subclass} onChange={(e) => chooseSubclass(e.target.value)}>
               <option value="">(none)</option>
               {subclassOptions.map((s) => (
                 <option key={s.name} value={s.name}>
@@ -1938,6 +2052,7 @@ export function Dnd5eSheet({
             // count against the number of spells you know").
             currentSpells={sheet.spells.filter((s) => !s.id.startsWith(TOME_CANTRIP_PREFIX))}
             customSpells={customSpells}
+            extraSpellIds={subclassExtraSpellIds}
             onToggle={(spell, adding) => {
               if (adding) {
                 set("spells", [
@@ -1960,6 +2075,7 @@ export function Dnd5eSheet({
       {prepareSpellsOpen && (
         <PrepareSpellsModal
           sheet={sheet}
+          extraSpellIds={subclassExtraSpellIds}
           onConfirm={(spells) => {
             set("spells", spells);
             setPrepareSpellsOpen(false);

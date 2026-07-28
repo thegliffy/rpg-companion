@@ -31,6 +31,7 @@ export function SpellPickerModal({
   onClose,
   cantripsOnly = false,
   maxPicks,
+  extraSpellIds = new Set<string>(),
 }: {
   characterClass: string;
   characterLevel: number;
@@ -43,6 +44,10 @@ export function SpellPickerModal({
   // Pact of the Tome: caps the Book of Shadows at 3 cantrips -- unchecked boxes past the cap
   // are disabled, already-checked ones stay togglable so removal still works.
   maxPicks?: number;
+  // Subclass expanded spell list (#104): SRD ids that count as on-list for this character even
+  // though the spell's own `classes` doesn't include the chosen class -- e.g. a Hexblade's
+  // Shield/Wrathful Smite. Options, not grants; the level cap still applies.
+  extraSpellIds?: Set<string>;
 }) {
   const allSpells = useMemo(
     () => [...SRD_SPELLS, ...customSpells.map(customSpellToSrdShape)],
@@ -65,11 +70,11 @@ export function SpellPickerModal({
     const classId = selectedClass.toLowerCase();
     return allSpells.filter((s) => {
       if (cantripsOnly) return s.level === 0;
-      const classOk = overrideAllClasses || s.classes.includes(classId);
+      const classOk = overrideAllClasses || s.classes.includes(classId) || extraSpellIds.has(s.id);
       const levelOk = s.level === 0 || s.level <= maxLevel;
       return classOk && levelOk;
     });
-  }, [allSpells, selectedClass, overrideAllClasses, maxLevel, cantripsOnly]);
+  }, [allSpells, selectedClass, overrideAllClasses, maxLevel, cantripsOnly, extraSpellIds]);
 
   const currentIds = new Set(currentSpells.map((s) => s.srdId).filter(Boolean));
   const atCap = maxPicks !== undefined && currentIds.size >= maxPicks;

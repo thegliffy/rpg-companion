@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { DND5E_ABILITIES, DND5E_ABILITY_NAMES, DND5E_SKILLS } from "./dnd5e.js";
-import type { ClassLevelEntry, CasterType } from "./class-progression.js";
+import type { ClassLevelEntry, CasterType, MartialResourcePool } from "./class-progression.js";
 import type { SrdSpell } from "./srd-spells.js";
 import type { SrdMonster } from "./srd-monsters.js";
 import type { CustomContentType, CustomContentSystem, CustomContent } from "../types.js";
@@ -278,11 +278,125 @@ export const customSubraceDataSchema = z.object({
 });
 export type CustomSubraceData = z.infer<typeof customSubraceDataSchema>;
 
+// A subclass feature with real rules text and mechanics (#103). Deliberately a parallel array
+// rather than widening classLevelEntrySchema.features, which is `string[]` and shared with
+// customClassDataSchema *and* the SRD ClassLevelEntry type -- legacy name-only entries keep
+// working and are merged in by subclassFeaturesAt() below.
+const subclassFeatureSchema = effectBonusesSchema.extend({
+  id: z.string().min(1),
+  level: z.number().int().min(1).max(20),
+  name: z.string().trim().max(60),
+  description: z.string().trim().max(1000).default(""),
+  // Aggregated through effectSkillProficiencies (dnd5e.ts), same as a feat's.
+  skillProficiencies: z.array(z.string().trim().max(40)).max(18).default([]),
+  // Armor/weapon/tool proficiency is cosmetic in this app -- nothing computes off
+  // proficienciesText -- so these are appended to that free-text field on level-up.
+  armorProficiencies: z.array(z.string().trim().max(40)).max(10).default([]),
+  weaponProficiencies: z.array(z.string().trim().max(40)).max(10).default([]),
+  toolProficiencies: z.array(z.string().trim().max(40)).max(10).default([]),
+});
+export type SubclassFeature = z.infer<typeof subclassFeatureSchema>;
+
+// A spell a subclass touches (#104). "list" widens what the spell pickers offer (a Warlock
+// expanded spell list -- options, not handouts); "granted" pushes it straight onto the sheet
+// (domain-style always-prepared spells), tagged so it can be cleaned up again.
+const subclassSpellSchema = z.object({
+  id: z.string().min(1),
+  level: z.number().int().min(1).max(20),
+  srdId: z.string().trim().max(80).default(""),
+  name: z.string().trim().max(100),
+  spellLevel: z.number().int().min(0).max(9).default(0),
+  mode: z.enum(["list", "granted"]).default("list"),
+  atWill: z.boolean().default(false),
+});
+export type SubclassSpell = z.infer<typeof subclassSpellSchema>;
+
+// A limited-use resource (#105) -- e.g. Hexblade's Curse 1/short rest. `uses` is a fixed int on
+// purpose: it covers the benchmark case exactly, and proficiency-bonus/ability-mod scaling is a
+// later extension rather than speculative generality now.
+const subclassResourceSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().max(40),
+  level: z.number().int().min(1).max(20).default(1),
+  uses: z.number().int().min(1).max(20).default(1),
+  recharge: z.enum(["short", "long"]).default("long"),
+  note: z.string().trim().max(80).default(""),
+});
+export type SubclassResource = z.infer<typeof subclassResourceSchema>;
+
 export const customSubclassDataSchema = z.object({
   parentClass: z.string().trim().max(60).default(""),
   levels: z.array(classLevelEntrySchema).max(20).default([]),
+  features: z.array(subclassFeatureSchema).max(30).default([]),
+  spells: z.array(subclassSpellSchema).max(30).default([]),
+  resources: z.array(subclassResourceSchema).max(10).default([]),
 });
 export type CustomSubclassData = z.infer<typeof customSubclassDataSchema>;
+
+/** A name-only subclass feature (SRD data, or a pre-#103 custom subclass) as a rich entry with
+ * no mechanics -- exactly what level-up used to build inline. */
+export function blankSubclassFeature(name: string, level: number): SubclassFeature {
+  return {
+    id: newEntityId("subclass-feature-legacy"),
+    level,
+    name,
+    description: "",
+    abilityBonuses: {},
+    acBonus: 0,
+    attackBonus: 0,
+    damageBonus: 0,
+    spellDCBonus: 0,
+    spellAttackBonus: 0,
+    skillProficiencies: [],
+    armorProficiencies: [],
+    weaponProficiencies: [],
+    toolProficiencies: [],
+  };
+}
+
+/** Subclass features granted at exactly `level`, merging the rich #103 array with legacy
+ * name-only `levels[].features` entries (SRD subclasses, and custom ones authored before #103).
+ * A legacy name already covered by a rich entry is dropped so re-authoring doesn't double up. */
+export function subclassFeaturesAt(
+  levels: { level: number; features?: string[] }[],
+  richFeatures: SubclassFeature[],
+  level: number,
+): SubclassFeature[] {
+  const rich = richFeatures.filter((f) => f.level === level);
+  const covered = new Set(rich.map((f) => f.name.trim().toLowerCase()));
+  const legacy = (levels.find((e) => e.level === level)?.features ?? [])
+    .filter((name) => !covered.has(name.trim().toLowerCase()))
+    .map((name) => blankSubclassFeature(name, level));
+  return [...rich, ...legacy];
+}
+
+/** Every subclass spell unlocked at or below `level`. `mode` splits them: "list" widens the
+ * spell pickers, "granted" is pushed onto the sheet. */
+export function subclassSpellsUpTo(spells: SubclassSpell[], level: number, mode: "list" | "granted"): SubclassSpell[] {
+  return spells.filter((s) => s.level <= level && s.mode === mode);
+}
+
+/** Resources unlocked at or below `level`. */
+export function subclassResourcesUpTo(resources: SubclassResource[], level: number): SubclassResource[] {
+  return resources.filter((r) => r.level <= level);
+}
+
+/** Prefix for subclass-contributed martialUsed keys -- namespaced so a subclass resource can
+ * never collide with the base-class "rage"/"ki"/etc. pools it sits alongside. */
+export const SUBCLASS_RESOURCE_PREFIX = "subclass:";
+
+/** Maps a subclass's resources onto the same MartialResourcePool shape the sheet already
+ * renders and rests already reset (#105). Because longRest/shortRest clear via
+ * martialResetKeys(pools, restType), pools returned here need no separate rest handling. */
+export function subclassResourcePools(resources: SubclassResource[], level: number): MartialResourcePool[] {
+  return subclassResourcesUpTo(resources, level).map((r) => ({
+    key: `${SUBCLASS_RESOURCE_PREFIX}${r.id}`,
+    label: r.name,
+    max: r.uses,
+    resetOn: r.recharge,
+    note: r.note || undefined,
+  }));
+}
 
 // A spell granted by a feat (e.g. Magic Initiate) -- mirrors InvocationGrants' grantedSpells
 // (srd-invocations.ts) since a granted spell is pushed onto sheet.spells the same way regardless
