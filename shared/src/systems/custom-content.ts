@@ -1,7 +1,9 @@
 import { z } from "zod";
-import { DND5E_ABILITIES, DND5E_ABILITY_NAMES, DND5E_SKILLS } from "./dnd5e.js";
+import { DND5E_ABILITIES, DND5E_ABILITY_NAMES, DND5E_SKILLS, buffEffectSchema, hasBuffEffect } from "./dnd5e.js";
 import type { ClassLevelEntry, CasterType, MartialResourcePool } from "./class-progression.js";
+import type { BuffEffect } from "./dnd5e.js";
 import type { SrdSpell } from "./srd-spells.js";
+import { SRD_SPELL_EFFECTS } from "./srd-spell-effects.js";
 import type { SrdMonster } from "./srd-monsters.js";
 import type { CustomContentType, CustomContentSystem, CustomContent } from "../types.js";
 import { newEntityId } from "../id.js";
@@ -460,6 +462,11 @@ export const customSpellDataSchema = z.object({
   concentration: z.boolean().default(false),
   // SRD class ids (lowercase) that can cast this spell -- same convention as SrdSpell.classes.
   classes: z.array(z.string().trim().toLowerCase().max(30)).max(12).default([]),
+  // Attack/damage buff this spell grants on cast (#110-113) -- e.g. Wrathful Smite's next-hit
+  // 1d6 psychic. Distinct from damageDice/damageType above, which is damage the spell itself
+  // deals when cast (Magic Missile); this is damage/bonus applied to the *caster's own later
+  // weapon attack*. All-default (hasBuffEffect false) means "no buff", the common case.
+  buff: buffEffectSchema.default({}),
 });
 export type CustomSpellData = z.infer<typeof customSpellDataSchema>;
 
@@ -484,6 +491,22 @@ export function customSpellToSrdShape(item: CustomContent): SrdSpell {
     concentration: d.concentration,
     classes: d.classes,
   };
+}
+
+/** Resolves a spell id (SRD or `custom-${id}`) to the BuffEffect it grants on cast, checking the
+ * curated SRD_SPELL_EFFECTS table first and then the spell's own authored buff if it's a visible
+ * custom spell -- null when the spell has no buff. Centralized here so SpellCastControl's cast
+ * handler and any future caller resolve identically rather than re-deriving the custom-id
+ * unwrapping and hasBuffEffect check at each call site. */
+export function resolveSpellBuff(spellId: string, customSpells: CustomContent[]): BuffEffect | null {
+  const curated = SRD_SPELL_EFFECTS[spellId];
+  if (curated) return curated;
+  if (!spellId.startsWith("custom-")) return null;
+  const customId = Number(spellId.slice("custom-".length));
+  const item = customSpells.find((c) => c.id === customId);
+  if (!item) return null;
+  const buff = (item.data as CustomSpellData).buff;
+  return hasBuffEffect(buff) ? buff : null;
 }
 
 // Spans the SRD weapon/armor/gear/magic-item shape via a `kind` discriminator, plus the same

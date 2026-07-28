@@ -195,6 +195,43 @@ export const effectEntrySchema = z.object({
 
 export type EffectEntry = z.infer<typeof effectEntrySchema>;
 
+// The attack/damage side of what a buff spell grants (#110) -- deliberately separate from
+// effectEntrySchema above: feats/features/items are flat-int, always-on bonuses, while a spell's
+// buff needs dice terms (Bless's +1d4, Wrathful Smite's +1d6 psychic) and a consumption rule
+// (per-hit vs the next hit only). Shared between a custom spell's authored buff and the curated
+// SRD_SPELL_EFFECTS table (srd-spell-effects.ts) so both resolve through the same shape.
+export const buffEffectSchema = z.object({
+  attackBonus: z.number().int().min(-10).max(10).default(0),
+  attackDice: z.string().trim().max(20).default(""),
+  damageBonus: z.number().int().min(-10).max(10).default(0),
+  damageDice: z.string().trim().max(20).default(""),
+  damageType: z.string().trim().max(30).default(""),
+  // "per-hit" applies every time (Bless, Magic Weapon); "once" is consumed by the next damage
+  // roll it contributes to (Wrathful Smite, Divine Favor, Branding Smite) and then removed.
+  consumption: z.enum(["per-hit", "once"]).default("per-hit"),
+});
+export type BuffEffect = z.infer<typeof buffEffectSchema>;
+
+/** True when a buff actually contributes something -- a spell with no buff fields set still
+ * parses to an all-default BuffEffect, which should never create a no-op activeEffect entry. */
+export function hasBuffEffect(buff: BuffEffect): boolean {
+  return buff.attackBonus !== 0 || buff.attackDice.trim() !== "" || buff.damageBonus !== 0 || buff.damageDice.trim() !== "";
+}
+
+// A buff spell's effect once cast, sitting on the sheet until consumed or its concentration ends
+// (#111). Only the mechanical bonus is tracked -- like activeEffects' sibling arrays (feats,
+// features), the spell's other effects (conditions imposed, save DCs on others, etc.) aren't
+// modelled, so removing this is the whole "break/consume" story.
+export const activeEffectSchema = buffEffectSchema.extend({
+  id: z.string().min(1),
+  name: z.string().max(100),
+  sourceSpellId: z.string().max(100).optional(),
+  // True for effects from a concentration spell -- cleared alongside concentratingOn by
+  // breakConcentration() and a failed concentration save, so the two can't drift apart.
+  endsWithConcentration: z.boolean().default(false),
+});
+export type ActiveEffect = z.infer<typeof activeEffectSchema>;
+
 export const dnd5eSheetSchema = z.object({
   class: z.string().max(60).default(""),
   subclass: z.string().max(60).default(""),
@@ -306,8 +343,8 @@ export const dnd5eSheetSchema = z.object({
   martialUsed: z.record(z.string(), z.number().int().min(0).max(99)).default({}),
   // The one spell currently being concentrated on, if any -- 5e allows exactly one, so casting
   // another concentration spell replaces this rather than stacking. Null when not concentrating.
-  // Only a marker: the spell's actual effects aren't modelled, so breaking clears this and
-  // nothing else.
+  // The spell's actual effects aren't modelled beyond this marker and any linked activeEffects
+  // below (endsWithConcentration), both of which breakConcentration() clears together.
   concentratingOn: z
     .object({
       spellId: z.string().trim().max(100),
@@ -315,6 +352,12 @@ export const dnd5eSheetSchema = z.object({
     })
     .nullable()
     .default(null),
+  // Buff spells currently in effect (#111) -- Bless's +1d4, Wrathful Smite's +1d6 psychic, etc.
+  // Created when SpellCastControl casts a spell with a resolved BuffEffect (custom-authored or
+  // from the curated SRD_SPELL_EFFECTS table), consumed by AttackRollControl's onHit for
+  // consumption: "once" effects, and cleared by breakConcentration()/a long rest for
+  // endsWithConcentration ones.
+  activeEffects: z.array(activeEffectSchema).max(10).default([]),
 });
 
 export type Dnd5eSheetData = z.infer<typeof dnd5eSheetSchema>;
@@ -456,13 +499,40 @@ export function formatModifier(value: number): string {
   return value >= 0 ? `+${value}` : `${value}`;
 }
 
-/** Attack bonus = ability modifier + proficiency bonus (always proficient) + magic bonus + feat attack bonuses. */
+/** Sum of active buff effects' flat attackBonus (e.g. a +1 weapon buff) -- folded into
+ * attackBonus() below alongside feat bonuses. */
+export function activeEffectAttackBonus(sheet: Dnd5eSheetData): number {
+  return sheet.activeEffects.reduce((sum, e) => sum + e.attackBonus, 0);
+}
+
+/** Extra dice terms active effects add to an attack ROLL (Bless's +1d4) -- combined into the same
+ * 1d20 formula as the flat bonus above rather than rolled separately, since a single formula can
+ * carry multiple dice terms and an attack roll (unlike damage) has only one number to report. */
+export function activeEffectAttackDice(sheet: Dnd5eSheetData): string[] {
+  return sheet.activeEffects.filter((e) => e.attackDice.trim() !== "").map((e) => e.attackDice.trim());
+}
+
+/** Sum of active buff effects' flat damageBonus. */
+export function activeEffectDamageBonus(sheet: Dnd5eSheetData): number {
+  return sheet.activeEffects.reduce((sum, e) => sum + e.damageBonus, 0);
+}
+
+/** Active effects that add extra damage dice on a hit (Wrathful Smite's 1d6 psychic). Rolled and
+ * reported separately from a weapon's own damage, since each can carry its own damage type;
+ * "once" ones are meant to be removed by the caller (AttackRollControl's onHit) after they land. */
+export function activeEffectDamageDice(sheet: Dnd5eSheetData): ActiveEffect[] {
+  return sheet.activeEffects.filter((e) => e.damageDice.trim() !== "");
+}
+
+/** Attack bonus = ability modifier + proficiency bonus (always proficient) + magic bonus + feat
+ * attack bonuses + active buff effects' flat attack bonuses. */
 export function attackBonus(sheet: Dnd5eSheetData, attack: { ability: Dnd5eAbility; magicBonus: number }): number {
   return (
     abilityModifier(effectiveAbilityScore(sheet, attack.ability)) +
     proficiencyBonus(sheet.level) +
     attack.magicBonus +
-    featBonusTotal(sheet, "attackBonus")
+    featBonusTotal(sheet, "attackBonus") +
+    activeEffectAttackBonus(sheet)
   );
 }
 

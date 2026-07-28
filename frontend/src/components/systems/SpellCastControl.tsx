@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { SrdSpell } from "shared";
+import type { BuffEffect, SrdSpell } from "shared";
 import * as diceApi from "../../api/dice";
 
 type Phase = "idle" | "rolling" | "awaiting-hit-miss" | "miss" | "done";
@@ -14,6 +14,8 @@ export function SpellCastControl({
   onConsumeSlot,
   onConcentrate,
   replacesConcentration = null,
+  buff = null,
+  onBuff,
 }: {
   spell: SrdSpell;
   spellAttackBonus: number | null;
@@ -31,6 +33,13 @@ export function SpellCastControl({
   onConcentrate?: () => void;
   /** Name of the spell already being concentrated on, if casting this one would replace it. */
   replacesConcentration?: string | null;
+  /** The spell's resolved buff (curated SRD_SPELL_EFFECTS or the custom spell's own `buff`
+   * field), if any -- passed in rather than resolved here so this component stays free of the
+   * customSpells lookup. Independent of concentration: most curated buffs happen to be
+   * concentration spells, but a homebrew one need not be. */
+  buff?: BuffEffect | null;
+  /** Called when a spell with a resolved buff is cast, so the sheet can add an activeEffect. */
+  onBuff?: (buff: BuffEffect) => void;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [attackBreakdown, setAttackBreakdown] = useState<string | null>(null);
@@ -54,6 +63,7 @@ export function SpellCastControl({
 
     if (consumesSlot) onConsumeSlot?.();
     if (spell.concentration) onConcentrate?.();
+    if (buff) onBuff?.(buff);
 
     if (spell.requiresAttackRoll) {
       setPhase("rolling");
@@ -92,6 +102,20 @@ export function SpellCastControl({
       {spell.concentration && (
         <small style={{ marginLeft: "0.4rem", color: replacesConcentration ? "crimson" : "#666" }}>
           {replacesConcentration ? `(concentration — drops ${replacesConcentration})` : "(concentration)"}
+        </small>
+      )}
+      {buff && (
+        <small style={{ marginLeft: "0.4rem", color: "#666" }}>
+          (buffs your attacks:{" "}
+          {[
+            buff.attackDice ? `+${buff.attackDice} to hit` : "",
+            buff.attackBonus ? `+${buff.attackBonus} to hit` : "",
+            buff.damageDice ? `+${buff.damageDice}${buff.damageType ? ` ${buff.damageType}` : ""} dmg` : "",
+            buff.damageBonus ? `+${buff.damageBonus} dmg` : "",
+          ]
+            .filter(Boolean)
+            .join(", ")}
+          {buff.consumption === "once" ? ", next hit" : ""})
         </small>
       )}
       {error && <span style={{ color: "crimson", marginLeft: "0.5rem" }}>{error}</span>}

@@ -54,6 +54,10 @@ import {
   martialFeatureLines,
   martialResourcePools,
   concentrationSaveDC,
+  resolveSpellBuff,
+  activeEffectAttackDice,
+  activeEffectDamageBonus,
+  activeEffectDamageDice,
   subclassFeaturesAt,
   subclassResourcePools,
   subclassSpellsUpTo,
@@ -755,7 +759,11 @@ export function Dnd5eSheet({
    * never modelled mechanically, so there's nothing else to unwind. */
   function breakConcentration(reason: string) {
     const name = sheet.concentratingOn?.spellName;
-    setSheet((prev) => ({ ...prev, concentratingOn: null }));
+    setSheet((prev) => ({
+      ...prev,
+      concentratingOn: null,
+      activeEffects: prev.activeEffects.filter((e) => !e.endsWithConcentration),
+    }));
     setConcentrationDamage("");
     setConcentrationMessage(name ? `${reason}: ${name} ends.` : reason);
   }
@@ -795,8 +803,9 @@ export function Dnd5eSheet({
         mysticArcanum: prev.mysticArcanum.map((a) => ({ ...a, used: false })),
         // Every martial resource (Rage, Action Surge, Indomitable, Ki) recovers on a long rest.
         martialUsed: {},
-        // Nothing survives a long rest -- you can't sustain a spell while resting.
+        // Nothing survives a long rest -- you can't sustain a spell (or its buff) while resting.
         concentratingOn: null,
+        activeEffects: [],
       };
     });
     if (hpMax !== "") setHpCurrent(hpMax);
@@ -1708,6 +1717,42 @@ export function Dnd5eSheet({
           </div>
         )}
 
+        {/* Active effects -- buffs currently in effect from a cast spell (#110-113). Only
+            rendered when there's at least one, same convention as the Concentration box above. */}
+        {sheet.activeEffects.length > 0 && (
+          <div style={{ ...box, flex: "0 0 auto" }}>
+            <h3>Active effects</h3>
+            {sheet.activeEffects.map((e) => (
+              <div key={e.id} style={{ display: "flex", gap: "0.4rem", alignItems: "center", marginBottom: "0.3rem" }}>
+                <span>
+                  <strong>{e.name}</strong>
+                  {": "}
+                  {[
+                    e.attackDice ? `+${e.attackDice} to hit` : "",
+                    e.attackBonus ? formatModifier(e.attackBonus) + " to hit" : "",
+                    e.damageDice ? `+${e.damageDice}${e.damageType ? ` ${e.damageType}` : ""} dmg` : "",
+                    e.damageBonus ? formatModifier(e.damageBonus) + " dmg" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
+                  <small style={{ color: "#666" }}>
+                    {" "}
+                    ({e.consumption === "once" ? "next hit" : "per hit"})
+                  </small>
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSheet((prev) => ({ ...prev, activeEffects: prev.activeEffects.filter((x) => x.id !== e.id) }))
+                  }
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Conditions */}
         <div style={{ ...box, flex: "0 0 auto" }}>
           <h3>Conditions</h3>
@@ -1776,8 +1821,14 @@ export function Dnd5eSheet({
           const bonus = attackBonus(sheet, atk);
           // Ability modifier applies to weapon damage too (RAW), not just the attack roll --
           // AttackRollControl's "magicBonus" prop is really "everything added to the damage
-          // roll besides the dice", so it carries ability + the item's magic bonus + feat bonuses.
-          const damageBonus = abilityModifier(effectiveAbilityScore(sheet, atk.ability)) + atk.magicBonus + featBonusTotal(sheet, "damageBonus");
+          // roll besides the dice", so it carries ability + the item's magic bonus + feat bonuses
+          // + active buff effects' flat damage bonus (attackBonus() already folds their flat
+          // attack bonus into `bonus` above).
+          const damageBonus =
+            abilityModifier(effectiveAbilityScore(sheet, atk.ability)) +
+            atk.magicBonus +
+            featBonusTotal(sheet, "damageBonus") +
+            activeEffectDamageBonus(sheet);
           return (
             <div key={atk.id} style={{ marginBottom: "0.5rem" }}>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -1838,6 +1889,19 @@ export function Dnd5eSheet({
                 damageDice={atk.damageDice}
                 damageType={atk.damageType}
                 campaignId={character.campaignId}
+                extraAttackDice={activeEffectAttackDice(sheet)}
+                extraDamage={activeEffectDamageDice(sheet).map((e) => ({
+                  id: e.id,
+                  label: e.name,
+                  dice: e.damageDice,
+                  type: e.damageType,
+                }))}
+                onHit={() =>
+                  setSheet((prev) => ({
+                    ...prev,
+                    activeEffects: prev.activeEffects.filter((e) => e.consumption !== "once"),
+                  }))
+                }
               />
             </div>
           );
@@ -2124,8 +2188,29 @@ export function Dnd5eSheet({
                       setSheet((prev) => ({
                         ...prev,
                         concentratingOn: { spellId: srdSpell.id, spellName: srdSpell.name },
+                        // Only one concentration spell at a time, so whatever the previous one
+                        // was contributing ends the moment this one starts -- runs before onBuff
+                        // below adds this spell's own effect (functional setSheet updates apply
+                        // in call order within the same tick).
+                        activeEffects: prev.activeEffects.filter((e) => !e.endsWithConcentration),
                       }));
                     }}
+                    buff={resolveSpellBuff(srdSpell.id, customSpells)}
+                    onBuff={(buff) =>
+                      setSheet((prev) => ({
+                        ...prev,
+                        activeEffects: [
+                          ...prev.activeEffects,
+                          {
+                            id: `effect-${crypto.randomUUID()}`,
+                            name: srdSpell.name,
+                            sourceSpellId: srdSpell.id,
+                            ...buff,
+                            endsWithConcentration: srdSpell.concentration ?? false,
+                          },
+                        ],
+                      }))
+                    }
                   />
                 )
               )}

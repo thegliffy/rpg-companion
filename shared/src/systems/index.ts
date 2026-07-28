@@ -2,6 +2,7 @@ import { genericSystem } from "./generic.js";
 import { dnd5eSystem } from "./dnd5e.js";
 import { pf2eSystem } from "./pf2e.js";
 export * from "./srd-spells.js";
+export * from "./srd-spell-effects.js";
 export * from "./class-progression.js";
 export * from "./srd-class-proficiencies.js";
 export * from "./srd-races.js";

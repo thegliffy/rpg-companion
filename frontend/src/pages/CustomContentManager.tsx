@@ -482,6 +482,15 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [spellRitual, setSpellRitual] = useState(false);
   const [spellConcentration, setSpellConcentration] = useState(false);
   const [spellClasses, setSpellClasses] = useState("");
+  // Attack/damage buff this spell grants on cast (#110-113) -- distinct from spellDamageDice/
+  // spellDamageType above, which is damage the spell itself deals (Magic Missile); this is
+  // bonus applied to the caster's own later weapon attack (Wrathful Smite, Bless).
+  const [spellBuffAttackBonus, setSpellBuffAttackBonus] = useState("0");
+  const [spellBuffAttackDice, setSpellBuffAttackDice] = useState("");
+  const [spellBuffDamageBonus, setSpellBuffDamageBonus] = useState("0");
+  const [spellBuffDamageDice, setSpellBuffDamageDice] = useState("");
+  const [spellBuffDamageType, setSpellBuffDamageType] = useState("");
+  const [spellBuffConsumption, setSpellBuffConsumption] = useState<"per-hit" | "once">("per-hit");
 
   // Item fields (abilityBonuses reused from above; kind drives which fields apply)
   const [itemKind, setItemKind] = useState<"weapon" | "armor" | "gear" | "magic">("weapon");
@@ -624,6 +633,12 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setSpellRitual(false);
     setSpellConcentration(false);
     setSpellClasses("");
+    setSpellBuffAttackBonus("0");
+    setSpellBuffAttackDice("");
+    setSpellBuffDamageBonus("0");
+    setSpellBuffDamageDice("");
+    setSpellBuffDamageType("");
+    setSpellBuffConsumption("per-hit");
     setItemKind("weapon");
     setItemWeight("0");
     setItemValue("0");
@@ -837,6 +852,14 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         ritual: boolean;
         concentration?: boolean;
         classes: string[];
+        buff?: {
+          attackBonus: number;
+          attackDice: string;
+          damageBonus: number;
+          damageDice: string;
+          damageType: string;
+          consumption: "per-hit" | "once";
+        };
       };
       setSpellLevel(String(d.level));
       setSpellSchool(d.school);
@@ -850,6 +873,12 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       setSpellRitual(d.ritual);
       setSpellConcentration(d.concentration ?? false);
       setSpellClasses(d.classes.join(", "));
+      setSpellBuffAttackBonus(String(d.buff?.attackBonus ?? 0));
+      setSpellBuffAttackDice(d.buff?.attackDice ?? "");
+      setSpellBuffDamageBonus(String(d.buff?.damageBonus ?? 0));
+      setSpellBuffDamageDice(d.buff?.damageDice ?? "");
+      setSpellBuffDamageType(d.buff?.damageType ?? "");
+      setSpellBuffConsumption(d.buff?.consumption ?? "per-hit");
     } else if (item.type === "item") {
       const d = item.data as {
         kind: "weapon" | "armor" | "gear" | "magic";
@@ -1131,6 +1160,14 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
           ritual: spellRitual,
           concentration: spellConcentration,
           classes: spellClasses.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean),
+          buff: {
+            attackBonus: Number(spellBuffAttackBonus) || 0,
+            attackDice: spellBuffAttackDice.trim(),
+            damageBonus: Number(spellBuffDamageBonus) || 0,
+            damageDice: spellBuffDamageDice.trim(),
+            damageType: spellBuffDamageType.trim(),
+            consumption: spellBuffConsumption,
+          },
         };
       } else if (type === "item") {
         data = {
@@ -2440,6 +2477,67 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                 Classes that can cast this (comma-separated, e.g. "wizard, sorcerer")
                 <br />
                 <input value={spellClasses} onChange={(e) => setSpellClasses(e.target.value)} style={{ width: "100%" }} />
+              </label>
+            </div>
+
+            <h4 style={{ marginTop: "1rem" }}>Attack/damage buff (optional)</h4>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+              Bonus applied to the caster's <em>own later weapon attack</em> when this spell is cast — e.g. Wrathful
+              Smite's next-hit 1d6 psychic, or Bless's +1d4 to hit. Separate from "Damage dice" above, which is
+              damage the spell itself deals on cast (Magic Missile).
+            </p>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+              <label>
+                Attack bonus{" "}
+                <input
+                  type="number"
+                  value={spellBuffAttackBonus}
+                  onChange={(e) => setSpellBuffAttackBonus(e.target.value)}
+                  style={{ width: "3rem" }}
+                />
+              </label>
+              <label>
+                Attack dice{" "}
+                <input
+                  value={spellBuffAttackDice}
+                  onChange={(e) => setSpellBuffAttackDice(e.target.value)}
+                  placeholder="e.g. 1d4"
+                  style={{ width: "5rem" }}
+                />
+              </label>
+              <label>
+                Damage bonus{" "}
+                <input
+                  type="number"
+                  value={spellBuffDamageBonus}
+                  onChange={(e) => setSpellBuffDamageBonus(e.target.value)}
+                  style={{ width: "3rem" }}
+                />
+              </label>
+              <label>
+                Damage dice{" "}
+                <input
+                  value={spellBuffDamageDice}
+                  onChange={(e) => setSpellBuffDamageDice(e.target.value)}
+                  placeholder="e.g. 1d6"
+                  style={{ width: "5rem" }}
+                />
+              </label>
+              <label>
+                Damage type{" "}
+                <input
+                  value={spellBuffDamageType}
+                  onChange={(e) => setSpellBuffDamageType(e.target.value)}
+                  placeholder="e.g. psychic"
+                  style={{ width: "6rem" }}
+                />
+              </label>
+              <label>
+                Applies{" "}
+                <select value={spellBuffConsumption} onChange={(e) => setSpellBuffConsumption(e.target.value as "per-hit" | "once")}>
+                  <option value="per-hit">Every hit, until it ends</option>
+                  <option value="once">Next hit only</option>
+                </select>
               </label>
             </div>
           </>

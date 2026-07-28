@@ -57,7 +57,11 @@ export const SRD_SPELLS: SrdSpell[] = [
   { id: "blindness-deafness", name: "Blindness/Deafness", level: 2, school: "Necromancy", castingTime: "1 action", range: "30 feet", duration: "1 minute", saveAbility: "con", classes: ["bard", "cleric", "sorcerer", "wizard"] },
   { id: "blink", name: "Blink", level: 3, school: "Transmutation", castingTime: "1 action", range: "Self", duration: "1 minute", classes: ["sorcerer", "wizard"] },
   { id: "blur", name: "Blur", level: 2, school: "Illusion", castingTime: "1 action", range: "Self", duration: "Up to 1 minute", concentration: true, classes: ["sorcerer", "wizard"] },
-  { id: "branding-smite", name: "Branding Smite", level: 2, school: "Evocation", castingTime: "1 bonus action", range: "Self", duration: "Up to 1 minute", concentration: true, damageDice: "2d6", damageType: "Radiant", classes: ["paladin"] },
+  // damageDice/damageType deliberately omitted -- this is bonus damage on your *next* weapon
+  // hit (SRD_SPELL_EFFECTS in srd-spell-effects.ts, consumption: "once"), not damage the spell
+  // itself deals on cast. Setting them here would make SpellCastControl roll the 2d6 immediately
+  // instead, on top of the #111 activeEffect that applies it correctly.
+  { id: "branding-smite", name: "Branding Smite", level: 2, school: "Evocation", castingTime: "1 bonus action", range: "Self", duration: "Up to 1 minute", concentration: true, classes: ["paladin"] },
   { id: "burning-hands", name: "Burning Hands", level: 1, school: "Evocation", castingTime: "1 action", range: "Self", duration: "Instantaneous", saveAbility: "dex", damageDice: "3d6", damageType: "Fire", classes: ["sorcerer", "wizard"] },
   { id: "call-lightning", name: "Call Lightning", level: 3, school: "Conjuration", castingTime: "1 action", range: "120 feet", duration: "Up to 10 minutes", concentration: true, damageDice: "3d10", damageType: "Lightning", classes: ["druid"] },
   { id: "calm-emotions", name: "Calm Emotions", level: 2, school: "Enchantment", castingTime: "1 action", range: "60 feet", duration: "Up to 1 minute", concentration: true, saveAbility: "cha", classes: ["bard", "cleric"] },
@@ -111,7 +115,9 @@ export const SRD_SPELLS: SrdSpell[] = [
   { id: "dispel-evil-and-good", name: "Dispel Evil and Good", level: 5, school: "Abjuration", castingTime: "1 action", range: "Self", duration: "Up to 1 minute", concentration: true, saveAbility: "cha", classes: ["cleric", "paladin"] },
   { id: "dispel-magic", name: "Dispel Magic", level: 3, school: "Abjuration", castingTime: "1 action", range: "120 feet", duration: "Instantaneous", classes: ["bard", "cleric", "druid", "paladin", "sorcerer", "warlock", "wizard"] },
   { id: "divination", name: "Divination", level: 4, school: "Divination", castingTime: "1 action", range: "Self", duration: "Instantaneous", ritual: true, classes: ["druid"] },
-  { id: "divine-favor", name: "Divine Favor", level: 1, school: "Evocation", castingTime: "1 bonus action", range: "Self", duration: "Up to 1 minute", concentration: true, damageDice: "1d4", damageType: "Radiant", classes: ["paladin"] },
+  // damageDice/damageType deliberately omitted -- see the Branding Smite comment above; this is
+  // a sustained per-hit weapon damage buff (SRD_SPELL_EFFECTS), not instant damage on cast.
+  { id: "divine-favor", name: "Divine Favor", level: 1, school: "Evocation", castingTime: "1 bonus action", range: "Self", duration: "Up to 1 minute", concentration: true, classes: ["paladin"] },
   { id: "divine-word", name: "Divine Word", level: 7, school: "Evocation", castingTime: "1 bonus action", range: "30 feet", duration: "Instantaneous", saveAbility: "cha", classes: ["cleric"] },
   { id: "dominate-beast", name: "Dominate Beast", level: 4, school: "Enchantment", castingTime: "1 action", range: "60 feet", duration: "Up to 1 minute", concentration: true, saveAbility: "wis", classes: ["druid", "sorcerer"] },
   { id: "dominate-monster", name: "Dominate Monster", level: 8, school: "Enchantment", castingTime: "1 action", range: "60 feet", duration: "Up to 1 hour", concentration: true, saveAbility: "wis", classes: ["bard", "sorcerer", "warlock", "wizard"] },
