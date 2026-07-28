@@ -613,3 +613,47 @@ character's level-1 picker alongside SRD "Shield".
     - **Fix (done):** one `spellNameOptions` list (SRD + every *visible* custom spell, deduped by name so a homebrew spell can deliberately shadow an SRD one) now backs both autocompletes **and** the unresolved-name check, so what's suggested and what's accepted can't drift apart.
     - **Second bug the fix exposed:** once the *feat* autocomplete offered custom spells, its save path still resolved only against `SRD_SPELLS` — a picked homebrew spell would have saved with no id. Added a shared `resolveSpellName()` (SRD first, then visible custom as `custom-${id}`, matching `customSpellToSrdShape`) used by both the subclass and feat paths.
     - **Verify (done):** subclass datalist went 319 → 320 and now contains "Wrathful Smite"; the 3 genuinely-absent spells still warn. Re-saving Hexblade upgraded that row from `srdId: "", spellLevel: 0` to `srdId: "custom-19", spellLevel: 1` — the level had been wrong too, since it was only surviving via the sheet's read-time name fallback. Character picker still shows "Wrathful Smite (homebrew)" beside SRD "Shield".
+
+## Theme: spells that buff your attacks
+
+Prompted by "Wrathful Smite should provide an attack bonus". Worth stating precisely: Wrathful
+Smite grants **extra damage** (*"the next time you hit with a melee weapon attack… an extra 1d6
+psychic damage"*), not a bonus to the attack roll — but the general feature has to cover both,
+since Bless and Magic Weapon really do buff the roll.
+
+**Three gaps, not one.** (a) There is no active-spell effect source at all: `allEffectEntries()`
+is feats + features and is *always on*, items gate on `itemBonusesActive()` (equipped + attuned),
+and spells contribute nothing. (b) `effectEntrySchema`'s `attackBonus`/`damageBonus` are
+`z.number().int()` — **integers only**, so `+1d6 psychic` is inexpressible even once a spell can
+contribute. (c) There's no consumption model: Wrathful Smite is next-hit-only, Hex is every hit,
+Bless is every attack roll.
+
+**Decisions taken (both by the user):** curate the SRD buff spells *in addition to* custom-spell
+buff fields; and **auto-consume** once-only effects on the next damage roll.
+
+**Licensing constraint found while scoping:** Hex, Wrathful Smite, Elemental Weapon and most
+smites are **not in SRD 5.1** — only Bless, Divine Favor, Hunter's Mark, Magic Weapon, Branding
+Smite, Shillelagh, True Strike and Spirit Guardians are. So the curated table covers those eight
+only; everything else is authored as a custom spell (which is how Wrathful Smite already exists
+in this instance). Keep the table in its own file with a provenance note, the way
+`CLASS_STAT_PRIORITY` is explicitly marked "not licensed SRD content" — do **not** append to
+`SRD_SPELLS`, whose header claims a single upstream source.
+
+110. **Dice-valued, typed bonuses.** Extend the bonus vocabulary beyond flat ints.
+    - **Shape:** `attackDice: string` (Bless "1d4"), `damageDice: string` ("1d6"), `damageType: string` ("psychic"), alongside the existing flat `attackBonus`/`damageBonus`. Validate as a dice expression, not free text.
+    - Deliberately **not** retrofitted onto `effectEntrySchema` (feats/features/items are flat-bonus things and always-on); this belongs to the new active-effect entry in #111 so the always-on path keeps its simple integer maths.
+
+111. **`activeEffects` on the sheet, with consumption and concentration linkage.**
+    - **Schema:** `activeEffects: [{ id, name, sourceSpellId?, ...#110 fields, consumption: "once" | "per-hit", endsWithConcentration: boolean }]`.
+    - **Concentration linkage is the payoff from #108:** seven of the eight SRD buff spells are concentration spells, so an effect flagged `endsWithConcentration` clears in `breakConcentration()` and on a failed save — the existing single hook, no new bookkeeping.
+    - **Auto-consume:** a `"once"` effect is folded into the next damage roll and then removed. **This makes the damage roll mutate sheet state**, which it currently doesn't — `AttackRollControl` needs an `onConsume` callback up to the sheet, and a mis-clicked roll will burn the smite. Accepted, but keep the removal visible (log it in the roll result) so it's never silent.
+    - **UI:** an "Active effects" box mirroring the #108 Concentration panel — each effect with its dice/type and a manual remove.
+
+112. **Authoring: custom-spell buff fields + the curated SRD table.**
+    - `customSpellDataSchema` gains the #110 fields plus `consumption`, so "Wrathful Smite → 1d6 psychic, once" is authorable; manager gets the inputs.
+    - New `srd-spell-effects.ts`: `Record<srdId, BuffEffect>` for the eight SRD spells above, with the not-from-the-import provenance note.
+    - Casting a spell that has a buff (custom field or curated entry) creates the `activeEffect`, reusing the `onConcentrate` hook point in `SpellCastControl` added by #108.
+
+113. **Attack roll plumbing.** `AttackRollControl` takes a flat `magicBonus: number` and builds `damageDice + magicBonus`; `attackBonus()` returns a single int.
+    - Both need to carry **extra dice terms**: the d20 roll gains Bless's `+1d4`, the damage roll gains `+1d6` and should report its type ("7 psychic") rather than silently folding into the total.
+    - **Verify:** author Wrathful Smite with 1d6 psychic/once, cast it, confirm the effect appears, the next damage roll includes `+1d6` and reports psychic, the effect then disappears, and a second attack in the same turn does **not** get it. Confirm Bless adds 1d4 to the d20 and persists across hits. Confirm breaking concentration ends a linked effect.
