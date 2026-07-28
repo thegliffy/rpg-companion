@@ -404,6 +404,7 @@ function levelsToRows(
 export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const { user } = useAuth();
   const [items, setItems] = useState<CustomContent[]>([]);
+  const [visibleSpellNames, setVisibleSpellNames] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -525,7 +526,15 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   function refresh() {
     customContentApi
       .listCustomContent()
-      .then((all) => setItems(all.filter((i) => i.createdByUserId === user?.id)))
+      .then((all) => {
+        setItems(all.filter((i) => i.createdByUserId === user?.id));
+        // Every custom spell *visible* to this user, not just their own -- a subclass spell row
+        // resolves against the same set on the sheet, so the unresolved-name warning below has to
+        // match that or it fires on approved spells someone else authored.
+        setVisibleSpellNames(
+          new Set(all.filter((i) => i.type === "spell").map((i) => i.name.trim().toLowerCase())),
+        );
+      })
       .catch((err) => setError(err.message));
   }
 
@@ -1969,7 +1978,16 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                 <option key={sp.id} value={sp.name} />
               ))}
             </datalist>
-            {subclassSpellRows.map((row, i) => (
+            {subclassSpellRows.map((row, i) => {
+              // A name that matches neither the SRD nor any visible custom spell will silently do
+              // nothing on the sheet -- several PHB spells on published expanded lists (Wrathful
+              // Smite, Elemental Weapon, Staggering Smite, Banishing Smite...) aren't in SRD 5.1.
+              const typed = row.name.trim().toLowerCase();
+              const unresolved =
+                typed !== "" &&
+                !SRD_SPELLS.some((sp) => sp.name.toLowerCase() === typed) &&
+                !visibleSpellNames.has(typed);
+              return (
               <div key={row.id} style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap", marginTop: "0.4rem" }}>
                 <label>
                   Lvl{" "}
@@ -1987,7 +2005,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                   list="srd-spells-list-subclass"
                   value={row.name}
                   onChange={(e) => setSubclassSpellRows((prev) => prev.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))}
-                  style={{ flex: 1, minWidth: "12rem" }}
+                  style={{ flex: 1, minWidth: "12rem", borderColor: unresolved ? "crimson" : undefined }}
                 />
                 <select
                   value={row.mode}
@@ -2011,8 +2029,15 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                 <button type="button" onClick={() => setSubclassSpellRows((prev) => prev.filter((_, j) => j !== i))}>
                   Remove
                 </button>
+                {unresolved && (
+                  <div style={{ flexBasis: "100%", color: "crimson", fontSize: "0.85rem" }}>
+                    No SRD or custom spell named “{row.name.trim()}” — this row won’t do anything. Several PHB spells
+                    aren’t in the SRD; create it under Type → Spell first, then it will resolve by name.
+                  </div>
+                )}
               </div>
-            ))}
+              );
+            })}
             <button
               type="button"
               onClick={() => setSubclassSpellRows((prev) => [...prev, emptySubclassSpellRow(1)])}

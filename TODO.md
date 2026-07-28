@@ -584,3 +584,11 @@ green throughout.
   Banishing Smite) aren't in the SRD 5.1 dataset at all. Subclass spell rows now fall back to
   resolving against the author's own custom spells by name, so an expanded list isn't silently
   truncated to whatever the SRD happens to include.
+
+**Follow-up (done):** the manager now flags a subclass spell row whose name resolves to neither
+an SRD spell nor any *visible* custom spell (own or approved — matched against the same set the
+sheet resolves against, so it can't false-positive on someone else's approved spell). The input
+turns red with a note pointing at Type → Spell. Verified on the authored Hexblade: exactly the 4
+non-SRD rows flagged and the 6 SRD ones stayed clean; authoring "Wrathful Smite" as a custom
+spell dropped the count to 3 and the spell then appeared as "Wrathful Smite (homebrew)" in the
+character's level-1 picker alongside SRD "Shield".
