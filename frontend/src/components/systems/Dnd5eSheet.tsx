@@ -480,15 +480,20 @@ export function Dnd5eSheet({
    * level -- subclasses are usually chosen after character creation, so the levels already
    * passed would otherwise never be applied. */
   function chooseSubclass(name: string) {
-    const custom = customSubclasses.find((s) => s.name.toLowerCase() === name.trim().toLowerCase());
-    if (!custom) {
+    if (!name.trim()) {
       set("subclass", name);
       return;
     }
-    const d = custom.data as CustomSubclassData;
+    // SRD and custom subclasses both back-fill: subclassFeaturesAtLevel() already merges either
+    // source. This matters more than it looks -- the base class table used to hand every
+    // character its default subclass's features, so an SRD Fiend warlock got them "for free";
+    // with that removed, skipping the back-fill here would leave SRD subclasses granting nothing.
     const earned: SubclassFeature[] = [];
-    for (let lvl = 1; lvl <= sheet.level; lvl++) earned.push(...subclassFeaturesAt(d.levels, d.features, lvl));
-    const grantedSpells = subclassSpellsUpTo(d.spells, sheet.level, "granted");
+    for (let lvl = 1; lvl <= sheet.level; lvl++) earned.push(...subclassFeaturesAtLevel(name, lvl));
+    const custom = customSubclasses.find((s) => s.name.toLowerCase() === name.trim().toLowerCase());
+    const grantedSpells = custom
+      ? subclassSpellsUpTo((custom.data as CustomSubclassData).spells, sheet.level, "granted")
+      : [];
     setSheet((prev) => ({ ...prev, subclass: name, ...mergeGrants(prev, earned, grantedSpells, sheet.level) }));
   }
 
