@@ -457,6 +457,7 @@ export const customSpellDataSchema = z.object({
   damageDice: z.string().trim().max(30).optional(),
   damageType: z.string().trim().max(30).optional(),
   ritual: z.boolean().default(false),
+  concentration: z.boolean().default(false),
   // SRD class ids (lowercase) that can cast this spell -- same convention as SrdSpell.classes.
   classes: z.array(z.string().trim().toLowerCase().max(30)).max(12).default([]),
 });
@@ -480,6 +481,7 @@ export function customSpellToSrdShape(item: CustomContent): SrdSpell {
     damageDice: d.damageDice,
     damageType: d.damageType,
     ritual: d.ritual,
+    concentration: d.concentration,
     classes: d.classes,
   };
 }

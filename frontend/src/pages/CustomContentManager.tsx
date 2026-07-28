@@ -480,6 +480,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [spellDamageDice, setSpellDamageDice] = useState("");
   const [spellDamageType, setSpellDamageType] = useState("");
   const [spellRitual, setSpellRitual] = useState(false);
+  const [spellConcentration, setSpellConcentration] = useState(false);
   const [spellClasses, setSpellClasses] = useState("");
 
   // Item fields (abilityBonuses reused from above; kind drives which fields apply)
@@ -590,6 +591,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setSpellDamageDice("");
     setSpellDamageType("");
     setSpellRitual(false);
+    setSpellConcentration(false);
     setSpellClasses("");
     setItemKind("weapon");
     setItemWeight("0");
@@ -802,6 +804,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         damageDice?: string;
         damageType?: string;
         ritual: boolean;
+        concentration?: boolean;
         classes: string[];
       };
       setSpellLevel(String(d.level));
@@ -814,6 +817,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       setSpellDamageDice(d.damageDice ?? "");
       setSpellDamageType(d.damageType ?? "");
       setSpellRitual(d.ritual);
+      setSpellConcentration(d.concentration ?? false);
       setSpellClasses(d.classes.join(", "));
     } else if (item.type === "item") {
       const d = item.data as {
@@ -1094,6 +1098,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
           damageDice: spellDamageDice.trim() || undefined,
           damageType: spellDamageType.trim() || undefined,
           ritual: spellRitual,
+          concentration: spellConcentration,
           classes: spellClasses.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean),
         };
       } else if (type === "item") {
@@ -2378,6 +2383,9 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
               </label>
               <label>
                 <input type="checkbox" checked={spellRitual} onChange={(e) => setSpellRitual(e.target.checked)} /> Ritual
+              </label>{" "}
+              <label>
+                <input type="checkbox" checked={spellConcentration} onChange={(e) => setSpellConcentration(e.target.checked)} /> Concentration
               </label>
               <label>
                 Save ability{" "}

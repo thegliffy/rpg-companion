@@ -304,6 +304,17 @@ export const dnd5eSheetSchema = z.object({
   // level-up's max increasing needs no migration of this field. A rest just zeroes the relevant
   // keys (see martialRestKeys in class-progression.ts for which keys clear on which rest).
   martialUsed: z.record(z.string(), z.number().int().min(0).max(99)).default({}),
+  // The one spell currently being concentrated on, if any -- 5e allows exactly one, so casting
+  // another concentration spell replaces this rather than stacking. Null when not concentrating.
+  // Only a marker: the spell's actual effects aren't modelled, so breaking clears this and
+  // nothing else.
+  concentratingOn: z
+    .object({
+      spellId: z.string().trim().max(100),
+      spellName: z.string().trim().max(100),
+    })
+    .nullable()
+    .default(null),
 });
 
 export type Dnd5eSheetData = z.infer<typeof dnd5eSheetSchema>;
@@ -479,6 +490,12 @@ export function spellSaveDC(sheet: Dnd5eSheetData): number | null {
 
 export function spellAttackBonus(sheet: Dnd5eSheetData): number | null {
   return spellAttackBonusForAbility(sheet, sheet.spellcastingAbility);
+}
+
+/** Concentration save DC after taking `damage`: DC 10, or half the damage taken, whichever is
+ * higher (PHB 203). The save itself is a plain Constitution save. */
+export function concentrationSaveDC(damage: number): number {
+  return Math.max(10, Math.floor(Math.max(0, damage) / 2));
 }
 
 /**

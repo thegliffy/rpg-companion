@@ -53,6 +53,7 @@ import {
   customClassLevelEntry,
   martialFeatureLines,
   martialResourcePools,
+  concentrationSaveDC,
   subclassFeaturesAt,
   subclassResourcePools,
   subclassSpellsUpTo,
@@ -161,6 +162,9 @@ export function Dnd5eSheet({
   const [invocationLevelUpPending, setInvocationLevelUpPending] = useState(false);
   const [pactBoonLevelUpPending, setPactBoonLevelUpPending] = useState(false);
   const [prepareSpellsOpen, setPrepareSpellsOpen] = useState(false);
+  const [concentrationDamage, setConcentrationDamage] = useState("");
+  const [concentrationMessage, setConcentrationMessage] = useState<string | null>(null);
+  const [concentrationBusy, setConcentrationBusy] = useState(false);
 
   const {
     classes: customClasses,
@@ -747,6 +751,38 @@ export function Dnd5eSheet({
     }
   }
 
+  /** Clears what's being concentrated on. Only the marker is dropped -- the spell's effects were
+   * never modelled mechanically, so there's nothing else to unwind. */
+  function breakConcentration(reason: string) {
+    const name = sheet.concentratingOn?.spellName;
+    setSheet((prev) => ({ ...prev, concentratingOn: null }));
+    setConcentrationDamage("");
+    setConcentrationMessage(name ? `${reason}: ${name} ends.` : reason);
+  }
+
+  /** Rolls the Constitution save to maintain concentration after taking damage: DC 10 or half the
+   * damage, whichever is higher. Failing breaks concentration. */
+  async function rollConcentrationSave() {
+    const damage = Number(concentrationDamage) || 0;
+    const dc = concentrationSaveDC(damage);
+    const bonus = abilityModifier(effectiveAbilityScore(sheet, "con")) + (sheet.saveProficiencies.includes("con") ? pb : 0);
+    setConcentrationBusy(true);
+    try {
+      const formula = bonus === 0 ? "1d20" : `1d20${bonus > 0 ? "+" : ""}${bonus}`;
+      const roll = await diceApi.createRoll(character.campaignId, formula, `Concentration save (DC ${dc})`);
+      if (roll.total >= dc) {
+        setConcentrationDamage("");
+        setConcentrationMessage(`${roll.breakdown} vs DC ${dc} — held.`);
+      } else {
+        breakConcentration(`${roll.breakdown} vs DC ${dc} — failed`);
+      }
+    } catch (err) {
+      setConcentrationMessage(err instanceof Error ? err.message : "Roll failed");
+    } finally {
+      setConcentrationBusy(false);
+    }
+  }
+
   function longRest() {
     setSheet((prev) => {
       const bonusDice = Math.max(1, Math.floor(prev.hitDiceTotal / 2));
@@ -759,6 +795,8 @@ export function Dnd5eSheet({
         mysticArcanum: prev.mysticArcanum.map((a) => ({ ...a, used: false })),
         // Every martial resource (Rage, Action Surge, Indomitable, Ki) recovers on a long rest.
         martialUsed: {},
+        // Nothing survives a long rest -- you can't sustain a spell while resting.
+        concentratingOn: null,
       };
     });
     if (hpMax !== "") setHpCurrent(hpMax);
@@ -1623,6 +1661,53 @@ export function Dnd5eSheet({
           )}
         </div>
 
+        {/* Concentration -- only rendered while actually concentrating, so it stays out of the
+            way for characters who never cast one. */}
+        {(sheet.concentratingOn || concentrationMessage) && (
+          <div style={{ ...box, flex: "0 0 auto" }}>
+            <h3>Concentration</h3>
+            {sheet.concentratingOn ? (
+              <>
+            <div style={{ marginBottom: "0.4rem" }}>
+              Concentrating on <strong>{sheet.concentratingOn.spellName}</strong>
+            </div>
+            <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
+              <label>
+                Damage taken{" "}
+                <input
+                  type="number"
+                  min={0}
+                  value={concentrationDamage}
+                  onChange={(e) => setConcentrationDamage(e.target.value)}
+                  style={{ width: "4rem" }}
+                />
+              </label>
+              <button type="button" onClick={rollConcentrationSave} disabled={concentrationBusy || concentrationDamage === ""}>
+                Roll DC {concentrationSaveDC(Number(concentrationDamage) || 0)} CON save
+              </button>
+              <button type="button" onClick={() => breakConcentration("Concentration dropped")}>
+                Break
+              </button>
+            </div>
+              </>
+            ) : (
+              // Not concentrating, but there's still an outcome to report -- the save that failed,
+              // or a manual break. Without this the panel would unmount the instant concentration
+              // ended and take the roll result with it.
+              <div>
+                <button type="button" onClick={() => setConcentrationMessage(null)} style={{ float: "right" }}>
+                  Dismiss
+                </button>
+              </div>
+            )}
+            {concentrationMessage && (
+              <div style={{ marginTop: "0.3rem" }}>
+                <small>{concentrationMessage}</small>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Conditions */}
         <div style={{ ...box, flex: "0 0 auto" }}>
           <h3>Conditions</h3>
@@ -2028,6 +2113,19 @@ export function Dnd5eSheet({
                     consumesSlot={consumesSlot}
                     hasSlot={hasSlot}
                     onConsumeSlot={consumeSlot}
+                    replacesConcentration={
+                      sheet.concentratingOn && sheet.concentratingOn.spellId !== srdSpell.id
+                        ? sheet.concentratingOn.spellName
+                        : null
+                    }
+                    onConcentrate={() => {
+                      setConcentrationMessage(null);
+                      setConcentrationDamage("");
+                      setSheet((prev) => ({
+                        ...prev,
+                        concentratingOn: { spellId: srdSpell.id, spellName: srdSpell.name },
+                      }));
+                    }}
                   />
                 )
               )}

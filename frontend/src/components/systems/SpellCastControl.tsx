@@ -12,6 +12,8 @@ export function SpellCastControl({
   consumesSlot = false,
   hasSlot = true,
   onConsumeSlot,
+  onConcentrate,
+  replacesConcentration = null,
 }: {
   spell: SrdSpell;
   spellAttackBonus: number | null;
@@ -24,6 +26,11 @@ export function SpellCastControl({
   hasSlot?: boolean;
   /** Spends the lowest available slot at or above the spell's level. */
   onConsumeSlot?: () => void;
+  /** Called when a concentration spell is cast, so the sheet can mark what's being sustained.
+   * 5e allows only one at a time, so the sheet replaces rather than stacks. */
+  onConcentrate?: () => void;
+  /** Name of the spell already being concentrated on, if casting this one would replace it. */
+  replacesConcentration?: string | null;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [attackBreakdown, setAttackBreakdown] = useState<string | null>(null);
@@ -46,6 +53,7 @@ export function SpellCastControl({
     setDamageBreakdown(null);
 
     if (consumesSlot) onConsumeSlot?.();
+    if (spell.concentration) onConcentrate?.();
 
     if (spell.requiresAttackRoll) {
       setPhase("rolling");
@@ -80,6 +88,11 @@ export function SpellCastControl({
       {ritualOnly && <small style={{ marginLeft: "0.4rem", color: "#666" }}>(no slot used, +10 min)</small>}
       {consumesSlot && !hasSlot && (
         <small style={{ marginLeft: "0.4rem", color: "crimson" }}>(no slot available)</small>
+      )}
+      {spell.concentration && (
+        <small style={{ marginLeft: "0.4rem", color: replacesConcentration ? "crimson" : "#666" }}>
+          {replacesConcentration ? `(concentration — drops ${replacesConcentration})` : "(concentration)"}
+        </small>
       )}
       {error && <span style={{ color: "crimson", marginLeft: "0.5rem" }}>{error}</span>}
       {attackBreakdown && (
