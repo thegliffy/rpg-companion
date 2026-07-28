@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
   CustomContent,
   CustomContentType,
@@ -404,7 +404,7 @@ function levelsToRows(
 export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const { user } = useAuth();
   const [items, setItems] = useState<CustomContent[]>([]);
-  const [visibleSpellNames, setVisibleSpellNames] = useState<Set<string>>(new Set());
+  const [visibleSpells, setVisibleSpells] = useState<CustomContent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -529,17 +529,48 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       .listCustomContent()
       .then((all) => {
         setItems(all.filter((i) => i.createdByUserId === user?.id));
-        // Every custom spell *visible* to this user, not just their own -- a subclass spell row
-        // resolves against the same set on the sheet, so the unresolved-name warning below has to
-        // match that or it fires on approved spells someone else authored.
-        setVisibleSpellNames(
-          new Set(all.filter((i) => i.type === "spell").map((i) => i.name.trim().toLowerCase())),
-        );
+        // Every custom spell *visible* to this user, not just their own -- these feed both the
+        // spell-name autocompletes and the unresolved-name warning, and the sheet resolves against
+        // the same set, so anything narrower would suggest too little and warn too much.
+        setVisibleSpells(all.filter((i) => i.type === "spell"));
       })
       .catch((err) => setError(err.message));
   }
 
   useEffect(refresh, [user?.id]);
+
+  // SRD plus every visible custom spell, deduped by name (a homebrew spell may deliberately
+  // shadow an SRD one). Backs both spell-name autocompletes and the unresolved-name check, so
+  // the thing suggested and the thing accepted can't drift apart.
+  const spellNameOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const name of [...SRD_SPELLS.map((s) => s.name), ...visibleSpells.map((i) => i.name.trim())]) {
+      const key = name.trim().toLowerCase();
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        out.push(name);
+      }
+    }
+    return out;
+  }, [visibleSpells]);
+  const knownSpellNames = useMemo(
+    () => new Set(spellNameOptions.map((n) => n.toLowerCase())),
+    [spellNameOptions],
+  );
+
+  /** Resolves a typed spell name to the id and level stored on the sheet: an SRD spell, else a
+   * visible custom one (`custom-${id}`, matching customSpellToSrdShape). Without the custom leg a
+   * homebrew spell saves with an empty id and renders on the sheet as a bare name. */
+  function resolveSpellName(name: string): { srdId: string; level: number } | null {
+    const key = name.trim().toLowerCase();
+    if (!key) return null;
+    const srd = SRD_SPELLS.find((sp) => sp.name.toLowerCase() === key);
+    if (srd) return { srdId: srd.id, level: srd.level };
+    const custom = visibleSpells.find((i) => i.name.trim().toLowerCase() === key);
+    if (custom) return { srdId: `custom-${custom.id}`, level: (custom.data as { level?: number }).level ?? 0 };
+    return null;
+  }
 
   function resetForm() {
     setEditingId(null);
@@ -1018,13 +1049,13 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
           spells: subclassSpellRows
             .filter((s) => s.name.trim() !== "")
             .map((s) => {
-              const srdSpell = SRD_SPELLS.find((sp) => sp.name.toLowerCase() === s.name.trim().toLowerCase());
+              const resolved = resolveSpellName(s.name);
               return {
                 id: s.id,
                 level: Number(s.level) || 1,
-                srdId: srdSpell?.id ?? "",
+                srdId: resolved?.srdId ?? "",
                 name: s.name.trim(),
-                spellLevel: srdSpell?.level ?? 0,
+                spellLevel: resolved?.level ?? 0,
                 mode: s.mode,
                 atWill: s.atWill,
               };
@@ -1053,11 +1084,11 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
           grantedSpells: featGrantedSpells
             .filter((r) => r.name.trim() !== "")
             .map((r) => {
-              const srdSpell = SRD_SPELLS.find((s) => s.name.toLowerCase() === r.name.trim().toLowerCase());
+              const resolved = resolveSpellName(r.name);
               return {
                 name: r.name.trim(),
-                srdId: srdSpell?.id,
-                level: srdSpell?.level ?? (Number(r.level) || 0),
+                srdId: resolved?.srdId,
+                level: resolved?.level ?? (Number(r.level) || 0),
                 atWill: r.atWill,
               };
             }),
@@ -1979,8 +2010,8 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
               list — options, not handouts). <strong>Granted</strong> puts it straight on the sheet at that level.
             </p>
             <datalist id="srd-spells-list-subclass">
-              {SRD_SPELLS.map((sp) => (
-                <option key={sp.id} value={sp.name} />
+              {spellNameOptions.map((n) => (
+                <option key={n} value={n} />
               ))}
             </datalist>
             {subclassSpellRows.map((row, i) => {
@@ -1988,10 +2019,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
               // nothing on the sheet -- several PHB spells on published expanded lists (Wrathful
               // Smite, Elemental Weapon, Staggering Smite, Banishing Smite...) aren't in SRD 5.1.
               const typed = row.name.trim().toLowerCase();
-              const unresolved =
-                typed !== "" &&
-                !SRD_SPELLS.some((sp) => sp.name.toLowerCase() === typed) &&
-                !visibleSpellNames.has(typed);
+              const unresolved = typed !== "" && !knownSpellNames.has(typed);
               return (
               <div key={row.id} style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap", marginTop: "0.4rem" }}>
                 <label>
@@ -2210,8 +2238,8 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
 
             <h4 style={{ marginTop: "1rem" }}>Spells granted</h4>
             <datalist id="srd-spells-list-feat">
-              {SRD_SPELLS.map((sp) => (
-                <option key={sp.id} value={sp.name} />
+              {spellNameOptions.map((n) => (
+                <option key={n} value={n} />
               ))}
             </datalist>
             {featGrantedSpells.map((row, i) => (
