@@ -61,10 +61,34 @@ const classLevelEntrySchema = z.object({
   martial: martialLevelEntrySchema.optional(),
 });
 
+// A limited-use resource (#105, generalized to classes in #127) -- e.g. Hexblade's Curse 1/short
+// rest, or an Artificer's infusions. `uses` is a fixed int on purpose: it covers the benchmark
+// case exactly, and proficiency-bonus/ability-mod scaling is a later extension rather than
+// speculative generality now. Named generically since #127 lifted this from subclass-only to
+// also cover customClassDataSchema -- a homebrew resource belongs wherever its owner (class or
+// subclass) is authored, same shape either way.
+const homebrewResourceSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().trim().max(40),
+  level: z.number().int().min(1).max(20).default(1),
+  uses: z.number().int().min(1).max(20).default(1),
+  recharge: z.enum(["short", "long"]).default("long"),
+  note: z.string().trim().max(80).default(""),
+});
+// Kept as "SubclassResource" (rather than renamed) since it's the established public name and
+// every existing call site/import uses it -- ClassResource is a same-shape alias for clarity at
+// the class-side call sites #127 adds.
+export type SubclassResource = z.infer<typeof homebrewResourceSchema>;
+export type ClassResource = SubclassResource;
+
 export const customClassDataSchema = z.object({
   hitDie: z.number().int().refine((v) => [6, 8, 10, 12].includes(v), { message: "Hit die must be 6, 8, 10, or 12" }),
   casterType: z.enum(["none", "prepared", "known", "pact"]).default("none"),
   levels: z.array(classLevelEntrySchema).max(20).default([]),
+  // Limited-use resources this class grants (#127) -- e.g. an Artificer's infusions or a Blood
+  // Hunter's hemocraft die. Same shape and rest-handling as a subclass's resources (#105); the
+  // asymmetry where only a subclass could carry one was never intentional.
+  resources: z.array(homebrewResourceSchema).max(10).default([]),
 });
 export type CustomClassData = z.infer<typeof customClassDataSchema>;
 
@@ -315,25 +339,12 @@ const subclassSpellSchema = z.object({
 });
 export type SubclassSpell = z.infer<typeof subclassSpellSchema>;
 
-// A limited-use resource (#105) -- e.g. Hexblade's Curse 1/short rest. `uses` is a fixed int on
-// purpose: it covers the benchmark case exactly, and proficiency-bonus/ability-mod scaling is a
-// later extension rather than speculative generality now.
-const subclassResourceSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().trim().max(40),
-  level: z.number().int().min(1).max(20).default(1),
-  uses: z.number().int().min(1).max(20).default(1),
-  recharge: z.enum(["short", "long"]).default("long"),
-  note: z.string().trim().max(80).default(""),
-});
-export type SubclassResource = z.infer<typeof subclassResourceSchema>;
-
 export const customSubclassDataSchema = z.object({
   parentClass: z.string().trim().max(60).default(""),
   levels: z.array(classLevelEntrySchema).max(20).default([]),
   features: z.array(subclassFeatureSchema).max(30).default([]),
   spells: z.array(subclassSpellSchema).max(30).default([]),
-  resources: z.array(subclassResourceSchema).max(10).default([]),
+  resources: z.array(homebrewResourceSchema).max(10).default([]),
 });
 export type CustomSubclassData = z.infer<typeof customSubclassDataSchema>;
 
@@ -385,21 +396,34 @@ export function subclassResourcesUpTo(resources: SubclassResource[], level: numb
   return resources.filter((r) => r.level <= level);
 }
 
-/** Prefix for subclass-contributed martialUsed keys -- namespaced so a subclass resource can
- * never collide with the base-class "rage"/"ki"/etc. pools it sits alongside. */
+/** Prefixes for homebrew-contributed martialUsed keys -- namespaced per source so a class
+ * resource, a subclass resource, and the base-class "rage"/"ki"/etc. pools they sit alongside
+ * can never collide even if two happen to share an id. */
 export const SUBCLASS_RESOURCE_PREFIX = "subclass:";
+export const CLASS_RESOURCE_PREFIX = "class:";
 
-/** Maps a subclass's resources onto the same MartialResourcePool shape the sheet already
+/** Maps a homebrew resource list onto the same MartialResourcePool shape the sheet already
  * renders and rests already reset (#105). Because longRest/shortRest clear via
  * martialResetKeys(pools, restType), pools returned here need no separate rest handling. */
-export function subclassResourcePools(resources: SubclassResource[], level: number): MartialResourcePool[] {
+function homebrewResourcePools(resources: SubclassResource[], level: number, prefix: string): MartialResourcePool[] {
   return subclassResourcesUpTo(resources, level).map((r) => ({
-    key: `${SUBCLASS_RESOURCE_PREFIX}${r.id}`,
+    key: `${prefix}${r.id}`,
     label: r.name,
     max: r.uses,
     resetOn: r.recharge,
     note: r.note || undefined,
   }));
+}
+
+export function subclassResourcePools(resources: SubclassResource[], level: number): MartialResourcePool[] {
+  return homebrewResourcePools(resources, level, SUBCLASS_RESOURCE_PREFIX);
+}
+
+/** Same as subclassResourcePools, for a homebrew *class*'s own resources (#127) -- e.g. an
+ * Artificer's infusions, tracked the same way a subclass's Hexblade's Curse is. Distinct prefix
+ * so a class and its subclass can each define a same-named/same-id resource without colliding. */
+export function classResourcePools(resources: ClassResource[], level: number): MartialResourcePool[] {
+  return homebrewResourcePools(resources, level, CLASS_RESOURCE_PREFIX);
 }
 
 // A spell granted by a feat (e.g. Magic Initiate) -- mirrors InvocationGrants' grantedSpells

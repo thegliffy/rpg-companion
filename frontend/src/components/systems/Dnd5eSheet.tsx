@@ -62,6 +62,7 @@ import {
   activeEffectDamageDice,
   subclassFeaturesAt,
   subclassResourcePools,
+  classResourcePools,
   subclassSpellsUpTo,
   blankSubclassFeature,
   martialResourceAvailable,
@@ -284,11 +285,12 @@ export function Dnd5eSheet({
     : expectedSlots(sheet.class, sheet.level);
 
   const martialLines = martialFeatureLines(effectiveLevelEntry(sheet.class, sheet.level)?.martial);
-  // Base-class pools (Rage/Action Surge/Indomitable/Ki) plus any the subclass contributes (#105).
-  // Both use the same MartialResourcePool shape, so the counters render and the rest handlers
-  // reset them without either needing to know where a pool came from.
+  // Base-class pools (Rage/Action Surge/Indomitable/Ki) plus any the class (#127) or subclass
+  // (#105) contributes. All three use the same MartialResourcePool shape, so the counters render
+  // and the rest handlers reset them without any of them needing to know where a pool came from.
   const martialPools = [
     ...martialResourcePools(effectiveLevelEntry(sheet.class, sheet.level)?.martial),
+    ...classResourcePools(matchedCustomClass ? (matchedCustomClass.data as CustomClassData).resources : [], sheet.level),
     ...subclassResourcePools(subclassData?.resources ?? [], sheet.level),
   ];
 

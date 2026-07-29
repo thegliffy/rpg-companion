@@ -272,6 +272,20 @@ interface FeatSpellChoiceRow {
 }
 const splitCsv = (text: string): string[] => text.split(",").map((s) => s.trim()).filter(Boolean);
 
+// Shared by the class (#127) and subclass (#105) save paths -- same row shape, same filter/map.
+function resourceRowsToData(rows: ResourceRow[]): SubclassResource[] {
+  return rows
+    .filter((r) => r.name.trim() !== "")
+    .map((r) => ({
+      id: r.id,
+      name: r.name.trim(),
+      level: Number(r.level) || 1,
+      uses: Number(r.uses) || 1,
+      recharge: r.recharge,
+      note: r.note.trim(),
+    }));
+}
+
 // Subclass sub-editors (#103-105). Same form-input-strings convention as every other row type
 // here; numbers are parsed on save.
 interface SubclassFeatureRow {
@@ -322,7 +336,9 @@ const emptySubclassSpellRow = (level: number): SubclassSpellRow => ({
   atWill: false,
 });
 
-interface SubclassResourceRow {
+// Shared by class (#127) and subclass (#105) resource editors -- same shape either way, so one
+// row type covers both rather than two identical interfaces.
+interface ResourceRow {
   id: string;
   name: string;
   level: string;
@@ -330,8 +346,8 @@ interface SubclassResourceRow {
   recharge: "short" | "long";
   note: string;
 }
-const emptySubclassResourceRow = (): SubclassResourceRow => ({
-  id: `subclass-resource-${crypto.randomUUID()}`,
+const emptyResourceRow = (idPrefix: "class" | "subclass"): ResourceRow => ({
+  id: `${idPrefix}-resource-${crypto.randomUUID()}`,
   name: "",
   level: "1",
   uses: "1",
@@ -432,6 +448,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   // Class fields
   const [hitDie, setHitDie] = useState("8");
   const [casterType, setCasterType] = useState<"none" | "prepared" | "known" | "pact">("none");
+  const [classResourceRows, setClassResourceRows] = useState<ResourceRow[]>([]);
   const [levelRows, setLevelRows] = useState<LevelRow[]>([emptyLevelRow(1)]);
 
   // Background fields
@@ -453,7 +470,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [parentClass, setParentClass] = useState("");
   const [subclassFeatureRows, setSubclassFeatureRows] = useState<SubclassFeatureRow[]>([]);
   const [subclassSpellRows, setSubclassSpellRows] = useState<SubclassSpellRow[]>([]);
-  const [subclassResourceRows, setSubclassResourceRows] = useState<SubclassResourceRow[]>([]);
+  const [subclassResourceRows, setSubclassResourceRows] = useState<ResourceRow[]>([]);
 
   // Feat fields (ability bonuses reused from above).
   const [featDescription, setFeatDescription] = useState("");
@@ -597,6 +614,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setTraits("");
     setHitDie("8");
     setCasterType("none");
+    setClassResourceRows([]);
     setLevelRows([emptyLevelRow(1)]);
     setBgSkillsFixed([]);
     setBgSkillChoices([]);
@@ -707,10 +725,21 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         hitDie: number;
         casterType: "none" | "prepared" | "known" | "pact";
         levels: { level: number; cantripsKnown?: number; spellsKnown?: number; slots?: Record<string, number>; features?: string[]; martial?: ParsedMartial }[];
+        resources?: SubclassResource[];
       };
       setHitDie(String(d.hitDie));
       setCasterType(d.casterType);
       setLevelRows(levelsToRows(d.levels));
+      setClassResourceRows(
+        (d.resources ?? []).map((r) => ({
+          id: r.id,
+          name: r.name,
+          level: String(r.level),
+          uses: String(r.uses),
+          recharge: r.recharge,
+          note: r.note,
+        })),
+      );
     } else if (item.type === "background") {
       // Normalizes both legacy flat rows and the new structured shape through the same schema
       // the backend validates against, so the builder never needs its own duplicate shim.
@@ -1062,7 +1091,12 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
           traits: traitsArr,
         };
       } else if (type === "class") {
-        data = { hitDie: Number(hitDie), casterType, levels: rowsToLevels(levelRows) };
+        data = {
+          hitDie: Number(hitDie),
+          casterType,
+          levels: rowsToLevels(levelRows),
+          resources: resourceRowsToData(classResourceRows),
+        };
       } else if (type === "background") {
         data = buildBackgroundData();
       } else if (type === "subrace") {
@@ -1107,16 +1141,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                 atWill: s.atWill,
               };
             }),
-          resources: subclassResourceRows
-            .filter((r) => r.name.trim() !== "")
-            .map((r) => ({
-              id: r.id,
-              name: r.name.trim(),
-              level: Number(r.level) || 1,
-              uses: Number(r.uses) || 1,
-              recharge: r.recharge,
-              note: r.note.trim(),
-            })),
+          resources: resourceRowsToData(subclassResourceRows),
         };
       } else if (type === "feat") {
         data = {
@@ -1464,6 +1489,71 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
               }}
             >
               Add level
+            </button>
+
+            <h4 style={{ marginTop: "1.2rem" }}>Limited-use resources</h4>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+              Gets a spend/reset counter on the sheet that clears on the matching rest, alongside Rage and Ki -- e.g.
+              an Artificer's infusions or a Blood Hunter's hemocraft die.
+            </p>
+            {classResourceRows.map((row, i) => (
+              <div key={row.id} style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap", marginTop: "0.4rem" }}>
+                <label>
+                  Lvl{" "}
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={row.level}
+                    onChange={(e) => setClassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, level: e.target.value } : r)))}
+                    style={{ width: "3rem" }}
+                  />
+                </label>
+                <input
+                  placeholder="Resource name (e.g. Infusions)"
+                  value={row.name}
+                  onChange={(e) => setClassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))}
+                  style={{ flex: 1, minWidth: "10rem" }}
+                />
+                <label>
+                  Uses{" "}
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    value={row.uses}
+                    onChange={(e) => setClassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, uses: e.target.value } : r)))}
+                    style={{ width: "3rem" }}
+                  />
+                </label>
+                <select
+                  value={row.recharge}
+                  onChange={(e) =>
+                    setClassResourceRows((prev) =>
+                      prev.map((r, j) => (j === i ? { ...r, recharge: e.target.value as ResourceRow["recharge"] } : r)),
+                    )
+                  }
+                >
+                  <option value="short">Per short rest</option>
+                  <option value="long">Per long rest</option>
+                </select>
+                <input
+                  placeholder="Note (optional)"
+                  value={row.note}
+                  onChange={(e) => setClassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, note: e.target.value } : r)))}
+                  style={{ flex: 1, minWidth: "8rem" }}
+                />
+                <button type="button" onClick={() => setClassResourceRows((prev) => prev.filter((_, j) => j !== i))}>
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setClassResourceRows((prev) => [...prev, emptyResourceRow("class")])}
+              style={{ marginTop: "0.4rem" }}
+            >
+              Add resource
             </button>
           </>
         ) : type === "background" ? (
@@ -2176,7 +2266,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                   value={row.recharge}
                   onChange={(e) =>
                     setSubclassResourceRows((prev) =>
-                      prev.map((r, j) => (j === i ? { ...r, recharge: e.target.value as SubclassResourceRow["recharge"] } : r)),
+                      prev.map((r, j) => (j === i ? { ...r, recharge: e.target.value as ResourceRow["recharge"] } : r)),
                     )
                   }
                 >
@@ -2196,7 +2286,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
             ))}
             <button
               type="button"
-              onClick={() => setSubclassResourceRows((prev) => [...prev, emptySubclassResourceRow()])}
+              onClick={() => setSubclassResourceRows((prev) => [...prev, emptyResourceRow("subclass")])}
               style={{ marginTop: "0.4rem" }}
             >
               Add resource

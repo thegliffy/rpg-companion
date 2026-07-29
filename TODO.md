@@ -834,7 +834,7 @@ SRD data.
     - **Shape:** `grantedFeats: string[]` of custom-content ids (or SRD feat ids), resolved at character creation the way `backgroundGrants()` already applies skills/tools/equipment.
     - **Reuse the #109 resolver pattern** — SRD id first, then a visible custom feat — and reuse the #109 unresolved-name warning so a background pointing at a deleted feat says so instead of silently granting nothing.
 
-127. **Generic class resources.** `martialLevelEntrySchema` is 13 hardcoded fields (rage, ki, sneak attack, action surge…), so Artificer infusions or a Blood Hunter's hemocraft die are inexpressible at class level.
+127. ✅ **Generic class resources.** `martialLevelEntrySchema` is 13 hardcoded fields (rage, ki, sneak attack, action surge…), so Artificer infusions or a Blood Hunter's hemocraft die are inexpressible at class level.
     - **The mechanism already exists** — #105 built exactly this for *subclasses* (`subclassResourceSchema` + `subclassResourcePools()`, riding the generalized `martialUsed` tracker). This is lifting that same shape to `customClassDataSchema`, not new machinery, which makes it far smaller than its position in the list suggests.
     - Odd asymmetry worth closing regardless: today a homebrew resource is expressible on a subclass but not on the class that owns it.
 
@@ -846,3 +846,14 @@ through the existing cast-control render path instead of a parallel one. Item de
 as a reference line under the item row, kept separate from the player-editable `notes` field
 (`customItemNotesText` still seeds that with the mechanical one-liner) so authoring prose can
 never clobber a player's own notes.
+
+**Verified (#127, done):** authored a custom "Artificer" class with an Infusions resource
+(4 uses, long rest) via a direct API call (test account promoted to `dm` in the dev DB to reach
+the manager, same pattern as earlier in this session), put it on a level-2 character, and drove
+it in the browser. The counter rendered as "Infusions: 4 / 4 (Known infusions active at once)"
+in the same Martial features block Rage/Ki already use. Use spent it to 3/4, storing
+`martialUsed["class:res-infusions"]: 1` -- the namespaced key exactly as designed. Long rest
+reset it to 4/4 and cleared martialUsed, with **zero new rest-handling code**: `longRest()`
+already resets via `martialResetKeys(pools, restType)` over whatever pools are in play, so a
+class-contributed pool rode along automatically once added to the `martialPools` list, the same
+payoff #105 got for subclasses. Full build + 21 backend tests green.
