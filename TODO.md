@@ -805,7 +805,7 @@ descriptions (#121) are display-only and safe at any size.
 throwaway cap bump first; monsters get **both** the schema fields and a backfill of the missing
 SRD data.
 
-121. **`description` on spells and items.** Neither `customSpellDataSchema` nor `customItemDataSchema` has a description field at all — a homebrew spell can carry damage dice and a save DC but not a single word of what it does. Rated the biggest gap and it is.
+121. ✅ **`description` on spells and items.** Neither `customSpellDataSchema` nor `customItemDataSchema` has a description field at all — a homebrew spell can carry damage dice and a save DC but not a single word of what it does. Rated the biggest gap and it is.
     - **Schema:** `description: z.string().trim().max(4000).default("")` on both. Display-only (nothing copies it onto a sheet entry), so it's exempt from the coupling trap above and can be generous.
     - **Render** in the manager editors and wherever the spell/item detail line already shows — the cast control's metadata row and the inventory notes.
 
@@ -837,3 +837,12 @@ SRD data.
 127. **Generic class resources.** `martialLevelEntrySchema` is 13 hardcoded fields (rage, ki, sneak attack, action surge…), so Artificer infusions or a Blood Hunter's hemocraft die are inexpressible at class level.
     - **The mechanism already exists** — #105 built exactly this for *subclasses* (`subclassResourceSchema` + `subclassResourcePools()`, riding the generalized `martialUsed` tracker). This is lifting that same shape to `customClassDataSchema`, not new machinery, which makes it far smaller than its position in the list suggests.
     - Odd asymmetry worth closing regardless: today a homebrew resource is expressible on a subclass but not on the class that owns it.
+
+**Verified (#121, done):** built and typechecked clean across all three workspaces (shared,
+frontend, backend), 21 backend tests green. `customSpellDataSchema`/`customItemDataSchema` gain
+a 4000-char `description`; `SrdSpell` gains an optional `description` field (always undefined
+for real SRD entries, populated only via `customSpellToSrdShape`) so a custom spell's text flows
+through the existing cast-control render path instead of a parallel one. Item description renders
+as a reference line under the item row, kept separate from the player-editable `notes` field
+(`customItemNotesText` still seeds that with the mechanical one-liner) so authoring prose can
+never clobber a player's own notes.

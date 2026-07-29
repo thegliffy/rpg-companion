@@ -19,6 +19,11 @@ export interface SrdSpell {
   /** Requires concentration. Backfilled from the SRD's "Concentration, up to X" durations,
    * whose "Concentration, " prefix the 5e-database import stripped -- "Up to X" is what survives. */
   concentration?: boolean;
+  /** Prose description (#121) -- always undefined for SRD spells (deliberately not carried by
+   * this file, see the header comment); populated only when adapting a custom spell via
+   * customSpellToSrdShape, so a custom spell's rules text flows through the same render paths a
+   * cast control or spell picker already uses for SRD spells. */
+  description?: string;
   /** SRD class ids (lowercase) that can cast this spell, e.g. ["wizard", "sorcerer"]. */
   classes: string[];
 }

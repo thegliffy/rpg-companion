@@ -470,6 +470,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [featPrereqText, setFeatPrereqText] = useState("");
 
   // Spell fields
+  const [spellDescription, setSpellDescription] = useState("");
   const [spellLevel, setSpellLevel] = useState("0");
   const [spellSchool, setSpellSchool] = useState("");
   const [spellCastingTime, setSpellCastingTime] = useState("1 action");
@@ -497,6 +498,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [spellScalingNote, setSpellScalingNote] = useState("");
 
   // Item fields (abilityBonuses reused from above; kind drives which fields apply)
+  const [itemDescription, setItemDescription] = useState("");
   const [itemKind, setItemKind] = useState<"weapon" | "armor" | "gear" | "magic">("weapon");
   const [itemWeight, setItemWeight] = useState("0");
   const [itemValue, setItemValue] = useState("0");
@@ -625,6 +627,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setFeatPrereqAbility({});
     setFeatPrereqLevel("0");
     setFeatPrereqText("");
+    setSpellDescription("");
     setSpellLevel("0");
     setSpellSchool("");
     setSpellCastingTime("1 action");
@@ -645,6 +648,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setSpellBuffConsumption("per-hit");
     setSpellScalingDicePerLevel("");
     setSpellScalingNote("");
+    setItemDescription("");
     setItemKind("weapon");
     setItemWeight("0");
     setItemValue("0");
@@ -846,6 +850,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       setFeatPrereqText(d.prereqText ?? "");
     } else if (item.type === "spell") {
       const d = item.data as {
+        description?: string;
         level: number;
         school: string;
         castingTime: string;
@@ -869,6 +874,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         scalingDicePerLevel?: string;
         scalingNote?: string;
       };
+      setSpellDescription(d.description ?? "");
       setSpellLevel(String(d.level));
       setSpellSchool(d.school);
       setSpellCastingTime(d.castingTime);
@@ -891,6 +897,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       setSpellScalingNote(d.scalingNote ?? "");
     } else if (item.type === "item") {
       const d = item.data as {
+        description?: string;
         kind: "weapon" | "armor" | "gear" | "magic";
         weight: number;
         value: number;
@@ -907,6 +914,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         abilityBonuses: Partial<Record<Dnd5eAbility, number>>;
         acBonus: number;
       };
+      setItemDescription(d.description ?? "");
       setItemKind(d.kind);
       setItemWeight(String(d.weight));
       setItemValue(String(d.value));
@@ -1158,6 +1166,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         };
       } else if (type === "spell") {
         data = {
+          description: spellDescription.trim(),
           level: Number(spellLevel) || 0,
           school: spellSchool.trim(),
           castingTime: spellCastingTime.trim(),
@@ -1183,6 +1192,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         };
       } else if (type === "item") {
         data = {
+          description: itemDescription.trim(),
           kind: itemKind,
           weight: Number(itemWeight) || 0,
           value: Number(itemValue) || 0,
@@ -2428,6 +2438,19 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
           </>
         ) : type === "spell" ? (
           <>
+            <div style={{ marginTop: "0.5rem" }}>
+              <label style={{ display: "block" }}>
+                Description
+                <br />
+                <textarea
+                  value={spellDescription}
+                  onChange={(e) => setSpellDescription(e.target.value)}
+                  rows={4}
+                  style={{ width: "100%" }}
+                  placeholder="What the spell does -- shown wherever this spell appears (picker, cast control), never copied onto a sheet entry."
+                />
+              </label>
+            </div>
             <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
               <label>
                 Level{" "}
@@ -2583,6 +2606,19 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
           </>
         ) : type === "item" ? (
           <>
+            <div style={{ marginTop: "0.5rem" }}>
+              <label style={{ display: "block" }}>
+                Description
+                <br />
+                <textarea
+                  value={itemDescription}
+                  onChange={(e) => setItemDescription(e.target.value)}
+                  rows={4}
+                  style={{ width: "100%" }}
+                  placeholder="What the item does -- reference text shown next to it on the sheet, separate from the mechanical Notes field a player edits."
+                />
+              </label>
+            </div>
             <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
               <label>
                 Kind{" "}

@@ -2174,6 +2174,9 @@ export function Dnd5eSheet({
                   )}
                 </div>
               )}
+              {srdSpell?.description && (
+                <div style={{ fontSize: "0.85rem", color: "#555", marginTop: "0.1rem" }}>{srdSpell.description}</div>
+              )}
               {srdSpell?.id === "eldritch-blast" ? (
                 <EldritchBlastControl
                   key={`eb-${effectiveAbility}`}
@@ -2364,6 +2367,14 @@ export function Dnd5eSheet({
           }
           const hasBonuses =
             item.equipped || item.acBonus !== 0 || item.requiresAttunement || Object.values(item.abilityBonuses).some((v) => v);
+          // Reference-only (#121): shown for a matched custom item, never copied onto `notes`
+          // (that field is the player's own editable mechanical summary, seeded once at pick
+          // time by customItemNotesText -- overwriting it with prose would clobber their edits).
+          const itemDescription = (
+            customItems.find((ci) => ci.name.toLowerCase() === item.name.trim().toLowerCase())?.data as
+              | CustomItemData
+              | undefined
+          )?.description;
           return (
             <div key={item.id} style={{ marginBottom: "0.5rem" }}>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
@@ -2451,6 +2462,11 @@ export function Dnd5eSheet({
                   Remove
                 </button>
               </div>
+              {itemDescription && (
+                <div style={{ marginTop: "0.2rem", marginLeft: "0.5rem", fontSize: "0.85rem", color: "#555" }}>
+                  {itemDescription}
+                </div>
+              )}
               {hasBonuses && (
                 <div
                   style={{

@@ -451,6 +451,9 @@ export type CustomFeatData = z.infer<typeof customFeatDataSchema>;
 // custom-content row's own name/nothing-special-needed level field, so this schema keeps
 // `level` too (spells need it outside a class-progression context) plus every mechanical field.
 export const customSpellDataSchema = z.object({
+  // Display-only (#121) -- never copied onto a sheet entry, unlike a feat/feature description,
+  // so it's exempt from the effectEntrySchema coupling that governs those caps (see #116).
+  description: z.string().trim().max(4000).default(""),
   level: z.number().int().min(0).max(9),
   school: z.string().trim().max(30).default(""),
   castingTime: z.string().trim().max(60).default(""),
@@ -498,6 +501,7 @@ export function customSpellToSrdShape(item: CustomContent): SrdSpell {
     ritual: d.ritual,
     concentration: d.concentration,
     classes: d.classes,
+    description: d.description || undefined,
   };
 }
 
@@ -540,6 +544,9 @@ export function resolveSpellScaling(spellId: string, customSpells: CustomContent
 // bespoke armor drives AC/attack/damage exactly like an SRD item, which plain SRD gear/weapons
 // (no bonuses) and SRD magic items (name/category/rarity only, no mechanical stats) cannot.
 export const customItemDataSchema = z.object({
+  // Display-only (#121), same exemption as customSpellDataSchema.description -- never copied
+  // onto a sheet entry (an inventory item's own `notes` field is separate, player-editable text).
+  description: z.string().trim().max(4000).default(""),
   kind: z.enum(["weapon", "armor", "gear", "magic"]),
   weight: z.number().min(0).max(9999).default(0),
   // Sell value in gp -- same unit as the sheet's InventoryItem.value, used by the campaign shop.
