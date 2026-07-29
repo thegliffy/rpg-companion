@@ -825,7 +825,7 @@ SRD data.
     - **Flexible ASI:** `abilityBonuses` is a fixed record, so "+2 to one ability of your choice, +1 to another" (the modern default) can't be expressed. Add a choice shape alongside the fixed record, resolved during character creation.
     - **Sheet application** is the real work, not the schema: darkvision and resistances have nowhere to land today (no senses/resistances fields on `dnd5eSheetSchema`), so this needs sheet-side fields too. Scope check before starting — this is the largest of the seven.
 
-125. **Monster `legendaryActions` + `skills` + `senses`.** Bigger than "add fields": the **SRD import dropped this data too**. Zero of the 319 SRD monsters have structured `legendaryActions` or `skills`, and 46 dragons/bosses are affected — "Legendary Resistance" survives only as special-ability prose on 30 of them.
+125. ✅ **Monster `legendaryActions` + `skills` + `senses`.** Bigger than "add fields": the **SRD import dropped this data too**. Zero of the 319 SRD monsters have structured `legendaryActions` or `skills`, and 46 dragons/bosses are affected — "Legendary Resistance" survives only as special-ability prose on 30 of them.
     - **Straight data-loss bug first:** `customMonsterToSrdShape` maps `senses: { passivePerception: d.passivePerception }`, silently dropping darkvision/blindsight/tremorsense/truesight, which `SrdMonster.senses` already models. A custom dragon cannot have darkvision. Fix the custom schema to carry the full senses object.
     - **Then** add `legendaryActions` and `skills` to both `SrdMonster` and the custom schema, and **backfill the ~30 legendary SRD monsters** by hand (CC-BY, ships in-repo, same precedent as [srd-spell-scaling.ts](shared/src/systems/srd-spell-scaling.ts)). Without the backfill only newly-authored monsters work and the existing bestiary stays broken.
     - Bestiary/Arena rendering needs the new sections; check both, since Arena drives combat.
@@ -857,3 +857,25 @@ reset it to 4/4 and cleared martialUsed, with **zero new rest-handling code**: `
 already resets via `martialResetKeys(pools, restType)` over whatever pools are in play, so a
 class-contributed pool rode along automatically once added to the `martialPools` list, the same
 payoff #105 got for subclasses. Full build + 21 backend tests green.
+
+**Verified (#125, done):** fetched authoritative legendary-action/skills/senses data for all 23
+SRD monsters with Legendary Resistance (20 dragons + Vampire + Lich + Tarrasque) from
+dnd5eapi.co -- confirmed to mirror the same 5e-bits/5e-database dataset this repo's own SRD
+import already cites, cross-checked against existing local data (blindsight/darkvision numbers
+matched exactly before any edit). Injected via a scripted, line-scoped patch rather than manual
+editing across 23 dense one-line object literals; verified purely additive (23 lines modified,
+0 deleted) and the exact expected counts (23 with legendaryActions, 22 with skills -- Tarrasque
+has none, correctly). One correction en route: the `MonsterLegendaryAction.cost` field had to be
+optional (undefined = 1) to match the zod schema's `.default(1)` and avoid forcing `cost: 1` onto
+every single-cost action.
+
+Live-verified: Adult Brass Dragon's Bestiary page shows "Skills History +7, Perception +11..."
+and a Legendary Actions section with a rollable Wing Attack -- correctly **without** a Roll
+button, since Wing Attack is a save-based effect with no attack roll (the same
+attackBonus-required gate regular actions already use). Arena now offers the Vampire's legendary
+"Unarmed Strike" and "Bite (Costs 2 Actions)" as extra attack options alongside its regular
+actions in an actual fight. Authored a custom "Shadow Wyrm" dragon via the API with
+darkvision/blindsight/skills/legendaryActions and confirmed the Bestiary renders "Senses
+blindsight 60 ft, darkvision 120 ft, passive Perception 18" -- the exact data-loss bug
+(previously only passivePerception survived `customMonsterToSrdShape`) fixed and confirmed live,
+not just by reading the code.

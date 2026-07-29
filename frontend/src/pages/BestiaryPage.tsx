@@ -64,6 +64,12 @@ function MonsterDetail({ monster }: { monster: SrdMonster }) {
       <p style={{ fontSize: "0.85rem" }}>
         <strong>Senses</strong> {sensesText(monster.senses)}
         <br />
+        {monster.skills && monster.skills.length > 0 && (
+          <>
+            <strong>Skills</strong> {monster.skills.map((s) => `${s.name} +${s.bonus}`).join(", ")}
+            <br />
+          </>
+        )}
         <strong>Languages</strong> {monster.languages || "—"}
         {monster.damageVulnerabilities.length > 0 && (
           <>
@@ -106,6 +112,35 @@ function MonsterDetail({ monster }: { monster: SrdMonster }) {
         <div>
           <h3>Actions</h3>
           {monster.actions.map((a) => (
+            <div key={a.name} style={{ marginBottom: "0.5rem" }}>
+              <p style={{ fontSize: "0.9rem", marginBottom: "0.2rem" }}>
+                <strong>{a.name}.</strong> {a.desc}
+              </p>
+              {a.attackBonus !== undefined && a.damageDice !== undefined && a.damageType !== undefined && (
+                <AttackRollControl
+                  name={`${monster.name} ${a.name}`}
+                  attackBonus={a.attackBonus}
+                  magicBonus={0}
+                  damageDice={a.damageDice}
+                  damageType={a.damageType}
+                  campaignId={null}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {monster.legendaryActions && monster.legendaryActions.length > 0 && (
+        <div>
+          <h3>Legendary Actions</h3>
+          <p style={{ fontSize: "0.85rem", color: "#666", marginTop: "-0.3rem" }}>
+            {monster.name} can take {monster.legendaryActionsPerRound ?? 3} legendary action
+            {(monster.legendaryActionsPerRound ?? 3) === 1 ? "" : "s"}, choosing from the options below. Only one
+            option can be used at a time and only at the end of another creature's turn. {monster.name} regains
+            spent legendary actions at the start of its turn.
+          </p>
+          {monster.legendaryActions.map((a) => (
             <div key={a.name} style={{ marginBottom: "0.5rem" }}>
               <p style={{ fontSize: "0.9rem", marginBottom: "0.2rem" }}>
                 <strong>{a.name}.</strong> {a.desc}

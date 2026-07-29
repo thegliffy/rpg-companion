@@ -57,6 +57,15 @@ function combatantFromCharacter(c: Character): Combatant | null {
 }
 
 function combatantFromMonster(m: SrdMonster): Combatant {
+  // Legendary actions with attack data (a dragon's Tail Attack, a vampire's Bite) join the same
+  // pool regular actions draw from -- the Arena simulator has no turn-order/action-economy model
+  // to gate "only at the end of another creature's turn" against, so the simplest honest
+  // integration is letting them be picked like any other attack rather than tracking legendary
+  // action economy the rest of Arena doesn't model either.
+  const rollableAttacks = [...m.actions, ...(m.legendaryActions ?? [])].filter(
+    (a): a is typeof a & { attackBonus: number; damageDice: string; damageType: string } =>
+      a.attackBonus !== undefined && a.damageDice !== undefined && a.damageType !== undefined,
+  );
   return {
     key: `monster-${m.id}`,
     label: m.name,
@@ -64,11 +73,7 @@ function combatantFromMonster(m: SrdMonster): Combatant {
     hpMax: m.hp,
     hpCurrent: m.hp,
     dexMod: abilityModifier(m.dex),
-    attacks: m.actions
-      .filter((a): a is typeof a & { attackBonus: number; damageDice: string; damageType: string } =>
-        a.attackBonus !== undefined && a.damageDice !== undefined && a.damageType !== undefined,
-      )
-      .map((a) => ({ name: a.name, attackBonus: a.attackBonus, damageDice: a.damageDice, damageType: a.damageType })),
+    attacks: rollableAttacks.map((a) => ({ name: a.name, attackBonus: a.attackBonus, damageDice: a.damageDice, damageType: a.damageType })),
     initiative: null,
   };
 }

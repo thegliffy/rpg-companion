@@ -642,6 +642,23 @@ const monsterSpecialAbilitySchema = z.object({
   desc: z.string().trim().max(500).default(""),
 });
 
+// Same shape as monsterActionSchema plus the action-point cost (#125) -- see the
+// MonsterLegendaryAction comment in srd-monsters.ts for why this isn't monsterActionSchema with
+// an optional cost tacked on.
+const monsterLegendaryActionSchema = z.object({
+  name: z.string().trim().max(60),
+  desc: z.string().trim().max(500).default(""),
+  cost: z.number().int().min(1).max(3).default(1),
+  attackBonus: z.number().int().min(-5).max(20).optional(),
+  damageDice: z.string().trim().max(30).optional(),
+  damageType: z.string().trim().max(30).optional(),
+});
+
+const monsterSkillSchema = z.object({
+  name: z.string().trim().max(30),
+  bonus: z.number().int().min(-5).max(20),
+});
+
 // Mirrors the Bestiary's SrdMonster field set exactly (srd-monsters.ts) -- so a homebrew
 // monster shows in the Bestiary and fights in the Arena identically to an SRD one.
 export const customMonsterDataSchema = z.object({
@@ -667,13 +684,25 @@ export const customMonsterDataSchema = z.object({
   wis: z.number().int().min(1).max(30),
   cha: z.number().int().min(1).max(30),
   passivePerception: z.number().int().min(0).max(30).default(10),
+  // #125: previously only passivePerception existed here, so customMonsterToSrdShape's senses
+  // mapping silently dropped darkvision/blindsight/tremorsense/truesight for every custom
+  // monster -- a homebrew dragon could not have darkvision. SrdMonster.senses already models
+  // all four; this just gives the authoring side the fields to fill them.
+  darkvision: z.number().int().min(0).max(240).optional(),
+  blindsight: z.number().int().min(0).max(240).optional(),
+  tremorsense: z.number().int().min(0).max(240).optional(),
+  truesight: z.number().int().min(0).max(240).optional(),
   languages: z.string().trim().max(200).default(""),
   damageVulnerabilities: z.array(z.string().trim().max(30)).max(10).default([]),
   damageResistances: z.array(z.string().trim().max(30)).max(10).default([]),
   damageImmunities: z.array(z.string().trim().max(30)).max(10).default([]),
   conditionImmunities: z.array(z.string().trim().max(30)).max(15).default([]),
+  skills: z.array(monsterSkillSchema).max(10).default([]),
   specialAbilities: z.array(monsterSpecialAbilitySchema).max(10).default([]),
   actions: z.array(monsterActionSchema).max(10).default([]),
+  legendaryActions: z.array(monsterLegendaryActionSchema).max(10).default([]),
+  // Only meaningful when legendaryActions is non-empty; 3 is the near-universal 5e default.
+  legendaryActionsPerRound: z.number().int().min(1).max(5).default(3),
 });
 export type CustomMonsterData = z.infer<typeof customMonsterDataSchema>;
 
@@ -700,14 +729,23 @@ export function customMonsterToSrdShape(item: CustomContent): SrdMonster {
     int: d.int,
     wis: d.wis,
     cha: d.cha,
-    senses: { passivePerception: d.passivePerception },
+    senses: {
+      passivePerception: d.passivePerception,
+      darkvision: d.darkvision,
+      blindsight: d.blindsight,
+      tremorsense: d.tremorsense,
+      truesight: d.truesight,
+    },
     languages: d.languages,
     damageVulnerabilities: d.damageVulnerabilities,
     damageResistances: d.damageResistances,
     damageImmunities: d.damageImmunities,
     conditionImmunities: d.conditionImmunities,
+    skills: d.skills.length > 0 ? d.skills : undefined,
     specialAbilities: d.specialAbilities,
     actions: d.actions,
+    legendaryActions: d.legendaryActions.length > 0 ? d.legendaryActions : undefined,
+    legendaryActionsPerRound: d.legendaryActions.length > 0 ? d.legendaryActionsPerRound : undefined,
   };
 }
 

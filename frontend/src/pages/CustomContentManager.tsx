@@ -142,6 +142,60 @@ interface MonsterSpecialAbility {
   name: string;
   desc: string;
 }
+interface MonsterLegendaryAction {
+  name: string;
+  desc: string;
+  cost?: number;
+  attackBonus?: number;
+  damageDice?: string;
+  damageType?: string;
+}
+interface MonsterSkill {
+  name: string;
+  bonus: number;
+}
+
+// One skill per line: "Name: +bonus" (#125).
+function parseSkillsText(text: string): MonsterSkill[] {
+  return text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const idx = line.indexOf(":");
+      if (idx === -1) return { name: line, bonus: 0 };
+      return { name: line.slice(0, idx).trim(), bonus: Number(line.slice(idx + 1).trim()) || 0 };
+    });
+}
+function skillsToText(skills: MonsterSkill[]): string {
+  return skills.map((s) => `${s.name}: +${s.bonus}`).join("\n");
+}
+
+// One legendary action per line: "Name | cost | attackBonus | damageDice | damageType | description"
+// -- same convention as parseActionsText below, with cost inserted after name (#125). Cost blank
+// means 1, matching MonsterLegendaryAction.cost's "undefined means 1" convention.
+function parseLegendaryActionsText(text: string): MonsterLegendaryAction[] {
+  return text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [name, cost, attackBonus, damageDice, damageType, desc] = line.split("|").map((s) => s.trim());
+      return {
+        name: name || "",
+        desc: desc || "",
+        cost: cost ? Number(cost) : undefined,
+        attackBonus: attackBonus ? Number(attackBonus) : undefined,
+        damageDice: damageDice || undefined,
+        damageType: damageType || undefined,
+      };
+    });
+}
+function legendaryActionsToText(actions: MonsterLegendaryAction[]): string {
+  return actions
+    .map((a) => [a.name, a.cost ?? "", a.attackBonus ?? "", a.damageDice ?? "", a.damageType ?? "", a.desc].join(" | "))
+    .join("\n");
+}
 
 // One special ability per line: "Name: description".
 function parseSpecialAbilitiesText(text: string): MonsterSpecialAbility[] {
@@ -548,13 +602,22 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [monsterWis, setMonsterWis] = useState("10");
   const [monsterCha, setMonsterCha] = useState("10");
   const [monsterPassivePerception, setMonsterPassivePerception] = useState("10");
+  // #125: darkvision/blindsight/tremorsense/truesight -- previously only passivePerception
+  // existed, so a custom monster could never have darkvision (see customMonsterToSrdShape).
+  const [monsterDarkvision, setMonsterDarkvision] = useState("");
+  const [monsterBlindsight, setMonsterBlindsight] = useState("");
+  const [monsterTremorsense, setMonsterTremorsense] = useState("");
+  const [monsterTruesight, setMonsterTruesight] = useState("");
   const [monsterLanguages, setMonsterLanguages] = useState("");
   const [monsterVulnerabilities, setMonsterVulnerabilities] = useState("");
   const [monsterResistances, setMonsterResistances] = useState("");
   const [monsterImmunities, setMonsterImmunities] = useState("");
   const [monsterConditionImmunities, setMonsterConditionImmunities] = useState("");
+  const [monsterSkillsText, setMonsterSkillsText] = useState("");
   const [monsterSpecialAbilitiesText, setMonsterSpecialAbilitiesText] = useState("");
   const [monsterActionsText, setMonsterActionsText] = useState("");
+  const [monsterLegendaryActionsText, setMonsterLegendaryActionsText] = useState("");
+  const [monsterLegendaryActionsPerRound, setMonsterLegendaryActionsPerRound] = useState("3");
 
   function refresh() {
     customContentApi
@@ -697,13 +760,20 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setMonsterWis("10");
     setMonsterCha("10");
     setMonsterPassivePerception("10");
+    setMonsterDarkvision("");
+    setMonsterBlindsight("");
+    setMonsterTremorsense("");
+    setMonsterTruesight("");
     setMonsterLanguages("");
     setMonsterVulnerabilities("");
     setMonsterResistances("");
     setMonsterImmunities("");
     setMonsterConditionImmunities("");
+    setMonsterSkillsText("");
     setMonsterSpecialAbilitiesText("");
     setMonsterActionsText("");
+    setMonsterLegendaryActionsText("");
+    setMonsterLegendaryActionsPerRound("3");
   }
 
   function startEdit(item: CustomContent) {
@@ -979,13 +1049,20 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         wis: number;
         cha: number;
         passivePerception: number;
+        darkvision?: number;
+        blindsight?: number;
+        tremorsense?: number;
+        truesight?: number;
         languages: string;
         damageVulnerabilities: string[];
         damageResistances: string[];
         damageImmunities: string[];
         conditionImmunities: string[];
+        skills?: MonsterSkill[];
         specialAbilities: MonsterSpecialAbility[];
         actions: MonsterAction[];
+        legendaryActions?: MonsterLegendaryAction[];
+        legendaryActionsPerRound?: number;
       };
       setMonsterSize(d.size);
       setMonsterType(d.type);
@@ -1003,13 +1080,20 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       setMonsterWis(String(d.wis));
       setMonsterCha(String(d.cha));
       setMonsterPassivePerception(String(d.passivePerception));
+      setMonsterDarkvision(d.darkvision !== undefined ? String(d.darkvision) : "");
+      setMonsterBlindsight(d.blindsight !== undefined ? String(d.blindsight) : "");
+      setMonsterTremorsense(d.tremorsense !== undefined ? String(d.tremorsense) : "");
+      setMonsterTruesight(d.truesight !== undefined ? String(d.truesight) : "");
       setMonsterLanguages(d.languages);
       setMonsterVulnerabilities(d.damageVulnerabilities.join(", "));
       setMonsterResistances(d.damageResistances.join(", "));
       setMonsterImmunities(d.damageImmunities.join(", "));
       setMonsterConditionImmunities(d.conditionImmunities.join(", "));
+      setMonsterSkillsText(skillsToText(d.skills ?? []));
       setMonsterSpecialAbilitiesText(specialAbilitiesToText(d.specialAbilities));
       setMonsterActionsText(actionsToText(d.actions));
+      setMonsterLegendaryActionsText(legendaryActionsToText(d.legendaryActions ?? []));
+      setMonsterLegendaryActionsPerRound(String(d.legendaryActionsPerRound ?? 3));
     }
   }
 
@@ -1252,13 +1336,20 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
           wis: Number(monsterWis) || 10,
           cha: Number(monsterCha) || 10,
           passivePerception: Number(monsterPassivePerception) || 10,
+          darkvision: monsterDarkvision.trim() ? Number(monsterDarkvision) : undefined,
+          blindsight: monsterBlindsight.trim() ? Number(monsterBlindsight) : undefined,
+          tremorsense: monsterTremorsense.trim() ? Number(monsterTremorsense) : undefined,
+          truesight: monsterTruesight.trim() ? Number(monsterTruesight) : undefined,
           languages: monsterLanguages.trim(),
           damageVulnerabilities: monsterVulnerabilities.split(",").map((s) => s.trim()).filter(Boolean),
           damageResistances: monsterResistances.split(",").map((s) => s.trim()).filter(Boolean),
           damageImmunities: monsterImmunities.split(",").map((s) => s.trim()).filter(Boolean),
           conditionImmunities: monsterConditionImmunities.split(",").map((s) => s.trim()).filter(Boolean),
+          skills: parseSkillsText(monsterSkillsText),
           specialAbilities: parseSpecialAbilitiesText(monsterSpecialAbilitiesText),
           actions: parseActionsText(monsterActionsText),
+          legendaryActions: parseLegendaryActionsText(monsterLegendaryActionsText),
+          legendaryActionsPerRound: Number(monsterLegendaryActionsPerRound) || 3,
         };
       }
 
@@ -2849,6 +2940,22 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                 Passive Perception{" "}
                 <input type="number" style={{ width: "3rem" }} value={monsterPassivePerception} onChange={(e) => setMonsterPassivePerception(e.target.value)} />
               </label>
+              <label>
+                Darkvision (ft){" "}
+                <input type="number" style={{ width: "3.5rem" }} value={monsterDarkvision} onChange={(e) => setMonsterDarkvision(e.target.value)} />
+              </label>
+              <label>
+                Blindsight (ft){" "}
+                <input type="number" style={{ width: "3.5rem" }} value={monsterBlindsight} onChange={(e) => setMonsterBlindsight(e.target.value)} />
+              </label>
+              <label>
+                Tremorsense (ft){" "}
+                <input type="number" style={{ width: "3.5rem" }} value={monsterTremorsense} onChange={(e) => setMonsterTremorsense(e.target.value)} />
+              </label>
+              <label>
+                Truesight (ft){" "}
+                <input type="number" style={{ width: "3.5rem" }} value={monsterTruesight} onChange={(e) => setMonsterTruesight(e.target.value)} />
+              </label>
             </div>
             <h4 style={{ marginTop: "1rem" }}>Ability scores</h4>
             <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
@@ -2896,6 +3003,17 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                 <input value={monsterConditionImmunities} onChange={(e) => setMonsterConditionImmunities(e.target.value)} style={{ width: "100%" }} />
               </label>
             </div>
+            <h4 style={{ marginTop: "1rem" }}>Skills</h4>
+            <p>
+              <small>One per line: "Name: +bonus" (e.g. "Perception: +11").</small>
+            </p>
+            <textarea
+              value={monsterSkillsText}
+              onChange={(e) => setMonsterSkillsText(e.target.value)}
+              rows={2}
+              style={{ width: "100%" }}
+              placeholder="Perception: +11"
+            />
             <h4 style={{ marginTop: "1rem" }}>Special abilities</h4>
             <p>
               <small>One per line: "Name: description".</small>
@@ -2920,6 +3038,33 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
               style={{ width: "100%" }}
               placeholder="Bite | 4 | 2d4+2 | Piercing | Melee Weapon Attack..."
             />
+            <h4 style={{ marginTop: "1rem" }}>Legendary actions (optional)</h4>
+            <p>
+              <small>
+                One per line: "Name | cost | attack bonus | damage dice | damage type | description" -- leave cost
+                blank for the common 1-action cost; leave the attack fields blank for non-attack options.
+              </small>
+            </p>
+            <textarea
+              value={monsterLegendaryActionsText}
+              onChange={(e) => setMonsterLegendaryActionsText(e.target.value)}
+              rows={3}
+              style={{ width: "100%" }}
+              placeholder="Detect | | | | | The dragon makes a Wisdom (Perception) check.&#10;Wing Attack (Costs 2 Actions) | 2 | | 2d6+6 | Bludgeoning | ..."
+            />
+            {monsterLegendaryActionsText.trim() && (
+              <label style={{ display: "block", marginTop: "0.4rem" }}>
+                Legendary actions per round{" "}
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  style={{ width: "3rem" }}
+                  value={monsterLegendaryActionsPerRound}
+                  onChange={(e) => setMonsterLegendaryActionsPerRound(e.target.value)}
+                />
+              </label>
+            )}
           </>
         )}
 
