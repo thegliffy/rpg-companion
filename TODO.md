@@ -712,3 +712,54 @@ dropdown, with no error anywhere to say why.
     - **Fix (done):** raised `effectEntrySchema.description` to `.max(1000)` to match, in [dnd5e.ts](shared/src/systems/dnd5e.ts).
     - **Verify (done):** reran the same reproduction script post-fix against the reporter's real data — `VALID`. Full build + 21 backend tests green.
     - **Not this bug, but found along the way:** the live server had zero auto-deploy (`docker-image.yml` only builds/pushes to GHCR; `docker compose pull && up -d` on the server is a manual step) — a real gap worth knowing about, though not the cause here since the reporter deploys manually and confirmed the server was already on the latest pushed commit.
+
+## Theme: spell scaling (upcasting + cantrip growth)
+
+Requested: "some spells have a scaling element, for example Fireball for each level above the
+third it adds 1d6 — can we implement this on SRD spells and make it an option in the spell
+creator." Nothing in the app scales anything today.
+
+**Two independent axes, both missing.** *Slot upcasting* (cast Fireball with a 5th-level slot →
++2d6) and *cantrip growth* (Fire Bolt 1d10 → 4d10 at character levels 5/11/17). Only Eldritch
+Blast scales at all, via bespoke `eldritchBlastProfile()`/`eldritchBlastBeams()`
+([srd-invocations.ts](shared/src/systems/srd-invocations.ts)) — the other 9 damage cantrips never
+grow.
+
+**Prerequisite, and it's a real UX change not a detail:** you can't choose a slot level. `consumeSlot()`
+([Dnd5eSheet.tsx](frontend/src/components/systems/Dnd5eSheet.tsx)) always takes `candidateSlots[0]`,
+the *lowest* available slot at or above the spell's level. Upcasting is meaningless until that's a
+choice. Warlocks are exempt by construction — Pact Magic grants a single slot level, so
+lowest-available is already the only (and correct) option for them.
+
+**Scope honesty (decided with the user):** of the four categories raised — extra damage, more
+targets, increased duration/effect, general utility — **only extra damage is mechanically
+applicable.** The app models no targets, no other creatures' HP, and no durations, so the other
+three become a freeform "at higher levels" note rendered with the chosen slot level substituted in,
+rather than three schemas that could only ever print text. **Decisions taken (all three by the
+user):** freeform note for non-damage; bundle cantrip scaling into the same batch; curate all 52
+SRD damage spells rather than a popular subset.
+
+**Licensing:** unlike Hexblade (#103-106), SRD 5.1 "At Higher Levels" text *is* CC-BY and safe to
+ship. But the 5e-database import didn't carry it, so it's hand-transcribed — keep it in its own
+file with a provenance note, exactly the precedent [srd-spell-effects.ts](shared/src/systems/srd-spell-effects.ts)
+set in #110-113, rather than appending to `SRD_SPELLS` whose header claims a single upstream source.
+
+117. **Choose a slot level when casting.** Prerequisite for everything below.
+    - `SpellCastControl` gains a slot-level selector defaulting to the spell's own level, listing every level from the spell's base up to the highest slot the character *has available*. `onConsumeSlot` takes the chosen level instead of `consumeSlot()` picking for you; `candidateSlots` stops being an implicit "lowest wins".
+    - **Hide the control when it can't matter** — a cantrip, an at-will grant, a ritual cast, or a caster with exactly one distinct slot level (every Warlock). Otherwise it's noise on the majority of casts.
+    - **Verify:** a Wizard with 1st/2nd/3rd slots casting Magic Missile can pick each level and the *chosen* slot decrements, not the lowest; a Warlock sees no selector and still casts correctly.
+
+118. **Scaling data: curated SRD table + spell-creator fields.**
+    - **New `srd-spell-scaling.ts`:** `Record<srdId, SpellScaling>` where `SpellScaling = { damageDicePerLevel?: string; note?: string }` — `damageDicePerLevel` is the rollable part ("1d6" for Fireball, "1d8" for Cure Wounds), `note` the freeform line for target/duration/utility upcasts. All **52** leveled spells that carry `damageDice`, hand-transcribed from their own "At Higher Levels" text; plus notes for the well-known non-damage ones (Aid, Invisibility, Command, Hold Monster, Dispel Magic, Planar Binding).
+    - **Watch for the not-simply-more-dice cases** while transcribing: Magic Missile (+1 dart, not +1 die), Scorching Ray (+1 ray) — these are `note`-only, since "add 1 dart" isn't expressible as extra dice on one roll. Don't force them into `damageDicePerLevel`.
+    - **`customSpellDataSchema`** gains the same two fields, with inputs in the manager's spell editor sitting near the existing Damage dice/type row.
+
+119. **Apply scaling at cast time.**
+    - `SpellCastControl` computes `levelsAbove = castLevel - spell.level` and, when `damageDicePerLevel` is set, appends it `levelsAbove` times to the damage formula — reusing the multi-term formula approach #113 already established for `extraAttackDice`, not a second string-building convention.
+    - Render the resolved scaling next to the Cast button (e.g. "at 5th: 10d6 fire") and the freeform `note` with the chosen level substituted, so a non-damage upcast is at least *visible* at the table.
+    - **Verify:** Fireball at 3rd rolls 8d6, at 5th rolls 10d6; Cure Wounds at 1st/4th scale by 1d8 each step; Magic Missile shows its note and does **not** silently add dice; a custom spell with authored scaling behaves identically to an SRD one.
+
+120. **Cantrip growth on character level.** A single 5e rule, not per-spell data: a damage cantrip's dice *count* multiplies at character levels 5/11/17.
+    - Those exact thresholds already exist in `eldritchBlastBeams()` ([class-progression.ts:497](shared/src/systems/class-progression.ts)) — **factor a shared `cantripScaleMultiplier(level)` (1/2/3/4) and have both call it**, rather than writing the magic numbers a second time.
+    - Applies to a cantrip's `damageDice` by multiplying the dice count (`1d10` → `3d10` at 11th). **Eldritch Blast is excluded** — it scales by *beams*, and its bespoke profile already handles that; double-applying would quadruple it.
+    - **Verify:** Fire Bolt reads 1d10 at level 4, 2d10 at 5, 4d10 at 17; Eldritch Blast still shows beams and is not additionally dice-scaled; a level-1 character sees no change anywhere.
