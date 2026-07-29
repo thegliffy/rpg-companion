@@ -55,6 +55,8 @@ import {
   martialResourcePools,
   concentrationSaveDC,
   resolveSpellBuff,
+  resolveSpellScaling,
+  scaledCantripDamage,
   activeEffectAttackDice,
   activeEffectDamageBonus,
   activeEffectDamageDice,
@@ -2042,12 +2044,19 @@ export function Dnd5eSheet({
           })()}
         </h4>
         {sheet.spells.map((sp, i) => {
-          const srdSpell = sp.srdId
+          const baseSrdSpell = sp.srdId
             ? (SRD_SPELLS.find((s) => s.id === sp.srdId) ??
               (() => {
                 const custom = customSpells.find((c) => `custom-${c.id}` === sp.srdId);
                 return custom ? customSpellToSrdShape(custom) : undefined;
               })())
+            : undefined;
+          // Cantrip growth (#120) is applied here, at the single point the spell is resolved, so
+          // the damage line and the cast control can't disagree about what a cantrip rolls.
+          // Leveled spells, Eldritch Blast (scales by beams) and compound dice pass through
+          // untouched -- see scaledCantripDamage.
+          const srdSpell = baseSrdSpell
+            ? { ...baseSrdSpell, damageDice: scaledCantripDamage(baseSrdSpell, sheet.level) }
             : undefined;
           const isCustom = !sp.srdId;
           const effectiveAbility = sp.abilityOverride ?? sheet.spellcastingAbility;
@@ -2063,14 +2072,21 @@ export function Dnd5eSheet({
             ? sheet.spellSlots.filter((s) => s.level >= sp.level && s.available > 0).sort((a, b) => a.level - b.level)
             : [];
           const hasSlot = candidateSlots.length > 0;
+          // Distinct levels with a slot free, for the cast control's upcast selector. One entry
+          // (or none) means there's no choice to offer -- every Warlock lands here, since Pact
+          // Magic grants a single slot level.
+          const availableSlotLevels = [...new Set(candidateSlots.map((s) => s.level))];
 
           function updateSpell(patch: Partial<Dnd5eSheetData["spells"][number]>) {
             set("spells", sheet.spells.map((x, j) => (j === i ? { ...x, ...patch } : x)));
           }
 
-          function consumeSlot() {
+          /** Spends a slot of exactly `slotLevel` -- the level chosen in the cast control. Falls
+           * back to the lowest available at or above the spell's level when the requested one
+           * isn't free, so a stale selection can't burn the wrong slot or silently no-op. */
+          function consumeSlot(slotLevel: number) {
             if (candidateSlots.length === 0) return;
-            const target = candidateSlots[0];
+            const target = candidateSlots.find((s) => s.level === slotLevel) ?? candidateSlots[0];
             set(
               "spellSlots",
               sheet.spellSlots.map((s) => (s.level === target.level ? { ...s, available: s.available - 1 } : s)),
@@ -2177,6 +2193,8 @@ export function Dnd5eSheet({
                     consumesSlot={consumesSlot}
                     hasSlot={hasSlot}
                     onConsumeSlot={consumeSlot}
+                    availableSlotLevels={availableSlotLevels}
+                    scaling={resolveSpellScaling(srdSpell.id, customSpells)}
                     replacesConcentration={
                       sheet.concentratingOn && sheet.concentratingOn.spellId !== srdSpell.id
                         ? sheet.concentratingOn.spellName

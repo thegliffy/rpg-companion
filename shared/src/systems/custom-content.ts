@@ -4,6 +4,8 @@ import type { ClassLevelEntry, CasterType, MartialResourcePool } from "./class-p
 import type { BuffEffect } from "./dnd5e.js";
 import type { SrdSpell } from "./srd-spells.js";
 import { SRD_SPELL_EFFECTS } from "./srd-spell-effects.js";
+import { SRD_SPELL_SCALING } from "./srd-spell-scaling.js";
+import type { SpellScaling } from "./srd-spell-scaling.js";
 import type { SrdMonster } from "./srd-monsters.js";
 import type { CustomContentType, CustomContentSystem, CustomContent } from "../types.js";
 import { newEntityId } from "../id.js";
@@ -467,6 +469,12 @@ export const customSpellDataSchema = z.object({
   // deals when cast (Magic Missile); this is damage/bonus applied to the *caster's own later
   // weapon attack*. All-default (hasBuffEffect false) means "no buff", the common case.
   buff: buffEffectSchema.default({}),
+  // "At Higher Levels" scaling (#117-120), mirroring SRD_SPELL_SCALING's shape so
+  // resolveSpellScaling() can treat an authored spell and a curated SRD one identically.
+  // `scalingDicePerLevel` is the rollable part (appended per slot level above the spell's own
+  // level); `scalingNote` covers upcasts that aren't extra dice on one roll.
+  scalingDicePerLevel: z.string().trim().max(20).default(""),
+  scalingNote: z.string().trim().max(300).default(""),
 });
 export type CustomSpellData = z.infer<typeof customSpellDataSchema>;
 
@@ -507,6 +515,24 @@ export function resolveSpellBuff(spellId: string, customSpells: CustomContent[])
   if (!item) return null;
   const buff = (item.data as CustomSpellData).buff;
   return hasBuffEffect(buff) ? buff : null;
+}
+
+/** Resolves a spell id (SRD or `custom-${id}`) to its upcast scaling -- the curated
+ * SRD_SPELL_SCALING table first, then a visible custom spell's own authored fields. Mirrors
+ * resolveSpellBuff() so both spell-metadata lookups share one convention. Null when the spell
+ * has no scaling of either kind. */
+export function resolveSpellScaling(spellId: string, customSpells: CustomContent[]): SpellScaling | null {
+  const curated = SRD_SPELL_SCALING[spellId];
+  if (curated) return curated;
+  if (!spellId.startsWith("custom-")) return null;
+  const customId = Number(spellId.slice("custom-".length));
+  const item = customSpells.find((c) => c.id === customId);
+  if (!item) return null;
+  const d = item.data as CustomSpellData;
+  const dicePerLevel = d.scalingDicePerLevel?.trim() ?? "";
+  const note = d.scalingNote?.trim() ?? "";
+  if (!dicePerLevel && !note) return null;
+  return { dicePerLevel: dicePerLevel || undefined, note: note || undefined };
 }
 
 // Spans the SRD weapon/armor/gear/magic-item shape via a `kind` discriminator, plus the same

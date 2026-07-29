@@ -3,6 +3,7 @@
 // 5e-bits/5e-database project. Feature names only — no rules text.
 import type { Dnd5eAbility, Dnd5eSheetData } from "./dnd5e.js";
 import { abilityModifier, effectiveAbilityScore } from "./dnd5e.js";
+import { cantripScaleMultiplier } from "./srd-spell-scaling.js";
 
 // Recommended ability-score priority order per class, general D&D community
 // guidance (not licensed SRD content) -- purely an informational hint during
@@ -493,12 +494,11 @@ export function unlockedArcanumTiers(level: number): number[] {
   return MYSTIC_ARCANUM_TIERS.filter((t) => level >= t.charLevel).map((t) => t.spellLevel);
 }
 
-/** Number of Eldritch Blast beams by character level: 1 at 1-4, 2 at 5-10, 3 at 11-16, 4 at 17+. */
+/** Number of Eldritch Blast beams by character level: 1 at 1-4, 2 at 5-10, 3 at 11-16, 4 at 17+.
+ * Same 5/11/17 breakpoints every damage cantrip grows on, so this defers to the shared rule
+ * rather than repeating the thresholds -- EB just spends the growth on beams instead of dice. */
 export function eldritchBlastBeams(level: number): number {
-  if (level >= 17) return 4;
-  if (level >= 11) return 3;
-  if (level >= 5) return 2;
-  return 1;
+  return cantripScaleMultiplier(level);
 }
 
 export function casterTypeForClass(className: string): CasterType {

@@ -491,6 +491,10 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [spellBuffDamageDice, setSpellBuffDamageDice] = useState("");
   const [spellBuffDamageType, setSpellBuffDamageType] = useState("");
   const [spellBuffConsumption, setSpellBuffConsumption] = useState<"per-hit" | "once">("per-hit");
+  // "At Higher Levels" scaling (#117-120) -- dice appended per slot level above the spell's own
+  // level, plus a freeform note for upcasts that aren't extra dice on one roll.
+  const [spellScalingDicePerLevel, setSpellScalingDicePerLevel] = useState("");
+  const [spellScalingNote, setSpellScalingNote] = useState("");
 
   // Item fields (abilityBonuses reused from above; kind drives which fields apply)
   const [itemKind, setItemKind] = useState<"weapon" | "armor" | "gear" | "magic">("weapon");
@@ -639,6 +643,8 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setSpellBuffDamageDice("");
     setSpellBuffDamageType("");
     setSpellBuffConsumption("per-hit");
+    setSpellScalingDicePerLevel("");
+    setSpellScalingNote("");
     setItemKind("weapon");
     setItemWeight("0");
     setItemValue("0");
@@ -860,6 +866,8 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
           damageType: string;
           consumption: "per-hit" | "once";
         };
+        scalingDicePerLevel?: string;
+        scalingNote?: string;
       };
       setSpellLevel(String(d.level));
       setSpellSchool(d.school);
@@ -879,6 +887,8 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       setSpellBuffDamageDice(d.buff?.damageDice ?? "");
       setSpellBuffDamageType(d.buff?.damageType ?? "");
       setSpellBuffConsumption(d.buff?.consumption ?? "per-hit");
+      setSpellScalingDicePerLevel(d.scalingDicePerLevel ?? "");
+      setSpellScalingNote(d.scalingNote ?? "");
     } else if (item.type === "item") {
       const d = item.data as {
         kind: "weapon" | "armor" | "gear" | "magic";
@@ -1168,6 +1178,8 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
             damageType: spellBuffDamageType.trim(),
             consumption: spellBuffConsumption,
           },
+          scalingDicePerLevel: spellScalingDicePerLevel.trim(),
+          scalingNote: spellScalingNote.trim(),
         };
       } else if (type === "item") {
         data = {
@@ -2538,6 +2550,34 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                   <option value="per-hit">Every hit, until it ends</option>
                   <option value="once">Next hit only</option>
                 </select>
+              </label>
+            </div>
+
+            <h4 style={{ marginTop: "1rem" }}>At higher levels (optional)</h4>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+              How the spell scales when cast with a higher-level slot. <strong>Dice per level</strong> is added to the
+              damage roll once per slot level above this spell's own level (Fireball would be <code>1d6</code>) — it
+              needs "Damage dice" above to attach to. Use the <strong>note</strong> for upcasts that aren't extra dice
+              on one roll: more targets, longer duration, or scaling per <em>two</em> levels.
+            </p>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+              <label>
+                Dice per level{" "}
+                <input
+                  value={spellScalingDicePerLevel}
+                  onChange={(e) => setSpellScalingDicePerLevel(e.target.value)}
+                  placeholder="e.g. 1d6"
+                  style={{ width: "5rem" }}
+                />
+              </label>
+              <label style={{ flex: 1, minWidth: "16rem" }}>
+                Note{" "}
+                <input
+                  value={spellScalingNote}
+                  onChange={(e) => setSpellScalingNote(e.target.value)}
+                  placeholder="e.g. Targets one additional creature for each slot level above 2nd."
+                  style={{ width: "100%" }}
+                />
               </label>
             </div>
           </>
