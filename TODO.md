@@ -687,3 +687,21 @@ spells with the identical damageDice-without-requiresAttackRoll shape (Scorching
 Lightning, Fire Shield, Flame Blade, Flaming Sphere) that may have the same bug in the other
 direction -- an attack-roll spell auto-hitting. Unrelated to buff spells specifically, so spun off
 rather than fixed inline.
+
+## Theme: parent-class/race fields are free text, one typo from silently not matching
+
+Prompted by "subclasses aren't working." The likely cause: a custom subclass's `parentClass`
+([CustomContentManager.tsx](frontend/src/pages/CustomContentManager.tsx)) is a plain text input,
+matched against the character's `sheet.class` via `.trim().toLowerCase() === ...` in
+[Dnd5eSheet.tsx](frontend/src/components/systems/Dnd5eSheet.tsx). Trimming/casing are already
+forgiving, but the *spelling* has to match exactly — "Warlok", a trailing character, or anything
+not byte-for-byte the class's name and the subclass silently never appears in the Subclass
+dropdown, with no error anywhere to say why.
+
+114. **`parentClass` becomes a dropdown, sourced from the same classes a character can actually have.** A character's `sheet.class` is one of: an SRD class name (`DND5E_CLASSES`), a custom class's name, or — if "Other (homebrew)" was picked at character creation — arbitrary free text ([Dnd5eSheet.tsx:1085-1109](frontend/src/components/systems/Dnd5eSheet.tsx)). The dropdown has to cover all three or it'd be *more* restrictive than character creation itself, not just safer.
+    - **Options:** SRD classes (`DND5E_CLASSES`, matching the `<select>` already used for the character's own Class field) + an optgroup of every *visible* custom class (own + approved — same "visible" convention #109 established for spell autocompletes, needs a new `visibleClasses` fetch in the manager alongside the existing `visibleSpells`) + a trailing **"Other (homebrew)"** option that reveals a free-text fallback input. Mirrors the character sheet's own Class field exactly (SRD + custom optgroup + Other-homebrew-with-text-input), rather than inventing a second convention.
+    - **No schema change** — `parentClass` stays a `string`; only the manager's input control changes from `<input>` to `<select>` (+ conditional text input for Other). Existing subclasses with a typo'd `parentClass` are unaffected until re-saved (loading a mistyped value into the dropdown will fall through to "Other (homebrew)" with the stored text preserved, not silently blank it).
+    - **Verify:** author a subclass, pick a class from the dropdown, confirm it appears in that class's Subclass options on a character sheet. Pick "Other (homebrew)", type a class name matching a character whose class was itself homebrew-typed, confirm the same. Re-open an existing (pre-fix) subclass with a typo'd parentClass and confirm the typo'd text survives into the Other-homebrew fallback rather than being lost.
+
+115. **Same bug, same fix, for `parentRace` (subraces).** [CustomContentManager.tsx:1824](frontend/src/pages/CustomContentManager.tsx) has the identical free-text `Parent race` input, matched the identical way in Dnd5eSheet.tsx's subrace filter. Not reported broken, but it's the same bug in the same file for the same reason — worth doing in the same pass rather than waiting for a second "X isn't working" report. Same dropdown shape: `SRD_RACES` + visible custom races + Other-homebrew fallback.
+    - **Verify:** same as #114, substituting race/subrace.
