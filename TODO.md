@@ -786,3 +786,54 @@ spell at its base level. Hellish Rebuke read 2d10 instead of the 2d10+4d10 a 9th
 actually deals. Split the two concepts: the *selector* still hides when there's nothing to choose,
 but the cast level now follows the slot actually being spent. Re-verified: Hellish Rebuke shows
 `(at 5: 2d10+4d10 fire)`, rolls `2d10+4d10 = 46`, spends a level-5 slot, and still shows no selector.
+
+## Theme: custom-content depth (external review recommendations)
+
+Seven recommendations from an outside review of the custom-content system, in the priority order
+given. Grounded against the schemas below; a few turned out to be different (or larger) problems
+than the summary implied.
+
+**Cross-cutting trap — text caps are coupled.** #116 (today) was exactly this: an authoring cap
+raised above the *sheet-entry* cap it feeds makes saves fail with "Invalid D&D 5e sheet data".
+Anything whose text is copied onto the sheet must move `effectEntrySchema.description`
+([dnd5e.ts](shared/src/systems/dnd5e.ts), now 1000) in the same change. **Feats are coupled** —
+`FeatPickerModal.pickCustom` copies `description` straight onto a FeatEntry. **Race traits are
+not** — they're only rendered (`raceInfo.traits.join(", ")`), never materialized. Spell/item
+descriptions (#121) are display-only and safe at any size.
+
+**Decisions taken (both by the user):** race traits go **straight to rich objects** rather than a
+throwaway cap bump first; monsters get **both** the schema fields and a backfill of the missing
+SRD data.
+
+121. **`description` on spells and items.** Neither `customSpellDataSchema` nor `customItemDataSchema` has a description field at all — a homebrew spell can carry damage dice and a save DC but not a single word of what it does. Rated the biggest gap and it is.
+    - **Schema:** `description: z.string().trim().max(4000).default("")` on both. Display-only (nothing copies it onto a sheet entry), so it's exempt from the coupling trap above and can be generous.
+    - **Render** in the manager editors and wherever the spell/item detail line already shows — the cast control's metadata row and the inventory notes.
+
+122. **Raise text caps — with the coupled ones moved together.**
+    - Feats 500 → 2000, **and `effectEntrySchema.description` 1000 → 2000 in the same commit** or #116 recurs the moment someone writes a long feat.
+    - Subclass features already sit at 1000 (#103) and the sheet side matches after #116 — **already satisfied**, no change needed.
+    - Background features/variants (500) are also copied to the sheet; raise with the same care if raised at all.
+    - Race traits are handled by #124 instead — a cap bump there would be thrown away.
+
+123. **JSON pack import.** Nothing bulk exists; every item is hand-entered one form at a time.
+    - **Shape:** DM/admin-only upload of `{ type, name, data }[]`, validated per-row through the existing per-type schemas (`schemaForType` already exists in [customContent.routes.ts](backend/src/routes/customContent.routes.ts)) so an import can't create anything the forms couldn't.
+    - **Partial success matters:** report per-row pass/fail rather than rejecting a 60-item pack for one bad row, and dedupe by (type, name) so re-importing a corrected pack updates instead of duplicating.
+    - Wikidot-ish markdown parsing is explicitly **out of scope** for v1 — JSON first, and only consider a parser once the JSON path proves the round-trip.
+
+124. **Race trait mechanics (rich trait objects).** `traits: z.array(z.string().max(60))` — bare 60-char strings, display-only, zero mechanics. Darkvision, resistances and granted cantrips are all unrepresentable, so a homebrew Tiefling is cosmetic.
+    - **Schema:** `traits: [{ id, name, description, darkvisionFeet, damageResistances[], grantedCantrips[], ...effectBonuses? }]`, with a **`z.preprocess` migration from the current `string[]`** (name only, everything else defaulted) — the same no-DB-migration shim pattern #100 used for background features.
+    - **Flexible ASI:** `abilityBonuses` is a fixed record, so "+2 to one ability of your choice, +1 to another" (the modern default) can't be expressed. Add a choice shape alongside the fixed record, resolved during character creation.
+    - **Sheet application** is the real work, not the schema: darkvision and resistances have nowhere to land today (no senses/resistances fields on `dnd5eSheetSchema`), so this needs sheet-side fields too. Scope check before starting — this is the largest of the seven.
+
+125. **Monster `legendaryActions` + `skills` + `senses`.** Bigger than "add fields": the **SRD import dropped this data too**. Zero of the 319 SRD monsters have structured `legendaryActions` or `skills`, and 46 dragons/bosses are affected — "Legendary Resistance" survives only as special-ability prose on 30 of them.
+    - **Straight data-loss bug first:** `customMonsterToSrdShape` maps `senses: { passivePerception: d.passivePerception }`, silently dropping darkvision/blindsight/tremorsense/truesight, which `SrdMonster.senses` already models. A custom dragon cannot have darkvision. Fix the custom schema to carry the full senses object.
+    - **Then** add `legendaryActions` and `skills` to both `SrdMonster` and the custom schema, and **backfill the ~30 legendary SRD monsters** by hand (CC-BY, ships in-repo, same precedent as [srd-spell-scaling.ts](shared/src/systems/srd-spell-scaling.ts)). Without the backfill only newly-authored monsters work and the existing bestiary stays broken.
+    - Bestiary/Arena rendering needs the new sections; check both, since Arena drives combat.
+
+126. **Background `grantedFeats`.** No link from a background to a feat exists.
+    - **Shape:** `grantedFeats: string[]` of custom-content ids (or SRD feat ids), resolved at character creation the way `backgroundGrants()` already applies skills/tools/equipment.
+    - **Reuse the #109 resolver pattern** — SRD id first, then a visible custom feat — and reuse the #109 unresolved-name warning so a background pointing at a deleted feat says so instead of silently granting nothing.
+
+127. **Generic class resources.** `martialLevelEntrySchema` is 13 hardcoded fields (rage, ki, sneak attack, action surge…), so Artificer infusions or a Blood Hunter's hemocraft die are inexpressible at class level.
+    - **The mechanism already exists** — #105 built exactly this for *subclasses* (`subclassResourceSchema` + `subclassResourcePools()`, riding the generalized `martialUsed` tracker). This is lifting that same shape to `customClassDataSchema`, not new machinery, which makes it far smaller than its position in the list suggests.
+    - Odd asymmetry worth closing regardless: today a homebrew resource is expressible on a subclass but not on the class that owns it.
