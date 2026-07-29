@@ -461,7 +461,11 @@ export const spellChoiceSchema = z.object({
 export type SpellChoice = z.infer<typeof spellChoiceSchema>;
 
 export const customFeatDataSchema = effectBonusesSchema.extend({
-  description: z.string().trim().max(500).default(""),
+  // 2000, not 500 -- feat rules text (e.g. Magic Initiate's full spell-list caveat, Polearm
+  // Master's three riders) routinely runs long. Coupled to effectEntrySchema.description
+  // (dnd5e.ts) since FeatPickerModal.pickCustom copies this straight onto a sheet entry --
+  // raised together in the same change, see #122.
+  description: z.string().trim().max(2000).default(""),
   // Skill ids this feat grants proficiency in (e.g. Skilled) -- aggregated via
   // effectSkillProficiencies (dnd5e.ts) rather than merged into skillProficiencies, so removing
   // the feat automatically un-grants it.

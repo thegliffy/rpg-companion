@@ -809,7 +809,7 @@ SRD data.
     - **Schema:** `description: z.string().trim().max(4000).default("")` on both. Display-only (nothing copies it onto a sheet entry), so it's exempt from the coupling trap above and can be generous.
     - **Render** in the manager editors and wherever the spell/item detail line already shows — the cast control's metadata row and the inventory notes.
 
-122. **Raise text caps — with the coupled ones moved together.**
+122. ✅ **Raise text caps — with the coupled ones moved together.**
     - Feats 500 → 2000, **and `effectEntrySchema.description` 1000 → 2000 in the same commit** or #116 recurs the moment someone writes a long feat.
     - Subclass features already sit at 1000 (#103) and the sheet side matches after #116 — **already satisfied**, no change needed.
     - Background features/variants (500) are also copied to the sheet; raise with the same care if raised at all.
@@ -914,5 +914,21 @@ via a raw `.value =` assignment doesn't fire React's synthetic onChange, so `bac
 silently stayed empty (class/race, set the same way, happened to have worked). Re-driven with
 `form_input` (which dispatches proper events) and the mechanism worked on the first pass. Full
 build across all three workspaces clean; 21 backend tests green.
+
+**Verified (#122, done):** raised `customFeatDataSchema.description` 500 → 2000
+([custom-content.ts](shared/src/systems/custom-content.ts)) and the coupled
+`effectEntrySchema.description` 1000 → 2000 ([dnd5e.ts](shared/src/systems/dnd5e.ts)) in the same
+change -- `FeatPickerModal.pickCustom` copies a feat's description straight onto a sheet entry, so
+raising only the content-side cap would recreate #116 (saves failing with "Invalid D&D 5e sheet
+data") the moment someone wrote a feat past the old 1000-char sheet limit. Subclass features
+(already 1000/1000, #103) needed no change; background features/variants and race traits stay out
+of scope per the plan (the latter is #124's job).
+
+Live-verified: created a custom feat via the API with a 1804-char description (would have been
+rejected outright at the old 500-char content cap) -- accepted, status 201. Added it to an existing
+level-9 character's sheet via a PATCH exercising the real `dnd5eSheetSchema`/`effectEntrySchema`
+validation path (the same one `FeatPickerModal` drives) -- the full 1804 characters round-tripped
+with no truncation, status 200. Full build across all three workspaces clean; 21 backend tests
+green.
 
 **Wikidot-ish markdown import remains explicitly out of scope**, per the plan -- JSON first.

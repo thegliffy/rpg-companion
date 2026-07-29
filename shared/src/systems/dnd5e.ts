@@ -180,12 +180,11 @@ const currencySchema = z.object({
 export const effectEntrySchema = z.object({
   id: z.string().min(1),
   name: z.string().max(100),
-  // 1000, not 500 -- matches subclassFeatureSchema's cap (custom-content.ts) so a subclass
-  // feature's full rules text (e.g. Hexblade's Curse, Hex Warrior) survives the copy onto a
-  // sheet entry when the subclass is chosen. This is the only entry point that authors
-  // long-form text into an effectEntrySchema; feat/background-feature authoring is capped at
-  // 500 on both sides already, so this alone was the one length mismatch in the family.
-  description: z.string().max(1000).default(""),
+  // 2000 -- covers both feeds into this field: subclassFeatureSchema's 1000-char cap
+  // (custom-content.ts, a subclass feature's full rules text on pick) and customFeatDataSchema's
+  // 2000-char cap (a feat's full rules text on pick, #122). Kept at the larger of the two so
+  // neither source can produce text this field then truncates or rejects.
+  description: z.string().max(2000).default(""),
   abilityBonuses: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(-10).max(10)).default({}),
   acBonus: z.number().int().min(-10).max(10).default(0),
   attackBonus: z.number().int().min(-10).max(10).default(0),
