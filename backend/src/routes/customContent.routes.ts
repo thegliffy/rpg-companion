@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createCustomContentSchema,
   updateCustomContentSchema,
+  importCustomContentSchema,
   customRaceDataSchema,
   customClassDataSchema,
   customBackgroundDataSchema,
@@ -13,7 +14,7 @@ import {
   customMonsterDataSchema,
   CUSTOM_CONTENT_TYPES_BY_SYSTEM,
 } from "shared";
-import type { CustomContentType } from "shared";
+import type { CustomContentType, ImportCustomContentResult } from "shared";
 import { requireAuth, requireGlobalRole, requireAdmin } from "../middleware/auth.js";
 import { requireCustomContentOwnerOrAdmin } from "../middleware/customContent.js";
 import {
@@ -88,6 +89,83 @@ customContentRouter.post("/", requireGlobalRole("dm", "admin"), async (req, res)
     dataParsed.data,
   );
   res.status(201).json({ item: getCustomContent(created.id) });
+});
+
+// Bulk upload (#123) -- static route, must stay above the /:id routes below.
+customContentRouter.post("/import", requireGlobalRole("dm", "admin"), async (req, res) => {
+  const parsed = importCustomContentSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });
+    return;
+  }
+  const { system, items } = parsed.data;
+  const userId = req.session.userId!;
+
+  // Dedup scope is deliberately "this user's own items in this system" only -- an import
+  // updating someone else's content (even an admin's) would need its own authorization story,
+  // so a name collision with another user's item just creates a second, separate row rather
+  // than silently overwriting content the importer doesn't own.
+  const ownItems = listVisibleCustomContent(userId).filter(
+    (i) => i.createdByUserId === userId && i.system === system,
+  );
+
+  const results: ImportCustomContentResult[] = [];
+  for (let index = 0; index < items.length; index++) {
+    const row = items[index];
+    if (!CUSTOM_CONTENT_TYPES_BY_SYSTEM[system].includes(row.type)) {
+      results.push({
+        index,
+        name: row.name,
+        type: row.type,
+        status: "error",
+        error: `"${row.type}" is not a valid custom-content type for ${system}`,
+      });
+      continue;
+    }
+
+    const dataParsed = dataSchemaFor(row.type).safeParse(row.data);
+    if (!dataParsed.success) {
+      results.push({
+        index,
+        name: row.name,
+        type: row.type,
+        status: "error",
+        error: "Invalid data",
+        issues: dataParsed.error.issues.map((i) => ({ path: i.path, message: i.message })),
+      });
+      continue;
+    }
+
+    // Case-insensitive (type, name) match against the importer's own items -- re-uploading a
+    // corrected pack updates existing rows instead of duplicating them.
+    const existing = ownItems.find(
+      (i) => i.type === row.type && i.name.trim().toLowerCase() === row.name.trim().toLowerCase(),
+    );
+    if (existing) {
+      await updateCustomContent(existing.id, { name: row.name.trim(), data: dataParsed.data });
+      results.push({ index, name: row.name, type: row.type, status: "updated", id: existing.id });
+    } else {
+      const created = await createCustomContent(userId, row.type, system, row.name.trim(), dataParsed.data);
+      results.push({ index, name: row.name, type: row.type, status: "created", id: created.id });
+      // So a later row in the *same* pack with the same (type, name) updates this one instead
+      // of creating a second duplicate within one import.
+      ownItems.push({
+        id: created.id,
+        type: row.type,
+        system,
+        createdByUserId: userId,
+        createdByUsername: "",
+        name: row.name.trim(),
+        data: dataParsed.data,
+        status: "pending",
+        approvedByUserId: null,
+        approvedAt: null,
+        createdAt: "",
+      });
+    }
+  }
+
+  res.json({ results });
 });
 
 customContentRouter.patch("/:id", requireCustomContentOwnerOrAdmin, async (req, res) => {

@@ -1,4 +1,4 @@
-import type { CustomContent, CustomContentType, CustomContentSystem } from "shared";
+import type { CustomContent, CustomContentType, CustomContentSystem, ImportCustomContentResult } from "shared";
 
 async function parseOrThrow(res: Response) {
   if (!res.ok) {
@@ -34,6 +34,19 @@ export async function createCustomContent(
   });
   const body = await parseOrThrow(res);
   return body.item;
+}
+
+export async function importCustomContent(
+  system: CustomContentSystem,
+  items: { type: CustomContentType; name: string; data: unknown }[],
+): Promise<ImportCustomContentResult[]> {
+  const res = await fetch("/api/custom-content/import", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ system, items }),
+  });
+  const body = await parseOrThrow(res);
+  return body.results;
 }
 
 export async function updateCustomContent(id: number, updates: { name?: string; data?: unknown }): Promise<CustomContent> {

@@ -815,7 +815,7 @@ SRD data.
     - Background features/variants (500) are also copied to the sheet; raise with the same care if raised at all.
     - Race traits are handled by #124 instead — a cap bump there would be thrown away.
 
-123. **JSON pack import.** Nothing bulk exists; every item is hand-entered one form at a time.
+123. ✅ **JSON pack import.** Nothing bulk exists; every item is hand-entered one form at a time.
     - **Shape:** DM/admin-only upload of `{ type, name, data }[]`, validated per-row through the existing per-type schemas (`schemaForType` already exists in [customContent.routes.ts](backend/src/routes/customContent.routes.ts)) so an import can't create anything the forms couldn't.
     - **Partial success matters:** report per-row pass/fail rather than rejecting a 60-item pack for one bad row, and dedupe by (type, name) so re-importing a corrected pack updates instead of duplicating.
     - Wikidot-ish markdown parsing is explicitly **out of scope** for v1 — JSON first, and only consider a parser once the JSON path proves the round-trip.
@@ -879,3 +879,17 @@ darkvision/blindsight/skills/legendaryActions and confirmed the Bestiary renders
 blindsight 60 ft, darkvision 120 ft, passive Perception 18" -- the exact data-loss bug
 (previously only passivePerception survived `customMonsterToSrdShape`) fixed and confirmed live,
 not just by reading the code.
+
+**Verified (#123, done):** imported a 3-row pack (2 valid + 1 deliberately invalid) via the
+manager's new "Import a pack" box -- result read "2 created, 0 updated, 1 failed" with the exact
+zod validation message for the bad row ("level: Number must be less than or equal to 9") and both
+good rows still succeeded, confirming per-row partial success rather than all-or-nothing.
+Re-imported the same feat name with changed data: count stayed at 1, same content id, and the
+new description/acBonus actually landed -- dedup-by-(type, name) updates in place rather than
+duplicating. Malformed request bodies are rejected by the shared importCustomContentSchema with
+the same per-field zod issues the single-create route already returns. Full build + 21 backend
+tests green throughout; POST /api/custom-content/import reuses the exact same dataSchemaFor()
+per-type validation and requireGlobalRole("dm", "admin") gate as the existing single-item route,
+so an import can't create anything the manager forms couldn't.
+
+**Wikidot-ish markdown import remains explicitly out of scope**, per the plan -- JSON first.

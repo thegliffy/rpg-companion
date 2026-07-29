@@ -770,6 +770,38 @@ export const updateCustomContentSchema = z.object({
   data: z.unknown().optional(),
 });
 
+// Bulk upload (#123) -- one system per pack, since a homebrew pack realistically targets one
+// game system; each row is validated per-type through the same per-type schemas the single-item
+// create route already uses (dataSchemaFor in customContent.routes.ts), so an import can never
+// create anything the manager forms couldn't. Capped at 200 rows -- generous for a homebrew
+// pack, small enough that one request can't wedge the server.
+export const importCustomContentSchema = z.object({
+  system: z.enum(["generic", "dnd5e", "pf2e"]).default("dnd5e"),
+  items: z
+    .array(
+      z.object({
+        type: z.enum(["race", "class", "background", "subrace", "subclass", "feat", "spell", "item", "monster"]),
+        name: z.string().trim().min(1).max(60),
+        data: z.unknown(),
+      }),
+    )
+    .min(1)
+    .max(200),
+});
+export type ImportCustomContentInput = z.infer<typeof importCustomContentSchema>;
+
+/** One row's outcome from an import (#123) -- reported per-row rather than aborting the whole
+ * batch on the first bad row, since a 60-item pack with one typo shouldn't lose the other 59. */
+export interface ImportCustomContentResult {
+  index: number;
+  name: string;
+  type: CustomContentType;
+  status: "created" | "updated" | "error";
+  id?: number;
+  error?: string;
+  issues?: { path: (string | number)[]; message: string }[];
+}
+
 /** Finds the highest-level entry at or below `level`, same lookup rule as built-in classes. */
 export function customClassLevelEntry(levels: ClassLevelEntry[], level: number): ClassLevelEntry | null {
   let best: ClassLevelEntry | null = null;

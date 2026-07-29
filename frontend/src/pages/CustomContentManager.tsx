@@ -9,6 +9,7 @@ import type {
   SubclassFeature,
   SubclassSpell,
   SubclassResource,
+  ImportCustomContentResult,
 } from "shared";
 import {
   DND5E_ABILITIES,
@@ -482,6 +483,12 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [type, setType] = useState<CustomContentType>("race");
   const [name, setName] = useState("");
 
+  // JSON pack import (#123).
+  const [importText, setImportText] = useState("");
+  const [importBusy, setImportBusy] = useState(false);
+  const [importResults, setImportResults] = useState<ImportCustomContentResult[] | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+
   const validTypes = CUSTOM_CONTENT_TYPES_BY_SYSTEM[system];
 
   function changeSystem(next: CustomContentSystem) {
@@ -633,6 +640,46 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   }
 
   useEffect(refresh, [user?.id]);
+
+  /** Parses and uploads a JSON pack against the currently selected System -- each row is
+   * validated server-side through the same per-type schema the New Item form uses, so nothing an
+   * import creates could not also have been hand-entered. Errors are per-row (#123): one bad row
+   * in a 60-item pack doesn't lose the other 59. */
+  async function handleImport() {
+    setImportError(null);
+    setImportResults(null);
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(importText);
+    } catch {
+      setImportError("Not valid JSON.");
+      return;
+    }
+    if (!Array.isArray(parsed)) {
+      setImportError('Expected a JSON array of { "type", "name", "data" } objects.');
+      return;
+    }
+    setImportBusy(true);
+    try {
+      const results = await customContentApi.importCustomContent(system, parsed as { type: CustomContentType; name: string; data: unknown }[]);
+      setImportResults(results);
+      refresh();
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : "Import failed");
+    } finally {
+      setImportBusy(false);
+    }
+  }
+
+  function handleImportFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImportText(String(reader.result ?? ""));
+      setImportResults(null);
+      setImportError(null);
+    };
+    reader.readAsText(file);
+  }
 
   // SRD plus every visible custom spell, deduped by name (a homebrew spell may deliberately
   // shadow an SRD one). Backs both spell-name autocompletes and the unresolved-name check, so
@@ -1406,6 +1453,65 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
             </span>
           </div>
         ))}
+      </div>
+
+      <div style={box}>
+        <h3>Import a pack</h3>
+        <p style={{ margin: "0 0 0.5rem", fontSize: "0.85rem", color: "#555" }}>
+          Upload or paste a JSON array of <code>{"{ type, name, data }"}</code> objects, validated against the same
+          per-type rules as the form below. All rows import into the <strong>System</strong> selected below (currently{" "}
+          <strong>{SYSTEM_LABELS[system]}</strong>). Re-importing a corrected pack updates rows that match an
+          existing item of yours by name instead of duplicating them.
+        </p>
+        <input
+          type="file"
+          accept="application/json"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleImportFile(file);
+            e.target.value = "";
+          }}
+        />
+        <div style={{ marginTop: "0.4rem" }}>
+          <textarea
+            value={importText}
+            onChange={(e) => setImportText(e.target.value)}
+            rows={6}
+            style={{ width: "100%", fontFamily: "monospace", fontSize: "0.85rem" }}
+            placeholder='[&#10;  { "type": "spell", "name": "Wrathful Smite", "data": { "level": 1, ... } }&#10;]'
+          />
+        </div>
+        <button type="button" onClick={handleImport} disabled={importBusy || !importText.trim()} style={{ marginTop: "0.4rem" }}>
+          {importBusy ? "Importing…" : "Import"}
+        </button>
+        {importError && <p style={{ color: "crimson" }}>{importError}</p>}
+        {importResults && (
+          <div style={{ marginTop: "0.5rem" }}>
+            <p>
+              <small>
+                {importResults.filter((r) => r.status === "created").length} created,{" "}
+                {importResults.filter((r) => r.status === "updated").length} updated,{" "}
+                {importResults.filter((r) => r.status === "error").length} failed.
+              </small>
+            </p>
+            {importResults.map((r) => (
+              <div key={r.index} style={{ fontSize: "0.85rem", padding: "0.15rem 0" }}>
+                {r.status === "error" ? (
+                  <span style={{ color: "crimson" }}>
+                    ✗ Row {r.index + 1} ({r.name || "unnamed"}): {r.error}
+                    {r.issues && r.issues.length > 0 && (
+                      <> — {r.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}</>
+                    )}
+                  </span>
+                ) : (
+                  <span style={{ color: "#2a7" }}>
+                    ✓ Row {r.index + 1} ({r.name}): {r.status}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div style={box}>
