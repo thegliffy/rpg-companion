@@ -21,6 +21,8 @@ import {
   recommendedStatPriority,
   normalizeClassId,
   customBackgroundDataSchema,
+  resolveGrantedFeat,
+  newEntityId,
   expectedCantripsKnown,
   expectedSlots,
   classProficiencies,
@@ -53,6 +55,7 @@ export function CharacterCreationWizard({
     races: customRaces,
     backgrounds: customBackgrounds,
     subraces: customSubraces,
+    feats: customFeats,
   } = useCustomContent();
 
   // step 1
@@ -346,6 +349,8 @@ export function CharacterCreationWizard({
         features: [] as ReturnType<typeof emptyDnd5eSheet>["features"],
         items: [] as ReturnType<typeof emptyDnd5eSheet>["items"],
         gold: 0,
+        feats: [] as ReturnType<typeof emptyDnd5eSheet>["feats"],
+        grantedSpells: [] as ReturnType<typeof emptyDnd5eSheet>["spells"],
       };
     }
 
@@ -401,7 +406,42 @@ export function CharacterCreationWizard({
       value: 0,
     }));
 
-    return { proficienciesText: profLines.join("\n"), features, items, gold: data.equipment.gold };
+    // Feats the background grants outright (#126) -- resolved once at creation, same as every
+    // other background grant here; a reference that no longer resolves (e.g. a deleted custom
+    // feat) is silently skipped rather than blocking character creation.
+    const feats: ReturnType<typeof emptyDnd5eSheet>["feats"] = [];
+    const grantedSpells: ReturnType<typeof emptyDnd5eSheet>["spells"] = [];
+    for (const ref of data.grantedFeats) {
+      const resolved = resolveGrantedFeat(ref, customFeats);
+      if (!resolved) continue;
+      const featId = newEntityId("bg-feat");
+      feats.push({
+        id: featId,
+        name: resolved.name,
+        description: resolved.description,
+        abilityBonuses: resolved.abilityBonuses,
+        acBonus: resolved.acBonus,
+        attackBonus: resolved.attackBonus,
+        damageBonus: resolved.damageBonus,
+        spellDCBonus: resolved.spellDCBonus,
+        spellAttackBonus: resolved.spellAttackBonus,
+        skillProficiencies: resolved.skillProficiencies,
+      });
+      // Same feat-spell-${feat.id}-${i} tagging addFeat() uses on the sheet, so removing this
+      // feat later still cleans up the spells it granted.
+      resolved.grantedSpells.forEach((gs, i) => {
+        grantedSpells.push({
+          id: `feat-spell-${featId}-${i}`,
+          srdId: gs.srdId,
+          name: gs.name,
+          level: gs.level,
+          prepared: false,
+          atWill: gs.atWill,
+        });
+      });
+    }
+
+    return { proficienciesText: profLines.join("\n"), features, items, gold: data.equipment.gold, feats, grantedSpells };
   }
 
   // The racial (race + subrace) ability bonuses are applied on top of the base scores from
@@ -507,6 +547,7 @@ export function CharacterCreationWizard({
           proficienciesText,
           features: grants.features,
           items: grants.items,
+          feats: grants.feats,
           currency: { ...emptyDnd5eSheet().currency, gp: grants.gold },
           hitDice: hitDieForClass(charClass) !== undefined ? `${level}d${hitDieForClass(charClass)}` : "",
           hitDiceTotal: level,
@@ -516,23 +557,28 @@ export function CharacterCreationWizard({
           // history for the skipped levels, same simplification already made for suggestedHp.
           hpDiceHistory: hitDieForClass(charClass) !== undefined ? [hitDieForClass(charClass)!] : [],
           spellcastingAbility: isWizardClass ? "int" : isWarlockClass ? "cha" : "",
-          spells: isWizardClass
-            ? spellbookSpells.map((s, i) => ({
-                id: `spell-${crypto.randomUUID()}-${i}`,
-                srdId: s.id,
-                name: s.name,
-                level: s.level,
-                prepared: i < wizardPrepCap,
-              }))
-            : isWarlockClass
-              ? warlockCantrips.map((s, i) => ({
+          spells: [
+            ...(isWizardClass
+              ? spellbookSpells.map((s, i) => ({
                   id: `spell-${crypto.randomUUID()}-${i}`,
                   srdId: s.id,
                   name: s.name,
-                  level: 0,
-                  prepared: false,
+                  level: s.level,
+                  prepared: i < wizardPrepCap,
                 }))
-              : [],
+              : isWarlockClass
+                ? warlockCantrips.map((s, i) => ({
+                    id: `spell-${crypto.randomUUID()}-${i}`,
+                    srdId: s.id,
+                    name: s.name,
+                    level: 0,
+                    prepared: false,
+                  }))
+                : []),
+            // A background-granted feat's own fixed spells (#126) -- e.g. Magic Initiate granted
+            // outright by a background rather than picked later on the sheet.
+            ...grants.grantedSpells,
+          ],
           // Pact Magic slots are fixed by level (no player choice, unlike which cantrips/spells
           // are known) -- seed them from the same table the sheet's "Set to expected" button uses,
           // so a Warlock isn't created with an empty Spell slots block.

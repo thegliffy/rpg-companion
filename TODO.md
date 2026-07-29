@@ -830,7 +830,7 @@ SRD data.
     - **Then** add `legendaryActions` and `skills` to both `SrdMonster` and the custom schema, and **backfill the ~30 legendary SRD monsters** by hand (CC-BY, ships in-repo, same precedent as [srd-spell-scaling.ts](shared/src/systems/srd-spell-scaling.ts)). Without the backfill only newly-authored monsters work and the existing bestiary stays broken.
     - Bestiary/Arena rendering needs the new sections; check both, since Arena drives combat.
 
-126. **Background `grantedFeats`.** No link from a background to a feat exists.
+126. ✅ **Background `grantedFeats`.** No link from a background to a feat exists.
     - **Shape:** `grantedFeats: string[]` of custom-content ids (or SRD feat ids), resolved at character creation the way `backgroundGrants()` already applies skills/tools/equipment.
     - **Reuse the #109 resolver pattern** — SRD id first, then a visible custom feat — and reuse the #109 unresolved-name warning so a background pointing at a deleted feat says so instead of silently granting nothing.
 
@@ -891,5 +891,28 @@ the same per-field zod issues the single-create route already returns. Full buil
 tests green throughout; POST /api/custom-content/import reuses the exact same dataSchemaFor()
 per-type validation and requireGlobalRole("dm", "admin") gate as the existing single-item route,
 so an import can't create anything the manager forms couldn't.
+
+**Verified (#126, done):** added `grantedFeats: string[]` (custom-content ids like `custom-24`, or
+raw SRD feat names) to `rawCustomBackgroundDataSchema`, plus a shared `resolveGrantedFeat(ref,
+customFeats)` resolver mirroring the existing spell/subclass id-tag pattern. `backgroundGrants()`
+in the creation wizard now resolves each ref once at character creation, pushing a full feat entry
+(abilityBonuses/acBonus/skillProficiencies/etc.) and tagging any of *that feat's own* granted
+spells as `feat-spell-${featId}-${i}` -- the same tag `addFeat()` uses on the sheet, so cleanup
+logic works regardless of grant source. Manager UI adds a "Granted feats" comma-separated field
+with a datalist and the established red unresolved-name warning (#109's pattern) when a background
+references a feat that no longer exists.
+
+Live-verified end-to-end: created a custom "Grit" feat (grants Intimidation proficiency + an
+at-will Guidance cantrip) and a custom "Hardened Veteran" background with
+`grantedFeats: ["custom-24"]` pointing at it, then drove the actual character-creation wizard in
+the browser -- picked Fighter/Human/Hardened Veteran, standard-array abilities, created the
+character. The resulting sheet shows a Feats entry for Grit (`intimidation` in
+`skillProficiencies`, tagged `bg-feat-<uuid>`) and "Guidance" in `spells`
+(`feat-spell-bg-feat-<uuid>-0`), exactly as designed. First verification attempt showed empty
+`feats`/`spells` -- traced to a test-harness bug, not the app: driving the background `<select>`
+via a raw `.value =` assignment doesn't fire React's synthetic onChange, so `background` state
+silently stayed empty (class/race, set the same way, happened to have worked). Re-driven with
+`form_input` (which dispatches proper events) and the mechanism worked on the first pass. Full
+build across all three workspaces clean; 21 backend tests green.
 
 **Wikidot-ish markdown import remains explicitly out of scope**, per the plan -- JSON first.

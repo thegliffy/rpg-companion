@@ -7,6 +7,7 @@ import { SRD_SPELL_EFFECTS } from "./srd-spell-effects.js";
 import { SRD_SPELL_SCALING } from "./srd-spell-scaling.js";
 import type { SpellScaling } from "./srd-spell-scaling.js";
 import type { SrdMonster } from "./srd-monsters.js";
+import { SRD_FEATS } from "./srd-feats.js";
 import type { CustomContentType, CustomContentSystem, CustomContent } from "../types.js";
 import { newEntityId } from "../id.js";
 
@@ -162,6 +163,13 @@ const rawCustomBackgroundDataSchema = z.object({
   // mechanical tweak is a natural future extension once a concrete need shows up.
   variants: z.array(backgroundVariantSchema).max(20).default([]),
   variantPickCount: z.number().int().min(0).max(5).default(1),
+  // Feats this background grants outright at character creation (#126) -- e.g. a homebrew
+  // background paired with a homebrew bonus feat. References are an SRD feat id or `custom-${id}`,
+  // the same SRD-then-custom convention #109 established for spell references, resolved via
+  // resolveGrantedFeat() below. Deliberately just a fixed grant, not a picker: a feat with its own
+  // spellChoices rows (#102) has those left unresolved when granted this way, since the character
+  // creation wizard has no multi-step picker to resolve them through.
+  grantedFeats: z.array(z.string().trim().max(100)).max(5).default([]),
 });
 
 /** A legacy or pre-#100 singular {name, description} feature, upgraded into a one-element
@@ -470,6 +478,62 @@ export const customFeatDataSchema = effectBonusesSchema.extend({
   prereqText: z.string().trim().max(120).default(""),
 });
 export type CustomFeatData = z.infer<typeof customFeatDataSchema>;
+
+/** What a background's grantedFeats resolves to -- everything backgroundGrants() (the character
+ * creation wizard) needs to build a FeatEntry plus any spells the feat fixedly grants. */
+export interface ResolvedGrantedFeat {
+  name: string;
+  description: string;
+  abilityBonuses: Partial<Record<string, number>>;
+  acBonus: number;
+  attackBonus: number;
+  damageBonus: number;
+  spellDCBonus: number;
+  spellAttackBonus: number;
+  skillProficiencies: string[];
+  grantedSpells: GrantedSpell[];
+}
+
+/** Resolves a background's granted-feat reference (an SRD feat id, or `custom-${id}`) to the
+ * feat's full data -- SRD-then-custom, the same order resolveSpellBuff/resolveSpellScaling use.
+ * SRD_FEATS carries name only (no mechanical data, matching how FeatPickerModal's own SRD pick
+ * builds a blank-bonus entry), so an SRD grant is a name-only feat; a custom one carries its real
+ * bonuses and fixed grantedSpells. spellChoices are deliberately not included -- see the
+ * grantedFeats field comment on why those aren't resolved through this path. */
+export function resolveGrantedFeat(ref: string, customFeats: CustomContent[]): ResolvedGrantedFeat | null {
+  const srd = SRD_FEATS.find((f) => f.id === ref);
+  if (srd) {
+    return {
+      name: srd.name,
+      description: "",
+      abilityBonuses: {},
+      acBonus: 0,
+      attackBonus: 0,
+      damageBonus: 0,
+      spellDCBonus: 0,
+      spellAttackBonus: 0,
+      skillProficiencies: [],
+      grantedSpells: [],
+    };
+  }
+  if (!ref.startsWith("custom-")) return null;
+  const customId = Number(ref.slice("custom-".length));
+  const item = customFeats.find((c) => c.id === customId);
+  if (!item) return null;
+  const d = item.data as CustomFeatData;
+  return {
+    name: item.name,
+    description: d.description,
+    abilityBonuses: d.abilityBonuses,
+    acBonus: d.acBonus,
+    attackBonus: d.attackBonus,
+    damageBonus: d.damageBonus,
+    spellDCBonus: d.spellDCBonus,
+    spellAttackBonus: d.spellAttackBonus,
+    skillProficiencies: d.skillProficiencies,
+    grantedSpells: d.grantedSpells,
+  };
+}
 
 // Mirrors the SRD SrdSpell field set exactly (srd-spells.ts) -- name/level come from the
 // custom-content row's own name/nothing-special-needed level field, so this schema keeps

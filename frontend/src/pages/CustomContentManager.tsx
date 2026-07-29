@@ -19,6 +19,7 @@ import {
   DND5E_LANGUAGES,
   SRD_BACKGROUNDS,
   SRD_SPELLS,
+  SRD_FEATS,
   CUSTOM_CONTENT_TYPES_BY_SYSTEM,
   SYSTEM_IDS,
   customBackgroundDataSchema,
@@ -476,6 +477,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const { user } = useAuth();
   const [items, setItems] = useState<CustomContent[]>([]);
   const [visibleSpells, setVisibleSpells] = useState<CustomContent[]>([]);
+  const [visibleFeats, setVisibleFeats] = useState<CustomContent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -525,6 +527,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
   const [bgVariants, setBgVariants] = useState<BgVariantRow[]>([]);
   const [bgVariantPickCount, setBgVariantPickCount] = useState("1");
   const [bgCloneFrom, setBgCloneFrom] = useState("");
+  const [bgGrantedFeatsText, setBgGrantedFeatsText] = useState(""); // comma-separated feat names (#126)
 
   // Subrace / subclass parent (ability bonuses, traits, and level rows are reused from above).
   const [parentRace, setParentRace] = useState("");
@@ -635,6 +638,10 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         // spell-name autocompletes and the unresolved-name warning, and the sheet resolves against
         // the same set, so anything narrower would suggest too little and warn too much.
         setVisibleSpells(all.filter((i) => i.type === "spell"));
+        // Same "visible, not just own" convention for feats (#126) -- backs the background
+        // editor's grantedFeats autocomplete/warning, and the wizard resolves grants against the
+        // same set.
+        setVisibleFeats(all.filter((i) => i.type === "feat"));
       })
       .catch((err) => setError(err.message));
   }
@@ -714,6 +721,33 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     return null;
   }
 
+  // SRD plus every visible custom feat, deduped by name -- same convention as spellNameOptions,
+  // backing the background editor's grantedFeats (#126) autocomplete and unresolved-name check.
+  const featNameOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const name of [...SRD_FEATS.map((f) => f.name), ...visibleFeats.map((i) => i.name.trim())]) {
+      const key = name.trim().toLowerCase();
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        out.push(name);
+      }
+    }
+    return out;
+  }, [visibleFeats]);
+
+  /** Resolves a typed feat name to the reference id a background's grantedFeats stores -- an SRD
+   * feat id, or `custom-${id}` matching resolveGrantedFeat's (custom-content.ts) expectation. */
+  function resolveFeatId(name: string): string | null {
+    const key = name.trim().toLowerCase();
+    if (!key) return null;
+    const srd = SRD_FEATS.find((f) => f.name.toLowerCase() === key);
+    if (srd) return srd.id;
+    const custom = visibleFeats.find((i) => i.name.trim().toLowerCase() === key);
+    if (custom) return `custom-${custom.id}`;
+    return null;
+  }
+
   function resetForm() {
     setEditingId(null);
     setName("");
@@ -738,6 +772,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setBgVariants([]);
     setBgVariantPickCount("1");
     setBgCloneFrom("");
+    setBgGrantedFeatsText("");
     setParentRace("");
     setParentClass("");
     setSubclassFeatureRows([]);
@@ -893,6 +928,21 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       );
       setBgVariants(d.variants);
       setBgVariantPickCount(String(d.variantPickCount));
+      // Stored as reference ids; shown as names to edit, matching every other name-typed field
+      // here. A ref that no longer resolves (SRD id typo'd, custom feat deleted) is shown as the
+      // raw stored string rather than silently dropped, so re-saving the background doesn't lose
+      // it -- the unresolved-name warning below will flag it for the author to fix or remove.
+      setBgGrantedFeatsText(
+        d.grantedFeats
+          .map((ref) => {
+            if (ref.startsWith("custom-")) {
+              const id = Number(ref.slice("custom-".length));
+              return visibleFeats.find((f) => f.id === id)?.name ?? ref;
+            }
+            return SRD_FEATS.find((f) => f.id === ref)?.name ?? ref;
+          })
+          .join(", "),
+      );
     } else if (item.type === "subrace") {
       const d = item.data as { parentRace: string; abilityBonuses: Partial<Record<Dnd5eAbility, number>>; traits: string[] };
       setParentRace(d.parentRace);
@@ -1192,6 +1242,11 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         })),
       variants: bgVariants.filter((v) => v.title.trim() !== ""),
       variantPickCount: Number(bgVariantPickCount) || 1,
+      grantedFeats: bgGrantedFeatsText
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((name) => resolveFeatId(name) ?? name),
     };
   }
 
@@ -1934,6 +1989,41 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
               Starting gold <input type="number" min={0} value={bgGold} onChange={(e) => setBgGold(e.target.value)} style={{ width: "5rem" }} />
             </label>
 
+            <h4 style={{ marginTop: "1rem" }}>Granted feats (optional)</h4>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+              Feats this background grants outright at character creation -- comma-separated names, matching an SRD
+              feat or one of your own custom feats. A feat with its own spell choices (Magic Initiate-style) grants
+              only its fixed effects this way; the choices themselves aren't resolved.
+            </p>
+            <datalist id="feat-name-list-background">
+              {featNameOptions.map((n) => (
+                <option key={n} value={n} />
+              ))}
+            </datalist>
+            <input
+              list="feat-name-list-background"
+              value={bgGrantedFeatsText}
+              onChange={(e) => setBgGrantedFeatsText(e.target.value)}
+              placeholder="e.g. Tough"
+              style={{ width: "100%" }}
+            />
+            {(() => {
+              const unresolved = bgGrantedFeatsText
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean)
+                .filter((n) => !featNameOptions.some((o) => o.toLowerCase() === n.toLowerCase()));
+              return (
+                unresolved.length > 0 && (
+                  <div style={{ color: "crimson", fontSize: "0.85rem", marginTop: "0.2rem" }}>
+                    No SRD or custom feat named {unresolved.map((n) => `“${n}”`).join(", ")} — this background won't
+                    grant {unresolved.length === 1 ? "it" : "them"}. Create the feat under Type → Feat first, then it
+                    will resolve by name.
+                  </div>
+                )
+              );
+            })()}
+
             <h4 style={{ marginTop: "1rem" }}>Features</h4>
             <p>
               <small>Some backgrounds grant more than one distinct feature -- add a row per feature. Bonuses are optional.</small>
@@ -2098,6 +2188,11 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                   <p style={{ margin: "0.2rem 0" }}>
                     <strong>Equipment:</strong> {preview.equipment}
                   </p>
+                  {bgGrantedFeatsText.trim() && (
+                    <p style={{ margin: "0.2rem 0" }}>
+                      <strong>Granted Feats:</strong> {bgGrantedFeatsText}
+                    </p>
+                  )}
                   {preview.features.map((f) => {
                     const bonusParts = [
                       ...DND5E_ABILITIES.filter((a) => f.abilityBonuses[a]).map((a) => `${formatModifier(f.abilityBonuses[a]!)} ${a.toUpperCase()}`),
