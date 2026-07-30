@@ -20,7 +20,7 @@ export type View =
   | { name: "character"; characterId: number; back: View }
   | { name: "create-character"; campaignId: number | null; back: View }
   | { name: "admin" }
-  | { name: "custom-content" }
+  | { name: "custom-content"; editContentId?: number; back?: View }
   | { name: "bestiary" }
   | { name: "arena" };
 
@@ -95,8 +95,19 @@ function App() {
           }
         />
       )}
-      {view.name === "admin" && <AdminPanel onBack={() => setView({ name: "home" })} />}
-      {view.name === "custom-content" && <CustomContentManager onBack={() => setView({ name: "home" })} />}
+      {view.name === "admin" && (
+        <AdminPanel
+          onBack={() => setView({ name: "home" })}
+          onOpenCharacter={(characterId) => setView({ name: "character", characterId, back: { name: "admin" } })}
+          onEditContent={(editContentId) => setView({ name: "custom-content", editContentId, back: { name: "admin" } })}
+        />
+      )}
+      {view.name === "custom-content" && (
+        <CustomContentManager
+          onBack={() => setView(view.back ?? { name: "home" })}
+          editContentId={view.editContentId}
+        />
+      )}
       {view.name === "bestiary" && <BestiaryPage onBack={() => setView({ name: "home" })} />}
       {view.name === "arena" && <ArenaPage onBack={() => setView({ name: "home" })} />}
 

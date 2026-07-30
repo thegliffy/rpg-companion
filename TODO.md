@@ -972,3 +972,157 @@ one, confirming the migration path. Full build across all three workspaces clean
 green.
 
 **Wikidot-ish markdown import remains explicitly out of scope**, per the plan -- JSON first.
+
+## Theme: admin portal — manage all custom content and characters
+
+Today's admin portal ([AdminPanel.tsx](frontend/src/pages/AdminPanel.tsx), 164 lines) does exactly
+two things: a users table (role change + password reset) and an approve/reject list of *pending*
+custom content. It cannot see approved content, cannot see characters at all, and has no search,
+filter or bulk action.
+
+**The headline finding: write authorization is already admin-aware everywhere.** Every mutation
+path already has an explicit admin bypass —
+[`requireCharacterOwnerOrDM`](backend/src/middleware/character.ts) ("a global admin can act on any
+character, owned or attached anywhere"), `requireCharacterOwner`, `requireCharacterViewable`,
+[`requireCustomContentOwnerOrAdmin`](backend/src/middleware/customContent.ts), and
+`redactPrivateNotesIfNotOwner` ("a global admin is a deliberate exception"). An admin can already
+open, edit and delete any character or content item **if they can get its id**. So this theme is
+almost entirely a *read/enumeration* problem plus UI, not an authorization rewrite — much smaller
+than "manage everything" sounds.
+
+**Cross-cutting trap — do not widen `listVisibleCustomContent`.** The tempting one-liner is to make
+[that function](backend/src/services/customContent.service.ts) return everything when the caller is
+an admin. It feeds the *player-facing pickers* (spell/feat/race lists on the sheet and in the
+wizard), so widening it would fill an admin's own character sheets with everyone else's unapproved
+drafts. The admin's management list and the admin's picker feed are different concerns: add a
+separate endpoint, leave the existing function alone.
+
+**Second trap — don't ship full payloads in list endpoints.** `Character.sheetData` is a whole 5e
+sheet and `CustomContent.data` is a whole class/monster blob. A 200-row admin list must not carry
+200 of either (payload size, and `sheetData` contains the `privateNotes` field that only exists to
+be redacted). Both list endpoints return lean summary shapes; the manager and sheet keep fetching
+full single items the way they already do.
+
+**Decisions taken (all by the user):** all four optional capabilities are in scope (revoke
+approval, reassign character owner, bulk select+act, delete users); admin content editing **reuses
+CustomContentManager** rather than duplicating its ~9 type-specific editors; layout is **tabbed**;
+user deletion **blocks when the user still owns anything** rather than cascading or reassigning.
+
+128. ✅ **Admin enumeration endpoints — the actual gap.** No `listAllCharacters()` or
+    `listAllCustomContent()` exists; `listCharactersForOwner`/`listCharactersForCampaign` are the
+    only character list functions, and `listVisibleCustomContent(userId)` is approved-plus-own-pending.
+    - **Add** `listAllCustomContent()` and `listAllCharacters()` services + `GET /api/admin/content`
+      and `GET /api/admin/characters` on the existing `requireAuth, requireAdmin`-gated admin router.
+    - **Lean summary shapes** per the trap above: `AdminCharacterSummary` (id, name, owner, campaign,
+      system, level, status, updatedAt) and `AdminContentSummary` (`CustomContent` minus `data`).
+      New types in `shared`, so the frontend isn't casting.
+    - Leave `listVisibleCustomContent` untouched.
+
+129. ✅ **Tabbed portal shell.** Restructure AdminPanel.tsx into Users / Custom content / Characters
+    tabs, each with its own search box and filter row; widen past the current 700px column.
+    - Tab state is local (no routing change) — `App.tsx` has one `{ name: "admin" }` view and adding
+      per-tab URLs would mean touching its hand-rolled view union for no user-visible gain.
+    - Extract the existing users table into its own tab component; it stays as-is functionally
+      except for the delete button #135 adds.
+
+130. ✅ **Custom content tab.** All items (not just pending), with owner / type / system / status
+    columns, filter by status+type+system+owner, free-text name search, and per-row approve /
+    revoke / delete.
+    - **Bulk select + act:** checkboxes with bulk approve/revoke/delete, sized for the case that
+      motivated it — approving a 40-item pack imported via #123 one click at a time is untenable.
+    - Bulk actions reuse the existing single-item routes in a loop rather than new bulk endpoints,
+      matching how #123's importer reuses `dataSchemaFor()` per row; partial failure reports
+      per-row the same way the import result list does.
+
+131. ✅ **Revoke approval (approved → pending).** Approval is one-way today (`approveCustomContent`
+    sets status/approvedByUserId/approvedAt; nothing sets them back), so the only way to un-publish
+    a bad item is to delete it and destroy the author's work.
+    - **Route:** `POST /api/custom-content/:id/unapprove`, admin-only, clearing
+      `approvedByUserId`/`approvedAt` alongside the status flip.
+    - **Known consequence to surface in the UI, not paper over:** a character that already
+      references the item as `custom-${id}` (spell `srdId`, background `grantedFeats`, race trait
+      granted spells) will stop resolving for everyone except the author once it leaves `approved`,
+      and will render as a bare name. Revoking is the right tool for "this shouldn't be public
+      yet", not for "this is wrong" — the confirm dialog should say so.
+
+132. ✅ **Character tab.** All characters with owner / campaign / system / level / status columns,
+    filter by owner+campaign+system+status, name search.
+    - Per-row: open sheet (already fully functional for admins — `requireCharacterOwnerOrDM` and
+      the sheet's own admin exceptions mean **no sheet-side work at all**, this is purely a
+      navigation entry point), detach from campaign, delete.
+    - Bulk delete, same partial-failure reporting as #130.
+
+133. ✅ **Reassign character owner.** Genuinely new — nothing in the codebase currently writes
+    `characters.ownerUserId` after creation.
+    - **Route:** `PATCH /api/admin/characters/:id/owner` taking a target userId.
+    - **Edge case that needs a deliberate answer:** if the character is attached to a campaign the
+      new owner isn't a member of, the character would be owned by a non-member. Detach on
+      reassignment (simplest, and the admin can re-attach) rather than silently auto-joining
+      someone to a campaign — matching #123's refusal to let an import silently touch content its
+      caller doesn't own.
+
+134. ✅ **Make CustomContentManager admin-aware.** So admins can *edit* other people's content
+    without duplicating ~2400 lines of type-specific editors (the chosen approach).
+    - When `user.role === "admin"`, its "My items" list is fed by the #128 admin endpoint instead
+      of `listCustomContent()`, gains an owner column, and retitles ("All items"). Every existing
+      per-type editor, the `startEdit` parse path and the save path are reused unchanged —
+      `PATCH /:id` already allows admins via `requireCustomContentOwnerOrAdmin`.
+    - The admin portal's content tab links here for edit rather than embedding a second editor.
+
+135. ✅ **Delete users, with an ownership guard.** Users can currently only have their role/password
+    changed, never be removed.
+    - **Blocked, not cascading** (the user's call): `foreign_keys = ON` is set in
+      [client.ts](backend/src/db/client.ts) and **6 of the 8 FKs to `users.id` are NOT NULL** —
+      `campaigns.ownerUserId`, `campaignMemberships.userId`, `characters.ownerUserId`,
+      `diceRolls.userId`, `notes.authorUserId`, `customContent.createdByUserId` (only
+      `encounters.ownerUserId` and `customContent.approvedByUserId` are nullable). A bare DELETE
+      therefore fails at the DB with an opaque constraint error → 500.
+    - **So:** count dependants first and return **409 with a breakdown** ("3 characters, 1 campaign,
+      12 content items, 40 dice rolls") so the admin reassigns (#133) or deletes those first.
+      Nothing is ever destroyed implicitly.
+    - **Two guards beyond that:** an admin can't delete their own account (same reasoning as the
+      existing self-role-change block in AdminPanel.tsx), and can't delete the **last** remaining
+      admin — that would leave the install with no way to reach this portal at all.
+    - Dice rolls and notes are the awkward part of the breakdown (nobody wants to hand-delete 40
+      rolls to remove a departed player). Worth revisiting whether those two specifically should
+      cascade, once the guard exists and the real numbers are visible.
+
+**Verified (#128-135, done):** the headline finding from the plan held up exactly as predicted --
+every mutation route already had an admin bypass (`requireCharacterOwnerOrDM`,
+`requireCustomContentOwnerOrAdmin`, `redactPrivateNotesIfNotOwner`), so this theme really was almost
+entirely enumeration + UI, not an authorization rewrite. Added `listAllCustomContent()` /
+`listAllCharacters()` (lean `AdminContentSummary`/`AdminCharacterSummary` shapes, no `data`/
+`sheetData`) alongside the existing `listVisibleCustomContent`/`listCharactersForOwner` -- the
+latter two are untouched, so the player-facing pickers still only ever see approved-plus-own-pending,
+per the plan's first trap. Also added a `GET /api/custom-content/:id` single-item route that turned
+out to be missing entirely -- needed so `CustomContentManager`'s new admin "All items" list (fed by
+the lean summary) can fetch a clicked row's full `data` before opening the editor.
+
+`unapproveCustomContent()` mirrors `approveCustomContent()` exactly (clears
+status/approvedByUserId/approvedAt); `reassignCharacterOwner()` detaches from the campaign when the
+new owner isn't a member, reusing `getMembership()` rather than duplicating that check; user delete
+counts six dependant tables up front (`countUserDependants`) and returns 409 with the full breakdown
+via a new `UserHasDependantsError` on the frontend, plus self-delete and last-remaining-admin guards
+(the latter is unreachable in practice given the former -- an admin can never be both the actor and
+the sole target of their own delete call -- but cheap to keep as documented intent). `AdminPanel.tsx`
+is now three tabs (Users/Custom content/Characters) with search+filter+bulk-select on the latter two,
+bulk actions looping the existing single-item routes with per-action partial-success counts (same
+reuse #123's importer makes). `CustomContentManager` gained an `editContentId` prop so the content
+tab's Edit button navigates straight into the real per-type editor instead of duplicating one.
+
+Live-verified extensively via a mix of browser UI and direct `fetch()` (native `window.confirm()`
+dialogs reliably hung the browser-automation tool this session, as they had earlier for character
+deletion -- confirmed a harness limitation, not an app bug, by re-testing the identical code paths
+via `fetch()`, which never touches `confirm()`): tabbed shell renders correct live counts (11 users,
+7 content, 12 characters); delete-user returned the exact dependant breakdown for a user owning
+campaigns/dice-rolls/notes (`409`, `{campaignsOwned:1, diceRolls:105, notes:4, ...}`) and correctly
+blocked self-delete (`400`); the content tab's "All items" table showed every user's items including
+other people's pending drafts, and clicking Edit on someone else's class navigated into
+`CustomContentManager`, auto-opened the real editor, and every field (hit die, caster type, level
+rows, the Infusions resource) came back exactly as authored; "← Back" from there returned to the
+admin panel, not home; approve/unapprove round-tripped status and cleared/set
+approvedByUserId+approvedAt correctly; character reassignment worked both when the new owner *was*
+already a campaign member (stayed attached) and when they *weren't* (correctly detached,
+`campaignId: null`), verified by checking real campaign-membership rows before asserting. Full build
+across all three workspaces clean throughout; 21 backend tests green. All test users/roles/data
+restored to their pre-verification state afterward.

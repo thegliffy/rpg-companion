@@ -21,6 +21,14 @@ export async function listPendingCustomContent(): Promise<CustomContent[]> {
   return data.items;
 }
 
+// Full single item, `data` included -- for opening the editor on an item that only appears in the
+// admin's site-wide summary list (#134), which doesn't carry `data`.
+export async function getCustomContent(id: number): Promise<CustomContent> {
+  const res = await fetch(`/api/custom-content/${id}`);
+  const data = await parseOrThrow(res);
+  return data.item;
+}
+
 export async function createCustomContent(
   type: CustomContentType,
   system: CustomContentSystem,
@@ -66,6 +74,12 @@ export async function deleteCustomContent(id: number): Promise<void> {
 
 export async function approveCustomContent(id: number): Promise<CustomContent> {
   const res = await fetch(`/api/custom-content/${id}/approve`, { method: "POST" });
+  const body = await parseOrThrow(res);
+  return body.item;
+}
+
+export async function unapproveCustomContent(id: number): Promise<CustomContent> {
+  const res = await fetch(`/api/custom-content/${id}/unapprove`, { method: "POST" });
   const body = await parseOrThrow(res);
   return body.item;
 }

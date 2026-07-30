@@ -24,6 +24,7 @@ import {
   listPendingCustomContent,
   updateCustomContent,
   approveCustomContent,
+  unapproveCustomContent,
   deleteCustomContent,
 } from "../services/customContent.service.js";
 
@@ -168,6 +169,15 @@ customContentRouter.post("/import", requireGlobalRole("dm", "admin"), async (req
   res.json({ results });
 });
 
+// Single-item fetch with the full `data` payload (#134) -- same owner-or-admin gate as PATCH/DELETE
+// below, since a pending item that's neither the requester's own nor approved shouldn't be
+// fetchable just by guessing an id. Needed so an admin can open the full editor for an item that
+// only shows up in their site-wide summary list (GET /api/admin/content), not the approved-plus-
+// own-pending set GET / already returns.
+customContentRouter.get("/:id", requireCustomContentOwnerOrAdmin, (req, res) => {
+  res.json({ item: getCustomContent(req.customContentRow!.id) });
+});
+
 customContentRouter.patch("/:id", requireCustomContentOwnerOrAdmin, async (req, res) => {
   const parsed = updateCustomContentSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -202,6 +212,25 @@ customContentRouter.post("/:id/approve", requireAdmin, async (req, res) => {
   }
 
   const updated = await approveCustomContent(id, req.session.userId!);
+  if (!updated) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  res.json({ item: getCustomContent(updated.id) });
+});
+
+// Reverses approve (#131) -- e.g. an item shouldn't have been published yet. The frontend is
+// responsible for warning that anything already resolving custom-${id} against this item (a
+// spell's srdId, a background's grantedFeats, a race trait's grantedSpells) stops resolving for
+// everyone but the author the moment it leaves "approved".
+customContentRouter.post("/:id/unapprove", requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+
+  const updated = await unapproveCustomContent(id);
   if (!updated) {
     res.status(404).json({ error: "Not found" });
     return;

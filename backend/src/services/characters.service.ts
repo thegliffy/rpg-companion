@@ -2,9 +2,10 @@ import { randomBytes } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { characters, users, campaigns } from "../db/schema.js";
-import type { Character, Dnd5eSheetData } from "shared";
+import type { Character, Dnd5eSheetData, AdminCharacterSummary } from "shared";
 import { removePortraitFile } from "../lib/portraits.js";
 import { isGlobalAdmin } from "./users.service.js";
+import { getMembership } from "./campaigns.service.js";
 
 export class CharacterConflictError extends Error {
   constructor(message = "Character was modified elsewhere — reload and try again") {
@@ -92,6 +93,55 @@ export function listCharactersForOwner(ownerUserId: number): Character[] {
   return rows.map((r) => toCharacter(r.character, r.ownerUsername, r.campaignName));
 }
 
+// Admin-only, site-wide (#128) -- every character regardless of owner. Lean summary (no
+// sheetData): a full sheet payload per row (which also carries the owner-only privateNotes field)
+// has no place in a list view; single-character fetches still return the full shape. `level` and
+// `status` are pulled out of the stored sheetData server-side without shipping the rest of it --
+// null for a system that doesn't model the concept (pf2e/generic have no status) or a
+// malformed/legacy row.
+export function listAllCharacters(): AdminCharacterSummary[] {
+  const rows = db
+    .select({
+      id: characters.id,
+      name: characters.name,
+      ownerUserId: characters.ownerUserId,
+      ownerUsername: users.username,
+      campaignId: characters.campaignId,
+      campaignName: campaigns.name,
+      system: characters.system,
+      sheetData: characters.sheetData,
+      updatedAt: characters.updatedAt,
+    })
+    .from(characters)
+    .innerJoin(users, eq(characters.ownerUserId, users.id))
+    .leftJoin(campaigns, eq(characters.campaignId, campaigns.id))
+    .all();
+
+  return rows.map((r) => {
+    let level: number | null = null;
+    let status: AdminCharacterSummary["status"] = null;
+    try {
+      const parsed = JSON.parse(r.sheetData) as Record<string, unknown>;
+      if (typeof parsed.level === "number") level = parsed.level;
+      if (parsed.status === "active" || parsed.status === "dead" || parsed.status === "retired") status = parsed.status;
+    } catch {
+      // Malformed/legacy sheetData -- summary just omits level/status rather than failing the list.
+    }
+    return {
+      id: r.id,
+      name: r.name,
+      ownerUserId: r.ownerUserId,
+      ownerUsername: r.ownerUsername,
+      campaignId: r.campaignId,
+      campaignName: r.campaignName,
+      system: r.system as Character["system"],
+      level,
+      status,
+      updatedAt: r.updatedAt,
+    };
+  });
+}
+
 export function getCharacterRow(id: number) {
   return db.select().from(characters).where(eq(characters.id, id)).get();
 }
@@ -174,6 +224,26 @@ export async function updateCharacter(
     throw new Error("Character not found");
   }
 
+  return getCharacter(id)!;
+}
+
+// Admin-only (#133) -- genuinely new: nothing else in the app writes ownerUserId after creation.
+// If the character is attached to a campaign the new owner isn't a member of, it's detached rather
+// than left owned-by-a-non-member or silently auto-joining the new owner to a campaign they never
+// asked to join (same refusal-to-act-without-authorization #123's importer applies).
+export async function reassignCharacterOwner(id: number, newOwnerUserId: number) {
+  const row = getCharacterRow(id);
+  if (!row) return null;
+
+  const updates: { ownerUserId: number; updatedAt: string; campaignId?: null } = {
+    ownerUserId: newOwnerUserId,
+    updatedAt: new Date().toISOString(),
+  };
+  if (row.campaignId !== null && !getMembership(row.campaignId, newOwnerUserId)) {
+    updates.campaignId = null;
+  }
+
+  await db.update(characters).set(updates).where(eq(characters.id, id));
   return getCharacter(id)!;
 }
 

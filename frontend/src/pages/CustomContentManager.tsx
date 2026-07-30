@@ -11,6 +11,7 @@ import type {
   SubclassResource,
   RaceTrait,
   ImportCustomContentResult,
+  AdminContentSummary,
 } from "shared";
 import {
   DND5E_ABILITIES,
@@ -30,9 +31,11 @@ import {
   formatModifier,
 } from "shared";
 import * as customContentApi from "../api/customContent";
+import * as adminApi from "../api/admin";
 import { useAuth } from "../context/AuthContext";
 
-const TYPE_LABELS: Record<CustomContentType, string> = {
+// Exported for AdminPanel's content tab (#130), so the two admin-facing item lists can't drift.
+export const TYPE_LABELS: Record<CustomContentType, string> = {
   race: "Race",
   subrace: "Subrace",
   class: "Class",
@@ -44,7 +47,7 @@ const TYPE_LABELS: Record<CustomContentType, string> = {
   monster: "Monster",
 };
 
-const SYSTEM_LABELS: Record<CustomContentSystem, string> = {
+export const SYSTEM_LABELS: Record<CustomContentSystem, string> = {
   dnd5e: "D&D 5e",
   pf2e: "Pathfinder 2e",
   generic: "Generic",
@@ -525,9 +528,22 @@ function levelsToRows(
   }));
 }
 
-export function CustomContentManager({ onBack }: { onBack: () => void }) {
+export function CustomContentManager({
+  onBack,
+  editContentId,
+}: {
+  onBack: () => void;
+  // Opens straight into editing this item on mount (#134) -- how the admin portal's content tab
+  // links here for editing instead of duplicating a second editor for every content type.
+  editContentId?: number;
+}) {
   const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [items, setItems] = useState<CustomContent[]>([]);
+  // Site-wide, every item regardless of owner/status (#134) -- admin-only, lean (no `data`), backs
+  // the "All items" list in place of the own-items-only `items` above. Edit still fetches the full
+  // item by id (getCustomContent) since this summary shape doesn't carry it.
+  const [allContentSummaries, setAllContentSummaries] = useState<AdminContentSummary[]>([]);
   const [visibleSpells, setVisibleSpells] = useState<CustomContent[]>([]);
   const [visibleFeats, setVisibleFeats] = useState<CustomContent[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -700,9 +716,23 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
         setVisibleFeats(all.filter((i) => i.type === "feat"));
       })
       .catch((err) => setError(err.message));
+    if (isAdmin) {
+      adminApi.listAllContent().then(setAllContentSummaries).catch((err) => setError(err.message));
+    }
   }
 
   useEffect(refresh, [user?.id]);
+
+  // Opens straight into the editor for editContentId (#134) once on mount -- the full item is
+  // fetched separately since the admin summary list it was clicked from doesn't carry `data`.
+  useEffect(() => {
+    if (editContentId === undefined) return;
+    customContentApi
+      .getCustomContent(editContentId)
+      .then(startEdit)
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load item"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editContentId]);
 
   /** Parses and uploads a JSON pack against the currently selected System -- each row is
    * validated server-side through the same per-type schema the New Item form uses, so nothing an
@@ -1569,6 +1599,18 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     }
   }
 
+  // Admin "All items" row Edit (#134) -- the row only carries the lean AdminContentSummary shape,
+  // so the full item (with `data`) is fetched by id before handing it to the normal startEdit path.
+  async function startEditById(id: number) {
+    setError(null);
+    try {
+      const item = await customContentApi.getCustomContent(id);
+      startEdit(item);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load item");
+    }
+  }
+
   // Repeatable trait-card editor (#124) -- shared by the race and subrace forms, same as
   // abilityBonuses, since traitRows is one state array reused between them.
   function renderTraitRows() {
@@ -1648,23 +1690,50 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       {error && <p style={{ color: "crimson" }}>{error}</p>}
 
       <div style={box}>
-        <h3>My items</h3>
-        {items.length === 0 && <p>None yet.</p>}
-        {items.map((item) => (
-          <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.3rem 0", borderBottom: "1px solid #eee" }}>
-            <span>
-              <strong>{item.name}</strong> ({SYSTEM_LABELS[item.system]} {TYPE_LABELS[item.type]}) — {item.status}
-            </span>
-            <span>
-              <button type="button" onClick={() => startEdit(item)}>
-                Edit
-              </button>{" "}
-              <button type="button" onClick={() => handleDelete(item.id)}>
-                Delete
-              </button>
-            </span>
-          </div>
-        ))}
+        <h3>{isAdmin ? "All items" : "My items"}</h3>
+        {isAdmin ? (
+          <>
+            {allContentSummaries.length === 0 && <p>None yet.</p>}
+            {allContentSummaries.map((item) => (
+              <div
+                key={item.id}
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.3rem 0", borderBottom: "1px solid #eee" }}
+              >
+                <span>
+                  <strong>{item.name}</strong> ({SYSTEM_LABELS[item.system]} {TYPE_LABELS[item.type]}) — {item.status} — by{" "}
+                  {item.createdByUsername}
+                </span>
+                <span>
+                  <button type="button" onClick={() => startEditById(item.id)}>
+                    Edit
+                  </button>{" "}
+                  <button type="button" onClick={() => handleDelete(item.id)}>
+                    Delete
+                  </button>
+                </span>
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            {items.length === 0 && <p>None yet.</p>}
+            {items.map((item) => (
+              <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.3rem 0", borderBottom: "1px solid #eee" }}>
+                <span>
+                  <strong>{item.name}</strong> ({SYSTEM_LABELS[item.system]} {TYPE_LABELS[item.type]}) — {item.status}
+                </span>
+                <span>
+                  <button type="button" onClick={() => startEdit(item)}>
+                    Edit
+                  </button>{" "}
+                  <button type="button" onClick={() => handleDelete(item.id)}>
+                    Delete
+                  </button>
+                </span>
+              </div>
+            ))}
+          </>
+        )}
       </div>
 
       <div style={box}>

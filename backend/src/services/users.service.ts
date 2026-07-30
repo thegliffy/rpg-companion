@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
 import { eq, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { users } from "../db/schema.js";
-import type { PublicUser, GlobalRole } from "shared";
+import { users, characters, campaigns, campaignMemberships, customContent, diceRolls, notes } from "../db/schema.js";
+import type { PublicUser, GlobalRole, AdminUserDependants } from "shared";
 
 const SALT_ROUNDS = 12;
 
@@ -64,6 +64,49 @@ export function findUserById(id: number) {
 
 export function isGlobalAdmin(userId: number): boolean {
   return findUserById(userId)?.role === "admin";
+}
+
+// Six of the eight FKs to users.id are NOT NULL (only encounters.ownerUserId and
+// customContent.approvedByUserId are nullable) and foreign_keys=ON is set in db/client.ts, so a
+// bare user delete fails at the DB with an opaque constraint error. Counted up front (#135) so the
+// route can return a 409 with a breakdown instead, and reassign/delete is a decision the admin
+// makes deliberately rather than something that cascades silently.
+export function countUserDependants(userId: number): AdminUserDependants {
+  const characterCount = db.select({ count: sql<number>`count(*)` }).from(characters).where(eq(characters.ownerUserId, userId)).get()!.count;
+  const campaignsOwnedCount = db.select({ count: sql<number>`count(*)` }).from(campaigns).where(eq(campaigns.ownerUserId, userId)).get()!.count;
+  const campaignMembershipCount = db
+    .select({ count: sql<number>`count(*)` })
+    .from(campaignMemberships)
+    .where(eq(campaignMemberships.userId, userId))
+    .get()!.count;
+  const customContentCount = db
+    .select({ count: sql<number>`count(*)` })
+    .from(customContent)
+    .where(eq(customContent.createdByUserId, userId))
+    .get()!.count;
+  const diceRollCount = db.select({ count: sql<number>`count(*)` }).from(diceRolls).where(eq(diceRolls.userId, userId)).get()!.count;
+  const noteCount = db.select({ count: sql<number>`count(*)` }).from(notes).where(eq(notes.authorUserId, userId)).get()!.count;
+
+  return {
+    characters: characterCount,
+    campaignsOwned: campaignsOwnedCount,
+    campaignMemberships: campaignMembershipCount,
+    customContent: customContentCount,
+    diceRolls: diceRollCount,
+    notes: noteCount,
+  };
+}
+
+export function hasAnyDependants(d: AdminUserDependants): boolean {
+  return Object.values(d).some((n) => n > 0);
+}
+
+export function countAdmins(): number {
+  return db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.role, "admin")).get()!.count;
+}
+
+export async function deleteUser(id: number) {
+  await db.delete(users).where(eq(users.id, id));
 }
 
 export async function verifyPassword(user: typeof users.$inferSelect, password: string) {

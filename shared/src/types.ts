@@ -94,6 +94,49 @@ export interface Character {
   updatedAt: string;
 }
 
+// Admin-only listing shapes (#128) -- deliberately lean: CustomContent.data and Character.sheetData
+// are whole content/sheet payloads (sheetData also carries the owner-only privateNotes field), so
+// a site-wide admin list must not ship either. Single-item fetches (GET /:id) still return the
+// full shape for editing; these are list-view summaries only.
+export interface AdminContentSummary {
+  id: number;
+  type: CustomContentType;
+  system: CustomContentSystem;
+  createdByUserId: number;
+  createdByUsername: string;
+  name: string;
+  status: CustomContentStatus;
+  approvedByUserId: number | null;
+  approvedAt: string | null;
+  createdAt: string;
+}
+
+export interface AdminCharacterSummary {
+  id: number;
+  name: string;
+  ownerUserId: number;
+  ownerUsername: string;
+  campaignId: number | null;
+  campaignName: string | null;
+  system: "generic" | "dnd5e" | "pf2e";
+  // Extracted server-side from sheetData without shipping the rest of it -- null when the system
+  // doesn't model the concept (pf2e/generic have no status; a malformed/legacy sheet has neither).
+  level: number | null;
+  status: "active" | "dead" | "retired" | null;
+  updatedAt: string;
+}
+
+// Dependant counts blocking a user delete (#135) -- returned on the 409 so the admin knows what
+// to reassign or delete first, rather than guessing from an opaque FK constraint error.
+export interface AdminUserDependants {
+  characters: number;
+  campaignsOwned: number;
+  campaignMemberships: number;
+  customContent: number;
+  diceRolls: number;
+  notes: number;
+}
+
 export interface Note {
   id: number;
   campaignId: number | null;

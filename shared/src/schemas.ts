@@ -21,6 +21,11 @@ export const resetUserPasswordSchema = z.object({
   password: z.string().min(8).max(200),
 });
 
+export const reassignCharacterOwnerSchema = z.object({
+  ownerUserId: z.number().int(),
+});
+export type ReassignCharacterOwnerInput = z.infer<typeof reassignCharacterOwnerSchema>;
+
 export const createCampaignSchema = z.object({
   name: z.string().trim().min(1).max(100),
   description: z.string().trim().max(2000).optional(),
