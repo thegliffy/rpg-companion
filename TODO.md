@@ -698,13 +698,31 @@ forgiving, but the *spelling* has to match exactly — "Warlok", a trailing char
 not byte-for-byte the class's name and the subclass silently never appears in the Subclass
 dropdown, with no error anywhere to say why.
 
-114. **`parentClass` becomes a dropdown, sourced from the same classes a character can actually have.** A character's `sheet.class` is one of: an SRD class name (`DND5E_CLASSES`), a custom class's name, or — if "Other (homebrew)" was picked at character creation — arbitrary free text ([Dnd5eSheet.tsx:1085-1109](frontend/src/components/systems/Dnd5eSheet.tsx)). The dropdown has to cover all three or it'd be *more* restrictive than character creation itself, not just safer.
+114. ✅ **`parentClass` becomes a dropdown, sourced from the same classes a character can actually have.** A character's `sheet.class` is one of: an SRD class name (`DND5E_CLASSES`), a custom class's name, or — if "Other (homebrew)" was picked at character creation — arbitrary free text ([Dnd5eSheet.tsx:1085-1109](frontend/src/components/systems/Dnd5eSheet.tsx)). The dropdown has to cover all three or it'd be *more* restrictive than character creation itself, not just safer.
     - **Options:** SRD classes (`DND5E_CLASSES`, matching the `<select>` already used for the character's own Class field) + an optgroup of every *visible* custom class (own + approved — same "visible" convention #109 established for spell autocompletes, needs a new `visibleClasses` fetch in the manager alongside the existing `visibleSpells`) + a trailing **"Other (homebrew)"** option that reveals a free-text fallback input. Mirrors the character sheet's own Class field exactly (SRD + custom optgroup + Other-homebrew-with-text-input), rather than inventing a second convention.
     - **No schema change** — `parentClass` stays a `string`; only the manager's input control changes from `<input>` to `<select>` (+ conditional text input for Other). Existing subclasses with a typo'd `parentClass` are unaffected until re-saved (loading a mistyped value into the dropdown will fall through to "Other (homebrew)" with the stored text preserved, not silently blank it).
     - **Verify:** author a subclass, pick a class from the dropdown, confirm it appears in that class's Subclass options on a character sheet. Pick "Other (homebrew)", type a class name matching a character whose class was itself homebrew-typed, confirm the same. Re-open an existing (pre-fix) subclass with a typo'd parentClass and confirm the typo'd text survives into the Other-homebrew fallback rather than being lost.
 
-115. **Same bug, same fix, for `parentRace` (subraces).** [CustomContentManager.tsx:1824](frontend/src/pages/CustomContentManager.tsx) has the identical free-text `Parent race` input, matched the identical way in Dnd5eSheet.tsx's subrace filter. Not reported broken, but it's the same bug in the same file for the same reason — worth doing in the same pass rather than waiting for a second "X isn't working" report. Same dropdown shape: `SRD_RACES` + visible custom races + Other-homebrew fallback.
+115. ✅ **Same bug, same fix, for `parentRace` (subraces).** [CustomContentManager.tsx:1824](frontend/src/pages/CustomContentManager.tsx) has the identical free-text `Parent race` input, matched the identical way in Dnd5eSheet.tsx's subrace filter. Not reported broken, but it's the same bug in the same file for the same reason — worth doing in the same pass rather than waiting for a second "X isn't working" report. Same dropdown shape: `SRD_RACES` + visible custom races + Other-homebrew fallback.
     - **Verify:** same as #114, substituting race/subrace.
+
+**Verified (#114-115, done):** added `visibleClasses`/`visibleRaces` state to CustomContentManager
+(same "visible, not just own" fetch #109/#126 already established for spells/feats), and turned
+both `parentClass`/`parentRace` from a bare `<input>` into the exact SRD-optgroup-Custom-optgroup-
+Other-homebrew `<select>` pattern Dnd5eSheet.tsx's own Class/Race fields already use -- no new UI
+convention invented. No schema change: `parentClass`/`parentRace` stay plain strings, only the
+manager's input control changed.
+
+Live-verified end-to-end: created a custom "Bloodrager" class, then a subclass with the dropdown's
+Custom optgroup selecting "Bloodrager (pending)" -- saved `parentClass: "Bloodrager"` byte-exact.
+Created a character with `class: "Bloodrager"` and confirmed the subclass actually appeared as a
+Subclass option on its sheet, closing the loop on the original "subclasses aren't working" report.
+Separately POSTed a subclass directly with a typo'd `parentClass: "Warlok"` (simulating a pre-fix
+row) and confirmed re-opening it in the manager fell through to "Other (homebrew)" with "Warlok"
+preserved in the fallback text input, not silently lost. Repeated the SRD-selection check for
+`parentRace` on a subrace (picked "Dwarf" from the dropdown, confirmed the select value stuck).
+Full build across all three workspaces clean, 21 backend tests green. Test users/content cleaned
+up afterward.
 
 116. ✅ **Bug: sheet PATCH rejected the instant a subclass with full rules text was chosen.** Reported live: "my sheet wont save with the custom hexblade class."
     - **Cause:** `subclassFeatureSchema.description` (custom-content.ts) allows up to 1000 characters, deliberately sized for real rules text (Hexblade's Curse and Hex Warrior's official text both run 700-800+ chars). But `chooseSubclass()`/`mergeGrants()` copies a granted feature's description straight onto a sheet entry validated by `effectEntrySchema`, which was still capped at 500 — the one length mismatch in the whole feat/feature/background-feature family (everything else authors and stores at a consistent 500). Any subclass feature over 500 chars made the PATCH a guaranteed 400, with the sheet just silently failing to save.

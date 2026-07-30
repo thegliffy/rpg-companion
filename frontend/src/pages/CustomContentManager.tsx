@@ -20,6 +20,7 @@ import {
   DND5E_SKILLS,
   DND5E_LANGUAGES,
   SRD_BACKGROUNDS,
+  SRD_RACES,
   SRD_SPELLS,
   SRD_FEATS,
   CUSTOM_CONTENT_TYPES_BY_SYSTEM,
@@ -549,6 +550,10 @@ export function CustomContentManager({
   const [allContentSummaries, setAllContentSummaries] = useState<AdminContentSummary[]>([]);
   const [visibleSpells, setVisibleSpells] = useState<CustomContent[]>([]);
   const [visibleFeats, setVisibleFeats] = useState<CustomContent[]>([]);
+  // Same "visible, not just own" convention, backing the parentClass/parentRace dropdowns (#114/
+  // #115) so a subclass/subrace author picks from classes/races a character can actually have.
+  const [visibleClasses, setVisibleClasses] = useState<CustomContent[]>([]);
+  const [visibleRaces, setVisibleRaces] = useState<CustomContent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -717,6 +722,8 @@ export function CustomContentManager({
         // editor's grantedFeats autocomplete/warning, and the wizard resolves grants against the
         // same set.
         setVisibleFeats(all.filter((i) => i.type === "feat"));
+        setVisibleClasses(all.filter((i) => i.type === "class"));
+        setVisibleRaces(all.filter((i) => i.type === "race"));
       })
       .catch((err) => setError(err.message));
     if (isAdmin) {
@@ -2473,7 +2480,43 @@ export function CustomContentManager({
           <>
             <div style={{ marginTop: "0.5rem" }}>
               <label>
-                Parent race <input value={parentRace} onChange={(e) => setParentRace(e.target.value)} placeholder="e.g. Dwarf" />
+                Parent race
+                <br />
+                <select
+                  value={
+                    SRD_RACES.some((r) => r.name.toLowerCase() === parentRace.trim().toLowerCase()) ||
+                    visibleRaces.some((r) => r.name.toLowerCase() === parentRace.trim().toLowerCase())
+                      ? parentRace
+                      : "__other__"
+                  }
+                  onChange={(e) => setParentRace(e.target.value === "__other__" ? "" : e.target.value)}
+                >
+                  {SRD_RACES.map((r) => (
+                    <option key={r.id} value={r.name}>
+                      {r.name}
+                    </option>
+                  ))}
+                  {visibleRaces.length > 0 && (
+                    <optgroup label="Custom">
+                      {visibleRaces.map((r) => (
+                        <option key={r.id} value={r.name}>
+                          {r.name}
+                          {r.status === "pending" ? " (pending)" : ""}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  <option value="__other__">Other (homebrew)</option>
+                </select>
+                {!SRD_RACES.some((r) => r.name.toLowerCase() === parentRace.trim().toLowerCase()) &&
+                  !visibleRaces.some((r) => r.name.toLowerCase() === parentRace.trim().toLowerCase()) && (
+                  <input
+                    placeholder="Homebrew race name"
+                    value={parentRace}
+                    onChange={(e) => setParentRace(e.target.value)}
+                    style={{ marginLeft: "0.4rem" }}
+                  />
+                )}
               </label>
             </div>
             <h4>Ability score bonuses (subrace)</h4>
@@ -2496,7 +2539,43 @@ export function CustomContentManager({
           <>
             <div style={{ marginTop: "0.5rem" }}>
               <label>
-                Parent class <input value={parentClass} onChange={(e) => setParentClass(e.target.value)} placeholder="e.g. Fighter" />
+                Parent class
+                <br />
+                <select
+                  value={
+                    DND5E_CLASSES.some((c) => c.name.toLowerCase() === parentClass.trim().toLowerCase()) ||
+                    visibleClasses.some((c) => c.name.toLowerCase() === parentClass.trim().toLowerCase())
+                      ? parentClass
+                      : "__other__"
+                  }
+                  onChange={(e) => setParentClass(e.target.value === "__other__" ? "" : e.target.value)}
+                >
+                  {DND5E_CLASSES.map((c) => (
+                    <option key={c.name} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                  {visibleClasses.length > 0 && (
+                    <optgroup label="Custom">
+                      {visibleClasses.map((c) => (
+                        <option key={c.id} value={c.name}>
+                          {c.name}
+                          {c.status === "pending" ? " (pending)" : ""}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  <option value="__other__">Other (homebrew)</option>
+                </select>
+                {!DND5E_CLASSES.some((c) => c.name.toLowerCase() === parentClass.trim().toLowerCase()) &&
+                  !visibleClasses.some((c) => c.name.toLowerCase() === parentClass.trim().toLowerCase()) && (
+                  <input
+                    placeholder="Homebrew class name"
+                    value={parentClass}
+                    onChange={(e) => setParentClass(e.target.value)}
+                    style={{ marginLeft: "0.4rem" }}
+                  />
+                )}
               </label>
             </div>
             <h4 style={{ marginTop: "1rem" }}>Features by level</h4>
