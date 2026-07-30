@@ -137,6 +137,10 @@ export function Dnd5eSheet({
   const [name, setName] = useState(character.name);
   const [hpCurrent, setHpCurrent] = useState(character.hpCurrent != null ? String(character.hpCurrent) : "");
   const [hpMax, setHpMax] = useState(character.hpMax != null ? String(character.hpMax) : "");
+  // Damage resistances (#124) -- a local text buffer for the same reason hpCurrent/hpMax are:
+  // an <input> whose value is a comma-joined array needs its own state, or a mid-typing comma
+  // gets swallowed by the join/split round-trip on every keystroke.
+  const [resistancesText, setResistancesText] = useState(() => sheet.damageResistances.join(", "));
   const [error, setError] = useState<string | null>(null);
   // Debounced whole-sheet auto-save: "pending" while waiting out the debounce window,
   // "saving" once the request is in flight, "saved"/"error" after it settles.
@@ -311,6 +315,19 @@ export function Dnd5eSheet({
     : matchedCustomRace
       ? { ...(matchedCustomRace.data as CustomRaceData) }
       : undefined;
+  const selectedSrdSubrace = SRD_SUBRACES.find((s) => s.name.toLowerCase() === sheet.subrace.trim().toLowerCase());
+  const matchedCustomSubrace = customSubraces.find((s) => s.name.toLowerCase() === sheet.subrace.trim().toLowerCase());
+  const subraceInfo = selectedSrdSubrace
+    ? selectedSrdSubrace
+    : matchedCustomSubrace
+      ? { ...(matchedCustomSubrace.data as CustomSubraceData) }
+      : undefined;
+  // A race/subrace's traits are either legacy display-only strings (every SrdRace/SrdSubrace, and
+  // any not-yet-migrated custom row) or the rich RaceTrait objects #124 introduced -- normalize
+  // both to plain names for the inline summary line.
+  function traitDisplayNames(traits: (string | { name: string })[]): string[] {
+    return traits.map((t) => (typeof t === "string" ? t : t.name));
+  }
 
   function set<K extends keyof Dnd5eSheetData>(key: K, value: Dnd5eSheetData[K]) {
     setSheet((prev) => ({ ...prev, [key]: value }));
@@ -1189,7 +1206,7 @@ export function Dnd5eSheet({
                     .join(", ")}
                 </>
               )}
-              {raceInfo.traits.length > 0 && <> · {raceInfo.traits.join(", ")}</>}
+              {raceInfo.traits.length > 0 && <> · {traitDisplayNames(raceInfo.traits).join(", ")}</>}
             </div>
           )}
         </label>
@@ -1211,6 +1228,11 @@ export function Dnd5eSheet({
                 </option>
               ))}
             </select>
+            {subraceInfo && subraceInfo.traits.length > 0 && (
+              <div style={{ fontSize: "0.8rem", color: "#666", marginTop: "0.2rem" }}>
+                {traitDisplayNames(subraceInfo.traits).join(", ")}
+              </div>
+            )}
           </label>
         )}
         <label>
@@ -1583,6 +1605,28 @@ export function Dnd5eSheet({
             <strong>{formatModifier(abilityModifier(effectiveAbilityScore(sheet, "dex")))}</strong>
             <span>Speed</span>
             <input type="number" value={sheet.speed} onChange={(e) => set("speed", Number(e.target.value) || 0)} style={numInput} />
+            <span>Darkvision</span>
+            <span>
+              <input
+                type="number"
+                min={0}
+                max={120}
+                value={sheet.darkvisionFeet}
+                onChange={(e) => set("darkvisionFeet", Number(e.target.value) || 0)}
+                style={numInput}
+              />{" "}
+              ft
+            </span>
+            <span>Resistances</span>
+            <input
+              value={resistancesText}
+              onChange={(e) => {
+                setResistancesText(e.target.value);
+                set("damageResistances", e.target.value.split(",").map((s) => s.trim()).filter(Boolean));
+              }}
+              placeholder="e.g. fire, poison"
+              style={{ ...numInput, width: "10rem" }}
+            />
             <span>HP</span>
             <span>
               <input type="number" value={hpCurrent} onChange={(e) => setHpCurrent(e.target.value)} style={numInput} /> /{" "}

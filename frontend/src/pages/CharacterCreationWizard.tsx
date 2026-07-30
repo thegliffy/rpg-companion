@@ -21,6 +21,8 @@ import {
   recommendedStatPriority,
   normalizeClassId,
   customBackgroundDataSchema,
+  customRaceDataSchema,
+  customSubraceDataSchema,
   resolveGrantedFeat,
   newEntityId,
   expectedCantripsKnown,
@@ -146,15 +148,70 @@ export function CharacterCreationWizard({
     if (subrace && !subraceOptions.some((s) => s.name === subrace)) setSubrace("");
   }, [subraceOptions, subrace]);
 
-  // Combined race + subrace ability bonuses -- both stack on top of the base scores.
+  // Structured trait/mechanics data for the selected race/subrace (#124) -- from custom content
+  // directly, or synthesized from the (much sparser) SRD entry so both sources share one
+  // resolution path, the same pattern resolvedBackgroundData below already established.
+  const resolvedRaceData = useMemo((): CustomRaceData | null => {
+    if (system !== "dnd5e" || !raceOrAncestry.trim()) return null;
+    const custom = customRaces.find((r) => r.name.toLowerCase() === raceOrAncestry.trim().toLowerCase());
+    if (custom) return customRaceDataSchema.parse(custom.data);
+    const srd = SRD_RACES.find((r) => r.name.toLowerCase() === raceOrAncestry.trim().toLowerCase());
+    if (srd) {
+      return customRaceDataSchema.parse({
+        abilityBonuses: srd.abilityBonuses,
+        speed: srd.speed,
+        size: srd.size,
+        languages: srd.languages,
+        traits: srd.traits,
+      });
+    }
+    return null;
+  }, [system, raceOrAncestry, customRaces]);
+
+  const resolvedSubraceData = useMemo((): CustomSubraceData | null => {
+    if (system !== "dnd5e" || !subrace.trim()) return null;
+    const custom = customSubraces.find((s) => s.name.toLowerCase() === subrace.trim().toLowerCase());
+    if (custom) return customSubraceDataSchema.parse(custom.data);
+    const srd = SRD_SUBRACES.find((s) => s.name.toLowerCase() === subrace.trim().toLowerCase());
+    if (srd) {
+      return customSubraceDataSchema.parse({
+        parentRace: srd.parentRace,
+        abilityBonuses: srd.abilityBonuses,
+        speed: 0,
+        traits: srd.traits,
+      });
+    }
+    return null;
+  }, [system, subrace, customSubraces]);
+
+  // Flexible ASI (#124): "+2 to one ability of your choice, +1 to another" -- one ability pick per
+  // resolvedRaceData.abilityBonusChoices slot. Reset whenever the race changes so a leftover pick
+  // from a different race can't carry over or point past the end of a shorter/absent list.
+  const [raceAbilityChoiceSel, setRaceAbilityChoiceSel] = useState<(Dnd5eAbility | "")[]>([]);
+  useEffect(() => {
+    setRaceAbilityChoiceSel(new Array(resolvedRaceData?.abilityBonusChoices.length ?? 0).fill(""));
+  }, [raceOrAncestry, resolvedRaceData?.abilityBonusChoices.length]);
+
+  function setRaceAbilityChoice(index: number, ability: Dnd5eAbility | "") {
+    setRaceAbilityChoiceSel((prev) => prev.map((a, i) => (i === index ? ability : a)));
+  }
+
+  // Combined race + subrace ability bonuses -- fixed bonuses both stack on top of the base
+  // scores, plus whichever ability each flexible-ASI slot above was pointed at.
   const raceAndSubraceBonuses = useMemo(() => {
     const combined: Partial<Record<Dnd5eAbility, number>> = { ...raceBonuses };
     for (const a of DND5E_ABILITIES) {
       const sub = subraceBonuses[a];
       if (sub) combined[a] = (combined[a] ?? 0) + sub;
     }
+    (resolvedRaceData?.abilityBonusChoices ?? []).forEach((choice, i) => {
+      const ability = raceAbilityChoiceSel[i];
+      if (ability) combined[ability] = (combined[ability] ?? 0) + choice.amount;
+    });
     return combined;
-  }, [raceBonuses, subraceBonuses]);
+  }, [raceBonuses, subraceBonuses, resolvedRaceData, raceAbilityChoiceSel]);
+
+  const raceAbilityChoicesComplete = raceAbilityChoiceSel.every((a) => a !== "");
 
   const statPriority = useMemo(
     () => (system === "dnd5e" ? recommendedStatPriority(charClass) : null),
@@ -444,6 +501,60 @@ export function CharacterCreationWizard({
     return { proficienciesText: profLines.join("\n"), features, items, gold: data.equipment.gold, feats, grantedSpells };
   }
 
+  // Everything race/subrace traits grant beyond ability bonuses (#124): speed, darkvision,
+  // damage resistances, and any spells the traits grant outright (e.g. a Tiefling's Infernal
+  // Legacy) -- same one-shot-at-creation resolution as backgroundGrants() above. Race and subrace
+  // traits are combined into one pool since a subrace's traits (e.g. Drow's Superior Darkvision)
+  // are just as mechanical as the parent race's.
+  function raceGrants() {
+    if (!resolvedRaceData) {
+      return {
+        speed: 30,
+        darkvisionFeet: 0,
+        damageResistances: [] as string[],
+        features: [] as ReturnType<typeof emptyDnd5eSheet>["features"],
+        grantedSpells: [] as ReturnType<typeof emptyDnd5eSheet>["spells"],
+      };
+    }
+    const allTraits = [...resolvedRaceData.traits, ...(resolvedSubraceData?.traits ?? [])];
+    const features: ReturnType<typeof emptyDnd5eSheet>["features"] = [];
+    const grantedSpells: ReturnType<typeof emptyDnd5eSheet>["spells"] = [];
+    let darkvisionFeet = 0;
+    const damageResistances = new Set<string>();
+    for (const trait of allTraits) {
+      features.push({
+        id: `race-trait-${trait.id}-${crypto.randomUUID()}`,
+        name: trait.name,
+        description: trait.description,
+        abilityBonuses: trait.abilityBonuses,
+        acBonus: trait.acBonus,
+        attackBonus: trait.attackBonus,
+        damageBonus: trait.damageBonus,
+        spellDCBonus: trait.spellDCBonus,
+        spellAttackBonus: trait.spellAttackBonus,
+        skillProficiencies: [],
+      });
+      darkvisionFeet = Math.max(darkvisionFeet, trait.darkvisionFeet);
+      for (const r of trait.damageResistances) damageResistances.add(r);
+      // Same feat-spell-${feat.id}-${i} tagging addFeat()/backgroundGrants() use, so removing
+      // this trait's source race later would clean up the same way (traits aren't individually
+      // removable post-creation today, but the tag keeps the convention consistent).
+      trait.grantedSpells.forEach((gs, i) => {
+        grantedSpells.push({
+          id: `race-trait-spell-${trait.id}-${i}`,
+          srdId: gs.srdId,
+          name: gs.name,
+          level: gs.level,
+          prepared: false,
+          atWill: gs.atWill,
+        });
+      });
+    }
+    // A subrace's own speed override (nonzero) wins over the parent race's; 0/unset means inherit.
+    const speed = resolvedSubraceData?.speed || resolvedRaceData.speed;
+    return { speed, darkvisionFeet, damageResistances: Array.from(damageResistances), features, grantedSpells };
+  }
+
   // The racial (race + subrace) ability bonuses are applied on top of the base scores from
   // whichever generation method was used — this combined value is what
   // actually gets saved as the character's abilities.
@@ -528,6 +639,7 @@ export function CharacterCreationWizard({
       let sheetData: unknown;
       if (system === "dnd5e") {
         const grants = backgroundGrants();
+        const race = raceGrants();
         // Merge class + background grants: skill proficiencies (deduped), and class armor/weapon/
         // tool lines above the background's tool/language lines in proficienciesText.
         const mergedSkillIds = Array.from(new Set([...backgroundGrantSkillIds, ...classSkillSel]));
@@ -542,10 +654,15 @@ export function CharacterCreationWizard({
           background,
           level,
           abilities: finalAbilities,
+          speed: race.speed,
+          darkvisionFeet: race.darkvisionFeet,
+          damageResistances: race.damageResistances,
           saveProficiencies: classProfs?.savingThrows ?? [],
           skillProficiencies: mergedSkillIds,
           proficienciesText,
-          features: grants.features,
+          // Race/subrace trait features (#124) precede the background's, matching the order the
+          // sheet's own Race/Background fields appear in.
+          features: [...race.features, ...grants.features],
           items: grants.items,
           feats: grants.feats,
           currency: { ...emptyDnd5eSheet().currency, gp: grants.gold },
@@ -578,6 +695,8 @@ export function CharacterCreationWizard({
             // A background-granted feat's own fixed spells (#126) -- e.g. Magic Initiate granted
             // outright by a background rather than picked later on the sheet.
             ...grants.grantedSpells,
+            // A race/subrace trait's own granted spells (#124) -- e.g. a Tiefling's Infernal Legacy.
+            ...race.grantedSpells,
           ],
           // Pact Magic slots are fixed by level (no player choice, unlike which cantrips/spells
           // are known) -- seed them from the same table the sheet's "Set to expected" button uses,
@@ -777,6 +896,31 @@ export function CharacterCreationWizard({
                       style={{ marginLeft: "0.4rem" }}
                     />
                   )}
+                  {(resolvedRaceData?.abilityBonusChoices.length ?? 0) > 0 && (
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <small>Choose a different ability for each racial bonus:</small>
+                      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.2rem" }}>
+                        {resolvedRaceData!.abilityBonusChoices.map((choice, i) => (
+                          <label key={i} style={{ fontSize: "0.85rem" }}>
+                            +{choice.amount}{" "}
+                            <select
+                              value={raceAbilityChoiceSel[i] ?? ""}
+                              onChange={(e) => setRaceAbilityChoice(i, e.target.value as Dnd5eAbility | "")}
+                            >
+                              <option value="">—</option>
+                              {DND5E_ABILITIES.filter(
+                                (a) => a === raceAbilityChoiceSel[i] || !raceAbilityChoiceSel.includes(a),
+                              ).map((a) => (
+                                <option key={a} value={a}>
+                                  {DND5E_ABILITY_NAMES[a]}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <input value={raceOrAncestry} onChange={(e) => setRaceOrAncestry(e.target.value)} />
@@ -970,14 +1114,17 @@ export function CharacterCreationWizard({
               />
             </label>
           </div>
-          {(!backgroundChoicesComplete || !classChoicesComplete) && (
+          {(!backgroundChoicesComplete || !classChoicesComplete || !raceAbilityChoicesComplete) && (
             <p>
-              <small style={{ color: "crimson" }}>Finish the class and background choices above before continuing.</small>
+              <small style={{ color: "crimson" }}>Finish the class, race and background choices above before continuing.</small>
             </p>
           )}
           <p>
             <button onClick={() => setStep("system")}>Back</button>{" "}
-            <button onClick={() => setStep("abilities")} disabled={!backgroundChoicesComplete || !classChoicesComplete}>
+            <button
+              onClick={() => setStep("abilities")}
+              disabled={!backgroundChoicesComplete || !classChoicesComplete || !raceAbilityChoicesComplete}
+            >
               Next: ability scores
             </button>
           </p>
@@ -1271,7 +1418,10 @@ export function CharacterCreationWizard({
           </label>
           <p>
             <button onClick={() => setStep(isStructured ? "abilities" : "system")}>Back</button>{" "}
-            <button onClick={create} disabled={creating || !backgroundChoicesComplete || !classChoicesComplete}>
+            <button
+              onClick={create}
+              disabled={creating || !backgroundChoicesComplete || !classChoicesComplete || !raceAbilityChoicesComplete}
+            >
               {creating ? "Creating…" : "Create character"}
             </button>
           </p>

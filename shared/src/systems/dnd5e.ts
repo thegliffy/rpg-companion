@@ -256,6 +256,12 @@ export const dnd5eSheetSchema = z.object({
   skillProficiencies: z.array(z.string().max(40)).max(30).default([]),
   ac: z.number().int().min(0).max(40).default(10),
   speed: z.number().int().min(0).max(200).default(30),
+  // Racial senses/resistances (#124) -- plain editable fields, same precedent as `speed`: seeded
+  // once from the chosen race/subrace's trait objects at character creation (max darkvision across
+  // traits, deduped resistances), then a normal player-editable value afterward, not re-derived
+  // live from race on every render.
+  darkvisionFeet: z.number().int().min(0).max(120).default(0),
+  damageResistances: z.array(z.string().trim().max(30)).max(20).default([]),
   hitDice: z.string().max(20).default(""),
   hitDiceTotal: z.number().int().min(0).max(20).default(1),
   hitDiceAvailable: z.number().int().min(0).max(20).default(1),

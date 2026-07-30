@@ -820,7 +820,7 @@ SRD data.
     - **Partial success matters:** report per-row pass/fail rather than rejecting a 60-item pack for one bad row, and dedupe by (type, name) so re-importing a corrected pack updates instead of duplicating.
     - Wikidot-ish markdown parsing is explicitly **out of scope** for v1 — JSON first, and only consider a parser once the JSON path proves the round-trip.
 
-124. **Race trait mechanics (rich trait objects).** `traits: z.array(z.string().max(60))` — bare 60-char strings, display-only, zero mechanics. Darkvision, resistances and granted cantrips are all unrepresentable, so a homebrew Tiefling is cosmetic.
+124. ✅ **Race trait mechanics (rich trait objects).** `traits: z.array(z.string().max(60))` — bare 60-char strings, display-only, zero mechanics. Darkvision, resistances and granted cantrips are all unrepresentable, so a homebrew Tiefling is cosmetic.
     - **Schema:** `traits: [{ id, name, description, darkvisionFeet, damageResistances[], grantedCantrips[], ...effectBonuses? }]`, with a **`z.preprocess` migration from the current `string[]`** (name only, everything else defaulted) — the same no-DB-migration shim pattern #100 used for background features.
     - **Flexible ASI:** `abilityBonuses` is a fixed record, so "+2 to one ability of your choice, +1 to another" (the modern default) can't be expressed. Add a choice shape alongside the fixed record, resolved during character creation.
     - **Sheet application** is the real work, not the schema: darkvision and resistances have nowhere to land today (no senses/resistances fields on `dnd5eSheetSchema`), so this needs sheet-side fields too. Scope check before starting — this is the largest of the seven.
@@ -929,6 +929,46 @@ rejected outright at the old 500-char content cap) -- accepted, status 201. Adde
 level-9 character's sheet via a PATCH exercising the real `dnd5eSheetSchema`/`effectEntrySchema`
 validation path (the same one `FeatPickerModal` drives) -- the full 1804 characters round-tripped
 with no truncation, status 200. Full build across all three workspaces clean; 21 backend tests
+green.
+
+**Verified (#124, done):** the largest of the seven, as flagged. Replaced `traits: string[]` with
+`raceTraitSchema` (id, name, description, darkvisionFeet, damageResistances[], grantedSpells[],
+plus the same effectBonuses feats/background-features already carry) on both
+`customRaceDataSchema` and `customSubraceDataSchema` -- subraces got the identical shape and
+migration, not a lesser version, since Drow's Superior Darkvision is exactly as mechanical as a
+race's own traits. A `z.preprocess` migration (`upgradeTraitStrings`) upgrades legacy bare-string
+rows into name-only rich objects on read, same no-DB-migration shim #100 used for background
+features. Added `abilityBonusChoices` to `customRaceDataSchema` for flexible ASI ("+2 to one
+ability of your choice, +1 to another") -- each entry is a bonus amount resolved to a
+player-chosen, mutually-exclusive ability during character creation.
+
+**Sheet application was the real work, as scoped:** added `darkvisionFeet`/`damageResistances` to
+`dnd5eSheetSchema` (previously nonexistent on a PC sheet at all) and a `raceGrants()` function in
+the creation wizard mirroring `backgroundGrants()` -- resolves the selected race's and subrace's
+traits once at creation into sheet `features` (tagged `race-trait-${id}-*`), takes the *max*
+darkvision across traits (not a sum) and a deduped union of resistances, and pushes any granted
+spells (tagged `race-trait-spell-${id}-*`, same convention `feat-spell-*` established). Also closed
+a pre-existing gap noted while building this: the wizard never applied race `speed` at all before
+now (subrace override wins when nonzero, per its existing "0 = inherit" convention). Manager UI
+replaced the shared comma-separated `<input>` (race and subrace reuse one `traitRows` state, same
+as `abilityBonuses`) with repeatable trait cards, each with a pipe-delimited granted-spells textarea
+resolved through the same `resolveSpellName` closure feats already use. `Dnd5eSheet.tsx`'s inline
+trait-name summary line needed a `traitDisplayNames()` normalizer since `.traits` is now
+`RaceTrait[]` for custom races but stays `string[]` for every `SrdRace`/`SrdSubrace` (`.join()`
+would otherwise silently print `[object Object]` -- caught by inspection, not by `tsc`, since
+`Array.prototype.join` accepts any element type).
+
+Live-verified end-to-end: authored a custom race (fixed DEX+2, flexible `[+2, +1]` ASI choices, a
+trait granting 90 ft darkvision + necrotic resistance + an at-will Guidance cantrip) and a subrace
+(120 ft darkvision, poison resistance, plus one deliberately-legacy plain-string trait to exercise
+the migration), then drove the actual wizard UI: picked the race, chose STR for the +2 slot and CON
+for the +1 slot (each slot's dropdown correctly excludes the ability already taken by the other),
+picked the subrace. Final abilities landed exactly right (STR 15+2=17, DEX 14+2=16, CON 13+2=15)
+and the created character's sheet showed `darkvisionFeet: 120` (max of 90/120, not 210),
+`damageResistances: ["necrotic","poison"]` (deduped union), `speed: 30` (inherited, subrace had no
+override), 3 feature entries with correct names (not `[object Object]`), and "Guidance" in `spells`
+with `atWill: true`. The legacy string trait rendered correctly as plain text alongside the rich
+one, confirming the migration path. Full build across all three workspaces clean; 21 backend tests
 green.
 
 **Wikidot-ish markdown import remains explicitly out of scope**, per the plan -- JSON first.

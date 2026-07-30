@@ -24,13 +24,58 @@ export const effectBonusesSchema = z.object({
 });
 export type EffectBonuses = z.infer<typeof effectBonusesSchema>;
 
-export const customRaceDataSchema = z.object({
+// A spell granted by a feat or race trait (e.g. Magic Initiate, or a Tiefling's Infernal Legacy)
+// -- mirrors InvocationGrants' grantedSpells (srd-invocations.ts) since a granted spell is pushed
+// onto sheet.spells the same way regardless of which of the three grants it.
+export const grantedSpellSchema = z.object({
+  name: z.string().trim().max(100),
+  srdId: z.string().trim().max(80).optional(),
+  level: z.number().int().min(0).max(9),
+  atWill: z.boolean().default(false),
+});
+export type GrantedSpell = z.infer<typeof grantedSpellSchema>;
+
+// A race/subrace trait (#124) -- was a bare display-only string, making darkvision, resistances
+// and innate spells unrepresentable (a homebrew Tiefling was cosmetic). Extends effectBonusesSchema
+// for the same reason feats/background features/subclass features do: a trait like Dwarven
+// Resilience is a flat always-on bonus, not just flavor text.
+export const raceTraitSchema = effectBonusesSchema.extend({
+  id: z.string().min(1),
+  name: z.string().trim().max(60),
+  description: z.string().trim().max(1000).default(""),
+  darkvisionFeet: z.number().int().min(0).max(120).default(0),
+  // Damage type names (e.g. "fire", "poison"), same free-text shape customMonsterDataSchema
+  // already uses for its damageResistances -- no fixed damage-type enum exists to validate against.
+  damageResistances: z.array(z.string().trim().max(30)).max(10).default([]),
+  grantedSpells: z.array(grantedSpellSchema).max(5).default([]),
+});
+export type RaceTrait = z.infer<typeof raceTraitSchema>;
+
+/** Upgrades a legacy `string[]` traits array (name only) into the current rich-object shape --
+ * same no-DB-migration shim pattern #100 used for background features. Already-structured entries
+ * pass through untouched; the surrounding schema's `.default()`s fill in the rest for bare names. */
+function upgradeTraitStrings(raw: unknown): unknown[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((t) => (typeof t === "string" ? { id: newEntityId("trait"), name: t } : t));
+}
+
+const rawCustomRaceDataSchema = z.object({
   abilityBonuses: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(-4).max(4)).default({}),
+  // Flexible ASI (#124): "+2 to one ability of your choice, +1 to another" (the modern default,
+  // e.g. Tasha's customized origins) can't be expressed by the fixed `abilityBonuses` record above
+  // since it doesn't commit to *which* ability gets the bonus. Each entry is one "+amount to an
+  // ability of your choice" slot; the character creation wizard prompts for a distinct ability per
+  // slot and folds the result into the character's final ability scores alongside the fixed bonuses.
+  abilityBonusChoices: z.array(z.object({ amount: z.number().int().min(1).max(4) })).max(3).default([]),
   speed: z.number().int().min(0).max(200).default(30),
   size: z.string().trim().max(20).default("Medium"),
   languages: z.array(z.string().trim().max(40)).max(20).default([]),
-  traits: z.array(z.string().trim().max(60)).max(20).default([]),
+  traits: z.array(raceTraitSchema).max(20).default([]),
 });
+export const customRaceDataSchema = z.preprocess((raw) => {
+  const input = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  return { ...input, traits: upgradeTraitStrings(input.traits) };
+}, rawCustomRaceDataSchema);
 export type CustomRaceData = z.infer<typeof customRaceDataSchema>;
 
 // Mirrors the SRD MartialLevelEntry fields exactly (class-progression.ts), so a homebrew
@@ -305,13 +350,20 @@ export function formatBackgroundGrants(data: CustomBackgroundData): {
   };
 }
 
-export const customSubraceDataSchema = z.object({
+const rawCustomSubraceDataSchema = z.object({
   parentRace: z.string().trim().max(60).default(""),
   abilityBonuses: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(-4).max(4)).default({}),
   // Optional speed override; 0/unset means "inherit parent race's speed".
   speed: z.number().int().min(0).max(200).default(0),
-  traits: z.array(z.string().trim().max(60)).max(20).default([]),
+  // Rich trait objects (#124) -- same shape and same migration as customRaceDataSchema.traits;
+  // a subrace (Drow's Superior Darkvision, Duergar's resistances/innate spells) needs the exact
+  // same mechanics a race trait does, not a lesser version of them.
+  traits: z.array(raceTraitSchema).max(20).default([]),
 });
+export const customSubraceDataSchema = z.preprocess((raw) => {
+  const input = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  return { ...input, traits: upgradeTraitStrings(input.traits) };
+}, rawCustomSubraceDataSchema);
 export type CustomSubraceData = z.infer<typeof customSubraceDataSchema>;
 
 // A subclass feature with real rules text and mechanics (#103). Deliberately a parallel array
@@ -433,17 +485,6 @@ export function subclassResourcePools(resources: SubclassResource[], level: numb
 export function classResourcePools(resources: ClassResource[], level: number): MartialResourcePool[] {
   return homebrewResourcePools(resources, level, CLASS_RESOURCE_PREFIX);
 }
-
-// A spell granted by a feat (e.g. Magic Initiate) -- mirrors InvocationGrants' grantedSpells
-// (srd-invocations.ts) since a granted spell is pushed onto sheet.spells the same way regardless
-// of whether it came from an invocation or a feat.
-export const grantedSpellSchema = z.object({
-  name: z.string().trim().max(100),
-  srdId: z.string().trim().max(80).optional(),
-  level: z.number().int().min(0).max(9),
-  atWill: z.boolean().default(false),
-});
-export type GrantedSpell = z.infer<typeof grantedSpellSchema>;
 
 // A feat's spell choice slot (e.g. Magic Initiate's "2 cantrips + 1 1st-level spell from a class
 // you choose") -- resolved in FeatPickerModal via WizardSpellbookPicker before the feat is added,

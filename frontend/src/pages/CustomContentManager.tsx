@@ -9,6 +9,7 @@ import type {
   SubclassFeature,
   SubclassSpell,
   SubclassResource,
+  RaceTrait,
   ImportCustomContentResult,
 } from "shared";
 import {
@@ -23,6 +24,8 @@ import {
   CUSTOM_CONTENT_TYPES_BY_SYSTEM,
   SYSTEM_IDS,
   customBackgroundDataSchema,
+  customRaceDataSchema,
+  customSubraceDataSchema,
   formatBackgroundGrants,
   formatModifier,
 } from "shared";
@@ -197,6 +200,55 @@ function legendaryActionsToText(actions: MonsterLegendaryAction[]): string {
   return actions
     .map((a) => [a.name, a.cost ?? "", a.attackBonus ?? "", a.damageDice ?? "", a.damageType ?? "", a.desc].join(" | "))
     .join("\n");
+}
+
+// A race/subrace trait row (#124) -- shared by both the race and subrace editors, same as
+// abilityBonuses. A trait's own granted spells (e.g. a Tiefling's Infernal Legacy) are authored as
+// pipe-delimited text nested inside the card rather than a third level of repeatable rows, the same
+// one-more-level-flat convention monster legendary actions use above.
+interface TraitRow {
+  id: string;
+  name: string;
+  description: string;
+  darkvisionFeet: string;
+  damageResistancesText: string; // comma-separated
+  grantedSpellsText: string; // one per line: "Name | atWill(yes/no)"
+}
+const emptyTraitRow = (): TraitRow => ({
+  id: `trait-${crypto.randomUUID()}`,
+  name: "",
+  description: "",
+  darkvisionFeet: "0",
+  damageResistancesText: "",
+  grantedSpellsText: "",
+});
+
+// "Name | atWill(yes/no)" per line -- atWill defaults to yes when omitted, since most racial
+// innate cantrips (e.g. a High Elf's bonus cantrip) are at-will; "no" marks a once-per-rest grant
+// like the higher tiers of Infernal Legacy.
+function parseTraitGrantedSpellsText(text: string): { name: string; atWill: boolean }[] {
+  return text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [name, atWillText] = line.split("|").map((s) => s.trim());
+      return { name: name || "", atWill: (atWillText ?? "yes").toLowerCase() !== "no" };
+    });
+}
+function traitGrantedSpellsToText(spells: { name: string; atWill: boolean }[]): string {
+  return spells.map((s) => `${s.name} | ${s.atWill ? "yes" : "no"}`).join("\n");
+}
+
+function dataToTraitRows(traits: RaceTrait[]): TraitRow[] {
+  return traits.map((t) => ({
+    id: t.id,
+    name: t.name,
+    description: t.description,
+    darkvisionFeet: String(t.darkvisionFeet),
+    damageResistancesText: t.damageResistances.join(", "),
+    grantedSpellsText: traitGrantedSpellsToText(t.grantedSpells),
+  }));
 }
 
 // One special ability per line: "Name: description".
@@ -503,10 +555,14 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
 
   // Race fields
   const [abilityBonuses, setAbilityBonuses] = useState<Partial<Record<Dnd5eAbility, string>>>({});
+  // Flexible ASI (#124) -- comma-separated bonus amounts, e.g. "2, 1" for "+2 to one ability of
+  // your choice, +1 to another" (the modern default). Race only; subraces keep fixed bonuses.
+  const [raceAbilityChoicesText, setRaceAbilityChoicesText] = useState("");
   const [speed, setSpeed] = useState("30");
   const [size, setSize] = useState("Medium");
   const [languages, setLanguages] = useState("");
-  const [traits, setTraits] = useState("");
+  // Traits (#124) -- shared between the race and subrace editors, same as abilityBonuses above.
+  const [traitRows, setTraitRows] = useState<TraitRow[]>([]);
 
   // Class fields
   const [hitDie, setHitDie] = useState("8");
@@ -748,14 +804,42 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     return null;
   }
 
+  // Shared by the race and subrace save paths (#124) -- a closure (not a top-level helper) since
+  // resolving a trait's granted spell names needs resolveSpellName's visibleSpells lookup, the
+  // same resolver a feat's grantedSpells already uses.
+  function traitRowsToData(rows: TraitRow[]): RaceTrait[] {
+    return rows
+      .filter((r) => r.name.trim() !== "")
+      .map((r) => ({
+        id: r.id,
+        name: r.name.trim(),
+        description: r.description.trim(),
+        darkvisionFeet: Number(r.darkvisionFeet) || 0,
+        damageResistances: splitCsv(r.damageResistancesText),
+        grantedSpells: parseTraitGrantedSpellsText(r.grantedSpellsText)
+          .filter((s) => s.name !== "")
+          .map((s) => {
+            const resolved = resolveSpellName(s.name);
+            return { name: s.name, srdId: resolved?.srdId, level: resolved?.level ?? 0, atWill: s.atWill };
+          }),
+        abilityBonuses: {},
+        acBonus: 0,
+        attackBonus: 0,
+        damageBonus: 0,
+        spellDCBonus: 0,
+        spellAttackBonus: 0,
+      }));
+  }
+
   function resetForm() {
     setEditingId(null);
     setName("");
     setAbilityBonuses({});
+    setRaceAbilityChoicesText("");
     setSpeed("30");
     setSize("Medium");
     setLanguages("");
-    setTraits("");
+    setTraitRows([]);
     setHitDie("8");
     setCasterType("none");
     setClassResourceRows([]);
@@ -864,14 +948,17 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     setType(item.type);
     setName(item.name);
     if (item.type === "race") {
-      const d = item.data as { abilityBonuses: Partial<Record<Dnd5eAbility, number>>; speed: number; size: string; languages: string[]; traits: string[] };
+      // Normalizes legacy string[] traits through the same schema the backend validates
+      // against (upgradeTraitStrings), same as the background parse below.
+      const d = customRaceDataSchema.parse(item.data);
       const bonuses: Partial<Record<Dnd5eAbility, string>> = {};
       for (const [k, v] of Object.entries(d.abilityBonuses)) bonuses[k as Dnd5eAbility] = String(v);
       setAbilityBonuses(bonuses);
+      setRaceAbilityChoicesText(d.abilityBonusChoices.map((c) => c.amount).join(", "));
       setSpeed(String(d.speed));
       setSize(d.size);
       setLanguages(d.languages.join(", "));
-      setTraits(d.traits.join(", "));
+      setTraitRows(dataToTraitRows(d.traits));
     } else if (item.type === "class") {
       const d = item.data as {
         hitDie: number;
@@ -944,12 +1031,12 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
           .join(", "),
       );
     } else if (item.type === "subrace") {
-      const d = item.data as { parentRace: string; abilityBonuses: Partial<Record<Dnd5eAbility, number>>; traits: string[] };
+      const d = customSubraceDataSchema.parse(item.data);
       setParentRace(d.parentRace);
       const bonuses: Partial<Record<Dnd5eAbility, string>> = {};
       for (const [k, v] of Object.entries(d.abilityBonuses)) bonuses[k as Dnd5eAbility] = String(v);
       setAbilityBonuses(bonuses);
-      setTraits(d.traits.join(", "));
+      setTraitRows(dataToTraitRows(d.traits));
     } else if (item.type === "subclass") {
       const d = item.data as {
         parentClass: string;
@@ -1265,12 +1352,16 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
       const abilityBonusesObj = Object.fromEntries(
         Object.entries(abilityBonuses).filter(([, v]) => v && v.trim() !== "").map(([k, v]) => [k, Number(v)]),
       );
-      const traitsArr = traits.split(",").map((s) => s.trim()).filter(Boolean);
+      const traitsArr = traitRowsToData(traitRows);
 
       let data: unknown;
       if (type === "race") {
         data = {
           abilityBonuses: abilityBonusesObj,
+          abilityBonusChoices: splitCsv(raceAbilityChoicesText)
+            .map((s) => Number(s))
+            .filter((n) => Number.isFinite(n) && n > 0)
+            .map((amount) => ({ amount })),
           speed: Number(speed) || 30,
           size,
           languages: languages.split(",").map((s) => s.trim()).filter(Boolean),
@@ -1478,6 +1569,72 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
     }
   }
 
+  // Repeatable trait-card editor (#124) -- shared by the race and subrace forms, same as
+  // abilityBonuses, since traitRows is one state array reused between them.
+  function renderTraitRows() {
+    return (
+      <div style={{ marginTop: "0.5rem" }}>
+        <h4 style={{ marginBottom: "0.25rem" }}>Traits</h4>
+        {traitRows.map((row, i) => (
+          <div key={row.id} style={{ border: "1px solid #ddd", borderRadius: 6, padding: "0.5rem", marginBottom: "0.4rem" }}>
+            <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
+              <input
+                placeholder="Trait name, e.g. Darkvision"
+                value={row.name}
+                onChange={(e) => setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))}
+                style={{ flex: 1, minWidth: "10rem" }}
+              />
+              <label title="Darkvision range in feet, 0 = none">
+                Darkvision{" "}
+                <input
+                  type="number"
+                  min={0}
+                  max={120}
+                  value={row.darkvisionFeet}
+                  onChange={(e) =>
+                    setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, darkvisionFeet: e.target.value } : r)))
+                  }
+                  style={{ width: "4rem" }}
+                />{" "}
+                ft
+              </label>
+              <button type="button" onClick={() => setTraitRows((prev) => prev.filter((_, j) => j !== i))}>
+                Remove
+              </button>
+            </div>
+            <textarea
+              placeholder="Description"
+              value={row.description}
+              onChange={(e) => setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, description: e.target.value } : r)))}
+              rows={2}
+              style={{ width: "100%", marginTop: "0.3rem" }}
+            />
+            <input
+              placeholder="Damage resistances (comma-separated, e.g. fire, poison)"
+              value={row.damageResistancesText}
+              onChange={(e) =>
+                setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, damageResistancesText: e.target.value } : r)))
+              }
+              style={{ width: "100%", marginTop: "0.3rem" }}
+            />
+            <textarea
+              placeholder={"Granted spells, one per line: Name | atWill(yes/no) -- e.g.\nThaumaturgy | yes\nHellish Rebuke | no"}
+              value={row.grantedSpellsText}
+              onChange={(e) =>
+                setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, grantedSpellsText: e.target.value } : r)))
+              }
+              rows={2}
+              style={{ width: "100%", marginTop: "0.3rem" }}
+            />
+          </div>
+        ))}
+        <button type="button" onClick={() => setTraitRows((prev) => [...prev, emptyTraitRow()])}>
+          Add trait
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div style={{ maxWidth: 800, margin: "0 auto", padding: "1rem" }}>
       <button onClick={onBack}>← Back</button>
@@ -1642,12 +1799,17 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
               </label>
             </div>
             <div style={{ marginTop: "0.5rem" }}>
-              <label style={{ display: "block" }}>
-                Traits (comma-separated names)
+              <label style={{ display: "block" }} title='"+2 to one ability of your choice, +1 to another" -- each amount is a separate slot resolved during character creation, on top of the fixed bonuses above'>
+                Flexible ability bonuses (comma-separated amounts, e.g. "2, 1")
                 <br />
-                <input value={traits} onChange={(e) => setTraits(e.target.value)} style={{ width: "100%" }} />
+                <input
+                  value={raceAbilityChoicesText}
+                  onChange={(e) => setRaceAbilityChoicesText(e.target.value)}
+                  style={{ width: "100%" }}
+                />
               </label>
             </div>
+            {renderTraitRows()}
           </>
         ) : type === "class" ? (
           <>
@@ -2242,13 +2404,7 @@ export function CustomContentManager({ onBack }: { onBack: () => void }) {
                 </label>
               ))}
             </div>
-            <div style={{ marginTop: "0.5rem" }}>
-              <label style={{ display: "block" }}>
-                Traits (comma-separated names)
-                <br />
-                <input value={traits} onChange={(e) => setTraits(e.target.value)} style={{ width: "100%" }} />
-              </label>
-            </div>
+            {renderTraitRows()}
           </>
         ) : type === "subclass" ? (
           <>
