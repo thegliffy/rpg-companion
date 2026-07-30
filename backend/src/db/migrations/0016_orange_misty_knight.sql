@@ -1,0 +1,1 @@
+ALTER TABLE `dice_rolls` ADD `detail` text;

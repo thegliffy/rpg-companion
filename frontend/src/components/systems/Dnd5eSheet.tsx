@@ -67,6 +67,8 @@ import {
   blankSubclassFeature,
   martialResourceAvailable,
   martialResetKeys,
+  naturalD20,
+  suggestedCritThreshold,
   abilityModifier,
   effectiveAbilityScore,
   equippedAbilityBonus,
@@ -96,7 +98,7 @@ import {
   customItemNotesText,
 } from "shared";
 import * as charactersApi from "../../api/characters";
-import * as diceApi from "../../api/dice";
+import { useDiceRoll } from "../../dice/DiceRollContext";
 import { useAuth } from "../../context/AuthContext";
 import { useCustomContent } from "../../hooks/useCustomContent";
 import { CharacterPortrait } from "../CharacterPortrait";
@@ -132,6 +134,7 @@ export function Dnd5eSheet({
   readOnly?: boolean;
 }) {
   const { user } = useAuth();
+  const { roll: diceRoll } = useDiceRoll();
   const isOwner = user?.id === character.ownerUserId;
   const [sheet, setSheet] = useState<Dnd5eSheetData>(() => dnd5eSheetSchema.parse(character.sheetData ?? {}));
   const [name, setName] = useState(character.name);
@@ -213,6 +216,23 @@ export function Dnd5eSheet({
     }
     return classLevelEntry(className, level);
   }
+
+  // Extra weapon dice on a crit (#144/#145): sheet.extraCritDice is the race-derived part (Half-Orc's
+  // Savage Attacks, cached at creation), summed with Brutal Critical -- a class feature that scales
+  // with level, so it's read live from the progression table the same way martialFeatureLines()
+  // already does, rather than cached alongside the race part.
+  const totalExtraCritDice =
+    sheet.extraCritDice + (effectiveLevelEntry(sheet.class, sheet.level)?.martial?.brutalCriticalDice ?? 0);
+
+  // Suggested crit threshold (#143) -- Champion's Improved/Superior Critical (SRD subclasses are
+  // name-only, so this is a name match) or a custom subclass feature's own critThreshold, the
+  // lowest across every feature gained at or below the current level. A suggestion, never forced:
+  // the "Crit on" field above stays a plain editable value either way.
+  const subclassFeaturesForCrit = subclassFeaturesAtLevel(sheet.subclass, sheet.level);
+  const suggestedCritThresholdForSheet = suggestedCritThreshold(
+    subclassFeaturesForCrit.map((f) => f.name),
+    subclassFeaturesForCrit.map((f) => f.critThreshold).filter((t): t is number => t !== undefined),
+  );
 
   // Subrace options for the current race (SRD + custom), and its trait/bonus info for display.
   const subraceOptions = [
@@ -401,7 +421,7 @@ export function Dnd5eSheet({
     if (readOnly) return;
     try {
       const formula = bonus === 0 ? "1d20" : `1d20${bonus > 0 ? "+" : ""}${bonus}`;
-      const roll = await diceApi.createRoll(character.campaignId, formula, label);
+      const roll = await diceRoll(character.campaignId, formula, label);
       setRollResults((prev) => ({ ...prev, [key]: roll.breakdown }));
     } catch (err) {
       setRollResults((prev) => ({ ...prev, [key]: err instanceof Error ? err.message : "Roll failed" }));
@@ -412,8 +432,11 @@ export function Dnd5eSheet({
     setDeathSaveBusy(true);
     setError(null);
     try {
-      const roll = await diceApi.createRoll(character.campaignId, "1d20", "Death save");
-      const natural = roll.total;
+      const roll = await diceRoll(character.campaignId, "1d20", "Death save");
+      // naturalD20() rather than roll.total directly (#141) -- coincidentally the same value for
+      // this bare "1d20" formula, but one definition of "natural" now covers every roll, not just
+      // ones with no other terms.
+      const natural = naturalD20(roll.detail) ?? roll.total;
       if (natural === 20) {
         setSheet((prev) => ({ ...prev, deathSaveSuccesses: 0, deathSaveFailures: 0 }));
         setHpCurrent("1");
@@ -752,7 +775,7 @@ export function Dnd5eSheet({
         diceGain = Math.floor(hitDie / 2) + 1;
         breakdown = `average (${diceGain})`;
       } else {
-        const roll = await diceApi.createRoll(character.campaignId, `1d${hitDie}`, `Level ${sheet.level} hit die`);
+        const roll = await diceRoll(character.campaignId, `1d${hitDie}`, `Level ${sheet.level} hit die`);
         diceGain = Math.max(1, roll.total);
         breakdown = roll.breakdown;
       }
@@ -798,7 +821,7 @@ export function Dnd5eSheet({
     setConcentrationBusy(true);
     try {
       const formula = bonus === 0 ? "1d20" : `1d20${bonus > 0 ? "+" : ""}${bonus}`;
-      const roll = await diceApi.createRoll(character.campaignId, formula, `Concentration save (DC ${dc})`);
+      const roll = await diceRoll(character.campaignId, formula, `Concentration save (DC ${dc})`);
       if (roll.total >= dc) {
         setConcentrationDamage("");
         setConcentrationMessage(`${roll.breakdown} vs DC ${dc} — held.`);
@@ -846,7 +869,7 @@ export function Dnd5eSheet({
     try {
       const bonusTotal = conMod * n;
       const formula = bonusTotal === 0 ? `${n}d${hitDie}` : `${n}d${hitDie}${bonusTotal > 0 ? "+" : ""}${bonusTotal}`;
-      const roll = await diceApi.createRoll(character.campaignId, formula, "Short rest healing");
+      const roll = await diceRoll(character.campaignId, formula, "Short rest healing");
       const healed = Math.max(0, roll.total);
 
       const isPact = casterTypeForClass(sheet.class) === "pact";
@@ -1627,6 +1650,28 @@ export function Dnd5eSheet({
               placeholder="e.g. fire, poison"
               style={{ ...numInput, width: "10rem" }}
             />
+            <span>Crit on</span>
+            <span>
+              <input
+                type="number"
+                min={2}
+                max={20}
+                value={sheet.critThreshold}
+                onChange={(e) => set("critThreshold", Number(e.target.value) || 20)}
+                style={numInput}
+              />{" "}
+              +
+              {sheet.critThreshold !== suggestedCritThresholdForSheet && (
+                <button
+                  type="button"
+                  onClick={() => set("critThreshold", suggestedCritThresholdForSheet)}
+                  style={{ marginLeft: "0.4rem", fontSize: "0.75rem" }}
+                  title={`Champion's Improved/Superior Critical, or a custom subclass's own threshold, suggest ${suggestedCritThresholdForSheet}`}
+                >
+                  Suggest ({suggestedCritThresholdForSheet})
+                </button>
+              )}
+            </span>
             <span>HP</span>
             <span>
               <input type="number" value={hpCurrent} onChange={(e) => setHpCurrent(e.target.value)} style={numInput} /> /{" "}
@@ -1944,6 +1989,8 @@ export function Dnd5eSheet({
                   dice: e.damageDice,
                   type: e.damageType,
                 }))}
+                critThreshold={sheet.critThreshold}
+                extraCritDice={totalExtraCritDice}
                 onHit={() =>
                   setSheet((prev) => ({
                     ...prev,
@@ -2229,6 +2276,7 @@ export function Dnd5eSheet({
                   profile={eldritchBlastProfile(sheet)}
                   spellAttackBonus={effectiveAtkBonus}
                   campaignId={character.campaignId}
+                  critThreshold={sheet.critThreshold}
                 />
               ) : (
                 srdSpell &&
@@ -2278,6 +2326,7 @@ export function Dnd5eSheet({
                         ],
                       }))
                     }
+                    critThreshold={sheet.critThreshold}
                   />
                 )
               )}

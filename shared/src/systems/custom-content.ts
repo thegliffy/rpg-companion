@@ -48,6 +48,10 @@ export const raceTraitSchema = effectBonusesSchema.extend({
   // already uses for its damageResistances -- no fixed damage-type enum exists to validate against.
   damageResistances: z.array(z.string().trim().max(30)).max(10).default([]),
   grantedSpells: z.array(grantedSpellSchema).max(5).default([]),
+  // Extra weapon damage dice added (not doubled) on a crit (#144) -- e.g. a homebrew race's own
+  // Savage-Attacks-alike. Sized off the weapon's own die at the point of use, same as SRD
+  // Half-Orc's (srd-races.ts) -- see critDamageFormula() (crit.ts).
+  extraCritDice: z.number().int().min(0).max(3).default(0),
 });
 export type RaceTrait = z.infer<typeof raceTraitSchema>;
 
@@ -382,6 +386,12 @@ const subclassFeatureSchema = effectBonusesSchema.extend({
   armorProficiencies: z.array(z.string().trim().max(40)).max(10).default([]),
   weaponProficiencies: z.array(z.string().trim().max(40)).max(10).default([]),
   toolProficiencies: z.array(z.string().trim().max(40)).max(10).default([]),
+  // Lowers the natural-d20 crit threshold once this feature is gained (#143) -- e.g. a homebrew
+  // Champion-alike's own "Improved Critical" at level 3. Optional and per-feature rather than one
+  // flat field on the subclass, since RAW grants it at a specific level, not from level 1.
+  // suggestedCritThreshold() (crit.ts) takes the lowest across every feature up to the character's
+  // level; unset means this feature doesn't touch it.
+  critThreshold: z.number().int().min(2).max(20).optional(),
 });
 export type SubclassFeature = z.infer<typeof subclassFeatureSchema>;
 

@@ -2,8 +2,10 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { DiceRoll } from "shared";
 import * as diceApi from "../api/dice";
 import { useCampaignRoom, useSocketEvent } from "../socket/useSocketEvent";
+import { useDiceRoll } from "../dice/DiceRollContext";
 
 export function DiceRoller({ campaignId }: { campaignId: number | null }) {
+  const { roll: diceRoll } = useDiceRoll();
   const [rolls, setRolls] = useState<DiceRoll[]>([]);
   const [formula, setFormula] = useState("");
   const [label, setLabel] = useState("");
@@ -37,7 +39,7 @@ export function DiceRoller({ campaignId }: { campaignId: number | null }) {
     e.preventDefault();
     setError(null);
     try {
-      const roll = await diceApi.createRoll(campaignId, formula, label || undefined);
+      const roll = await diceRoll(campaignId, formula, label || undefined);
       if (campaignId === null) {
         setRolls((prev) => [roll, ...prev].slice(0, 50));
       }

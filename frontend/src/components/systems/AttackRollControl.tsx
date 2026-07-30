@@ -1,7 +1,9 @@
-import { useState } from "react";
-import * as diceApi from "../../api/dice";
+import { useRef, useState } from "react";
+import type { DiceRoll } from "shared";
+import { naturalD20, critFormula, critDamageFormula } from "shared";
+import { useDiceRoll } from "../../dice/DiceRollContext";
 
-type Phase = "idle" | "rolling" | "awaiting-hit-miss" | "miss" | "done";
+type Phase = "idle" | "rolling" | "done";
 
 interface ExtraDamage {
   id: string;
@@ -19,6 +21,14 @@ export function AttackRollControl({
   campaignId,
   extraAttackDice = [],
   extraDamage = [],
+  // Natural d20 needed to crit (#143/#145) -- 20 unless the caller passes the character's own
+  // sheet.critThreshold. Familiars/wild shape/bestiary monsters have no subclass-derived
+  // threshold tracked anywhere, so they stay at the RAW default rather than inheriting the
+  // player's.
+  critThreshold = 20,
+  // Extra weapon dice added (not doubled) on a crit -- Brutal Critical + race Savage Attacks,
+  // summed by the caller (#144/#145). Same "player's own sheet only" scoping as critThreshold.
+  extraCritDice = 0,
   onHit,
 }: {
   name: string;
@@ -33,52 +43,99 @@ export function AttackRollControl({
   /** Active effects that add extra damage dice on a hit (Wrathful Smite's 1d6 psychic). Each is
    * rolled and reported as its own line since it can carry its own damage type. */
   extraDamage?: ExtraDamage[];
+  critThreshold?: number;
+  extraCritDice?: number;
   /** Called once, after a confirmed Hit finishes rolling (base damage + every extraDamage entry)
    * -- lets the sheet consume any consumption: "once" effects. Never called on a Miss, matching
    * Wrathful Smite's own text ("if you don't hit... the spell isn't wasted"). */
   onHit?: () => void;
 }) {
+  const { session, setSessionActions } = useDiceRoll();
   const [phase, setPhase] = useState<Phase>("idle");
-  const [attackBreakdown, setAttackBreakdown] = useState<string | null>(null);
-  const [damageBreakdown, setDamageBreakdown] = useState<string | null>(null);
-  const [extraDamageResults, setExtraDamageResults] = useState<{ label: string; type: string; breakdown: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // The session's scoped roll fn, stashed so a later event (the Hit button, rendered inside the
+  // modal via setSessionActions) can add more die groups to the SAME still-open modal instead of
+  // popping a second one for damage.
+  const scopedRollRef = useRef<((formula: string, label?: string) => Promise<DiceRoll>) | null>(null);
 
-  async function rollDamage() {
+  async function rollDamagePhase(isCrit: boolean) {
+    const scopedRoll = scopedRollRef.current!;
+    setPhase("rolling");
     try {
-      const formula = magicBonus === 0 ? damageDice : `${damageDice}${magicBonus > 0 ? "+" : ""}${magicBonus}`;
-      const roll = await diceApi.createRoll(campaignId, formula, `${name || "Attack"} damage`);
-      setDamageBreakdown(`${roll.breakdown}${damageType ? ` ${damageType}` : ""}`);
+      // Crit doubles dice, never the flat bonus (#142) -- critDamageFormula() (and critFormula()
+      // for the extra-damage entries below) only ever touches damageDice/e.dice, never magicBonus,
+      // which stays a separate appended term exactly as on a normal hit.
+      const critDice = isCrit ? critDamageFormula(damageDice, extraCritDice) : damageDice;
+      const formula = magicBonus === 0 ? critDice : `${critDice}${magicBonus > 0 ? "+" : ""}${magicBonus}`;
+      await scopedRoll(formula, `${name || "Attack"}${isCrit ? " critical" : ""} damage`);
 
-      const extras: { label: string; type: string; breakdown: string }[] = [];
       for (const e of extraDamage) {
-        const extraRoll = await diceApi.createRoll(campaignId, e.dice, `${name || "Attack"} bonus damage (${e.label})`);
-        extras.push({ label: e.label, type: e.type, breakdown: extraRoll.breakdown });
+        const dice = isCrit ? critFormula(e.dice) : e.dice;
+        await scopedRoll(dice, `${name || "Attack"} bonus damage (${e.label}${e.type ? `, ${e.type}` : ""})`);
       }
-      setExtraDamageResults(extras);
       setPhase("done");
       onHit?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Roll failed");
+      setPhase("idle");
     }
   }
 
   async function roll() {
     setError(null);
-    setAttackBreakdown(null);
-    setDamageBreakdown(null);
-    setExtraDamageResults([]);
     setPhase("rolling");
     try {
-      // Dice terms (Bless) plus the flat bonus combine into one formula/roll -- the roller
-      // supports multiple dice terms in a single expression, and an attack roll only ever
-      // reports one number, unlike damage which can carry several separately-typed sources.
-      const terms = [...extraAttackDice.map((d) => (d.startsWith("-") ? d : `+${d}`))];
-      if (attackBonus !== 0) terms.push(attackBonus > 0 ? `+${attackBonus}` : `${attackBonus}`);
-      const formula = `1d20${terms.join("")}`;
-      const rollResult = await diceApi.createRoll(campaignId, formula, `${name || "Attack"} attack roll`);
-      setAttackBreakdown(rollResult.breakdown);
-      setPhase(damageDice ? "awaiting-hit-miss" : "done");
+      await session(campaignId, `${name || "Attack"}`, async (scopedRoll) => {
+        scopedRollRef.current = scopedRoll;
+
+        const terms = [...extraAttackDice.map((d) => (d.startsWith("-") ? d : `+${d}`))];
+        if (attackBonus !== 0) terms.push(attackBonus > 0 ? `+${attackBonus}` : `${attackBonus}`);
+        const formula = `1d20${terms.join("")}`;
+        const attackRoll = await scopedRoll(formula, `${name || "Attack"} attack roll`);
+
+        if (!damageDice) {
+          setPhase("done");
+          return;
+        }
+
+        const natural = naturalD20(attackRoll.detail);
+        // A natural 20 always hits as a crit, a natural 1 always misses -- RAW leaves no other
+        // answer, so the Hit/Miss prompt (which exists because the app has no notion of target
+        // AC) is skipped on exactly these two rolls (#145).
+        if (natural !== null && natural >= critThreshold) {
+          setSessionActions(<p style={{ margin: 0, color: "#1f6e1f", fontWeight: 600 }}>Critical hit!</p>);
+          await rollDamagePhase(true);
+          return;
+        }
+        if (natural === 1) {
+          setSessionActions(<p style={{ margin: 0, color: "#a5281b" }}>Critical miss.</p>);
+          setPhase("done");
+          return;
+        }
+
+        setSessionActions(
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setSessionActions(null);
+                rollDamagePhase(false);
+              }}
+            >
+              Hit
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSessionActions(<p style={{ margin: 0, color: "#666" }}>Miss — no damage.</p>);
+                setPhase("done");
+              }}
+            >
+              Miss
+            </button>
+          </div>,
+        );
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Roll failed");
       setPhase("idle");
@@ -91,44 +148,7 @@ export function AttackRollControl({
         Roll
       </button>
       {error && <span style={{ color: "crimson", marginLeft: "0.5rem" }}>{error}</span>}
-      {attackBreakdown && (
-        <div>
-          <small>Attack: {attackBreakdown}</small>
-        </div>
-      )}
-      {phase === "awaiting-hit-miss" && (
-        <div>
-          <button
-            type="button"
-            onClick={() => {
-              setPhase("rolling");
-              rollDamage();
-            }}
-          >
-            Hit
-          </button>
-          <button type="button" onClick={() => setPhase("miss")} style={{ marginLeft: "0.4rem" }}>
-            Miss
-          </button>
-        </div>
-      )}
-      {phase === "miss" && (
-        <div>
-          <small>Miss — no damage.</small>
-        </div>
-      )}
-      {damageBreakdown && (
-        <div>
-          <small>Damage: {damageBreakdown}</small>
-        </div>
-      )}
-      {extraDamageResults.map((r, i) => (
-        <div key={i}>
-          <small>
-            +{r.breakdown} {r.type} ({r.label})
-          </small>
-        </div>
-      ))}
+      {damageType && <small style={{ marginLeft: "0.5rem", color: "#888" }}>({damageType})</small>}
     </div>
   );
 }

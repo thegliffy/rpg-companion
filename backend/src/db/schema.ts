@@ -100,6 +100,9 @@ export const diceRolls = sqliteTable("dice_rolls", {
   label: text("label"),
   total: integer("total").notNull(),
   breakdown: text("breakdown").notNull(),
+  // Structured per-die roll data (#136), JSON-encoded RollDetail -- null for rolls made before
+  // this column existed, or anything buildRollDetail() couldn't confidently structure.
+  detail: text("detail"),
   createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
 });
 

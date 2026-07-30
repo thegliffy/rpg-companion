@@ -1126,3 +1126,252 @@ already a campaign member (stayed attached) and when they *weren't* (correctly d
 `campaignId: null`), verified by checking real campaign-membership rows before asserting. Full build
 across all three workspaces clean throughout; 21 backend tests green. All test users/roles/data
 restored to their pre-verification state afterward.
+
+## Theme: visual dice rolling
+
+Every roll in the app currently surfaces as a text string — `roll.breakdown`, e.g.
+`1d20+5: [9]+5 = 14` — pasted inline wherever the roll happened. The ask: a popup showing the
+die face itself, the bonuses below it, and the total.
+
+**Rolling is and stays server-side.** [lib/dice.ts](backend/src/lib/dice.ts) validates against
+`DICE_FORMULA_PATTERN` and the comment in [schemas.ts](shared/src/schemas.ts) is explicit that the
+charset restriction is "defense-in-depth against the underlying expression evaluator, on top of it
+always running server-side". Nothing here moves rolling to the client for animation's sake — the
+client animates a result the server already decided.
+
+**The data is recoverable, but from two places.** `new DiceRoll(f).toJSON().rolls` gives per-die
+`value`, plus `useInTotal: false` and `modifiers: ["drop"]` on dice a modifier discarded (`4d6kh3`).
+What it does **not** carry is the die *size* — there is no `sides` anywhere in that JSON, so it
+cannot tell a d20 from a d6. `Parser.parse(notation)` does carry `{ sides, qty }` per term. The two
+arrays are positionally aligned (same expression structure, verified against `1d20+5`, `2d6+3`,
+`4d6kh3`, `8d6+2d6`), so the backend zips them into one structured shape. Reconstructing this by
+parsing the `breakdown` string instead would be fragile — `[4, 1d, 6, 1]` encodes a dropped die as a
+`d` suffix — and would duplicate logic the roller already has.
+
+**Cross-cutting trap — "every roll" only works if the modal is a *session*, not a dialog.** There
+are **18 `createRoll` call sites** across 8 files, and they are not all single dramatic rolls:
+[CharacterCreationWizard](frontend/src/pages/CharacterCreationWizard.tsx) fires `4d6kh3` six times in
+a `for` loop; [EldritchBlastControl](frontend/src/components/systems/EldritchBlastControl.tsx) fires
+attack+damage per beam (up to 6 rolls); [ArenaPage](frontend/src/pages/ArenaPage.tsx) rolls
+initiative for both combatants back to back, and attack+damage per exchange;
+[AttackRollControl](frontend/src/components/systems/AttackRollControl.tsx) rolls an attack, waits for
+the player to click Hit, then rolls damage plus one roll per active extra-damage effect. A
+one-modal-per-roll design means six stacked dialogs in the wizard. So the modal is modelled as a
+**roll session** that can hold several rolls and stay open across phases — which is what makes the
+chosen "every roll, everywhere" scope viable rather than punishing.
+
+**Second trap — `roll()` must still return its result.** Callers don't just display the breakdown;
+they *branch* on it. Death saves read `roll.total` to detect nat 20/nat 1 and mutate the sheet, the
+wizard collects six totals into its assignable `pool`, Arena applies damage to combatant HP, short
+rest healing adds to HP. The session API therefore resolves with the roll exactly as
+`diceApi.createRoll` does today — the modal is a *side effect* of rolling, never a replacement for
+the return value. This is what keeps an 18-site migration safe.
+
+**Decisions taken (all by the user):** scope is **every roll, everywhere** (hence the session
+design above); structured detail is **returned and persisted** (new column + migration), so history
+rows and socket-broadcast rolls carry it too; spectators in a campaign get **no popup** — the
+existing dice-log line only, so a dialog never steals focus mid-turn; and all four extras are in
+scope — nat 20/nat 1 highlighting, `prefers-reduced-motion`, a compact layout for many dice, and a
+reroll button.
+
+136. ✅ **Structured roll detail — shared shape, backend, migration.** The plumbing everything else
+    needs. Today `DiceRoll` ([types.ts](shared/src/types.ts)) and the `dice_rolls` table carry only
+    `total` + `breakdown: string`.
+    - **Shape:** `RollDetail { terms: RollTerm[]; total: number }`, where a term is one of
+      `{ kind: "dice", sides, dice: { value, kept }[], subtotal }`, `{ kind: "constant", value }`, or
+      `{ kind: "operator", op }`. `kept: false` is the `useInTotal: false` case (a dropped `4d6kh3`
+      die), rendered struck-through rather than hidden — seeing what was dropped is the point.
+    - **Build it** in `rollDice()` by zipping `Parser.parse(formula)` (sides/qty) with
+      `roll.toJSON().rolls` (values/drops), per the finding above.
+    - **Persist:** new nullable `detail` TEXT column (JSON) on `dice_rolls`, migration `0016`.
+      Nullable, not defaulted — every pre-existing row genuinely has no detail, and
+      `DiceRoll.detail: RollDetail | null` makes the renderer handle that explicitly rather than
+      faking an empty roll. Old rows keep rendering as today's `breakdown` text.
+    - `breakdown` stays exactly as-is. It's still the right thing for the dice log, the socket
+      payload, and any future non-visual surface — this adds a channel, it doesn't replace one.
+
+137. ✅ **`DiceRollModal` — the visual.** One presentational component, no roll logic of its own.
+    - **Layout, matching the ask:** the die face(s) at the top, each bonus/term on its own line
+      below, total at the bottom. Reuses the existing overlay convention from
+      [FeatPickerModal.tsx](frontend/src/components/systems/FeatPickerModal.tsx)
+      (`position: fixed; inset: 0; rgba(0,0,0,0.4); zIndex: 1000`) rather than inventing a second
+      modal style.
+    - **Die faces** as inline SVG per side count — a d20 gets the icosahedron silhouette, d4/d6/d8/
+      d10/d12 their own shapes, anything else a generic polygon. Value centred on the face.
+    - **Compact layout for many dice:** Meteor Swarm is `20d6` and upcasting stacks (`8d6+2d6`), so
+      faces wrap and shrink past a threshold, falling back to a plain value list at the extreme.
+      Designed up-front rather than discovered on a fireball.
+    - **Motion:** a short tumble before settling, wrapped in
+      `@media (prefers-reduced-motion: reduce)` that cuts straight to the result. The app has **no
+      `@keyframes` and no reduced-motion handling anywhere today** — this is the first, so it sets
+      the convention.
+    - **Reroll button** re-runs the same formula and replaces the result in place.
+
+138. ✅ **Roll session context — what makes "every roll" workable.** A `DiceRollProvider` +
+    `useDiceRoll()` hook wrapping the app.
+    - **API:** `roll(campaignId, formula, label)` — same signature and same resolved value as
+      today's `diceApi.createRoll`, so call sites keep working (see the second trap above) — plus
+      `session(label, fn)` which opens one modal and collects every `roll()` inside `fn` into it.
+    - The wizard's six ability scores, Eldritch Blast's beams, and Arena's two initiative rolls each
+      become **one** modal with several die groups, not six modals.
+    - Spectators are unaffected: this is client-local state on the roller's machine. The
+      `roll:created` socket broadcast and the dice log are untouched, per the chosen behaviour.
+
+139. ✅ **Migrate the 18 call sites onto the session API.** Mostly mechanical, and a net *deletion* —
+    a lot of per-component result state exists only to render breakdown strings that the modal now
+    owns: `attackBreakdown`/`damageBreakdown`/`extraDamageResults` (AttackRollControl),
+    `rollResults` (Dnd5eSheet), `rollDetails` (CharacterCreationWizard), and the equivalents in
+    SpellCastControl/EldritchBlast/Arena/Familiar/WildShape.
+    - Wrap the loop sites in `session(...)`: wizard ability scores, Eldritch Blast beams, Arena
+      initiative, Arena attack+damage.
+    - Leave `DiceRoller`'s log list alone — it's a chat history, not a roll result, and the chosen
+      spectator behaviour keeps it as text.
+
+140. ✅ **Multi-phase rolls inside one modal.** AttackRollControl's attack → Hit/Miss → damage → extra
+    damage is a state machine (`Phase`) that currently renders four separate text lines.
+    - The modal stays open across the whole sequence: attack die on top, **Hit/Miss buttons inside
+      the modal**, then damage and each typed extra-damage line appended below on a Hit.
+    - Preserves the existing `onHit` contract exactly — it fires once, after damage plus every
+      extra resolves, and never on a Miss (Wrathful Smite's "if you don't hit... the spell isn't
+      wasted" behaviour that #111 established).
+
+141. ✅ **Nat 20 / nat 1 highlighting.** Crits are **not modelled anywhere today** — the only natural-
+    value check in the codebase is `rollDeathSave` ([Dnd5eSheet.tsx](frontend/src/components/systems/Dnd5eSheet.tsx)),
+    and it only works because that formula is a bare `1d20`, making `roll.total` coincidentally the
+    natural die.
+    - With #136's structure the natural die is addressable for *any* formula, so add a
+      `naturalD20(detail)` helper (first kept die of the first d20 term) and colour the face
+      green on 20 / red on 1 in the modal.
+    - **Display only** in this pass — no crit damage doubling, no auto-doubling of dice. That's a
+      rules change with real blast radius (which dice double, brutal critical, Champion's expanded
+      crit range) and belongs in its own item if it's wanted.
+    - Worth refactoring `rollDeathSave` onto the same helper so there's one definition of "natural
+      d20" rather than two.
+
+## Theme: critical hits
+
+Extends #141, which deliberately stopped at colouring the die face. This is the rules half: a
+natural 20 should actually change the damage roll.
+
+**The whole mechanic is one pure function.** RAW (PHB 196): "Roll all of the attack's damage dice
+twice and add them together. Then add any relevant modifiers as normal." So a crit doubles the
+*dice* and leaves *flat modifiers* alone — `2d8+4` becomes `4d8+4`, **not** `4d8+8`. Everything
+below hangs off a single `critFormula(formula)` transform that doubles every dice term's quantity
+and passes constants through untouched.
+
+**Two damage shapes exist, and one function covers both.** Sheet attacks keep them separate —
+`attackSchema.damageDice` is pure dice (`"1d8"`) and the comment on `AttackRollControl`'s
+`magicBonus` prop already says it is "everything added to the damage roll besides the dice"
+(ability mod + magic + feat + buff flat). SRD monsters do the opposite: **482 of 553
+`damageDice` values embed the flat modifier** (`"2d8+4"`, `"1d6+1"`), against only 71 that are pure
+dice. A transform that doubles dice terms and ignores constants is correct for both without either
+path needing to know which shape it holds — and it is also correct for a player who types `"1d8+3"`
+into the sheet's free-text damage field, which nothing prevents today. Spell damage
+(`scaledSpellDamage` → `"8d6+2d6"`) falls out of the same rule: `"16d6+4d6"`, all dice doubled.
+
+**Cross-cutting trap — apply the transform to the dice string only, never to the flat bonus.**
+Because the sheet passes `damageDice` and the flat total as *separate* arguments, it would be easy
+to crit the assembled formula instead and silently double the ability modifier. The transform must
+sit on `damageDice` at the point of construction, with the flat bonus appended afterwards exactly
+as it is today.
+
+**Half the data already exists and is merely displayed.** `brutalCriticalDice` is fully populated in
+the Barbarian progression table ([class-progression.ts](shared/src/systems/class-progression.ts),
+levels 9/13/17 → 1/2/3) *and* authorable on custom classes via `martialLevelEntrySchema` — but
+`martialFeatureLines()` only ever renders it as the string `"Brutal Critical: +N dice"`. It has never
+been applied to anything. By contrast **there is no crit-range concept anywhere**: Champion's
+"Improved Critical" and "Superior Critical" are bare feature-name strings in
+[srd-subclasses.ts](shared/src/systems/srd-subclasses.ts), and Half-Orc "Savage Attacks" is a bare
+trait name in [srd-races.ts](shared/src/systems/srd-races.ts).
+
+142. ✅ **`critFormula()` — the transform, with tests.** One pure function in `shared`, the foundation
+    for everything below.
+    - Doubles the quantity of each dice term, leaves constants and operators alone:
+      `1d8` → `2d8`; `2d8+4` → `4d8+4`; `1d8+1d6` → `2d8+2d6`; `1d6+1` → `2d6+1`.
+    - **Degrade safely, don't guess:** return the input unchanged for anything it can't confidently
+      rewrite — an empty string, a bare constant (`"1"` is a real SRD monster `damageDice` value),
+      or a term carrying a keep/drop modifier (`4d6kh3`), where doubling the quantity would change
+      what the modifier selects. Damage formulas never use `kh`/`kl` today, but silently mangling
+      one is worse than leaving it be.
+    - **Tests:** `shared` currently has **no test runner at all** — only `backend` does
+      (`tsx --test src/**/*.test.ts`). Add the same script to `shared` and put `crit.test.ts`
+      beside the function. A pure string→string transform with this many edge cases is exactly what
+      the repo's existing test setup is for, and every other item here trusts it.
+
+143. ✅ **Crit threshold — detecting the crit.** Nothing models a crit range today.
+    - **Sheet field:** `critThreshold: z.number().int().min(2).max(20).default(20)` on
+      `dnd5eSheetSchema`, editable, so a house rule or an unmodelled feature can just set it.
+    - **Derived suggestion,** matching how the sheet already suggests HP and spell slots rather than
+      forcing them: Champion's "Improved Critical" (level 3) → 19, "Superior Critical" (15) → 18,
+      matched off the existing SRD subclass feature-name strings. Custom subclasses get an optional
+      `critThreshold` on `subclassFeatureSchema` so homebrew isn't stuck at 20.
+    - A roll crits when the natural d20 (via #141's `naturalD20(detail)` helper — one definition,
+      not two) is >= `critThreshold`.
+    - **Out of scope:** Hexblade's Curse and Assassinate widen the crit range only against a
+      *specific target*, and the app has no notion of a target. Noting it rather than half-building it.
+
+144. ✅ **Extra crit dice — Brutal Critical and Savage Attacks.** Both add *extra* weapon dice on a
+    crit rather than doubling anything, so they stack on top of #142's transform.
+    - **Brutal Critical:** read the `brutalCriticalDice` already sitting in the progression entry
+      (and in custom classes) instead of only printing it. Barbarian 9/13/17 → +1/+2/+3 dice of the
+      weapon's own size, so the size is parsed from the first dice term of `damageDice`.
+    - **Savage Attacks (Half-Orc):** +1 weapon die on a crit. #124 just turned race traits into rich
+      objects, which gives this an obvious home — add `extraCritDice` to `raceTraitSchema` and set
+      it on the SRD Half-Orc entry, rather than string-matching a trait name.
+    - Applies to *weapon* damage only, never to the extra typed damage entries — Brutal Critical
+      says "one additional weapon damage die", not one of everything.
+
+145. ✅ **Wire it through the four damage paths, and handle nat 20 / nat 1 in the flow.**
+    - `AttackRollControl` (sheet attacks, familiars, wild shape, bestiary), `SpellCastControl`
+      (spell attack cantrips/spells), `EldritchBlastControl` (per beam — each beam crits
+      independently), and `ArenaPage`.
+    - **Behaviour change worth calling out:** today the modal always asks Hit or Miss, because the
+      app can't know the target's AC. On a natural 20 RAW that question has only one answer — a crit
+      always hits — and on a natural 1 an attack always misses. So the Hit/Miss prompt is replaced
+      by "Critical hit!" / "Critical miss" on those two rolls, skipping a click that has no
+      alternative. Every other roll keeps the existing prompt untouched.
+    - The #137 modal labels the doubled roll as a crit and shows the doubled formula, so the player
+      can see *why* the dice count jumped rather than just getting a bigger number.
+    - `onHit` still fires exactly once after all damage resolves, preserving the #111 contract.
+
+**Verified (#136-145, done):** the whole theme in one build. `buildRollDetail()` zips
+`Parser.parse(formula)` (die size) with `roll.toJSON().rolls` (values) -- caught one real bug along
+the way: the library's `.d.ts` types don't match its actual runtime JSON (`RollResults.toJSON()`'s
+declared type omits the `type`/`rolls` fields the real output carries once something calls
+`JSON.stringify` recursively), so the zip round-trips through a full `JSON.parse(JSON.stringify(...))`
+rather than trusting live class-instance property reads. Migration `0016` adds a nullable `detail`
+column with no default, so pre-#136 rows fall back to the plain `breakdown` text exactly as
+designed. `critFormula()` shipped with its own test file -- `shared` had **no test runner at all**
+before this, so `npm run test -w shared` (tsx --test) is new; 22 tests total across
+`critFormula`/`critDamageFormula`/`naturalD20`/`isCriticalHit`/`isCriticalMiss`/`suggestedCritThreshold`.
+
+`DiceRollProvider`'s `session()` is the one primitive everything else is sugar over -- a bare
+`roll()` call is just `session(campaignId, label, (r) => r(formula, label))`. Each session carries
+a uuid so a scoped-roll or `setSessionActions` call from a session that's since been replaced (the
+player started a different roll before resolving this one's Hit/Miss) is a no-op instead of
+corrupting whatever's currently showing. **Bug caught live, not in review:** the first crit test
+showed the "Critical hit!" banner vanish instantly -- `rollDamagePhase()` unconditionally cleared
+`sessionActions` at its own start (correct for the normal Hit-button-click path, which needs its
+buttons to disappear) but that also wiped the banner the crit path had just set moments earlier.
+Fixed by moving the clear into the Hit-button's own `onClick` and leaving `rollDamagePhase()` itself
+silent on actions, so the crit banner persists through and after the damage roll. All 18 call sites
+now route through `roll()`/`session()`; zero direct `diceApi.createRoll` calls remain outside
+`DiceRollContext.tsx` itself.
+
+Live-verified extensively in the browser: a manual `4d6kh3` roll in the plain DiceRoller correctly
+showed the dropped die struck-through and greyed in the modal -- caught a real gap here too, the
+first version only handled the "kept: false" styling in the compact-grid renderer, not the
+individual-large-face renderer used for 2-4 dice, so a dropped die in exactly that range rendered
+with no indication it was dropped; fixed by threading `kept` through `DieFace` itself (opacity,
+grey fill/stroke, a struck-through line, `aria-label` suffixed ", dropped"). Created a level-5
+Fighter with `critThreshold: 2` (crits on anything but a natural 1) specifically to make the crit
+path deterministically testable rather than waiting on real 5% RNG: rolling its Longsword attack
+(1d8+3, no extra crit dice) auto-skipped the Hit/Miss prompt, showed "Critical hit!", and rolled
+`2d8` (doubled, flat +3 unchanged) for 13 damage, all in one modal, exactly matching PHB 196. The
+character-creation wizard's six ability-score rolls landed as **one** modal with six accumulating
+die groups and per-group totals correctly excluding the dropped die, matching the assignable pool
+exactly. Arena's initiative pair rolled as one two-group session; an Arena attack with the same
+character showed "CRITICAL HIT" in the text log, rolled `2d8` for damage, and applied it to the
+target's HP (10 → 2) correctly overriding the normal vs-AC hit check. Full build across all three
+workspaces clean throughout; 21 backend + 22 shared tests green. All test users/characters/rolls
+cleaned up afterward.

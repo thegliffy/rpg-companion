@@ -18,6 +18,7 @@ export * from "./srd-beasts.js";
 export * from "./srd-familiars.js";
 export * from "./srd-invocations.js";
 export * from "./custom-content.js";
+export * from "./crit.js";
 
 export const SYSTEMS = {
   generic: genericSystem,

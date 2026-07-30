@@ -7,12 +7,15 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput"
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "test": "tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "tsx": "^4.19.2",
+    "@types/node": "^22.9.0"
   }
 }

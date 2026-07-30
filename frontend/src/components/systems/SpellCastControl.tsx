@@ -1,9 +1,9 @@
-import { useState } from "react";
-import type { BuffEffect, SpellScaling, SrdSpell } from "shared";
-import { scaledSpellDamage } from "shared";
-import * as diceApi from "../../api/dice";
+import { useRef, useState } from "react";
+import type { BuffEffect, SpellScaling, SrdSpell, DiceRoll } from "shared";
+import { scaledSpellDamage, naturalD20, critFormula } from "shared";
+import { useDiceRoll } from "../../dice/DiceRollContext";
 
-type Phase = "idle" | "rolling" | "awaiting-hit-miss" | "miss" | "done";
+type Phase = "idle" | "rolling" | "done";
 
 export function SpellCastControl({
   spell,
@@ -19,6 +19,11 @@ export function SpellCastControl({
   onBuff,
   availableSlotLevels = [],
   scaling = null,
+  // Natural d20 needed to crit (#143/#145) -- 20 unless the caller passes the character's own
+  // sheet.critThreshold. No extraCritDice prop: Brutal Critical and Savage Attacks are both
+  // written as "melee weapon attack" only (PHB/Volo's), so neither ever applies to spell damage --
+  // only the base doubling (critFormula) does, same as any other attack roll.
+  critThreshold = 20,
 }: {
   spell: SrdSpell;
   spellAttackBonus: number | null;
@@ -52,14 +57,15 @@ export function SpellCastControl({
   buff?: BuffEffect | null;
   /** Called when a spell with a resolved buff is cast, so the sheet can add an activeEffect. */
   onBuff?: (buff: BuffEffect) => void;
+  critThreshold?: number;
 }) {
+  const { session, setSessionActions } = useDiceRoll();
   const [phase, setPhase] = useState<Phase>("idle");
-  const [attackBreakdown, setAttackBreakdown] = useState<string | null>(null);
-  const [damageBreakdown, setDamageBreakdown] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Slot level this cast will spend. Defaults to the spell's own level; only adjustable when the
   // character actually has a higher slot free (see availableSlotLevels).
   const [castLevel, setCastLevel] = useState(spell.level);
+  const scopedRollRef = useRef<((formula: string, label?: string) => Promise<DiceRoll>) | null>(null);
 
   const upcastLevels = consumesSlot ? availableSlotLevels.filter((l) => l >= spell.level) : [];
   // A *selector* is only worth showing when there's an actual choice between slot levels.
@@ -76,24 +82,21 @@ export function SpellCastControl({
     : undefined;
   const levelsAbove = Math.max(0, effectiveCastLevel - spell.level);
 
-  async function rollDamage() {
+  async function rollDamagePhase(isCrit: boolean) {
+    const scopedRoll = scopedRollRef.current!;
+    setPhase("rolling");
     try {
-      const roll = await diceApi.createRoll(
-        campaignId,
-        scaledDamage!,
-        `${spell.name} damage${levelsAbove > 0 ? ` (lvl ${effectiveCastLevel})` : ""}`,
-      );
-      setDamageBreakdown(roll.breakdown);
+      const formula = isCrit ? critFormula(scaledDamage!) : scaledDamage!;
+      await scopedRoll(formula, `${spell.name}${isCrit ? " critical" : ""} damage${levelsAbove > 0 ? ` (lvl ${effectiveCastLevel})` : ""}`);
       setPhase("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Roll failed");
+      setPhase("idle");
     }
   }
 
   async function cast() {
     setError(null);
-    setAttackBreakdown(null);
-    setDamageBreakdown(null);
 
     if (consumesSlot) onConsumeSlot?.(effectiveCastLevel);
     if (spell.concentration) onConcentrate?.();
@@ -102,18 +105,67 @@ export function SpellCastControl({
     if (spell.requiresAttackRoll) {
       setPhase("rolling");
       try {
-        const bonus = spellAttackBonus ?? 0;
-        const formula = bonus === 0 ? "1d20" : `1d20${bonus > 0 ? "+" : ""}${bonus}`;
-        const roll = await diceApi.createRoll(campaignId, formula, `${spell.name} attack roll`);
-        setAttackBreakdown(roll.breakdown);
-        setPhase(spell.damageDice ? "awaiting-hit-miss" : "done");
+        await session(campaignId, spell.name, async (scopedRoll) => {
+          scopedRollRef.current = scopedRoll;
+          const bonus = spellAttackBonus ?? 0;
+          const formula = bonus === 0 ? "1d20" : `1d20${bonus > 0 ? "+" : ""}${bonus}`;
+          const attackRoll = await scopedRoll(formula, `${spell.name} attack roll`);
+
+          if (!spell.damageDice) {
+            setPhase("done");
+            return;
+          }
+
+          const natural = naturalD20(attackRoll.detail);
+          if (natural !== null && natural >= critThreshold) {
+            setSessionActions(<p style={{ margin: 0, color: "#1f6e1f", fontWeight: 600 }}>Critical hit!</p>);
+            await rollDamagePhase(true);
+            return;
+          }
+          if (natural === 1) {
+            setSessionActions(<p style={{ margin: 0, color: "#a5281b" }}>Critical miss.</p>);
+            setPhase("done");
+            return;
+          }
+
+          setSessionActions(
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSessionActions(null);
+                  rollDamagePhase(false);
+                }}
+              >
+                Hit
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSessionActions(<p style={{ margin: 0, color: "#666" }}>Miss — no damage.</p>);
+                  setPhase("done");
+                }}
+              >
+                Miss
+              </button>
+            </div>,
+          );
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Roll failed");
         setPhase("idle");
       }
     } else if (spell.damageDice) {
       setPhase("rolling");
-      await rollDamage();
+      try {
+        await session(campaignId, spell.name, async (scopedRoll) => {
+          await scopedRoll(scaledDamage!, `${spell.name} damage${levelsAbove > 0 ? ` (lvl ${effectiveCastLevel})` : ""}`);
+        });
+        setPhase("done");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Roll failed");
+        setPhase("idle");
+      }
     } else {
       setPhase("done");
     }
@@ -181,38 +233,6 @@ export function SpellCastControl({
         </div>
       )}
       {error && <span style={{ color: "crimson", marginLeft: "0.5rem" }}>{error}</span>}
-      {attackBreakdown && (
-        <div>
-          <small>Attack: {attackBreakdown}</small>
-        </div>
-      )}
-      {phase === "awaiting-hit-miss" && (
-        <div>
-          <button
-            type="button"
-            onClick={() => {
-              setPhase("rolling");
-              rollDamage();
-            }}
-          >
-            Hit
-          </button>
-          <button type="button" onClick={() => setPhase("miss")} style={{ marginLeft: "0.4rem" }}>
-            Miss
-          </button>
-        </div>
-      )}
-      {phase === "miss" && <div><small>Miss — no damage.</small></div>}
-      {damageBreakdown && (
-        <div>
-          <small>Damage: {damageBreakdown}</small>
-        </div>
-      )}
-      {phase === "done" && !attackBreakdown && !damageBreakdown && (
-        <div>
-          <small>Cast.</small>
-        </div>
-      )}
     </div>
   );
 }

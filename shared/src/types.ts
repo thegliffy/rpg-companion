@@ -175,6 +175,42 @@ export interface EncounterSnapshot {
   combatants: Combatant[];
 }
 
+// Structured per-die roll data (#136) -- built server-side by zipping the parsed notation's die
+// sizes (Parser.parse, which the rolled-result JSON doesn't carry) with the rolled values
+// (DiceRoll#toJSON, which the parsed notation doesn't carry). Additive alongside `breakdown`
+// below, not a replacement -- the text stays the source of truth for the dice log, the socket
+// payload, and any future non-visual surface.
+export interface RollDetailDie {
+  value: number;
+  // false for a die a modifier discarded (e.g. the dropped die in 4d6kh3) -- rendered
+  // struck-through rather than hidden, since seeing what got dropped is the point.
+  kept: boolean;
+}
+
+export interface RollDetailDiceTerm {
+  kind: "dice";
+  sides: number;
+  dice: RollDetailDie[];
+  subtotal: number;
+}
+
+export interface RollDetailConstantTerm {
+  kind: "constant";
+  value: number;
+}
+
+export interface RollDetailOperatorTerm {
+  kind: "operator";
+  op: "+" | "-";
+}
+
+export type RollDetailTerm = RollDetailDiceTerm | RollDetailConstantTerm | RollDetailOperatorTerm;
+
+export interface RollDetail {
+  terms: RollDetailTerm[];
+  total: number;
+}
+
 export interface DiceRoll {
   id: number;
   campaignId: number | null;
@@ -184,5 +220,8 @@ export interface DiceRoll {
   label: string | null;
   total: number;
   breakdown: string;
+  // Null for rolls made before #136 (or anything the zip couldn't confidently structure) -- the
+  // renderer falls back to `breakdown` text in that case rather than faking an empty roll.
+  detail: RollDetail | null;
   createdAt: string;
 }

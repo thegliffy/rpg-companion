@@ -30,7 +30,7 @@ import {
   classProficiencies,
 } from "shared";
 import * as charactersApi from "../api/characters";
-import * as diceApi from "../api/dice";
+import { useDiceRoll } from "../dice/DiceRollContext";
 import { useCustomContent } from "../hooks/useCustomContent";
 import { WizardSpellbookPicker, type PickedSpell } from "../components/systems/WizardSpellbookPicker";
 
@@ -52,6 +52,7 @@ export function CharacterCreationWizard({
   const [step, setStep] = useState<"system" | "basics" | "abilities" | "spellbook" | "warlock" | "review">("system");
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const { session } = useDiceRoll();
   const {
     classes: customClasses,
     races: customRaces,
@@ -575,13 +576,18 @@ export function CharacterCreationWizard({
     setRolling(true);
     setError(null);
     try {
-      const totals: number[] = [];
-      const details: string[] = [];
-      for (let i = 0; i < 6; i++) {
-        const roll = await diceApi.createRoll(null, "4d6kh3", `Ability score roll ${i + 1}`);
-        totals.push(roll.total);
-        details.push(roll.breakdown);
-      }
+      // All six rolls join one session/modal (#138) rather than popping six dialogs in a row --
+      // the die groups accumulate live in the same box as the loop runs.
+      const { totals, details } = await session(null, "Ability scores", async (roll) => {
+        const totals: number[] = [];
+        const details: string[] = [];
+        for (let i = 0; i < 6; i++) {
+          const r = await roll("4d6kh3", `Ability score roll ${i + 1}`);
+          totals.push(r.total);
+          details.push(r.breakdown);
+        }
+        return { totals, details };
+      });
       setPool(totals);
       setRollDetails(details);
       setAssignments({});

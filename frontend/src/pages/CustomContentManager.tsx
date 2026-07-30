@@ -216,6 +216,7 @@ interface TraitRow {
   darkvisionFeet: string;
   damageResistancesText: string; // comma-separated
   grantedSpellsText: string; // one per line: "Name | atWill(yes/no)"
+  extraCritDice: string; // #144 -- e.g. a homebrew Savage-Attacks-alike
 }
 const emptyTraitRow = (): TraitRow => ({
   id: `trait-${crypto.randomUUID()}`,
@@ -224,6 +225,7 @@ const emptyTraitRow = (): TraitRow => ({
   darkvisionFeet: "0",
   damageResistancesText: "",
   grantedSpellsText: "",
+  extraCritDice: "0",
 });
 
 // "Name | atWill(yes/no)" per line -- atWill defaults to yes when omitted, since most racial
@@ -251,6 +253,7 @@ function dataToTraitRows(traits: RaceTrait[]): TraitRow[] {
     darkvisionFeet: String(t.darkvisionFeet),
     damageResistancesText: t.damageResistances.join(", "),
     grantedSpellsText: traitGrantedSpellsToText(t.grantedSpells),
+    extraCritDice: String(t.extraCritDice),
   }));
 }
 
@@ -852,6 +855,7 @@ export function CustomContentManager({
             const resolved = resolveSpellName(s.name);
             return { name: s.name, srdId: resolved?.srdId, level: resolved?.level ?? 0, atWill: s.atWill };
           }),
+        extraCritDice: Number(r.extraCritDice) || 0,
         abilityBonuses: {},
         acBonus: 0,
         attackBonus: 0,
@@ -1639,6 +1643,19 @@ export function CustomContentManager({
                   style={{ width: "4rem" }}
                 />{" "}
                 ft
+              </label>
+              <label title="Extra weapon damage dice added (not doubled) on a crit, e.g. a Savage-Attacks-alike">
+                Extra crit dice{" "}
+                <input
+                  type="number"
+                  min={0}
+                  max={3}
+                  value={row.extraCritDice}
+                  onChange={(e) =>
+                    setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, extraCritDice: e.target.value } : r)))
+                  }
+                  style={{ width: "3rem" }}
+                />
               </label>
               <button type="button" onClick={() => setTraitRows((prev) => prev.filter((_, j) => j !== i))}>
                 Remove

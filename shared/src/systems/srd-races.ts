@@ -10,6 +10,10 @@ export interface SrdRace {
   abilityBonuses: Partial<Record<Dnd5eAbility, number>>;
   languages: string[];
   traits: string[];
+  // Extra weapon damage dice on a crit (#144) -- Half-Orc's Savage Attacks. A race-level field
+  // rather than tied to a specific trait string, since SrdRace.traits is flavor-name-only; kept
+  // optional so every other SRD race (which has no such mechanic) just omits it.
+  extraCritDice?: number;
 }
 
 export const SRD_RACES: SrdRace[] = [
@@ -66,6 +70,7 @@ export const SRD_RACES: SrdRace[] = [
     abilityBonuses: { str: 2, con: 1 },
     languages: ["Common", "Orc"],
     traits: ["Darkvision", "Savage Attacks", "Relentless Endurance", "Menacing"],
+    extraCritDice: 1,
   },
   {
     id: "halfling",

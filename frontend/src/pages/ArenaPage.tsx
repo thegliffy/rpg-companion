@@ -9,11 +9,13 @@ import {
   SRD_MONSTERS,
   formatMonsterCR,
   customMonsterToSrdShape,
+  naturalD20,
+  critFormula,
 } from "shared";
 import type { Character, SrdMonster } from "shared";
 import * as charactersApi from "../api/characters";
-import * as diceApi from "../api/dice";
 import { useCustomContent } from "../hooks/useCustomContent";
+import { useDiceRoll } from "../dice/DiceRollContext";
 
 interface ArenaAttack {
   name: string;
@@ -31,6 +33,11 @@ interface Combatant {
   dexMod: number;
   attacks: ArenaAttack[];
   initiative: number | null;
+  // Natural d20 needed to crit (#143/#145) -- a player character carries their own sheet's value;
+  // a monster has no subclass-derived threshold tracked anywhere, so it stays at the RAW default.
+  // No extraCritDice here -- Brutal Critical/Savage Attacks fidelity is out of scope for Arena's
+  // already-simplified simulation, same "honest scope" call made for legendary action economy.
+  critThreshold: number;
 }
 
 function combatantFromCharacter(c: Character): Combatant | null {
@@ -53,6 +60,7 @@ function combatantFromCharacter(c: Character): Combatant | null {
         damageType: a.damageType,
       })),
     initiative: null,
+    critThreshold: sheet.critThreshold,
   };
 }
 
@@ -75,12 +83,14 @@ function combatantFromMonster(m: SrdMonster): Combatant {
     dexMod: abilityModifier(m.dex),
     attacks: rollableAttacks.map((a) => ({ name: a.name, attackBonus: a.attackBonus, damageDice: a.damageDice, damageType: a.damageType })),
     initiative: null,
+    critThreshold: 20,
   };
 }
 
 type Phase = "setup" | "battle" | "finished";
 
 export function ArenaPage({ onBack }: { onBack: () => void }) {
+  const { session } = useDiceRoll();
   const [characters, setCharacters] = useState<Character[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [sideAId, setSideAId] = useState<number | "">("");
@@ -162,16 +172,19 @@ export function ArenaPage({ onBack }: { onBack: () => void }) {
 
     setBusy(true);
     try {
-      const rollA = await diceApi.createRoll(
-        null,
-        combatantA.dexMod === 0 ? "1d20" : `1d20${combatantA.dexMod > 0 ? "+" : ""}${combatantA.dexMod}`,
-        `${combatantA.label} initiative`,
-      );
-      const rollB = await diceApi.createRoll(
-        null,
-        combatantB.dexMod === 0 ? "1d20" : `1d20${combatantB.dexMod > 0 ? "+" : ""}${combatantB.dexMod}`,
-        `${combatantB.label} initiative`,
-      );
+      // Both initiative rolls join one session/modal (#138) instead of popping two dialogs back
+      // to back.
+      const { rollA, rollB } = await session(null, "Roll initiative", async (roll) => {
+        const rollA = await roll(
+          combatantA!.dexMod === 0 ? "1d20" : `1d20${combatantA!.dexMod > 0 ? "+" : ""}${combatantA!.dexMod}`,
+          `${combatantA!.label} initiative`,
+        );
+        const rollB = await roll(
+          combatantB!.dexMod === 0 ? "1d20" : `1d20${combatantB!.dexMod > 0 ? "+" : ""}${combatantB!.dexMod}`,
+          `${combatantB!.label} initiative`,
+        );
+        return { rollA, rollB };
+      });
       const initA = { ...combatantA, initiative: rollA.total };
       const initB = { ...combatantB, initiative: rollB.total };
       setA(initA);
@@ -197,12 +210,27 @@ export function ArenaPage({ onBack }: { onBack: () => void }) {
     setError(null);
     try {
       const formula = atk.attackBonus === 0 ? "1d20" : `1d20${atk.attackBonus > 0 ? "+" : ""}${atk.attackBonus}`;
-      const atkRoll = await diceApi.createRoll(null, formula, `${attacker.label} ${atk.name}`);
-      const hit = atkRoll.total >= defender.ac;
-      addLog(`${attacker.label}'s ${atk.name}: ${atkRoll.breakdown} vs AC ${defender.ac} — ${hit ? "HIT" : "miss"}`);
+      // Attack + damage join one session/modal (#138). A natural 20 always hits and doubles
+      // damage dice, a natural 1 always misses -- RAW leaves no other answer, overriding the
+      // vs-AC check either way (#145). No extraCritDice (Brutal Critical etc.) here, per the
+      // Combatant-level scope note above.
+      const { hit, dmgRoll } = await session(null, `${attacker.label}'s ${atk.name}`, async (roll) => {
+        const atkRoll = await roll(formula, `${attacker.label} ${atk.name}`);
+        const natural = naturalD20(atkRoll.detail);
+        const isCrit = natural !== null && natural >= attacker.critThreshold;
+        const hit = isCrit || (natural !== 1 && atkRoll.total >= defender.ac);
+        addLog(
+          `${attacker.label}'s ${atk.name}: ${atkRoll.breakdown} vs AC ${defender.ac} — ${
+            isCrit ? "CRITICAL HIT" : natural === 1 ? "CRITICAL MISS" : hit ? "HIT" : "miss"
+          }`,
+        );
+        if (!hit) return { hit, isCrit, dmgRoll: null };
+        const dmgFormula = isCrit ? critFormula(atk.damageDice) : atk.damageDice;
+        const dmgRoll = await roll(dmgFormula, `${attacker.label} ${atk.name}${isCrit ? " critical" : ""} damage`);
+        return { hit, isCrit, dmgRoll };
+      });
 
-      if (hit) {
-        const dmgRoll = await diceApi.createRoll(null, atk.damageDice, `${attacker.label} ${atk.name} damage`);
+      if (hit && dmgRoll) {
         const dmg = Math.max(0, dmgRoll.total);
         const newHp = Math.max(0, defender.hpCurrent - dmg);
         addLog(`  ${dmgRoll.breakdown} ${atk.damageType} — ${defender.label} ${defender.hpCurrent}→${newHp} HP`);

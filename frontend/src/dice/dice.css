@@ -1,0 +1,26 @@
+.dice-die-tumble {
+  animation: dice-tumble 0.35s ease-out;
+}
+
+@keyframes dice-tumble {
+  0% {
+    transform: rotate(-25deg) scale(0.6);
+    opacity: 0.3;
+  }
+  60% {
+    transform: rotate(8deg) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+/* The app has no other @keyframes/reduced-motion handling anywhere yet (#137) -- this sets the
+   convention: anyone who has asked their OS for reduced motion skips straight to the settled
+   result instead of the tumble. */
+@media (prefers-reduced-motion: reduce) {
+  .dice-die-tumble {
+    animation: none;
+  }
+}

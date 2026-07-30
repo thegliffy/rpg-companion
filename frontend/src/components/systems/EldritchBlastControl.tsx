@@ -1,11 +1,7 @@
 import { useState } from "react";
 import type { EldritchBlastProfile } from "shared";
-import * as diceApi from "../../api/dice";
-
-interface BeamResult {
-  attack: string;
-  damage: string;
-}
+import { naturalD20, critFormula } from "shared";
+import { useDiceRoll } from "../../dice/DiceRollContext";
 
 /**
  * Dedicated cast control for Eldritch Blast: rolls one attack + one damage per beam (beam count
@@ -18,29 +14,36 @@ export function EldritchBlastControl({
   profile,
   spellAttackBonus,
   campaignId,
+  // No extraCritDice prop, same reasoning as SpellCastControl: Brutal Critical/Savage Attacks are
+  // both melee-weapon-only, so a spell attack (even a cantrip like this one) never gets them.
+  critThreshold = 20,
 }: {
   profile: EldritchBlastProfile;
   spellAttackBonus: number | null;
   campaignId: number | null;
+  critThreshold?: number;
 }) {
-  const [beams, setBeams] = useState<BeamResult[] | null>(null);
+  const { session } = useDiceRoll();
   const [rolling, setRolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function cast() {
     setRolling(true);
     setError(null);
-    setBeams(null);
     try {
       const bonus = spellAttackBonus ?? 0;
       const attackFormula = bonus === 0 ? "1d20" : `1d20${bonus > 0 ? "+" : ""}${bonus}`;
-      const results: BeamResult[] = [];
-      for (let i = 0; i < profile.beams; i++) {
-        const attack = await diceApi.createRoll(campaignId, attackFormula, `Eldritch Blast beam ${i + 1} attack`);
-        const damage = await diceApi.createRoll(campaignId, profile.damageDice, `Eldritch Blast beam ${i + 1} damage`);
-        results.push({ attack: attack.breakdown, damage: damage.breakdown });
-      }
-      setBeams(results);
+      // Every beam's attack + damage joins one session/modal (#138) rather than popping a dialog
+      // per beam -- each beam still crits independently (#145).
+      await session(campaignId, `Eldritch Blast (${profile.beams} beam${profile.beams > 1 ? "s" : ""})`, async (roll) => {
+        for (let i = 0; i < profile.beams; i++) {
+          const attack = await roll(attackFormula, `Beam ${i + 1} attack`);
+          const natural = naturalD20(attack.detail);
+          const isCrit = natural !== null && natural >= critThreshold;
+          const damageFormula = isCrit ? critFormula(profile.damageDice) : profile.damageDice;
+          await roll(damageFormula, `Beam ${i + 1}${isCrit ? " critical" : ""} damage`);
+        }
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Roll failed");
     } finally {
@@ -60,15 +63,6 @@ export function EldritchBlastControl({
         {profile.push ? " · Repelling Blast: push 10 ft on hit" : ""}
       </small>
       {error && <span style={{ color: "crimson", marginLeft: "0.5rem" }}>{error}</span>}
-      {beams && (
-        <div style={{ marginTop: "0.25rem", fontSize: "0.85rem" }}>
-          {beams.map((b, i) => (
-            <div key={i}>
-              <strong>Beam {i + 1}:</strong> attack {b.attack} · damage {b.damage}
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

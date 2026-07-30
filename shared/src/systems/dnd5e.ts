@@ -262,6 +262,17 @@ export const dnd5eSheetSchema = z.object({
   // live from race on every render.
   darkvisionFeet: z.number().int().min(0).max(120).default(0),
   damageResistances: z.array(z.string().trim().max(30)).max(20).default([]),
+  // Natural d20 needed to crit (#143) -- 20 is the RAW baseline. Plain editable field, same
+  // precedent as darkvisionFeet/speed above: the sheet suggests a value derived from subclass
+  // features (Champion's Improved/Superior Critical) but never forces it, so a house rule or an
+  // unmodelled feature can just set it directly.
+  critThreshold: z.number().int().min(2).max(20).default(20),
+  // Extra weapon dice added (not doubled) on a crit, from race traits only (#144) -- e.g. a
+  // Half-Orc's Savage Attacks. Seeded once at creation from the chosen race/subrace, same
+  // precedent as darkvisionFeet -- unlike Brutal Critical (a class feature that scales with level,
+  // computed live at the point of rolling instead of cached here), a race trait is fixed once
+  // chosen, so caching it is safe.
+  extraCritDice: z.number().int().min(0).max(5).default(0),
   hitDice: z.string().max(20).default(""),
   hitDiceTotal: z.number().int().min(0).max(20).default(1),
   hitDiceAvailable: z.number().int().min(0).max(20).default(1),

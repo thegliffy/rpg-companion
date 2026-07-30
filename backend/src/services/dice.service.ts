@@ -1,7 +1,7 @@
 import { eq, desc, and, isNull } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { diceRolls, users } from "../db/schema.js";
-import type { DiceRoll } from "shared";
+import type { DiceRoll, RollDetail } from "shared";
 import { rollDice } from "../lib/dice.js";
 
 function toDiceRoll(row: typeof diceRolls.$inferSelect, username: string): DiceRoll {
@@ -14,16 +14,18 @@ function toDiceRoll(row: typeof diceRolls.$inferSelect, username: string): DiceR
     label: row.label,
     total: row.total,
     breakdown: row.breakdown,
+    // Rows from before #136 (or a roll buildRollDetail() couldn't structure) store no JSON here.
+    detail: row.detail ? (JSON.parse(row.detail) as RollDetail) : null,
     createdAt: row.createdAt,
   };
 }
 
 export async function createRoll(campaignId: number | null, userId: number, formula: string, label?: string) {
-  const { total, breakdown } = rollDice(formula);
+  const { total, breakdown, detail } = rollDice(formula);
 
   const [created] = await db
     .insert(diceRolls)
-    .values({ campaignId, userId, formula, label: label ?? null, total, breakdown })
+    .values({ campaignId, userId, formula, label: label ?? null, total, breakdown, detail: detail ? JSON.stringify(detail) : null })
     .returning();
 
   const user = db.select().from(users).where(eq(users.id, userId)).get()!;
