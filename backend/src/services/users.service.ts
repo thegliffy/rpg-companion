@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { eq, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { users, characters, campaigns, campaignMemberships, customContent, diceRolls, notes } from "../db/schema.js";
+import { users, characters, campaigns, campaignMemberships, customContent, diceRolls, notes, apiTokens } from "../db/schema.js";
 import type { PublicUser, GlobalRole, AdminUserDependants } from "shared";
 
 const SALT_ROUNDS = 12;
@@ -86,6 +86,7 @@ export function countUserDependants(userId: number): AdminUserDependants {
     .get()!.count;
   const diceRollCount = db.select({ count: sql<number>`count(*)` }).from(diceRolls).where(eq(diceRolls.userId, userId)).get()!.count;
   const noteCount = db.select({ count: sql<number>`count(*)` }).from(notes).where(eq(notes.authorUserId, userId)).get()!.count;
+  const apiTokenCount = db.select({ count: sql<number>`count(*)` }).from(apiTokens).where(eq(apiTokens.userId, userId)).get()!.count;
 
   return {
     characters: characterCount,
@@ -94,6 +95,7 @@ export function countUserDependants(userId: number): AdminUserDependants {
     customContent: customContentCount,
     diceRolls: diceRollCount,
     notes: noteCount,
+    apiTokens: apiTokenCount,
   };
 }
 

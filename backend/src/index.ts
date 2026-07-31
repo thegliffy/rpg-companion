@@ -6,6 +6,7 @@ import type { ErrorRequestHandler } from "express";
 import { db } from "./db/client.js";
 import { sql } from "drizzle-orm";
 import { createSessionMiddleware } from "./middleware/session.js";
+import { resolveAuth } from "./middleware/auth.js";
 import { authRouter } from "./routes/auth.routes.js";
 import { campaignsRouter } from "./routes/campaigns.routes.js";
 import { charactersRouter } from "./routes/characters.routes.js";
@@ -14,6 +15,7 @@ import { encountersRouter } from "./routes/encounters.routes.js";
 import { rollsRouter } from "./routes/rolls.routes.js";
 import { adminRouter } from "./routes/admin.routes.js";
 import { customContentRouter } from "./routes/customContent.routes.js";
+import { tokensRouter } from "./routes/tokens.routes.js";
 import { sharedCharactersRouter } from "./routes/sharedCharacters.routes.js";
 import { createSocketServer } from "./sockets/index.js";
 
@@ -28,6 +30,9 @@ const sessionMiddleware = createSessionMiddleware();
 
 app.use(express.json());
 app.use(sessionMiddleware);
+// Resolves caller identity from a bearer token or the session cookie into req.authUserId (#147).
+// Must run after sessionMiddleware (it reads req.session) and before every router.
+app.use(resolveAuth);
 
 app.get("/api/health", (_req, res) => {
   const version = process.env.APP_VERSION ?? "dev";
@@ -49,6 +54,7 @@ app.use("/api/encounters", encountersRouter);
 app.use("/api/rolls", rollsRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/custom-content", customContentRouter);
+app.use("/api/tokens", tokensRouter);
 // Deliberately NOT behind requireAuth -- see sharedCharacters.routes.ts for why this is safe.
 app.use("/api/shared/characters", sharedCharactersRouter);
 

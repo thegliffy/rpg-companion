@@ -33,7 +33,7 @@ function loadCharacterOr404(req: Request, res: Response): boolean {
 export function requireCharacterOwnerOrDM(req: Request, res: Response, next: NextFunction) {
   if (!loadCharacterOr404(req, res)) return;
 
-  const userId = req.session.userId!;
+  const userId = req.authUserId!;
   if (req.characterRow!.ownerUserId === userId) {
     next();
     return;
@@ -59,7 +59,7 @@ export function requireCharacterOwnerOrDM(req: Request, res: Response, next: Nex
 export function requireCharacterOwner(req: Request, res: Response, next: NextFunction) {
   if (!loadCharacterOr404(req, res)) return;
 
-  if (req.characterRow!.ownerUserId !== req.session.userId! && !isGlobalAdmin(req.session.userId!)) {
+  if (req.characterRow!.ownerUserId !== req.authUserId! && !isGlobalAdmin(req.authUserId!)) {
     res.status(403).json({ error: "Only the character's owner can do this" });
     return;
   }
@@ -71,7 +71,7 @@ export function requireCharacterOwner(req: Request, res: Response, next: NextFun
 export function requireCharacterViewable(req: Request, res: Response, next: NextFunction) {
   if (!loadCharacterOr404(req, res)) return;
 
-  const userId = req.session.userId!;
+  const userId = req.authUserId!;
   if (req.characterRow!.ownerUserId === userId) {
     next();
     return;

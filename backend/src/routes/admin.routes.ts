@@ -101,9 +101,10 @@ adminRouter.patch("/users/:id/password", async (req, res) => {
 });
 
 // Blocked, not cascading (#135): a bare delete would fail at the DB with an opaque FK constraint
-// error (6 of 8 FKs to users.id are NOT NULL, foreign_keys=ON) or, worse, silently orphan data if
-// that pragma were ever off. Reassigning or deleting dependants is a decision the admin makes
-// deliberately -- see #133 for characters, and CustomContentManager for content.
+// error (7 of 9 FKs to users.id are NOT NULL, foreign_keys=ON -- api_tokens joined the list in
+// #146) or, worse, silently orphan data if that pragma were ever off. Reassigning or deleting
+// dependants is a decision the admin makes deliberately -- see #133 for characters, and
+// CustomContentManager for content.
 adminRouter.delete("/users/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) {
@@ -111,7 +112,7 @@ adminRouter.delete("/users/:id", async (req, res) => {
     return;
   }
 
-  if (id === req.session.userId) {
+  if (id === req.authUserId) {
     res.status(400).json({ error: "You can't delete your own account" });
     return;
   }

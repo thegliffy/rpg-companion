@@ -23,7 +23,7 @@ export function requireNoteAuthorOrDM(req: Request, res: Response, next: NextFun
     return;
   }
 
-  const userId = req.session.userId!;
+  const userId = req.authUserId!;
   if (note.authorUserId === userId) {
     req.noteRow = note;
     next();

@@ -48,7 +48,7 @@ export const charactersRouter = Router();
 charactersRouter.use(requireAuth);
 
 charactersRouter.get("/", (req, res) => {
-  const characters = listCharactersForOwner(req.session.userId!);
+  const characters = listCharactersForOwner(req.authUserId!);
   res.json({ characters });
 });
 
@@ -60,7 +60,7 @@ charactersRouter.post("/", async (req, res) => {
   }
 
   const campaignId = parsed.data.campaignId ?? null;
-  if (campaignId !== null && !getMembership(campaignId, req.session.userId!)) {
+  if (campaignId !== null && !getMembership(campaignId, req.authUserId!)) {
     res.status(403).json({ error: "Not a member of that campaign" });
     return;
   }
@@ -72,7 +72,7 @@ charactersRouter.post("/", async (req, res) => {
     return;
   }
 
-  const character = await createCharacter(req.session.userId!, {
+  const character = await createCharacter(req.authUserId!, {
     ...parsed.data,
     sheetData: sheetParsed.data,
   });
@@ -85,7 +85,7 @@ charactersRouter.get("/:id", requireCharacterOwnerOrDM, (req, res) => {
     res.status(404).json({ error: "Character not found" });
     return;
   }
-  res.json({ character: redactPrivateNotesIfNotOwner(character, req.session.userId!) });
+  res.json({ character: redactPrivateNotesIfNotOwner(character, req.authUserId!) });
 });
 
 charactersRouter.patch("/:id", requireCharacterOwnerOrDM, async (req, res) => {
@@ -96,7 +96,7 @@ charactersRouter.patch("/:id", requireCharacterOwnerOrDM, async (req, res) => {
   }
 
   const updates: typeof parsed.data = { ...parsed.data };
-  const isOwnerRequester = req.characterRow!.ownerUserId === req.session.userId!;
+  const isOwnerRequester = req.characterRow!.ownerUserId === req.authUserId!;
 
   // Once created, the owner can no longer rename their character or change class/background
   // (identity-defining fields) -- a DM or admin reaching this route as a non-owner can, since
@@ -121,7 +121,7 @@ charactersRouter.patch("/:id", requireCharacterOwnerOrDM, async (req, res) => {
       // The DM (not the owner) can edit the rest of the sheet but can never
       // change the owner's private notes — silently restore the stored value.
       // A global admin is exempt from this, same as the view-side redaction.
-      if (req.characterRow!.ownerUserId !== req.session.userId! && !isGlobalAdmin(req.session.userId!)) {
+      if (req.characterRow!.ownerUserId !== req.authUserId! && !isGlobalAdmin(req.authUserId!)) {
         (updates.sheetData as Dnd5eSheetData).privateNotes = existing.privateNotes ?? "";
       }
 
@@ -156,7 +156,7 @@ charactersRouter.patch("/:id", requireCharacterOwnerOrDM, async (req, res) => {
     }
   }
 
-  res.json({ character: redactPrivateNotesIfNotOwner(character, req.session.userId!) });
+  res.json({ character: redactPrivateNotesIfNotOwner(character, req.authUserId!) });
 });
 
 charactersRouter.delete("/:id", requireCharacterOwnerOrDM, async (req, res) => {
@@ -171,7 +171,7 @@ charactersRouter.post("/:id/attach", requireCharacterOwner, async (req, res) => 
     return;
   }
 
-  if (!getMembership(parsed.data.campaignId, req.session.userId!)) {
+  if (!getMembership(parsed.data.campaignId, req.authUserId!)) {
     res.status(403).json({ error: "Not a member of that campaign" });
     return;
   }
@@ -219,7 +219,7 @@ charactersRouter.post(
     // setCharacterPortrait bumps updatedAt -- return the fresh character so the sheet's
     // optimistic-concurrency token stays in sync instead of every later autosave 409ing.
     const character = getCharacter(req.characterRow!.id)!;
-    res.status(201).json({ character: redactPrivateNotesIfNotOwner(character, req.session.userId!) });
+    res.status(201).json({ character: redactPrivateNotesIfNotOwner(character, req.authUserId!) });
   },
 );
 

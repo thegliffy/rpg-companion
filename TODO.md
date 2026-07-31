@@ -1393,3 +1393,130 @@ character showed "CRITICAL HIT" in the text log, rolled `2d8` for damage, and ap
 target's HP (10 → 2) correctly overriding the normal vs-AC hit check. Full build across all three
 workspaces clean throughout; 21 backend + 22 shared tests green. All test users/characters/rolls
 cleaned up afterward.
+
+## Theme: API tokens for scripted access
+
+Prompted by "is there any way we can add API upload for custom content."
+
+**First finding: the upload already exists and already works from outside the browser.** #123 built
+`POST /api/custom-content/import`, and nothing about it is browser-specific. Proven end to end with
+plain curl against the dev server -- register/login to a cookie jar, then POST a pack:
+
+```
+{"results":[{"index":0,"name":"Curl Test Feat","type":"feat","status":"created","id":32},
+            {"index":1,"name":"Curl Test Spell","type":"spell","status":"created","id":33}]}
+```
+
+Per-row schema validation, `(type, name)` dedupe and partial-success reporting all work exactly as
+they do from the UI. **So this theme is not about upload at all -- it's about authentication.** The
+only thing making scripting awkward is that the sole way to authenticate is a password login plus a
+session cookie: a script has to embed a real account password, and the session is a rolling 7-day
+cookie that will eventually stop working.
+
+**The bulk of the work is a refactor, not the tokens.** Auth is session-only today, and
+**49 `req.session.userId` reads span 14 files** (every route group plus five middlewares). Token
+auth means those all have to resolve a user identity that may not have come from a session.
+
+**Cross-cutting trap #1 -- do not set `req.session.userId` from a token.** It's the tempting
+zero-refactor shortcut: populate the session field in memory and all 49 call sites keep working
+untouched. But mutating `req.session` marks it dirty, and `express-session` then *persists* it at
+response end -- every scripted API call would write a junk row into the `sessions` table, growing
+forever and polluting the same table real logins use. Hence a separate `req.authUserId`, and hence
+the refactor.
+
+**Cross-cutting trap #2 -- do not bcrypt the token.** Passwords get a deliberately slow KDF because
+they're low-entropy and brute-forceable; a 256-bit CSPRNG token has nothing to brute-force, so
+bcrypt would add ~100ms to *every* authenticated API request for no security gain. Worse, bcrypt is
+salted per-row, so you couldn't look a token up by its hash at all -- you'd have to scan every token
+row and compare one by one. A plain SHA-256 is deterministic, so the hash gets a unique index and
+lookup stays a single indexed read. (Same reasoning GitHub/GitLab use for PATs.)
+
+**Decisions taken (by the user):** tokens carry **full account access and inherit the owner's role**
+-- the GitHub classic-PAT model -- rather than being scoped to custom content or having per-token
+scope checkboxes. Simplest to build and flexible for scripting characters/campaigns later, with the
+accepted trade-off that a leaked token is a full account compromise until revoked (**including admin
+actions when the owner is an admin**). #146 leans on shown-once + `lastUsedAt` + one-click revoke to
+make that trade-off manageable rather than invisible.
+
+146. ✅ **Token storage, generation and lookup.** New `api_tokens` table + migration `0017`.
+    - **Columns:** `id`, `userId` (FK), `name` (what it's for -- "content upload script"),
+      `tokenHash` (**unique index**, the SHA-256 of the token), `prefix` (first few chars, shown in
+      the list so a token is identifiable without storing it), `lastUsedAt` (nullable),
+      `expiresAt` (nullable -- null means no expiry), `createdAt`.
+    - **Format:** `rpgc_<32 random bytes, base64url>`. The `rpgc_` prefix makes a leaked token
+      greppable in logs/repos and lets secret scanners recognise it.
+    - **Shown exactly once**, at creation. Only the hash is stored, so it is genuinely
+      unrecoverable afterwards -- the UI has to say so plainly.
+    - **Revoke = delete the row.** No soft-delete: this is a self-hosted server, and a revoked
+      token that still exists is just a thing to get wrong later.
+    - `lastUsedAt` is written on use (best-effort, never blocking the request) so a stale or
+      suspicious token is visible in the list.
+
+147. ✅ **`resolveAuth` middleware, and the 49-site session-read refactor.** The security-sensitive
+    half -- a *missed* call site is an auth bug, not a cosmetic one.
+    - **`req.authUserId`** becomes the single source of "who is this request", set app-wide before
+      the routers by a `resolveAuth` middleware: an `Authorization: Bearer rpgc_...` header when
+      present (hash → indexed lookup → reject if unknown/expired), otherwise `req.session.userId`.
+      `requireAuth`/`requireGlobalRole` read only `req.authUserId`.
+    - **Completeness is compiler-enforced, not grep-enforced:** temporarily remove `userId` from the
+      `express-session` `SessionData` declaration, which turns *every* remaining
+      `req.session.userId` read into a type error, fix them all, then restore the declaration (login
+      still writes it). Guarantees none of the 49 is missed, which a hand-audit or a sed could not.
+    - **Verify afterwards** that `grep -rn "req.session.userId" backend/src` returns only the login
+      write in `auth.routes.ts` and the session fallback inside `resolveAuth` itself.
+    - **Websockets stay session-only, deliberately.** `createSocketServer` shares the express session
+      middleware for live campaign updates; that's a browser feature, not a scripting one, and
+      bearer auth over the WS upgrade is surface with no use case behind it.
+    - **No rate limiting on token auth** (unlike login, which has IP + per-user limits): brute-forcing
+      256 bits of entropy isn't a threat model, and a limiter here would only ever throttle a
+      legitimate script.
+
+148. ✅ **Token routes.** `GET/POST/DELETE /api/tokens`, session-authenticated only.
+    - **A token cannot mint or list tokens.** Bearer-authenticated requests are rejected on this
+      router specifically, so a leaked token can't quietly issue itself successors or enumerate the
+      owner's other tokens -- the one place where "inherits your role" is deliberately not honoured,
+      and the main thing that keeps revocation meaningful.
+    - `POST` returns the plaintext token exactly once; `GET` returns name/prefix/lastUsedAt/expiry
+      only. `DELETE` is scoped to the caller's own tokens (admins included -- there's no reason to
+      manage someone else's tokens rather than disable the account).
+
+149. ✅ **Token management UI + a copy-pasteable example.** A new "API tokens" panel on the home
+    dashboard, alongside "My notes"/"My characters" -- per-user, so any DM who authors content can
+    self-serve without an admin.
+    - Create (name + optional expiry), list (name, prefix, last used, expiry), revoke.
+    - **The new-token screen shows a ready-to-run `curl` for the import endpoint** with the real
+      token already in it. The whole point of this theme is scripted uploads; making someone
+      reconstruct the request from docs would waste the work. Doubles as the "copy it now, you
+      cannot see it again" moment.
+
+**Verified (#146-149, done):** the refactor landed exactly as planned -- temporarily renaming
+`SessionData.userId` turned all 49 reads into compile errors, which is how every one was found
+rather than trusting a grep. Afterwards `grep -rn "req.session.userId"` returns only the four
+legitimate sites in `auth.routes.ts` (login/logout/session) plus `resolveAuth`'s own fallback read.
+
+**Caught during the refactor, not in review:** the hardening integration test builds **four**
+separate express apps, each wiring `express.json()` + `createSessionMiddleware()` + routers by hand
+-- so all four silently 401'd everything the moment `requireAuth` started reading `req.authUserId`.
+Fixing the four call sites was trivial, but the underlying footgun (assemble an app, forget one
+middleware, every authenticated route fails as "not authenticated") would bite again. So
+`requireAuth` now *throws* when `req.isTokenAuth === undefined` -- resolveAuth always sets it to a
+boolean, so undefined can only mean the middleware never ran. Misconfiguration now says so instead
+of masquerading as a bad password.
+
+**Second thing the build surfaced:** `api_tokens.user_id` is a NOT NULL FK, making it the **7th of
+9** blockers for #135's user delete. Without wiring it into `countUserDependants` a user whose only
+remaining dependant was a token would have hit the exact opaque FK-constraint 500 that #135 exists
+to prevent. Added to `AdminUserDependants` and the admin panel's breakdown; verified live -- a user
+with nothing but one token returns `409 {"apiTokens":1}` rather than a 500.
+
+Live-verified the whole flow with curl and in the browser: minted a token over a session, then used
+it as the **only** credential (no cookie, no password) to POST a 2-item pack to
+`/api/custom-content/import` -- both created. A bogus token 401s. **Trap #1 confirmed avoided:** ten
+consecutive token-authed requests added **zero** rows to the `sessions` table, while `lastUsedAt`
+updated correctly. A token forced past its expiry 401s and is deleted on sight. A revoked token
+401s immediately. **The #148 carve-out holds:** a valid token attempting to mint a successor or list
+its owner's tokens gets `403 "API tokens can't manage API tokens"` on both. In the UI, the panel
+(DM/admin only) created a token, showed it once with copy buttons, and listed it as `rpgc_p2iR-7ZA…`
+with no way to recover the full value -- and the generated example command, **run verbatim including
+its origin**, successfully imported a feat. Full build across all three workspaces clean; 21 backend
++ 22 shared tests green. All test users/tokens/content cleaned up afterward.

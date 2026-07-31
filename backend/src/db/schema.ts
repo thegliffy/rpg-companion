@@ -16,6 +16,32 @@ export const sessions = sqliteTable("sessions", {
   expiresAt: integer("expires_at").notNull(),
 });
 
+// Long-lived bearer tokens for scripted API access (#146) -- separate from `sessions` above, which
+// is browser-only and expires on a rolling 7-day window. A token authenticates as its owner and
+// inherits their role, so it can do anything they can (the one exception is the token routes
+// themselves -- see tokens.routes.ts).
+export const apiTokens = sqliteTable("api_tokens", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  // What the token is for ("content upload script") -- the only way to tell two apart in the list,
+  // since the token itself is never retrievable after creation.
+  name: text("name").notNull(),
+  // SHA-256 of the full token, hex. Deliberately *not* bcrypt: the token is 256 bits of CSPRNG
+  // output so there is nothing to brute-force, and bcrypt's per-row salt would make lookup a full
+  // table scan instead of the single indexed read a deterministic hash allows.
+  tokenHash: text("token_hash").notNull().unique(),
+  // First few chars of the plaintext ("rpgc_A1b2C3d4"), shown in the list so a token is
+  // identifiable without storing anything that could be used to authenticate.
+  prefix: text("prefix").notNull(),
+  // Written best-effort on each use so a stale or suspicious token is visible before it's a problem.
+  lastUsedAt: text("last_used_at"),
+  // Null means no expiry.
+  expiresAt: text("expires_at"),
+  createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
+});
+
 export const campaigns = sqliteTable("campaigns", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),

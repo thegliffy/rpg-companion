@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { MyCharactersSection } from "../components/MyCharactersSection";
 import { HallOfHeroesSection } from "../components/HallOfHeroesSection";
 import { DiceRoller } from "../components/DiceRoller";
+import { ApiTokensPanel } from "../components/ApiTokensPanel";
 import { NotesSection } from "../components/NotesSection";
 import { InitiativeTracker } from "../components/InitiativeTracker";
 
@@ -83,6 +84,15 @@ export function CampaignList({
 
       <hr />
       <InitiativeTracker campaignId={null} role={null} />
+
+      {/* DM/admin only -- tokens exist for scripted custom-content upload, which is already gated
+          to those roles, so a player has nothing to point one at. */}
+      {(user?.role === "dm" || user?.role === "admin") && (
+        <>
+          <hr />
+          <ApiTokensPanel />
+        </>
+      )}
 
       <hr />
       <h2>Campaigns</h2>

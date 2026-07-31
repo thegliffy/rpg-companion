@@ -18,7 +18,7 @@ export const encountersRouter = Router();
 encountersRouter.use(requireAuth);
 
 encountersRouter.get("/personal", (req, res) => {
-  const encounter = getActiveEncounterForOwner(req.session.userId!);
+  const encounter = getActiveEncounterForOwner(req.authUserId!);
   res.json({ encounter });
 });
 
@@ -29,12 +29,12 @@ encountersRouter.post("/personal/start", async (req, res) => {
     return;
   }
 
-  const encounter = await startPersonalEncounter(req.session.userId!, parsed.data.name);
+  const encounter = await startPersonalEncounter(req.authUserId!, parsed.data.name);
   res.status(201).json({ encounter });
 });
 
 encountersRouter.post("/personal/end", async (req, res) => {
-  const active = getActiveEncounterForOwner(req.session.userId!);
+  const active = getActiveEncounterForOwner(req.authUserId!);
   if (!active) {
     res.status(404).json({ error: "No active personal encounter" });
     return;
@@ -44,7 +44,7 @@ encountersRouter.post("/personal/end", async (req, res) => {
 });
 
 encountersRouter.post("/personal/advance-turn", async (req, res) => {
-  const active = getActiveEncounterForOwner(req.session.userId!);
+  const active = getActiveEncounterForOwner(req.authUserId!);
   if (!active) {
     res.status(404).json({ error: "No active personal encounter" });
     return;
@@ -60,7 +60,7 @@ encountersRouter.post("/personal/combatants", async (req, res) => {
     return;
   }
 
-  const active = getActiveEncounterForOwner(req.session.userId!);
+  const active = getActiveEncounterForOwner(req.authUserId!);
   if (!active) {
     res.status(404).json({ error: "No active personal encounter" });
     return;

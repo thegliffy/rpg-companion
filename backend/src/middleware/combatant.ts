@@ -31,7 +31,7 @@ export function requireCombatantController(req: Request, res: Response, next: Ne
     return;
   }
 
-  const userId = req.session.userId!;
+  const userId = req.authUserId!;
 
   if (encounter.campaignId === null) {
     if (encounter.ownerUserId !== userId) {

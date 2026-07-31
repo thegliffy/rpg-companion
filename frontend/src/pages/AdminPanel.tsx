@@ -137,6 +137,7 @@ export function AdminPanel({
           d.customContent > 0 && `${d.customContent} content item(s)`,
           d.diceRolls > 0 && `${d.diceRolls} dice roll(s)`,
           d.notes > 0 && `${d.notes} note(s)`,
+          d.apiTokens > 0 && `${d.apiTokens} API token(s)`,
         ].filter(Boolean);
         setDeleteBlocked((prev) => ({ ...prev, [id]: `Still owns: ${parts.join(", ")}. Reassign or delete those first.` }));
       } else {

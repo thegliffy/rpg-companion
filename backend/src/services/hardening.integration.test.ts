@@ -33,6 +33,7 @@ import { sharedCharactersRouter } from "../routes/sharedCharacters.routes.js";
 import { campaignsRouter } from "../routes/campaigns.routes.js";
 import { authRouter } from "../routes/auth.routes.js";
 import { createSessionMiddleware } from "../middleware/session.js";
+import { resolveAuth } from "../middleware/auth.js";
 import { db } from "../db/client.js";
 import { eq } from "drizzle-orm";
 import { shopItems } from "../db/schema.js";
@@ -154,6 +155,7 @@ describe("share token is read-only (#77)", () => {
     const app = express();
     app.use(express.json());
     app.use(createSessionMiddleware());
+    app.use(resolveAuth);
     app.use("/api/characters", charactersRouter);
     app.use("/api/shared/characters", sharedCharactersRouter);
     server = await new Promise<Server>((resolve) => {
@@ -209,6 +211,7 @@ describe("campaign character list redaction (#93)", () => {
     const app = express();
     app.use(express.json());
     app.use(createSessionMiddleware());
+    app.use(resolveAuth);
     app.use("/api/auth", authRouter);
     app.use("/api/campaigns", campaignsRouter);
     server = await new Promise<Server>((resolve) => {
@@ -299,6 +302,7 @@ describe("rate limiter fixes (#98)", () => {
     app.set("trust proxy", true);
     app.use(express.json());
     app.use(createSessionMiddleware());
+    app.use(resolveAuth);
     app.use("/api/auth", authRouter);
     app.use("/api/campaigns", campaignsRouter);
     server = await new Promise<Server>((resolve) => {
@@ -398,6 +402,7 @@ describe("empty shop-item PATCH and bad portrait upload return 4xx, not 500 (#99
     const app = express();
     app.use(express.json());
     app.use(createSessionMiddleware());
+    app.use(resolveAuth);
     app.use("/api/auth", authRouter);
     app.use("/api/campaigns", campaignsRouter);
     app.use("/api/characters", charactersRouter);

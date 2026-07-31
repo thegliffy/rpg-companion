@@ -10,7 +10,7 @@ export const notesRouter = Router();
 notesRouter.use(requireAuth);
 
 notesRouter.get("/", (req, res) => {
-  const notes = listPersonalNotes(req.session.userId!);
+  const notes = listPersonalNotes(req.authUserId!);
   res.json({ notes });
 });
 
@@ -21,7 +21,7 @@ notesRouter.post("/", async (req, res) => {
     return;
   }
 
-  const note = await createNote(null, req.session.userId!, parsed.data.title, parsed.data.contentMd);
+  const note = await createNote(null, req.authUserId!, parsed.data.title, parsed.data.contentMd);
   res.status(201).json({ note });
 });
 

@@ -70,14 +70,14 @@ campaignsRouter.post("/", requireGlobalRole("dm", "admin"), async (req, res) => 
     return;
   }
 
-  const campaign = await createCampaign(req.session.userId!, parsed.data.name, parsed.data.description);
+  const campaign = await createCampaign(req.authUserId!, parsed.data.name, parsed.data.description);
   res.status(201).json({ campaign });
 });
 
 campaignsRouter.get("/", (req, res) => {
-  const campaigns = isGlobalAdmin(req.session.userId!)
+  const campaigns = isGlobalAdmin(req.authUserId!)
     ? listAllCampaigns()
-    : listCampaignsForUser(req.session.userId!);
+    : listCampaignsForUser(req.authUserId!);
   res.json({ campaigns });
 });
 
@@ -97,7 +97,7 @@ campaignsRouter.post(
     }
 
     try {
-      const campaign = await joinCampaignByInviteCode(req.session.userId!, parsed.data.inviteCode);
+      const campaign = await joinCampaignByInviteCode(req.authUserId!, parsed.data.inviteCode);
       res.status(200).json({ campaign });
     } catch (err) {
       if (err instanceof InviteCodeNotFoundError) {
@@ -114,8 +114,8 @@ campaignsRouter.post(
 );
 
 campaignsRouter.get("/:id", requireCampaignMember, (req, res) => {
-  const detail = getCampaignDetail(req.campaignMembership!.campaignId, req.session.userId!, {
-    bypassMembership: isGlobalAdmin(req.session.userId!),
+  const detail = getCampaignDetail(req.campaignMembership!.campaignId, req.authUserId!, {
+    bypassMembership: isGlobalAdmin(req.authUserId!),
   });
   if (!detail) {
     res.status(404).json({ error: "Campaign not found" });
@@ -142,7 +142,7 @@ campaignsRouter.delete("/:id", requireCampaignMember, async (req, res) => {
     res.status(404).json({ error: "Campaign not found" });
     return;
   }
-  if (ownerUserId !== req.session.userId! && !isGlobalAdmin(req.session.userId!)) {
+  if (ownerUserId !== req.authUserId! && !isGlobalAdmin(req.authUserId!)) {
     res.status(403).json({ error: "Only the campaign owner or an admin can delete this campaign" });
     return;
   }
@@ -158,7 +158,7 @@ campaignsRouter.post("/:id/invite/regenerate", requireDM, async (req, res) => {
 
 campaignsRouter.get("/:id/characters", requireCampaignMember, (req, res) => {
   const characters = listCharactersForCampaign(req.campaignMembership!.campaignId).map((c) =>
-    redactForCampaignMember(c, req.session.userId!, req.campaignMembership!.role),
+    redactForCampaignMember(c, req.authUserId!, req.campaignMembership!.role),
   );
   res.json({ characters });
 });
@@ -176,7 +176,7 @@ campaignsRouter.post("/:id/notes", requireCampaignMember, async (req, res) => {
   }
 
   const campaignId = req.campaignMembership!.campaignId;
-  const note = await createNote(campaignId, req.session.userId!, parsed.data.title, parsed.data.contentMd);
+  const note = await createNote(campaignId, req.authUserId!, parsed.data.title, parsed.data.contentMd);
   emitToCampaign(campaignId, "notes:changed", { noteId: note.id, action: "created" });
   res.status(201).json({ note });
 });
@@ -259,7 +259,7 @@ campaignsRouter.post("/:id/rolls", requireCampaignMember, async (req, res) => {
 
   const campaignId = req.campaignMembership!.campaignId;
   try {
-    const roll = await createRoll(campaignId, req.session.userId!, parsed.data.formula, parsed.data.label);
+    const roll = await createRoll(campaignId, req.authUserId!, parsed.data.formula, parsed.data.label);
     emitToCampaign(campaignId, "roll:created", roll);
     res.status(201).json({ roll });
   } catch (err) {
@@ -346,7 +346,7 @@ campaignsRouter.post("/:id/shop/buy", requireCampaignMember, async (req, res) =>
 
   const character = getCharacter(parsed.data.characterId);
   const isDm = req.campaignMembership!.role === "dm";
-  if (!character || (character.ownerUserId !== req.session.userId! && !isDm)) {
+  if (!character || (character.ownerUserId !== req.authUserId! && !isDm)) {
     res.status(403).json({ error: "Not authorized to transact for this character" });
     return;
   }
@@ -378,7 +378,7 @@ campaignsRouter.post("/:id/shop/sell", requireCampaignMember, async (req, res) =
 
   const character = getCharacter(parsed.data.characterId);
   const isDm = req.campaignMembership!.role === "dm";
-  if (!character || (character.ownerUserId !== req.session.userId! && !isDm)) {
+  if (!character || (character.ownerUserId !== req.authUserId! && !isDm)) {
     res.status(403).json({ error: "Not authorized to transact for this character" });
     return;
   }

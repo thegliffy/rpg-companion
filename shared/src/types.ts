@@ -135,6 +135,28 @@ export interface AdminUserDependants {
   customContent: number;
   diceRolls: number;
   notes: number;
+  // api_tokens.user_id is NOT NULL too (#146), so live tokens block a user delete exactly like the
+  // six above -- counted here so the 409 breakdown stays complete rather than the delete failing
+  // with an opaque FK constraint error.
+  apiTokens: number;
+}
+
+// An API token as it can safely be listed (#146) -- deliberately no way to get the token itself
+// back. Only the SHA-256 hash is stored, so `prefix` is all there is to identify one by after
+// creation; the plaintext exists exactly once, in the POST /api/tokens response.
+export interface ApiTokenSummary {
+  id: number;
+  name: string;
+  prefix: string;
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+/** The one and only time the plaintext token is ever returned. */
+export interface CreatedApiToken {
+  token: string;
+  tokenInfo: ApiTokenSummary;
 }
 
 export interface Note {

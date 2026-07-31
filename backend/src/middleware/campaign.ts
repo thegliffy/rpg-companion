@@ -23,11 +23,11 @@ export function requireCampaignMember(req: Request, res: Response, next: NextFun
     return;
   }
 
-  const membership = getMembership(campaignId, req.session.userId!);
+  const membership = getMembership(campaignId, req.authUserId!);
   if (!membership) {
     // A global admin can act on any campaign as if they were its DM, even
     // without an actual membership row.
-    if (isGlobalAdmin(req.session.userId!)) {
+    if (isGlobalAdmin(req.authUserId!)) {
       req.campaignMembership = { campaignId, role: "dm" };
       next();
       return;

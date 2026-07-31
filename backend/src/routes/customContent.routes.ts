@@ -61,7 +61,7 @@ customContentRouter.get("/pending", requireAdmin, (_req, res) => {
 });
 
 customContentRouter.get("/", (req, res) => {
-  res.json({ items: listVisibleCustomContent(req.session.userId!) });
+  res.json({ items: listVisibleCustomContent(req.authUserId!) });
 });
 
 customContentRouter.post("/", requireGlobalRole("dm", "admin"), async (req, res) => {
@@ -83,7 +83,7 @@ customContentRouter.post("/", requireGlobalRole("dm", "admin"), async (req, res)
   }
 
   const created = await createCustomContent(
-    req.session.userId!,
+    req.authUserId!,
     parsed.data.type,
     parsed.data.system,
     parsed.data.name,
@@ -100,7 +100,7 @@ customContentRouter.post("/import", requireGlobalRole("dm", "admin"), async (req
     return;
   }
   const { system, items } = parsed.data;
-  const userId = req.session.userId!;
+  const userId = req.authUserId!;
 
   // Dedup scope is deliberately "this user's own items in this system" only -- an import
   // updating someone else's content (even an admin's) would need its own authorization story,
@@ -211,7 +211,7 @@ customContentRouter.post("/:id/approve", requireAdmin, async (req, res) => {
     return;
   }
 
-  const updated = await approveCustomContent(id, req.session.userId!);
+  const updated = await approveCustomContent(id, req.authUserId!);
   if (!updated) {
     res.status(404).json({ error: "Not found" });
     return;

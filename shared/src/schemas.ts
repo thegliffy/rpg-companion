@@ -26,6 +26,14 @@ export const reassignCharacterOwnerSchema = z.object({
 });
 export type ReassignCharacterOwnerInput = z.infer<typeof reassignCharacterOwnerSchema>;
 
+export const createApiTokenSchema = z.object({
+  name: z.string().trim().min(1).max(60),
+  // Days until the token expires; omitted means it never does. Capped at ~2 years so "never" is a
+  // deliberate choice rather than something you land on by typing a big number.
+  expiresInDays: z.number().int().min(1).max(730).optional(),
+});
+export type CreateApiTokenInput = z.infer<typeof createApiTokenSchema>;
+
 export const createCampaignSchema = z.object({
   name: z.string().trim().min(1).max(100),
   description: z.string().trim().max(2000).optional(),

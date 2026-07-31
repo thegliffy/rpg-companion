@@ -25,7 +25,7 @@ export function requireCustomContentOwnerOrAdmin(req: Request, res: Response, ne
     return;
   }
 
-  const userId = req.session.userId!;
+  const userId = req.authUserId!;
   if (row.createdByUserId !== userId && !isGlobalAdmin(userId)) {
     res.status(403).json({ error: "Only the creator or an admin can do this" });
     return;

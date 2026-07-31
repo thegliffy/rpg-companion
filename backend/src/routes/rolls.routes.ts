@@ -11,7 +11,7 @@ rollsRouter.use(requireAuth);
 
 rollsRouter.get("/", (req, res) => {
   const limit = parseLimit(req.query.limit);
-  const rolls = listPersonalRolls(req.session.userId!, limit);
+  const rolls = listPersonalRolls(req.authUserId!, limit);
   res.json({ rolls });
 });
 
@@ -23,7 +23,7 @@ rollsRouter.post("/", async (req, res) => {
   }
 
   try {
-    const roll = await createRoll(null, req.session.userId!, parsed.data.formula, parsed.data.label);
+    const roll = await createRoll(null, req.authUserId!, parsed.data.formula, parsed.data.label);
     res.status(201).json({ roll });
   } catch (err) {
     if (err instanceof InvalidDiceFormulaError) {
