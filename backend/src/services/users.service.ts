@@ -2,14 +2,31 @@ import bcrypt from "bcrypt";
 import { eq, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { users, characters, campaigns, campaignMemberships, customContent, diceRolls, notes, apiTokens } from "../db/schema.js";
-import type { PublicUser, GlobalRole, AdminUserDependants } from "shared";
+import type { PublicUser, GlobalRole, AdminUserDependants, ThemeId } from "shared";
 
 const SALT_ROUNDS = 12;
 
 export class UsernameTakenError extends Error {}
 
 export function toPublicUser(user: typeof users.$inferSelect): PublicUser {
-  return { id: user.id, username: user.username, role: user.role as GlobalRole, createdAt: user.createdAt };
+  return {
+    id: user.id,
+    username: user.username,
+    role: user.role as GlobalRole,
+    createdAt: user.createdAt,
+    theme: (user.theme as ThemeId | null) ?? null,
+  };
+}
+
+export async function updateUserTheme(id: number, theme: ThemeId) {
+  // "default" is stored as null rather than a literal, so there's exactly one representation of
+  // "no preference" -- the same one every pre-#154 row already has.
+  const [updated] = await db
+    .update(users)
+    .set({ theme: theme === "default" ? null : theme })
+    .where(eq(users.id, id))
+    .returning();
+  return updated;
 }
 
 export async function createUser(username: string, password: string) {

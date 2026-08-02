@@ -56,7 +56,7 @@ export function CampaignDashboard({
     }
   }
 
-  if (error) return <p style={{ color: "crimson" }}>{error}</p>;
+  if (error) return <p style={{ color: "var(--danger)" }}>{error}</p>;
   if (!campaign) return <p>Loading…</p>;
 
   return (
@@ -98,7 +98,7 @@ export function CampaignDashboard({
 
       {user && (user.id === campaign.ownerUserId || user.role === "admin") && (
         <div style={{ marginTop: "2rem", border: "1px solid crimson", borderRadius: 6, padding: "0.75rem" }}>
-          <h3 style={{ color: "crimson", marginTop: 0 }}>Delete campaign</h3>
+          <h3 style={{ color: "var(--danger)", marginTop: 0 }}>Delete campaign</h3>
           <p>
             This permanently deletes the campaign, its members, notes, encounters, and shop. Attached characters are{" "}
             <strong>detached</strong>, not deleted, and remain in your character list.
@@ -114,7 +114,7 @@ export function CampaignDashboard({
           <button
             onClick={handleDelete}
             disabled={deleteConfirmText !== campaign.name || deleting}
-            style={{ color: "crimson" }}
+            style={{ color: "var(--danger)" }}
           >
             {deleting ? "Deleting…" : "Delete campaign"}
           </button>

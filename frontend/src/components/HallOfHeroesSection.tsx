@@ -27,7 +27,7 @@ export function HallOfHeroesSection({ onOpenCharacter }: { onOpenCharacter: (id:
   return (
     <div>
       <h2>Hall of Heroes</h2>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
       <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
         {characters.map((c) => {
           const sheet = c.sheetData as Partial<Dnd5eSheetData>;
@@ -38,7 +38,7 @@ export function HallOfHeroesSection({ onOpenCharacter }: { onOpenCharacter: (id:
               key={c.id}
               onClick={() => onOpenCharacter(c.id)}
               style={{
-                border: "1px solid #ddd",
+                border: "1px solid var(--border-subtle)",
                 borderRadius: 6,
                 padding: "0.75rem",
                 width: "10rem",
@@ -48,7 +48,7 @@ export function HallOfHeroesSection({ onOpenCharacter }: { onOpenCharacter: (id:
             >
               <CharacterPortrait characterId={c.id} canEdit={false} size={96} />
               <div style={{ fontWeight: "bold", marginTop: "0.4rem" }}>{c.name}</div>
-              <small style={{ color: "#666" }}>
+              <small style={{ color: "var(--text-muted)" }}>
                 {label}
                 {date ? ` — ${date}` : ""}
               </small>

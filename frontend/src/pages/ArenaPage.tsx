@@ -280,17 +280,17 @@ export function ArenaPage({ onBack }: { onBack: () => void }) {
     <div style={{ maxWidth: 800, margin: "2rem auto", padding: "0 1rem" }}>
       <button onClick={onBack}>&larr; Back</button>
       <h1>Arena</h1>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       {phase === "setup" && (
         <div>
-          <p style={{ color: "#666" }}>
+          <p style={{ color: "var(--text-muted)" }}>
             Pick two combatants and simulate a fight, turn by turn. Only D&D 5e characters can fight (attacks/AC are
             pulled from their sheet).
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-            <div style={{ border: "1px solid #ccc", borderRadius: 6, padding: "0.75rem" }}>
+            <div style={{ border: "1px solid var(--border)", borderRadius: 6, padding: "0.75rem" }}>
               <h3>Side A</h3>
               <select value={sideAId} onChange={(e) => setSideAId(e.target.value ? Number(e.target.value) : "")}>
                 <option value="">Choose a character…</option>
@@ -302,7 +302,7 @@ export function ArenaPage({ onBack }: { onBack: () => void }) {
               </select>
             </div>
 
-            <div style={{ border: "1px solid #ccc", borderRadius: 6, padding: "0.75rem" }}>
+            <div style={{ border: "1px solid var(--border)", borderRadius: 6, padding: "0.75rem" }}>
               <h3>Side B</h3>
               <label style={{ marginRight: "1rem" }}>
                 <input
@@ -373,17 +373,17 @@ export function ArenaPage({ onBack }: { onBack: () => void }) {
               <div
                 key={c.key}
                 style={{
-                  border: turnKey === c.key && phase === "battle" ? "2px solid #2a6" : "1px solid #ccc",
+                  border: turnKey === c.key && phase === "battle" ? "2px solid var(--success)" : "1px solid var(--border)",
                   borderRadius: 6,
                   padding: "0.75rem",
                 }}
               >
                 <h3 style={{ marginBottom: "0.2rem" }}>
-                  {c.label} {turnKey === c.key && phase === "battle" && <span style={{ color: "#2a6" }}>(turn)</span>}
+                  {c.label} {turnKey === c.key && phase === "battle" && <span style={{ color: "var(--success)" }}>(turn)</span>}
                 </h3>
                 <p style={{ margin: "0.2rem 0" }}>
                   AC {c.ac} · Initiative {c.initiative} · HP{" "}
-                  <strong style={{ color: c.hpCurrent === 0 ? "crimson" : undefined }}>
+                  <strong style={{ color: c.hpCurrent === 0 ? "var(--danger)" : undefined }}>
                     {c.hpCurrent} / {c.hpMax}
                   </strong>{" "}
                   <button type="button" onClick={() => adjustHp(isA, -1)} disabled={phase === "finished"}>
@@ -396,7 +396,7 @@ export function ArenaPage({ onBack }: { onBack: () => void }) {
 
                 {phase === "battle" && turnKey === c.key && (
                   <div>
-                    {c.attacks.length === 0 && <p style={{ color: "#888" }}>No rollable attacks.</p>}
+                    {c.attacks.length === 0 && <p style={{ color: "var(--text-dim)" }}>No rollable attacks.</p>}
                     {c.attacks.map((atk) => (
                       <button
                         key={atk.name}
@@ -419,7 +419,7 @@ export function ArenaPage({ onBack }: { onBack: () => void }) {
 
           <div
             ref={logRef}
-            style={{ height: 220, overflowY: "auto", border: "1px solid #ccc", borderRadius: 6, padding: "0.5rem 0.75rem" }}
+            style={{ height: 220, overflowY: "auto", border: "1px solid var(--border)", borderRadius: 6, padding: "0.5rem 0.75rem" }}
           >
             {log.map((line, i) => (
               <div key={i}>{line}</div>

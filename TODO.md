@@ -1520,3 +1520,156 @@ its owner's tokens gets `403 "API tokens can't manage API tokens"` on both. In t
 with no way to recover the full value -- and the generated example command, **run verbatim including
 its origin**, successfully imported a feat. Full build across all three workspaces clean; 21 backend
 + 22 shared tests green. All test users/tokens/content cleaned up afterward.
+
+## Theme: a real theming layer, and six themes on top of it
+
+Prompted by "theming improvements to make it look like an old timey pen and paper theme," then widened
+to several themes including a futuristic one. A mockup of three paper directions was built first
+(Ledger / Vellum / Graph) and the direction confirmed off that.
+
+**The blocker is that there is no theming layer at all.** `index.css` defines `--text`, `--bg`,
+`--border`, `--accent` and even a `prefers-color-scheme: dark` block -- and **not one component reads
+any of them**. Every surface is styled inline with literal values: **186 hardcoded colours across 38
+components**, plus `crimson` as the de-facto error colour in **27** files. Editing the existing
+variables today changes nothing on screen, so "add a theme" is really "add the layer, then add
+themes."
+
+**The 186 is not 186 decisions -- it collapses hard.** Counted rather than estimated:
+
+| Pattern | Reality |
+| --- | --- |
+| `const box` panel style | duplicated across **7 files**, 5 of them byte-identical |
+| `overlayStyle` + `dialogStyle` | duplicated across **6 modal files** |
+| `crimson` | 27 files, already functioning as one error token |
+| `#666` / `#555` / `#888` / `#777` | 93 uses -> one muted-text token |
+| `#ccc` / `#ddd` / `#eee` / `#bbb` | 79 uses -> two border tokens (hairline + panel) |
+
+So the vocabulary lands around a dozen tokens, and a large share of the work is *extracting shared
+style objects that were already copy-pasted* -- a deduplication that's worth doing on its own merits
+and happens to be the thing that makes theming possible.
+
+**Cross-cutting trap #1 -- inline styles beat stylesheets, so the layer has to replace them, not
+override them.** There's no CSS-specificity trick that lets a theme win against
+`style={{ color: "#666" }}`; short of `!important` on every rule, the inline value always wins. The
+tokens must be *substituted into* those style objects (`color: "var(--text-muted)"`), which is why
+this is a refactor and not a stylesheet drop-in.
+
+**Cross-cutting trap #2 -- the traditional sheet is a printable artifact, not a screen.** It already
+carries its own 16 `--ts-*` tokens and an `@page` block. A dark or Console theme reaching print
+means a solid black page and a drained cartridge. Decision below: it themes on screen, and print is
+forced back to black-on-white regardless of theme.
+
+**Trap #3 -- `index.css` and `App.css` are still largely Vite starter scaffolding.** `.hero`,
+`#next-steps`, `#docs`, `.vite`, `.framework`, `.ticks`, `#spacer` are dead: nothing renders them.
+`#root` also still carries the template's `text-align: center` and a fixed `1126px` width. Clearing
+that out first means the theme layer isn't built on top of rules that fight it.
+
+**Decisions taken (all by the user):** **six themes**; the selected theme is an **account setting**
+(the app's first user preference of any kind); and the traditional sheet **follows the theme on
+screen but always prints as paper**.
+
+150. ✅ **Kill the dead starter CSS, then define the token vocabulary.** Groundwork -- nothing visual
+    should change in this item.
+    - Delete the unused Vite scaffold rules from `index.css`/`App.css` and the `#root` centring and
+      fixed width that no longer serve the app.
+    - **Define the tokens** on `:root`, named by *role* rather than by look, so a theme can't be
+      described in terms of one specific palette: `--surface`, `--surface-raised`, `--surface-sunken`,
+      `--text`, `--text-muted`, `--text-heading`, `--border`, `--border-strong`, `--accent`,
+      `--accent-contrast`, `--danger`, `--success`, plus `--font-display` / `--font-body` /
+      `--font-data` and a `--radius` (paper themes want ~1px, the current look wants 6px).
+    - **Default theme reproduces today's appearance exactly.** That's the acceptance test for the
+      whole refactor: with Default selected, the app should be pixel-identical to before, which is
+      the only cheap way to prove a 38-file substitution changed nothing.
+
+151. ✅ **Extract the duplicated style objects into one shared module.** The dedup that makes the rest
+    tractable, and worth doing regardless of theming.
+    - `const box` (7 files) becomes one exported `panel` style; `overlayStyle` + `dialogStyle`
+      (6 modal files) become one exported pair. All of them read tokens.
+    - Also folds in the `numInput`/`rowStyle` variants that repeat across sheets.
+    - Mechanical, and it shrinks the surface the next item has to touch.
+
+152. ✅ **Substitute tokens for the remaining hardcoded values.** The bulk edit, ~38 files.
+    - Greys map by role, not by value: `#666`/`#555`/`#888`/`#777` -> `--text-muted`;
+      `#ccc`/`#ddd`/`#eee` -> `--border`; `#bbb` -> `--border-strong`; `crimson` -> `--danger`;
+      `green`/`#1f6e1f` -> `--success`.
+    - **Verify by diffing rendered output, not by reading the diff.** With Default selected, walk
+      the main surfaces (home, sheet, custom content manager, admin panel, dice modal, bestiary,
+      arena) and confirm nothing moved or changed colour. A missed literal is invisible in Default
+      and only shows up as a stubborn light-grey border once a dark theme is on -- so this pass is
+      what makes the later themes trustworthy.
+    - The dice modal (#137) is a useful canary: it's recent, self-contained, and uses semantic
+      colour (nat 20 green / nat 1 red) that must survive theming without becoming unreadable on a
+      dark ground.
+
+153. ✅ **The six themes.** Each is one block of token overrides -- no component changes.
+    - **Default** — today's look, unchanged. Ships selected so nobody is surprised by an upgrade.
+    - **Ledger** — ruled off-white, oxblood for pending/corrections, ink blue for approvals.
+    - **Vellum** — aged warm paper, umber and moss; the heaviest of the paper set.
+    - **Graph** — blueprint white with a 16px CSS grid, plan blue, pencil brown.
+    - **Console** — the futuristic one: dark slate ground, phosphor accent, monospace `--font-data`,
+      square `--radius`. This is the theme that will surface every missed literal from #152.
+    - **High contrast** — near-black on white, heavy borders, no decorative tint. Held to a real
+      WCAG AA check on body text and on the semantic colours, not eyeballed.
+    - Every theme sets all tokens; none inherits half a palette from Default.
+
+154. ✅ **Theme as an account setting.** The app's first user preference -- worth building as a pattern,
+    not a one-off.
+    - Nullable `theme` column on `users` + migration `0018`; `GET /api/auth/session` returns it and a
+      `PATCH /api/auth/preferences` sets it. Null means Default, so existing rows need no backfill.
+    - **Mirrored into `localStorage` and applied before first paint**, so the correct theme is on the
+      document before the session request resolves -- otherwise every load flashes Default first.
+      The account value stays authoritative and overwrites the cache when it arrives.
+    - Picker lives in the same home-dashboard column as the API tokens panel (#149), visible to
+      everyone rather than DM/admin-gated -- a theme is nobody else's business.
+    - The next preference (the dice-modal opt-out considered and deferred during #139) should reuse
+      this endpoint rather than inventing a second one.
+
+155. ✅ **Print stays paper, whatever the theme.** Closes trap #2.
+    - A `@media print` block pins the traditional sheet's `--ts-*` tokens back to black-on-white and
+      neutralises any themed `--surface`/`--text` that would otherwise reach the page.
+    - **Verify via actual print preview** on the Console theme specifically -- the failure being
+      guarded against (a page of solid dark ink) is exactly the kind that looks fine on screen and
+      is only visible in preview.
+
+**Verified (#150-155, done):** the acceptance test held -- with Default selected the app reports the
+original values exactly (`--text: #6b6375`, 18px root, white ground, `--radius: 6px`, and **no
+`data-theme` attribute at all**, since Default *is* the `:root` block rather than a seventh copy of
+the palette). After the substitution, `grep` for a hardcoded colour in any style context across all
+`.tsx` returns **nothing** -- the only literals left are ThemePicker's swatches, which are literal by
+necessity: a swatch has to preview a theme that isn't currently applied, so it can't read live tokens.
+
+**Two corrections to the plan, made against reality rather than assumption.** First, the plan said to
+delete `#root`'s centring and fixed width as scaffold -- but they, along with the `p`/`code`/`h1`
+rules, are *live* and do affect the current layout. Only the class-based scaffold (`.hero`,
+`#next-steps`, `#docs`, `.ticks`, `#spacer`, `.counter`) was genuinely dead, plus `App.css` in its
+entirety, which turned out to be imported by nothing at all. Deleting what the plan claimed would
+have broken the pixel-identical criterion the same item depends on. Second, the greys collapse was
+described as ~12 tokens; the real vocabulary needed a `--warning`/`--warning-bg` pair that no
+existing role covered (the amber "(homebrew)" markers and the sheet's level-up banner), found only
+by sweeping for stragglers after the main pass.
+
+**Console did its job as the canary.** Auditing every rendered element for a light background or
+border while Console is active -- the only reliable way to find a missed literal, since one is
+invisible under Default -- returned **0 offenders across 984 elements** on the character sheet
+(the file that carried 39 literals) and 0 on the dice modal, whose die faces, dialog and semantic
+crit colours all themed correctly.
+
+**One real accessibility failure caught by measuring rather than eyeballing:** Graph's muted text
+came in at **4.35:1**, just under the 4.5 AA threshold. Darkened to 5.18:1. Final measured contrast
+against each theme's own ground -- body / muted / danger / success / accent all clear AA on all six:
+Ledger 15.5/5.2/7.4/9.6/7.4, Vellum 12.0/4.6/5.9/6.7/6.7, Graph 12.0/5.2/6.3/6.1/6.6,
+Console 12.2/6.0/6.6/10.9/11.2, High contrast 21.0/7.0/7.2/6.6/7.8.
+
+**Known and deliberate:** `--text-dim` (tertiary text -- "never", "No tokens yet") sits at 3.1-3.8:1
+on the five decorative themes. That is not a regression: Default's original `#888` was 3.54:1, so
+this is a pre-existing shortfall carried forward rather than introduced, and raising it on Default
+would break the pixel-identical criterion. The High contrast theme resolves it properly (7.0:1),
+which is what that theme exists for.
+
+Persistence verified end to end: choosing Console wrote `theme: "console"` to the account *and* the
+`rpgc-theme` localStorage key, and the theme survived a full navigation via the pre-paint
+`applyTheme(cachedTheme())` in `main.tsx` -- without which every load paints Default first and
+visibly snaps. Print guard confirmed parsed and live: with Console active, the `@media print` block
+still pins `--surface`/`--ts-fill` to white and forces `body { background: #fff !important }`, so the
+printable character sheet cannot come out as a page of solid dark ink. Full build clean across all
+three workspaces; 21 backend + 22 shared tests green; test user and character cleaned up.

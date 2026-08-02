@@ -322,9 +322,9 @@ export function AdminPanel({
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "1rem" }}>
       <button onClick={onBack}>← Back</button>
       <h2>Admin panel</h2>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
-      <div style={{ display: "flex", gap: "0.5rem", borderBottom: "1px solid #ccc", marginBottom: "1rem" }}>
+      <div style={{ display: "flex", gap: "0.5rem", borderBottom: "1px solid var(--border)", marginBottom: "1rem" }}>
         {(
           [
             ["users", `Users (${users.length})`],
@@ -339,7 +339,7 @@ export function AdminPanel({
               border: "none",
               background: "none",
               padding: "0.5rem 0.75rem",
-              borderBottom: tab === t ? "2px solid #333" : "2px solid transparent",
+              borderBottom: tab === t ? "2px solid var(--text)" : "2px solid transparent",
               fontWeight: tab === t ? "bold" : "normal",
               cursor: "pointer",
             }}
@@ -355,11 +355,11 @@ export function AdminPanel({
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Username</th>
-              <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Created</th>
-              <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Role</th>
-              <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Reset password</th>
-              <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Delete</th>
+              <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Username</th>
+              <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Created</th>
+              <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Role</th>
+              <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Reset password</th>
+              <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Delete</th>
             </tr>
           </thead>
           <tbody>
@@ -401,7 +401,7 @@ export function AdminPanel({
                     </button>
                     {resetMessages[u.id] && (
                       <div>
-                        <small style={{ color: "green" }}>{resetMessages[u.id]}</small>
+                        <small style={{ color: "var(--success)" }}>{resetMessages[u.id]}</small>
                       </div>
                     )}
                   </td>
@@ -416,7 +416,7 @@ export function AdminPanel({
                     </button>
                     {deleteBlocked[u.id] && (
                       <div>
-                        <small style={{ color: "crimson" }}>{deleteBlocked[u.id]}</small>
+                        <small style={{ color: "var(--danger)" }}>{deleteBlocked[u.id]}</small>
                       </div>
                     )}
                   </td>
@@ -437,7 +437,7 @@ export function AdminPanel({
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    border: "1px solid #ccc",
+                    border: "1px solid var(--border)",
                     borderRadius: 6,
                     padding: "0.5rem 0.75rem",
                     marginBottom: "0.5rem",
@@ -510,12 +510,12 @@ export function AdminPanel({
             <thead>
               <tr>
                 <th></th>
-                <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Name</th>
-                <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Type</th>
-                <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>System</th>
-                <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Owner</th>
-                <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Status</th>
-                <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Actions</th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Name</th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Type</th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>System</th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Owner</th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Status</th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -589,13 +589,13 @@ export function AdminPanel({
             <thead>
               <tr>
                 <th></th>
-                <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Name</th>
-                <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Owner</th>
-                <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Campaign</th>
-                <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>System</th>
-                <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Level</th>
-                <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Status</th>
-                <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Actions</th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Name</th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Owner</th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Campaign</th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>System</th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Level</th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Status</th>
+                <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Actions</th>
               </tr>
             </thead>
             <tbody>

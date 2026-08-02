@@ -55,21 +55,21 @@ export function DiceRoller({ campaignId }: { campaignId: number | null }) {
   return (
     <div>
       <h2>Dice Roller</h2>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       <div
         ref={historyRef}
         style={{
           height: 240,
           overflowY: "auto",
-          border: "1px solid #ccc",
+          border: "1px solid var(--border)",
           borderRadius: 4,
           padding: "0.4rem 0.6rem",
           marginBottom: "0.5rem",
         }}
       >
         {oldestFirst.length === 0 ? (
-          <p style={{ color: "#888", margin: 0 }}>No rolls yet.</p>
+          <p style={{ color: "var(--text-dim)", margin: 0 }}>No rolls yet.</p>
         ) : (
           <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
             {oldestFirst.map((r) => (

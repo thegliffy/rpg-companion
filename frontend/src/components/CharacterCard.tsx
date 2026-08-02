@@ -41,10 +41,10 @@ export function CharacterCard({
   actions?: ReactNode;
 }) {
   return (
-    <div style={{ border: "1px solid #ddd", padding: "1rem", marginBottom: "0.5rem" }}>
+    <div style={{ border: "1px solid var(--border-subtle)", padding: "1rem", marginBottom: "0.5rem" }}>
       <h3>
         {character.name} <small>({character.ownerUsername})</small>{" "}
-        <small style={{ background: "#eee", borderRadius: 4, padding: "0.1rem 0.4rem" }}>
+        <small style={{ background: "var(--border-faint)", borderRadius: 4, padding: "0.1rem 0.4rem" }}>
           {SYSTEMS[character.system]?.name ?? character.system}
         </small>
       </h3>

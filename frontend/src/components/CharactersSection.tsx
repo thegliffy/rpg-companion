@@ -53,7 +53,7 @@ export function CharactersSection({
   return (
     <div>
       <h2>Characters</h2>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       {characters.map((c) => (
         <CharacterCard

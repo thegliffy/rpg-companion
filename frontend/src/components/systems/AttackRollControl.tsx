@@ -103,12 +103,12 @@ export function AttackRollControl({
         // answer, so the Hit/Miss prompt (which exists because the app has no notion of target
         // AC) is skipped on exactly these two rolls (#145).
         if (natural !== null && natural >= critThreshold) {
-          setSessionActions(<p style={{ margin: 0, color: "#1f6e1f", fontWeight: 600 }}>Critical hit!</p>);
+          setSessionActions(<p style={{ margin: 0, color: "var(--success)", fontWeight: 600 }}>Critical hit!</p>);
           await rollDamagePhase(true);
           return;
         }
         if (natural === 1) {
-          setSessionActions(<p style={{ margin: 0, color: "#a5281b" }}>Critical miss.</p>);
+          setSessionActions(<p style={{ margin: 0, color: "var(--danger)" }}>Critical miss.</p>);
           setPhase("done");
           return;
         }
@@ -127,7 +127,7 @@ export function AttackRollControl({
             <button
               type="button"
               onClick={() => {
-                setSessionActions(<p style={{ margin: 0, color: "#666" }}>Miss — no damage.</p>);
+                setSessionActions(<p style={{ margin: 0, color: "var(--text-muted)" }}>Miss — no damage.</p>);
                 setPhase("done");
               }}
             >
@@ -147,8 +147,8 @@ export function AttackRollControl({
       <button type="button" onClick={roll} disabled={phase === "rolling"}>
         Roll
       </button>
-      {error && <span style={{ color: "crimson", marginLeft: "0.5rem" }}>{error}</span>}
-      {damageType && <small style={{ marginLeft: "0.5rem", color: "#888" }}>({damageType})</small>}
+      {error && <span style={{ color: "var(--danger)", marginLeft: "0.5rem" }}>{error}</span>}
+      {damageType && <small style={{ marginLeft: "0.5rem", color: "var(--text-dim)" }}>({damageType})</small>}
     </div>
   );
 }

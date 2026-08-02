@@ -9,8 +9,7 @@ import {
 } from "shared";
 import { AttackRollControl } from "./AttackRollControl";
 import { useCustomContent } from "../../hooks/useCustomContent";
-
-const box: React.CSSProperties = { border: "1px solid #bbb", borderRadius: 6, padding: "0.75rem" };
+import { panel as box } from "../../styles";
 
 function speedText(speed: Record<string, number | undefined>): string {
   return Object.entries(speed)
@@ -91,7 +90,7 @@ export function FamiliarPanel({
     <div style={box}>
       <h3>Familiar</h3>
       {chainPact && (
-        <p style={{ fontSize: "0.85rem", color: "#555", margin: "0 0 0.5rem" }}>
+        <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: "0 0 0.5rem" }}>
           Pact of the Chain: you can also choose the imp, pseudodragon, quasit, or sprite form.
           {chainMasterVoice && " Voice of the Chain Master: communicate telepathically and perceive through its senses on the same plane."}
         </p>
@@ -115,7 +114,7 @@ export function FamiliarPanel({
               <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> Show all monsters
             </label>
           </div>
-          <div style={{ fontSize: "0.8rem", color: "#666", marginTop: "0.3rem" }}>
+          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.3rem" }}>
             {showAll ? "Showing every monster as a possible form." : "Standard find familiar forms."}
           </div>
         </div>
@@ -124,7 +123,7 @@ export function FamiliarPanel({
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
             <strong style={{ fontSize: "1.1rem" }}>
               {active.name}{" "}
-              <small style={{ color: "#666" }}>
+              <small style={{ color: "var(--text-muted)" }}>
                 ({active.size} {active.type}, CR {formatMonsterCR(active.cr)})
               </small>
             </strong>
@@ -145,7 +144,7 @@ export function FamiliarPanel({
           </div>
 
           {sheet.familiar.dismissed ? (
-            <p style={{ color: "#888", margin: "0.4rem 0" }}>Familiar dismissed — resummon it (takes 1 hour in play).</p>
+            <p style={{ color: "var(--text-dim)", margin: "0.4rem 0" }}>Familiar dismissed — resummon it (takes 1 hour in play).</p>
           ) : (
             <>
               <div style={{ display: "grid", gridTemplateColumns: "auto auto", gap: "0.2rem 1rem", margin: "0.5rem 0", fontSize: "0.9rem" }}>
@@ -160,7 +159,7 @@ export function FamiliarPanel({
                     onChange={(e) => setFamiliarHp(e.target.value)}
                     style={{ width: "3.5rem", textAlign: "center" }}
                   />{" "}
-                  / {sheet.familiar.hpMax} <small style={{ color: "#666" }}>({active.hitDice})</small>
+                  / {sheet.familiar.hpMax} <small style={{ color: "var(--text-muted)" }}>({active.hitDice})</small>
                 </span>
                 <span>Speed</span>
                 <span>{speedText(active.speed)}</span>
@@ -177,7 +176,7 @@ export function FamiliarPanel({
               </div>
 
               {sheet.familiar.hpCurrent === 0 && (
-                <p style={{ color: "crimson", margin: "0.4rem 0" }}>
+                <p style={{ color: "var(--danger)", margin: "0.4rem 0" }}>
                   At 0 HP the familiar disappears — resummon it later (1 hour) or choose a different form.
                 </p>
               )}

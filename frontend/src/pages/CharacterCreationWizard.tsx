@@ -33,14 +33,13 @@ import * as charactersApi from "../api/characters";
 import { useDiceRoll } from "../dice/DiceRollContext";
 import { useCustomContent } from "../hooks/useCustomContent";
 import { WizardSpellbookPicker, type PickedSpell } from "../components/systems/WizardSpellbookPicker";
+import { panelRoomy as box } from "../styles";
 
 type StatMethod = "roll" | "array" | "pointbuy" | "manual";
 
 type Abilities = Record<Dnd5eAbility, number>;
 
 const DEFAULT_ABILITIES: Abilities = { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
-
-const box: React.CSSProperties = { border: "1px solid #bbb", borderRadius: 6, padding: "1rem" };
 
 export function CharacterCreationWizard({
   campaignId,
@@ -751,7 +750,7 @@ export function CharacterCreationWizard({
     <div style={{ maxWidth: 700, margin: "0 auto", padding: "0 1rem 2rem" }}>
       <button onClick={() => onDone(null)}>&larr; Cancel</button>
       <h1>New character</h1>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       {step === "system" && (
         <div style={box}>
@@ -946,7 +945,7 @@ export function CharacterCreationWizard({
                   ))}
                 </select>
                 {Object.keys(subraceBonuses).length > 0 && (
-                  <div style={{ fontSize: "0.8rem", color: "#666", marginTop: "0.2rem" }}>
+                  <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.2rem" }}>
                     {Object.entries(subraceBonuses)
                       .map(([a, b]) => `${a.toUpperCase()} ${formatModifier(b!)}`)
                       .join(", ")}{" "}
@@ -1085,7 +1084,7 @@ export function CharacterCreationWizard({
                           key={v.id}
                           style={{
                             display: "block",
-                            border: "1px solid #ddd",
+                            border: "1px solid var(--border-subtle)",
                             borderRadius: 6,
                             padding: "0.4rem",
                             marginTop: "0.3rem",
@@ -1097,7 +1096,7 @@ export function CharacterCreationWizard({
                             onChange={() => toggleVariant(resolvedBackgroundData.variantPickCount, v.id)}
                           />{" "}
                           <strong>{v.title}</strong>
-                          {v.description && <div style={{ fontSize: "0.8rem", color: "#666" }}>{v.description}</div>}
+                          {v.description && <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{v.description}</div>}
                         </label>
                       ))}
                     </div>
@@ -1122,7 +1121,7 @@ export function CharacterCreationWizard({
           </div>
           {(!backgroundChoicesComplete || !classChoicesComplete || !raceAbilityChoicesComplete) && (
             <p>
-              <small style={{ color: "crimson" }}>Finish the class, race and background choices above before continuing.</small>
+              <small style={{ color: "var(--danger)" }}>Finish the class, race and background choices above before continuing.</small>
             </p>
           )}
           <p>
@@ -1231,7 +1230,7 @@ export function CharacterCreationWizard({
               {method === "pointbuy" && (
                 <p>
                   Points spent: <strong>{pointsSpent}</strong> / {DND5E_POINT_BUY_BUDGET}
-                  {pointsSpent > DND5E_POINT_BUY_BUDGET && <span style={{ color: "crimson" }}> — over budget!</span>}
+                  {pointsSpent > DND5E_POINT_BUY_BUDGET && <span style={{ color: "var(--danger)" }}> — over budget!</span>}
                 </p>
               )}
               {DND5E_ABILITIES.map((a) => (

@@ -34,6 +34,7 @@ import {
 import * as customContentApi from "../api/customContent";
 import * as adminApi from "../api/admin";
 import { useAuth } from "../context/AuthContext";
+import { panelSpaced as box } from "../styles";
 
 // Exported for AdminPanel's content tab (#130), so the two admin-facing item lists can't drift.
 export const TYPE_LABELS: Record<CustomContentType, string> = {
@@ -53,8 +54,6 @@ export const SYSTEM_LABELS: Record<CustomContentSystem, string> = {
   pf2e: "Pathfinder 2e",
   generic: "Generic",
 };
-
-const box: React.CSSProperties = { border: "1px solid #bbb", borderRadius: 6, padding: "0.75rem", marginBottom: "1rem" };
 
 interface LevelRow {
   level: string;
@@ -1629,7 +1628,7 @@ export function CustomContentManager({
       <div style={{ marginTop: "0.5rem" }}>
         <h4 style={{ marginBottom: "0.25rem" }}>Traits</h4>
         {traitRows.map((row, i) => (
-          <div key={row.id} style={{ border: "1px solid #ddd", borderRadius: 6, padding: "0.5rem", marginBottom: "0.4rem" }}>
+          <div key={row.id} style={{ border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "0.5rem", marginBottom: "0.4rem" }}>
             <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
               <input
                 placeholder="Trait name, e.g. Darkvision"
@@ -1711,7 +1710,7 @@ export function CustomContentManager({
           everyone else can use it too.
         </small>
       </p>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       <div style={box}>
         <h3>{isAdmin ? "All items" : "My items"}</h3>
@@ -1721,7 +1720,7 @@ export function CustomContentManager({
             {allContentSummaries.map((item) => (
               <div
                 key={item.id}
-                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.3rem 0", borderBottom: "1px solid #eee" }}
+                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.3rem 0", borderBottom: "1px solid var(--border-faint)" }}
               >
                 <span>
                   <strong>{item.name}</strong> ({SYSTEM_LABELS[item.system]} {TYPE_LABELS[item.type]}) — {item.status} — by{" "}
@@ -1742,7 +1741,7 @@ export function CustomContentManager({
           <>
             {items.length === 0 && <p>None yet.</p>}
             {items.map((item) => (
-              <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.3rem 0", borderBottom: "1px solid #eee" }}>
+              <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.3rem 0", borderBottom: "1px solid var(--border-faint)" }}>
                 <span>
                   <strong>{item.name}</strong> ({SYSTEM_LABELS[item.system]} {TYPE_LABELS[item.type]}) — {item.status}
                 </span>
@@ -1762,7 +1761,7 @@ export function CustomContentManager({
 
       <div style={box}>
         <h3>Import a pack</h3>
-        <p style={{ margin: "0 0 0.5rem", fontSize: "0.85rem", color: "#555" }}>
+        <p style={{ margin: "0 0 0.5rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
           Upload or paste a JSON array of <code>{"{ type, name, data }"}</code> objects, validated against the same
           per-type rules as the form below. All rows import into the <strong>System</strong> selected below (currently{" "}
           <strong>{SYSTEM_LABELS[system]}</strong>). Re-importing a corrected pack updates rows that match an
@@ -1789,7 +1788,7 @@ export function CustomContentManager({
         <button type="button" onClick={handleImport} disabled={importBusy || !importText.trim()} style={{ marginTop: "0.4rem" }}>
           {importBusy ? "Importing…" : "Import"}
         </button>
-        {importError && <p style={{ color: "crimson" }}>{importError}</p>}
+        {importError && <p style={{ color: "var(--danger)" }}>{importError}</p>}
         {importResults && (
           <div style={{ marginTop: "0.5rem" }}>
             <p>
@@ -1802,14 +1801,14 @@ export function CustomContentManager({
             {importResults.map((r) => (
               <div key={r.index} style={{ fontSize: "0.85rem", padding: "0.15rem 0" }}>
                 {r.status === "error" ? (
-                  <span style={{ color: "crimson" }}>
+                  <span style={{ color: "var(--danger)" }}>
                     ✗ Row {r.index + 1} ({r.name || "unnamed"}): {r.error}
                     {r.issues && r.issues.length > 0 && (
                       <> — {r.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}</>
                     )}
                   </span>
                 ) : (
-                  <span style={{ color: "#2a7" }}>
+                  <span style={{ color: "var(--success)" }}>
                     ✓ Row {r.index + 1} ({r.name}): {r.status}
                   </span>
                 )}
@@ -1849,7 +1848,7 @@ export function CustomContentManager({
         )}
 
         {validTypes.length === 0 ? (
-          <p style={{ marginTop: "0.75rem", color: "#666" }}>
+          <p style={{ marginTop: "0.75rem", color: "var(--text-muted)" }}>
             No custom content types are available for {SYSTEM_LABELS[system]} yet.
           </p>
         ) : (
@@ -1999,7 +1998,7 @@ export function CustomContentManager({
             </button>
 
             <h4 style={{ marginTop: "1.2rem" }}>Limited-use resources</h4>
-            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
               Gets a spend/reset counter on the sheet that clears on the matching rest, alongside Rage and Ki -- e.g.
               an Artificer's infusions or a Blood Hunter's hemocraft die.
             </p>
@@ -2245,7 +2244,7 @@ export function CustomContentManager({
             </label>
 
             <h4 style={{ marginTop: "1rem" }}>Granted feats (optional)</h4>
-            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
               Feats this background grants outright at character creation -- comma-separated names, matching an SRD
               feat or one of your own custom feats. A feat with its own spell choices (Magic Initiate-style) grants
               only its fixed effects this way; the choices themselves aren't resolved.
@@ -2270,7 +2269,7 @@ export function CustomContentManager({
                 .filter((n) => !featNameOptions.some((o) => o.toLowerCase() === n.toLowerCase()));
               return (
                 unresolved.length > 0 && (
-                  <div style={{ color: "crimson", fontSize: "0.85rem", marginTop: "0.2rem" }}>
+                  <div style={{ color: "var(--danger)", fontSize: "0.85rem", marginTop: "0.2rem" }}>
                     No SRD or custom feat named {unresolved.map((n) => `“${n}”`).join(", ")} — this background won't
                     grant {unresolved.length === 1 ? "it" : "them"}. Create the feat under Type → Feat first, then it
                     will resolve by name.
@@ -2284,7 +2283,7 @@ export function CustomContentManager({
               <small>Some backgrounds grant more than one distinct feature -- add a row per feature. Bonuses are optional.</small>
             </p>
             {bgFeatures.map((f, i) => (
-              <div key={f.id} style={{ border: "1px solid #ddd", borderRadius: 6, padding: "0.5rem", marginBottom: "0.4rem" }}>
+              <div key={f.id} style={{ border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "0.5rem", marginBottom: "0.4rem" }}>
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                   <input
                     placeholder="Name"
@@ -2389,7 +2388,7 @@ export function CustomContentManager({
               </small>
             </p>
             {bgVariants.map((v, i) => (
-              <div key={v.id} style={{ border: "1px solid #ddd", borderRadius: 6, padding: "0.5rem", marginBottom: "0.4rem" }}>
+              <div key={v.id} style={{ border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "0.5rem", marginBottom: "0.4rem" }}>
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                   <input
                     placeholder="Title"
@@ -2429,7 +2428,7 @@ export function CustomContentManager({
             {(() => {
               const preview = formatBackgroundGrants(buildBackgroundData());
               return (
-                <div style={{ marginTop: "1rem", background: "#f7f7f7", border: "1px solid #ddd", borderRadius: 6, padding: "0.75rem" }}>
+                <div style={{ marginTop: "1rem", background: "var(--surface-sunken)", border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "0.75rem" }}>
                   <h4 style={{ marginTop: 0 }}>Preview</h4>
                   <p style={{ margin: "0.2rem 0" }}>
                     <strong>Skill Proficiencies:</strong> {preview.skills}
@@ -2626,12 +2625,12 @@ export function CustomContentManager({
             </button>
 
             <h4 style={{ marginTop: "1.2rem" }}>Features with rules text</h4>
-            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
               Use these instead of the bare names above when a feature needs its actual rules text, a mechanical bonus,
               or a proficiency grant. A name listed both here and above is only added once.
             </p>
             {subclassFeatureRows.map((row, i) => (
-              <div key={row.id} style={{ border: "1px solid #ddd", borderRadius: 6, padding: "0.5rem", marginTop: "0.5rem" }}>
+              <div key={row.id} style={{ border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "0.5rem", marginTop: "0.5rem" }}>
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                   <label>
                     Lvl{" "}
@@ -2767,7 +2766,7 @@ export function CustomContentManager({
             </button>
 
             <h4 style={{ marginTop: "1.2rem" }}>Spell list</h4>
-            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
               <strong>Added to list</strong> makes the spell selectable for this character (a Warlock expanded spell
               list — options, not handouts). <strong>Granted</strong> puts it straight on the sheet at that level.
             </p>
@@ -2800,7 +2799,7 @@ export function CustomContentManager({
                   list="srd-spells-list-subclass"
                   value={row.name}
                   onChange={(e) => setSubclassSpellRows((prev) => prev.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))}
-                  style={{ flex: 1, minWidth: "12rem", borderColor: unresolved ? "crimson" : undefined }}
+                  style={{ flex: 1, minWidth: "12rem", borderColor: unresolved ? "var(--danger)" : undefined }}
                 />
                 <select
                   value={row.mode}
@@ -2825,7 +2824,7 @@ export function CustomContentManager({
                   Remove
                 </button>
                 {unresolved && (
-                  <div style={{ flexBasis: "100%", color: "crimson", fontSize: "0.85rem" }}>
+                  <div style={{ flexBasis: "100%", color: "var(--danger)", fontSize: "0.85rem" }}>
                     No SRD or custom spell named “{row.name.trim()}” — this row won’t do anything. Several PHB spells
                     aren’t in the SRD; create it under Type → Spell first, then it will resolve by name.
                   </div>
@@ -2842,7 +2841,7 @@ export function CustomContentManager({
             </button>
 
             <h4 style={{ marginTop: "1.2rem" }}>Limited-use resources</h4>
-            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
               Gets a spend/reset counter on the sheet that clears on the matching rest, alongside Rage and Ki.
             </p>
             {subclassResourceRows.map((row, i) => (
@@ -3052,7 +3051,7 @@ export function CustomContentManager({
             </button>
 
             <h4 style={{ marginTop: "1rem" }}>Spell choices (e.g. Magic Initiate)</h4>
-            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
               A row the player resolves when taking the feat -- e.g. "2 cantrips from a class you choose". Add one row
               per distinct pick (a cantrip row and a separate 1st-level-spell row for Magic Initiate).
             </p>
@@ -3219,7 +3218,7 @@ export function CustomContentManager({
             </div>
 
             <h4 style={{ marginTop: "1rem" }}>Attack/damage buff (optional)</h4>
-            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
               Bonus applied to the caster's <em>own later weapon attack</em> when this spell is cast — e.g. Wrathful
               Smite's next-hit 1d6 psychic, or Bless's +1d4 to hit. Separate from "Damage dice" above, which is
               damage the spell itself deals on cast (Magic Missile).
@@ -3280,7 +3279,7 @@ export function CustomContentManager({
             </div>
 
             <h4 style={{ marginTop: "1rem" }}>At higher levels (optional)</h4>
-            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "#555" }}>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
               How the spell scales when cast with a higher-level slot. <strong>Dice per level</strong> is added to the
               damage roll once per slot level above this spell's own level (Fireball would be <code>1d6</code>) — it
               needs "Damage dice" above to attach to. Use the <strong>note</strong> for upcasts that aren't extra dice

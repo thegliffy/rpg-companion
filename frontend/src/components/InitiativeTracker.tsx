@@ -55,7 +55,7 @@ export function InitiativeTracker({
   return (
     <div>
       <h2>Initiative Tracker</h2>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       {!encounter || !encounter.isActive ? (
         isDM ? (

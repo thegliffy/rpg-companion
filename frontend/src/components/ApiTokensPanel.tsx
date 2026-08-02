@@ -76,20 +76,20 @@ export function ApiTokensPanel() {
 
       {expanded && (
         <>
-          <p style={{ fontSize: "0.85rem", color: "#555", margin: "0 0 0.5rem" }}>
+          <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: "0 0 0.5rem" }}>
             For scripts and automation — a token authenticates as you, without your password, and can be revoked on
             its own. It can do anything you can, so treat it like a password.
           </p>
 
-          {error && <p style={{ color: "crimson" }}>{error}</p>}
+          {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
           {newToken && (
-            <div style={{ border: "2px solid #2a8a2a", borderRadius: 6, padding: "0.6rem", marginBottom: "0.75rem" }}>
+            <div style={{ border: "2px solid var(--success)", borderRadius: 6, padding: "0.6rem", marginBottom: "0.75rem" }}>
               <p style={{ margin: "0 0 0.3rem", fontWeight: 600 }}>Copy this now — it can't be shown again.</p>
               <code
                 style={{
                   display: "block",
-                  background: "#f4f4f4",
+                  background: "var(--surface-sunken)",
                   padding: "0.4rem",
                   borderRadius: 4,
                   wordBreak: "break-all",
@@ -130,7 +130,7 @@ export function ApiTokensPanel() {
                 <summary style={{ cursor: "pointer", fontSize: "0.85rem" }}>Show example upload command</summary>
                 <pre
                   style={{
-                    background: "#f4f4f4",
+                    background: "var(--surface-sunken)",
                     padding: "0.5rem",
                     borderRadius: 4,
                     fontSize: "0.75rem",
@@ -169,16 +169,16 @@ export function ApiTokensPanel() {
           </div>
 
           {tokens.length === 0 ? (
-            <p style={{ color: "#888", margin: 0 }}>No tokens yet.</p>
+            <p style={{ color: "var(--text-dim)", margin: 0 }}>No tokens yet.</p>
           ) : (
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Name</th>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Token</th>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Last used</th>
-                  <th style={{ textAlign: "left", borderBottom: "1px solid #ccc" }}>Expires</th>
-                  <th style={{ borderBottom: "1px solid #ccc" }}></th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Name</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Token</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Last used</th>
+                  <th style={{ textAlign: "left", borderBottom: "1px solid var(--border)" }}>Expires</th>
+                  <th style={{ borderBottom: "1px solid var(--border)" }}></th>
                 </tr>
               </thead>
               <tbody>

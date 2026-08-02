@@ -26,6 +26,14 @@ export const reassignCharacterOwnerSchema = z.object({
 });
 export type ReassignCharacterOwnerInput = z.infer<typeof reassignCharacterOwnerSchema>;
 
+// The app's first user preference (#154). Deliberately shaped as "preferences" rather than
+// "set theme" so the next one (the dice-modal opt-out deferred during #139) extends this instead
+// of adding a second endpoint.
+export const updatePreferencesSchema = z.object({
+  theme: z.enum(["default", "ledger", "vellum", "graph", "console", "contrast"]).optional(),
+});
+export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>;
+
 export const createApiTokenSchema = z.object({
   name: z.string().trim().min(1).max(60),
   // Days until the token expires; omitted means it never does. Capped at ~2 years so "never" is a

@@ -1,26 +1,8 @@
 import { useMemo, useState } from "react";
 import type { CustomContent, Dnd5eSheetData } from "shared";
 import { SRD_SPELLS, DND5E_CLASSES, casterTypeForClass, maxPreparableSpellLevel, customSpellToSrdShape } from "shared";
-
-const overlayStyle: React.CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.4)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1000,
-};
-
-const dialogStyle: React.CSSProperties = {
-  background: "white",
-  color: "black",
-  borderRadius: 8,
-  padding: "1rem",
-  width: "min(600px, 92vw)",
-  maxHeight: "85vh",
-  overflowY: "auto",
-};
+import { modalOverlay as overlayStyle, modalDialog } from "../../styles";
+const dialogStyle = { ...modalDialog, width: "min(600px, 92vw)" };
 
 export function SpellPickerModal({
   characterClass,
@@ -138,7 +120,7 @@ export function SpellPickerModal({
 
         {byLevel.map(([level, spells]) => (
           <div key={level} style={{ marginBottom: "0.75rem" }}>
-            <div style={{ fontWeight: "bold", borderBottom: "1px solid #ddd" }}>
+            <div style={{ fontWeight: "bold", borderBottom: "1px solid var(--border-subtle)" }}>
               {level === 0 ? "Cantrips" : `Level ${level}`}
             </div>
             {spells.map((s) => (
@@ -151,9 +133,9 @@ export function SpellPickerModal({
                 />
                 <span style={{ flex: 1 }}>
                   {s.name}
-                  {customSpellIds.has(s.id) && <small style={{ color: "#a60" }}> (homebrew)</small>}
+                  {customSpellIds.has(s.id) && <small style={{ color: "var(--warning)" }}> (homebrew)</small>}
                 </span>
-                <small style={{ color: "#777" }}>{s.school}</small>
+                <small style={{ color: "var(--text-muted)" }}>{s.school}</small>
               </label>
             ))}
           </div>

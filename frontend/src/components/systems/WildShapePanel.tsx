@@ -3,8 +3,7 @@ import type { CustomContent, CustomMonsterData, Dnd5eSheetData, SrdBeast } from 
 import { SRD_BEASTS, findBeast, wildShapeEligible, maxWildShapeCR, formatCR, customMonsterToSrdShape } from "shared";
 import { AttackRollControl } from "./AttackRollControl";
 import { useCustomContent } from "../../hooks/useCustomContent";
-
-const box: React.CSSProperties = { border: "1px solid #bbb", borderRadius: 6, padding: "0.75rem" };
+import { panel as box } from "../../styles";
 
 /** Maps a beast-type custom monster onto the SrdBeast shape, same attack filtering SRD_BEASTS
  * uses (srd-beasts.ts) -- so an approved homebrew beast is Wild-Shape-eligible identically to
@@ -101,7 +100,7 @@ export function WildShapePanel({
       <h3>Wild Shape</h3>
       <div style={{ marginBottom: "0.5rem" }}>
         Uses available: <strong>{sheet.wildShape.usesAvailable}</strong>{" "}
-        <small style={{ color: "#666" }}>(2 per short or long rest)</small>
+        <small style={{ color: "var(--text-muted)" }}>(2 per short or long rest)</small>
       </div>
 
       {!activeBeast ? (
@@ -122,7 +121,7 @@ export function WildShapePanel({
               <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> Show all beasts
             </label>
           </div>
-          <div style={{ fontSize: "0.8rem", color: "#666", marginTop: "0.3rem" }}>
+          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.3rem" }}>
             {showAll
               ? "Showing every beast — mind your level limits."
               : `Filtered to your level (max CR ${formatCR(maxWildShapeCR(sheet.level))}${
@@ -134,7 +133,7 @@ export function WildShapePanel({
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
             <strong style={{ fontSize: "1.1rem" }}>
-              {activeBeast.name} <small style={{ color: "#666" }}>({activeBeast.size}, CR {formatCR(activeBeast.cr)})</small>
+              {activeBeast.name} <small style={{ color: "var(--text-muted)" }}>({activeBeast.size}, CR {formatCR(activeBeast.cr)})</small>
             </strong>
             <button type="button" onClick={revert}>
               Revert
@@ -142,7 +141,7 @@ export function WildShapePanel({
           </div>
 
           {sheet.wildShape.hpCurrent === 0 && (
-            <p style={{ color: "crimson", margin: "0.4rem 0" }}>
+            <p style={{ color: "var(--danger)", margin: "0.4rem 0" }}>
               Dropped to 0 HP — you revert to your normal form (excess damage carries over to your own HP). Click Revert.
             </p>
           )}
@@ -159,7 +158,7 @@ export function WildShapePanel({
                 onChange={(e) => setBeastHp(e.target.value)}
                 style={{ width: "3.5rem", textAlign: "center" }}
               />{" "}
-              / {sheet.wildShape.hpMax} <small style={{ color: "#666" }}>({activeBeast.hitDice})</small>
+              / {sheet.wildShape.hpMax} <small style={{ color: "var(--text-muted)" }}>({activeBeast.hitDice})</small>
             </span>
             <span>Speed</span>
             <span>{speedText(activeBeast.speed)}</span>
@@ -170,7 +169,7 @@ export function WildShapePanel({
               {activeBeast.str} / {activeBeast.dex} / {activeBeast.con}
             </span>
           </div>
-          <p style={{ fontSize: "0.8rem", color: "#666", marginTop: 0 }}>
+          <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: 0 }}>
             Your Intelligence, Wisdom, Charisma, alignment, and proficiencies stay your own while shaped.
           </p>
 

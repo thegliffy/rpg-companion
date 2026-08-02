@@ -53,7 +53,7 @@ export function CharacterSheetForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(submit)} style={{ border: "1px solid #ccc", padding: "1rem" }}>
+    <form onSubmit={handleSubmit(submit)} style={{ border: "1px solid var(--border)", padding: "1rem" }}>
       <div>
         <label>
           Name

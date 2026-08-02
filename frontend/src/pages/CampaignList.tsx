@@ -6,6 +6,7 @@ import { MyCharactersSection } from "../components/MyCharactersSection";
 import { HallOfHeroesSection } from "../components/HallOfHeroesSection";
 import { DiceRoller } from "../components/DiceRoller";
 import { ApiTokensPanel } from "../components/ApiTokensPanel";
+import { ThemePicker } from "../components/ThemePicker";
 import { NotesSection } from "../components/NotesSection";
 import { InitiativeTracker } from "../components/InitiativeTracker";
 
@@ -65,7 +66,7 @@ export function CampaignList({
 
   return (
     <div style={{ maxWidth: 640, margin: "2rem auto" }}>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       <MyCharactersSection
         campaigns={campaigns}
@@ -84,6 +85,9 @@ export function CampaignList({
 
       <hr />
       <InitiativeTracker campaignId={null} role={null} />
+
+      <hr />
+      <ThemePicker />
 
       {/* DM/admin only -- tokens exist for scripted custom-content upload, which is already gated
           to those roles, so a player has nothing to point one at. */}

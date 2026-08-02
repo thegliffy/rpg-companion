@@ -9,6 +9,9 @@ interface AuthContextValue {
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  /** Replaces the cached user after a preference change (#154), so anything reading `user` sees
+   * the new value without a full reload. */
+  setUser: (user: PublicUser) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -54,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, error, login, register, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,0 +1,254 @@
+/* The six themes (#153).
+ *
+ * Each block is nothing but token overrides -- no component ever changes. Every theme sets the
+ * complete set rather than inheriting half a palette from Default, so a token added later fails
+ * loudly in one place instead of silently falling back to the light default on five themes.
+ *
+ * Selected by a data-theme attribute on <html>, written by ThemeProvider (#154). Default has no
+ * block: it IS the :root definition in index.css. */
+
+/* Ledger — ruled off-white, oxblood for pending/corrections, ink blue for approvals. */
+:root[data-theme="ledger"] {
+  --surface: #f6f2e8;
+  --surface-raised: #fffdf7;
+  --surface-sunken: #ece5d5;
+
+  --text: #1c1a17;
+  --text-heading: #14120f;
+  --text-muted: #6b6459;
+  --text-dim: #8b8375;
+
+  --border-faint: #e0d8c6;
+  --border-subtle: #cfc5ae;
+  --border: #b3a78c;
+  --border-strong: #2a2621;
+  --frame-border: #cfc5ae;
+
+  --accent: #8c2f22;
+  --accent-contrast: #fffdf7;
+  --danger: #8c2f22;
+  --success: #24405c;
+  --warning: #8a5a12;
+  --warning-bg: #efe3c6;
+  --overlay: rgba(28, 26, 23, 0.45);
+  --code-bg: #ece5d5;
+
+  --font-body: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-display: var(--font-body);
+  --font-data: "Courier New", Courier, ui-monospace, monospace;
+  --radius: 1px;
+
+  /* Faint horizontal ruling, like a ledger page. */
+  --surface-texture: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 27px,
+    rgba(140, 47, 34, 0.07) 27px,
+    rgba(140, 47, 34, 0.07) 28px
+  );
+  --surface-texture-size: auto;
+}
+
+/* Vellum — aged warm paper; the heaviest of the paper set. */
+:root[data-theme="vellum"] {
+  --surface: #e5d7b8;
+  --surface-raised: #efe4ca;
+  --surface-sunken: #d8c6a1;
+
+  --text: #241a10;
+  --text-heading: #1a1209;
+  --text-muted: #6d5b40;
+  --text-dim: #8a7658;
+
+  --border-faint: #d3c19c;
+  --border-subtle: #c3ae86;
+  --border: #a89066;
+  --border-strong: #4a3722;
+  --frame-border: #c3ae86;
+
+  --accent: #6d3719;
+  --accent-contrast: #efe4ca;
+  --danger: #8a2f14;
+  --success: #3d4a2e;
+  --warning: #7a5518;
+  --warning-bg: #d9c69b;
+  --overlay: rgba(36, 26, 16, 0.5);
+  --code-bg: #d8c6a1;
+
+  --font-body: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-display: var(--font-body);
+  --font-data: "Courier New", Courier, ui-monospace, monospace;
+  --radius: 1px;
+
+  /* Uneven mottling, so the ground doesn't read as flat colour. */
+  --surface-texture:
+    radial-gradient(ellipse at 18% 24%, rgba(109, 55, 25, 0.06), transparent 55%),
+    radial-gradient(ellipse at 78% 68%, rgba(109, 55, 25, 0.05), transparent 50%),
+    radial-gradient(ellipse at 52% 88%, rgba(74, 55, 34, 0.05), transparent 45%);
+  --surface-texture-size: auto;
+}
+
+/* Graph — blueprint white with a real grid, plan blue and pencil brown. */
+:root[data-theme="graph"] {
+  --surface: #fbfaf7;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eef3f8;
+
+  --text: #2f343a;
+  --text-heading: #1d2226;
+  /* #6f7780 measured 4.35:1 on this ground -- just under AA. Darkened to clear 4.5 with margin
+   * rather than shipping muted text that fails on the lightest theme. */
+  --text-muted: #636b74;
+  --text-dim: #7d858e;
+
+  --border-faint: #e8eff5;
+  --border-subtle: #dbe6ef;
+  --border: #b9cfe0;
+  --border-strong: #5a6169;
+  --frame-border: #dbe6ef;
+
+  --accent: #2f5d8a;
+  --accent-contrast: #ffffff;
+  --danger: #a8342a;
+  --success: #2f6b45;
+  --warning: #8a6414;
+  --warning-bg: #f6eeda;
+  --overlay: rgba(47, 52, 58, 0.42);
+  --code-bg: #eef3f8;
+
+  --font-body: system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-body);
+  --font-data: "Courier New", Courier, ui-monospace, monospace;
+  --radius: 2px;
+
+  --surface-texture:
+    linear-gradient(rgba(185, 207, 224, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(185, 207, 224, 0.5) 1px, transparent 1px);
+  --surface-texture-size: 16px 16px;
+}
+
+/* Console — the futuristic one. Dark slate, phosphor accent, monospace data, square corners.
+ * This is the theme that surfaces any literal colour #152 missed: a stray #ccc border glows
+ * bright against this ground. */
+:root[data-theme="console"] {
+  --surface: #0e1418;
+  --surface-raised: #161f26;
+  --surface-sunken: #0a1013;
+
+  --text: #c6d4dc;
+  --text-heading: #e8f4fa;
+  --text-muted: #8195a1;
+  --text-dim: #61737e;
+
+  --border-faint: #1b262e;
+  --border-subtle: #24333c;
+  --border: #31434e;
+  --border-strong: #4a606d;
+  --frame-border: #24333c;
+
+  --accent: #35e0c8;
+  --accent-contrast: #06231f;
+  --danger: #ff6b5e;
+  --success: #46e08a;
+  --warning: #e0b545;
+  --warning-bg: #2a2312;
+  --overlay: rgba(4, 8, 10, 0.68);
+  --code-bg: #0a1013;
+
+  --font-body: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  --font-display: var(--font-body);
+  --font-data: var(--font-body);
+  --radius: 0px;
+
+  /* Faint scanline wash. */
+  --surface-texture: repeating-linear-gradient(
+    to bottom,
+    rgba(53, 224, 200, 0.03) 0,
+    rgba(53, 224, 200, 0.03) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  --surface-texture-size: auto;
+}
+
+/* High contrast — near-black on white, heavy borders, no decorative tint.
+ * Held to WCAG AA on body text and on both semantic colours. */
+:root[data-theme="contrast"] {
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f2f2f2;
+
+  --text: #000000;
+  --text-heading: #000000;
+  /* #595959 on white is 7.0:1 -- AA for normal text with room to spare, unlike the #888 it
+   * replaces (3.5:1, which fails). Muted text stays genuinely readable here. */
+  --text-muted: #595959;
+  --text-dim: #595959;
+
+  --border-faint: #767676;
+  --border-subtle: #595959;
+  --border: #333333;
+  --border-strong: #000000;
+  --frame-border: #000000;
+
+  --accent: #0b4fa8;
+  --accent-contrast: #ffffff;
+  --danger: #b3001b;
+  --success: #0f6b2f;
+  --warning: #7a4a00;
+  --warning-bg: #fff3cd;
+  --overlay: rgba(0, 0, 0, 0.6);
+  --code-bg: #f2f2f2;
+
+  --font-body: system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-body);
+  --font-data: ui-monospace, Consolas, monospace;
+  --radius: 2px;
+
+  --surface-texture: none;
+  --surface-texture-size: auto;
+}
+
+/* Print always renders as paper, whatever the theme (#155).
+ *
+ * Guards a real failure, not a cosmetic one: printing Console would otherwise put a solid dark
+ * ground across every page. The traditional character sheet exists to be printed, so it must come
+ * out black-on-white regardless of what's on screen. Pins both the app tokens and the sheet's own
+ * --ts-* palette. */
+@media print {
+  :root,
+  :root[data-theme] {
+    --surface: #ffffff;
+    --surface-raised: #ffffff;
+    --surface-sunken: #ffffff;
+    --text: #000000;
+    --text-heading: #000000;
+    --text-muted: #333333;
+    --text-dim: #555555;
+    --border-faint: #cccccc;
+    --border-subtle: #999999;
+    --border: #666666;
+    --border-strong: #000000;
+    --frame-border: #ffffff;
+    --accent: #000000;
+    --accent-contrast: #ffffff;
+    --danger: #000000;
+    --success: #000000;
+    --warning: #000000;
+    --warning-bg: #ffffff;
+    --code-bg: #ffffff;
+    --surface-texture: none;
+
+    --ts-ink: #1a1a1a;
+    --ts-muted: #555555;
+    --ts-line: #222222;
+    --ts-fill: #ffffff;
+    --ts-box: #ffffff;
+  }
+
+  body {
+    background: #ffffff !important;
+    background-image: none !important;
+    color: #000000;
+  }
+}

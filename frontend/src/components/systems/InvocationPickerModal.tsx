@@ -1,29 +1,11 @@
 import type { SrdInvocation } from "shared";
 import { SRD_INVOCATIONS, INVOCATION_PREFIX } from "shared";
+import { modalOverlay as overlayStyle, modalDialog } from "../../styles";
+const dialogStyle = { ...modalDialog, width: "min(560px, 92vw)" };
 
 // Re-exported so existing importers (Dnd5eSheet) keep working while the constant now lives in
 // shared as the single source of truth (used by eldritchBlastProfile's invocation lookup).
 export { INVOCATION_PREFIX };
-
-const overlayStyle: React.CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.4)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1000,
-};
-
-const dialogStyle: React.CSSProperties = {
-  background: "white",
-  color: "black",
-  borderRadius: 8,
-  padding: "1rem",
-  width: "min(560px, 92vw)",
-  maxHeight: "85vh",
-  overflowY: "auto",
-};
 
 /** Picks an Eldritch Invocation (SRD-only) and hands back the full invocation (including its
  * `grants` payload) for the caller to apply -- see Dnd5eSheet's addInvocation. */
@@ -51,19 +33,19 @@ export function InvocationPickerModal({
             <button
               key={inv.id}
               type="button"
-              style={{ ...rowStyle, opacity: known ? 0.5 : 1, borderBottom: "1px solid #eee" }}
+              style={{ ...rowStyle, opacity: known ? 0.5 : 1, borderBottom: "1px solid var(--border-faint)" }}
               disabled={known}
               onClick={() => onPick(inv)}
             >
               <strong>{inv.name}</strong>{" "}
-              <small style={{ color: belowLevel ? "crimson" : "#888" }}>
+              <small style={{ color: belowLevel ? "var(--danger)" : "var(--text-dim)" }}>
                 (level {inv.prereqLevel}
                 {inv.prereqPact ? `, Pact of the ${inv.prereqPact[0].toUpperCase()}${inv.prereqPact.slice(1)}` : ""}
                 {inv.prereqSpell ? `, requires ${inv.prereqSpell}` : ""})
               </small>
               {known && <small> — already known</small>}
               <br />
-              <small style={{ color: "#555" }}>{inv.description}</small>
+              <small style={{ color: "var(--text-muted)" }}>{inv.description}</small>
             </button>
           );
         })}

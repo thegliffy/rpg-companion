@@ -3,26 +3,8 @@ import type { RollDetailTerm } from "shared";
 import { naturalD20 } from "shared";
 import type { RollGroupResult } from "./DiceRollContext";
 import "./dice.css";
-
-const overlayStyle: React.CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.4)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1000,
-};
-
-const dialogStyle: React.CSSProperties = {
-  background: "white",
-  color: "black",
-  borderRadius: 8,
-  padding: "1rem",
-  width: "min(360px, 92vw)",
-  maxHeight: "85vh",
-  overflowY: "auto",
-};
+import { modalOverlay as overlayStyle, modalDialog } from "../styles";
+const dialogStyle = { ...modalDialog, width: "min(360px, 92vw)" };
 
 // Above this many dice in one term, faces give way to a compact numbered grid (#137) -- a
 // Meteor Swarm rolling 20d6 as twenty full polygons would overflow the box.
@@ -79,9 +61,9 @@ function DieFace({
   // for highlighting purposes -- it wasn't the die that decided anything.
   const isNat20 = kept && sides === 20 && value === 20;
   const isNat1 = kept && sides === 20 && value === 1;
-  const fill = !kept ? "#f0f0f0" : isNat20 ? "#e6f7e6" : isNat1 ? "#fbe6e6" : "#f4f4f4";
-  const stroke = !kept ? "#ccc" : isNat20 ? "#2a8a2a" : isNat1 ? "#c0392b" : "#888";
-  const textColor = !kept ? "#999" : isNat20 ? "#1f6e1f" : isNat1 ? "#a5281b" : "#222";
+  const fill = !kept ? "var(--surface-sunken)" : isNat20 ? "var(--surface-sunken)" : isNat1 ? "var(--surface-sunken)" : "var(--surface-sunken)";
+  const stroke = !kept ? "var(--border)" : isNat20 ? "var(--success)" : isNat1 ? "var(--danger)" : "var(--text-dim)";
+  const textColor = !kept ? "var(--text-dim)" : isNat20 ? "var(--success)" : isNat1 ? "var(--danger)" : "var(--text)";
 
   return (
     <svg
@@ -117,8 +99,8 @@ function CompactDiceGrid({ term, animate }: { term: Extract<RollDetailTerm, { ki
             justifyContent: "center",
             fontSize: 13,
             borderRadius: 4,
-            background: d.kept ? "#eef4fb" : "#f0f0f0",
-            color: d.kept ? "#1a4a7a" : "#999",
+            background: d.kept ? "var(--surface-sunken)" : "var(--surface-sunken)",
+            color: d.kept ? "var(--accent)" : "var(--text-dim)",
             textDecoration: d.kept ? "none" : "line-through",
           }}
         >
@@ -140,16 +122,16 @@ function RollGroupCard({ group, onReroll, busy }: { group: RollGroupResult; onRe
   const detail = roll.detail;
 
   return (
-    <div style={{ borderTop: "1px solid #eee", paddingTop: "0.6rem", marginTop: "0.6rem" }}>
+    <div style={{ borderTop: "1px solid var(--border-faint)", paddingTop: "0.6rem", marginTop: "0.6rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <p style={{ margin: 0, fontSize: 13, color: "#666" }}>{group.label}</p>
+        <p style={{ margin: 0, fontSize: 13, color: "var(--text-muted)" }}>{group.label}</p>
         <button
           type="button"
           onClick={onReroll}
           disabled={busy}
           title="Reroll"
           aria-label="Reroll"
-          style={{ border: "none", background: "none", cursor: "pointer", fontSize: 13, color: "#666", padding: "0 0.2rem" }}
+          style={{ border: "none", background: "none", cursor: "pointer", fontSize: 13, color: "var(--text-muted)", padding: "0 0.2rem" }}
         >
           ↻
         </button>
@@ -184,7 +166,7 @@ function RollGroupCard({ group, onReroll, busy }: { group: RollGroupResult; onRe
               .filter((t) => t.kind !== "operator")
               .map((term, i) => (
                 <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "2px 0" }}>
-                  <span style={{ color: "#666" }}>{termLabel(term)}</span>
+                  <span style={{ color: "var(--text-muted)" }}>{termLabel(term)}</span>
                   <span>{term.kind === "dice" ? term.subtotal : term.value}</span>
                 </div>
               ))}
@@ -192,7 +174,7 @@ function RollGroupCard({ group, onReroll, busy }: { group: RollGroupResult; onRe
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                borderTop: "1px solid #eee",
+                borderTop: "1px solid var(--border-faint)",
                 marginTop: 4,
                 paddingTop: 4,
                 fontWeight: 600,
@@ -206,8 +188,8 @@ function RollGroupCard({ group, onReroll, busy }: { group: RollGroupResult; onRe
         </>
       )}
 
-      {detail && naturalD20(detail) === 20 && <p style={{ margin: "0.3rem 0 0", color: "#1f6e1f", fontSize: 13 }}>Natural 20!</p>}
-      {detail && naturalD20(detail) === 1 && <p style={{ margin: "0.3rem 0 0", color: "#a5281b", fontSize: 13 }}>Natural 1.</p>}
+      {detail && naturalD20(detail) === 20 && <p style={{ margin: "0.3rem 0 0", color: "var(--success)", fontSize: 13 }}>Natural 20!</p>}
+      {detail && naturalD20(detail) === 1 && <p style={{ margin: "0.3rem 0 0", color: "var(--danger)", fontSize: 13 }}>Natural 1.</p>}
     </div>
   );
 }
@@ -234,13 +216,13 @@ export function DiceRollModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            style={{ border: "none", background: "none", cursor: "pointer", fontSize: 16, color: "#666" }}
+            style={{ border: "none", background: "none", cursor: "pointer", fontSize: 16, color: "var(--text-muted)" }}
           >
             ×
           </button>
         </div>
 
-        {groups.length === 0 && <p style={{ color: "#888" }}>Rolling…</p>}
+        {groups.length === 0 && <p style={{ color: "var(--text-dim)" }}>Rolling…</p>}
 
         {groups.map((g) => (
           <RollGroupCard key={g.id} group={g} onReroll={() => onReroll(g)} busy={false} />

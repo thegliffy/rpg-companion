@@ -118,12 +118,12 @@ export function SpellCastControl({
 
           const natural = naturalD20(attackRoll.detail);
           if (natural !== null && natural >= critThreshold) {
-            setSessionActions(<p style={{ margin: 0, color: "#1f6e1f", fontWeight: 600 }}>Critical hit!</p>);
+            setSessionActions(<p style={{ margin: 0, color: "var(--success)", fontWeight: 600 }}>Critical hit!</p>);
             await rollDamagePhase(true);
             return;
           }
           if (natural === 1) {
-            setSessionActions(<p style={{ margin: 0, color: "#a5281b" }}>Critical miss.</p>);
+            setSessionActions(<p style={{ margin: 0, color: "var(--danger)" }}>Critical miss.</p>);
             setPhase("done");
             return;
           }
@@ -142,7 +142,7 @@ export function SpellCastControl({
               <button
                 type="button"
                 onClick={() => {
-                  setSessionActions(<p style={{ margin: 0, color: "#666" }}>Miss — no damage.</p>);
+                  setSessionActions(<p style={{ margin: 0, color: "var(--text-muted)" }}>Miss — no damage.</p>);
                   setPhase("done");
                 }}
               >
@@ -177,7 +177,7 @@ export function SpellCastControl({
         type="button"
         onClick={cast}
         disabled={phase === "rolling"}
-        style={consumesSlot && !hasSlot ? { color: "crimson", borderColor: "crimson" } : undefined}
+        style={consumesSlot && !hasSlot ? { color: "var(--danger)", borderColor: "var(--danger)" } : undefined}
       >
         {ritualOnly ? "Cast as ritual" : "Cast"}
       </button>
@@ -193,17 +193,17 @@ export function SpellCastControl({
           </select>
         </label>
       )}
-      {ritualOnly && <small style={{ marginLeft: "0.4rem", color: "#666" }}>(no slot used, +10 min)</small>}
+      {ritualOnly && <small style={{ marginLeft: "0.4rem", color: "var(--text-muted)" }}>(no slot used, +10 min)</small>}
       {consumesSlot && !hasSlot && (
-        <small style={{ marginLeft: "0.4rem", color: "crimson" }}>(no slot available)</small>
+        <small style={{ marginLeft: "0.4rem", color: "var(--danger)" }}>(no slot available)</small>
       )}
       {spell.concentration && (
-        <small style={{ marginLeft: "0.4rem", color: replacesConcentration ? "crimson" : "#666" }}>
+        <small style={{ marginLeft: "0.4rem", color: replacesConcentration ? "var(--danger)" : "var(--text-muted)" }}>
           {replacesConcentration ? `(concentration — drops ${replacesConcentration})` : "(concentration)"}
         </small>
       )}
       {buff && (
-        <small style={{ marginLeft: "0.4rem", color: "#666" }}>
+        <small style={{ marginLeft: "0.4rem", color: "var(--text-muted)" }}>
           (buffs your attacks:{" "}
           {[
             buff.attackDice ? `+${buff.attackDice} to hit` : "",
@@ -217,7 +217,7 @@ export function SpellCastControl({
         </small>
       )}
       {levelsAbove > 0 && scaledDamage && scaledDamage !== spell.damageDice && (
-        <small style={{ marginLeft: "0.4rem", color: "#666" }}>
+        <small style={{ marginLeft: "0.4rem", color: "var(--text-muted)" }}>
           (at {effectiveCastLevel}: {scaledDamage}
           {spell.damageType ? ` ${spell.damageType.toLowerCase()}` : ""})
         </small>
@@ -226,13 +226,13 @@ export function SpellCastControl({
           Shown whenever the spell has one, since it's the only place these surface at all. */}
       {scaling?.note && (
         <div>
-          <small style={{ color: "#666" }}>
+          <small style={{ color: "var(--text-muted)" }}>
             At higher levels: {scaling.note}
             {levelsAbove > 0 ? ` (casting at ${effectiveCastLevel} — ${levelsAbove} above base)` : ""}
           </small>
         </div>
       )}
-      {error && <span style={{ color: "crimson", marginLeft: "0.5rem" }}>{error}</span>}
+      {error && <span style={{ color: "var(--danger)", marginLeft: "0.5rem" }}>{error}</span>}
     </div>
   );
 }

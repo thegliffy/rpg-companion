@@ -59,7 +59,7 @@ export function CharacterSheetPage({
     }
   }
 
-  if (error) return <p style={{ color: "crimson", padding: "1rem 2rem" }}>{error}</p>;
+  if (error) return <p style={{ color: "var(--danger)", padding: "1rem 2rem" }}>{error}</p>;
   if (!character) return <p style={{ padding: "1rem 2rem" }}>Loading…</p>;
 
   const readOnly =
@@ -101,7 +101,7 @@ export function CharacterSheetPage({
         )}
       </div>
       {readOnly && viewMode === "edit" && (
-        <p className="no-print" style={{ background: "#fff3cd", padding: "0.5rem 1rem", borderRadius: 6 }}>
+        <p className="no-print" style={{ background: "var(--warning-bg)", padding: "0.5rem 1rem", borderRadius: 6 }}>
           This character is retired or deceased — read-only memorial view. Reactivate below to resume editing.
         </p>
       )}

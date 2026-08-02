@@ -56,13 +56,13 @@ export function EldritchBlastControl({
       <button type="button" onClick={cast} disabled={rolling}>
         Cast Eldritch Blast ({profile.beams} beam{profile.beams > 1 ? "s" : ""})
       </button>{" "}
-      <small style={{ color: "#666" }}>
+      <small style={{ color: "var(--text-muted)" }}>
         {profile.rangeFeet} ft · {profile.damageDice} force per beam
         {profile.agonizing ? " (Agonizing Blast)" : ""}
         {profile.eldritchSpear ? " · Eldritch Spear" : ""}
         {profile.push ? " · Repelling Blast: push 10 ft on hit" : ""}
       </small>
-      {error && <span style={{ color: "crimson", marginLeft: "0.5rem" }}>{error}</span>}
+      {error && <span style={{ color: "var(--danger)", marginLeft: "0.5rem" }}>{error}</span>}
     </div>
   );
 }

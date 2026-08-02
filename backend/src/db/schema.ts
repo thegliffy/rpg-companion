@@ -7,6 +7,9 @@ export const users = sqliteTable("users", {
   passwordHash: text("password_hash").notNull(),
   // Global account rank, separate from the per-campaign dm/player role above.
   role: text("role", { enum: ["player", "dm", "admin"] }).notNull().default("player"),
+  // Selected UI theme (#154) -- the app's first user preference. Nullable rather than defaulted so
+  // existing rows need no backfill; null reads as "default" everywhere.
+  theme: text("theme"),
   createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
 });
 

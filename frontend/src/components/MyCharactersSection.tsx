@@ -39,7 +39,7 @@ export function MyCharactersSection({
   return (
     <div>
       <h2>My characters</h2>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       {characters.length === 0 && <p>No characters yet.</p>}
 

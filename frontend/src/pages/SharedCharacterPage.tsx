@@ -18,8 +18,7 @@ import {
   totalInventoryWeight,
 } from "shared";
 import * as charactersApi from "../api/characters";
-
-const box: React.CSSProperties = { border: "1px solid #bbb", borderRadius: 6, padding: "0.75rem" };
+import { panel as box } from "../styles";
 
 /**
  * Public, read-only view of a shared character -- reached via /c/:token, bypassing auth entirely
@@ -44,7 +43,7 @@ export function SharedCharacterPage({ token }: { token: string }) {
   if (error) {
     return (
       <div style={{ maxWidth: 500, margin: "4rem auto", textAlign: "center" }}>
-        <p style={{ color: "crimson" }}>{error}</p>
+        <p style={{ color: "var(--danger)" }}>{error}</p>
       </div>
     );
   }
@@ -52,7 +51,7 @@ export function SharedCharacterPage({ token }: { token: string }) {
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", padding: "1rem 2rem 3rem" }}>
-      <p style={{ background: "#eef", padding: "0.5rem 1rem", borderRadius: 6, fontSize: "0.85rem" }}>
+      <p style={{ background: "var(--surface-sunken)", padding: "0.5rem 1rem", borderRadius: 6, fontSize: "0.85rem" }}>
         Read-only shared view of {character.ownerUsername}'s character. No sign-in required, and nothing here can be
         edited.
       </p>
@@ -90,7 +89,7 @@ function SharedDnd5e({ character, token }: { character: Character; token: string
         )}
         <div>
           <h1 style={{ margin: 0 }}>{character.name}</h1>
-          <div style={{ color: "#666" }}>
+          <div style={{ color: "var(--text-muted)" }}>
             {sheet.race}
             {sheet.subrace ? ` (${sheet.subrace})` : ""} {sheet.class}
             {sheet.subclass ? ` (${sheet.subclass})` : ""} {sheet.level} — {sheet.background}
@@ -105,7 +104,7 @@ function SharedDnd5e({ character, token }: { character: Character; token: string
             <span>AC</span>
             <strong>
               {effectiveAC(sheet)}
-              {breakdown && <small style={{ color: "#666" }}> ({breakdown})</small>}
+              {breakdown && <small style={{ color: "var(--text-muted)" }}> ({breakdown})</small>}
             </strong>
             <span>HP</span>
             <strong>
@@ -144,7 +143,7 @@ function SharedDnd5e({ character, token }: { character: Character; token: string
               </div>
             ))}
           </div>
-          <p style={{ fontSize: "0.85rem", color: "#666", marginBottom: 0 }}>
+          <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: 0 }}>
             Passive Perception {passiveScore(sheet, "perception")} · Passive Investigation{" "}
             {passiveScore(sheet, "investigation")} · Passive Insight {passiveScore(sheet, "insight")}
           </p>
@@ -160,7 +159,7 @@ function SharedDnd5e({ character, token }: { character: Character; token: string
           </p>
           {sheet.spells.map((sp) => (
             <div key={sp.id} style={{ fontSize: "0.9rem" }}>
-              {sp.name} <small style={{ color: "#666" }}>({sp.level === 0 ? "cantrip" : `level ${sp.level}`})</small>
+              {sp.name} <small style={{ color: "var(--text-muted)" }}>({sp.level === 0 ? "cantrip" : `level ${sp.level}`})</small>
             </div>
           ))}
         </div>
@@ -174,7 +173,7 @@ function SharedDnd5e({ character, token }: { character: Character; token: string
               {item.equipped ? "▣" : "▢"} {item.name} × {item.quantity}
             </div>
           ))}
-          <p style={{ fontSize: "0.85rem", color: "#666" }}>Total weight: {totalInventoryWeight(sheet)} lb</p>
+          <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Total weight: {totalInventoryWeight(sheet)} lb</p>
         </div>
       )}
 
@@ -184,7 +183,7 @@ function SharedDnd5e({ character, token }: { character: Character; token: string
           {[...sheet.feats, ...sheet.features].map((f) => (
             <div key={f.id} style={{ marginBottom: "0.4rem" }}>
               <strong>{f.name}</strong>
-              {f.description && <div style={{ fontSize: "0.85rem", color: "#555" }}>{f.description}</div>}
+              {f.description && <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{f.description}</div>}
             </div>
           ))}
         </div>

@@ -51,7 +51,7 @@ export function AuthPage() {
             />
           </label>
         </div>
-        {error && <p style={{ color: "crimson" }}>{error}</p>}
+        {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
         <button type="submit" disabled={submitting}>
           {mode === "login" ? "Log in" : "Register"}
         </button>

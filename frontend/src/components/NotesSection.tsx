@@ -28,7 +28,7 @@ function NoteForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ border: "1px solid #ccc", padding: "1rem" }}>
+    <form onSubmit={handleSubmit} style={{ border: "1px solid var(--border)", padding: "1rem" }}>
       <div>
         <input
           placeholder="Title"
@@ -109,7 +109,7 @@ export function NotesSection({
   return (
     <div>
       <h2>{isPersonal ? "My notes" : "Notes"}</h2>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       {notes.map((n) =>
         editingId === n.id ? (
@@ -120,7 +120,7 @@ export function NotesSection({
             onCancel={() => setEditingId(null)}
           />
         ) : (
-          <div key={n.id} style={{ border: "1px solid #ddd", padding: "1rem", marginBottom: "0.5rem" }}>
+          <div key={n.id} style={{ border: "1px solid var(--border-subtle)", padding: "1rem", marginBottom: "0.5rem" }}>
             <h3>{n.title}</h3>
             <ReactMarkdown>{n.contentMd}</ReactMarkdown>
             <small>

@@ -114,8 +114,8 @@ import { WildShapePanel } from "./WildShapePanel";
 import { FamiliarPanel } from "./FamiliarPanel";
 import { InvocationPickerModal, INVOCATION_PREFIX } from "./InvocationPickerModal";
 import { CollapsibleSection } from "./CollapsibleSection";
+import { panel as box } from "../../styles";
 
-const box: React.CSSProperties = { border: "1px solid #bbb", borderRadius: 6, padding: "0.75rem" };
 const numInput: React.CSSProperties = { width: "3.5rem", textAlign: "center" };
 
 // Pact of the Blade: a single fixed-id attacks[] row so "Create pact weapon" is idempotent and
@@ -1096,7 +1096,7 @@ export function Dnd5eSheet({
               {shareBusy ? "Creating…" : "Create a read-only share link"}
             </button>
           )}
-          <p style={{ fontSize: "0.8rem", color: "#666", margin: "0.4rem 0 0" }}>
+          <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: "0.4rem 0 0" }}>
             Anyone with this link can view (but never edit) this character without signing in.
           </p>
         </div>
@@ -1218,7 +1218,7 @@ export function Dnd5eSheet({
             />
           )}
           {raceInfo && (
-            <div style={{ fontSize: "0.8rem", color: "#666", marginTop: "0.2rem" }}>
+            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.2rem" }}>
               Speed {raceInfo.speed} · {raceInfo.size}
               {Object.keys(raceInfo.abilityBonuses).length > 0 && (
                 <>
@@ -1252,7 +1252,7 @@ export function Dnd5eSheet({
               ))}
             </select>
             {subraceInfo && subraceInfo.traits.length > 0 && (
-              <div style={{ fontSize: "0.8rem", color: "#666", marginTop: "0.2rem" }}>
+              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.2rem" }}>
                 {traitDisplayNames(subraceInfo.traits).join(", ")}
               </div>
             )}
@@ -1446,7 +1446,7 @@ export function Dnd5eSheet({
                   {formatModifier(abilityModifier(effectiveAbilityScore(sheet, a)))}
                 </strong>
                 {eqBonus !== 0 && (
-                  <small style={{ color: "#666" }} title="Bonus from equipped items">
+                  <small style={{ color: "var(--text-muted)" }} title="Bonus from equipped items">
                     ({formatModifier(eqBonus)} eq)
                   </small>
                 )}
@@ -1477,7 +1477,7 @@ export function Dnd5eSheet({
               </div>
               {rollResults[`save-${a}`] && (
                 <div style={{ marginLeft: "1.9rem" }}>
-                  <small style={{ color: "#555" }}>{rollResults[`save-${a}`]}</small>
+                  <small style={{ color: "var(--text-muted)" }}>{rollResults[`save-${a}`]}</small>
                 </div>
               )}
             </div>
@@ -1495,7 +1495,7 @@ export function Dnd5eSheet({
                 if (skillsForAbility.length === 0) return null;
                 return (
                   <div key={a} style={{ breakInside: "avoid", marginBottom: "0.6rem" }}>
-                    <div style={{ fontWeight: "bold", fontSize: "0.85rem", color: "#666" }}>
+                    <div style={{ fontWeight: "bold", fontSize: "0.85rem", color: "var(--text-muted)" }}>
                       {DND5E_ABILITY_NAMES[a]}
                     </div>
                     {skillsForAbility.map((s) => {
@@ -1518,13 +1518,13 @@ export function Dnd5eSheet({
                             >
                               {s.name}
                               {effectGranted && !manuallyChecked && (
-                                <small style={{ color: "#666" }} title="Granted by a feat/feature/invocation">
+                                <small style={{ color: "var(--text-muted)" }} title="Granted by a feat/feature/invocation">
                                   {" "}
                                   (granted)
                                 </small>
                               )}
                               {s.id === "stealth" && hasArmorStealthDisadvantage(sheet) && (
-                                <small style={{ color: "crimson" }} title="Equipped armor imposes Stealth disadvantage">
+                                <small style={{ color: "var(--danger)" }} title="Equipped armor imposes Stealth disadvantage">
                                   {" "}
                                   (disadv.)
                                 </small>
@@ -1534,7 +1534,7 @@ export function Dnd5eSheet({
                           </div>
                           {rollResults[`skill-${s.id}`] && (
                             <div style={{ marginLeft: "1.7rem" }}>
-                              <small style={{ color: "#555" }}>{rollResults[`skill-${s.id}`]}</small>
+                              <small style={{ color: "var(--text-muted)" }}>{rollResults[`skill-${s.id}`]}</small>
                             </div>
                           )}
                         </div>
@@ -1608,20 +1608,20 @@ export function Dnd5eSheet({
               {acBreakdownText(sheet) ? (
                 <>
                   <strong style={{ fontSize: "1.1rem" }}>{effectiveAC(sheet)}</strong>{" "}
-                  <small style={{ color: "#666" }}>({acBreakdownText(sheet)})</small>
+                  <small style={{ color: "var(--text-muted)" }}>({acBreakdownText(sheet)})</small>
                 </>
               ) : (
                 <>
                   <input type="number" value={sheet.ac} onChange={(e) => set("ac", Number(e.target.value) || 0)} style={numInput} />{" "}
                   {effectiveAC(sheet) !== sheet.ac && (
-                    <small style={{ color: "#666" }} title="Effective AC including equipped items">
+                    <small style={{ color: "var(--text-muted)" }} title="Effective AC including equipped items">
                       → {effectiveAC(sheet)}
                     </small>
                   )}
                 </>
               )}
               {armorOverlapWarning(sheet) && (
-                <div style={{ color: "crimson", fontSize: "0.8rem" }}>{armorOverlapWarning(sheet)}</div>
+                <div style={{ color: "var(--danger)", fontSize: "0.8rem" }}>{armorOverlapWarning(sheet)}</div>
               )}
             </span>
             <span>Initiative</span>
@@ -1744,12 +1744,12 @@ export function Dnd5eSheet({
             </div>
           )}
           {sheet.deathSaveSuccesses >= 3 && (
-            <div style={{ marginTop: "0.5rem", color: "green" }}>
+            <div style={{ marginTop: "0.5rem", color: "var(--success)" }}>
               <strong>Stabilized.</strong>
             </div>
           )}
           {sheet.deathSaveFailures >= 3 && (
-            <div style={{ marginTop: "0.5rem", color: "crimson" }}>
+            <div style={{ marginTop: "0.5rem", color: "var(--danger)" }}>
               <strong>Character has died.</strong>{" "}
               <button type="button" onClick={() => setStatus("dead")}>
                 Mark as dead
@@ -1828,7 +1828,7 @@ export function Dnd5eSheet({
                   ]
                     .filter(Boolean)
                     .join(", ")}
-                  <small style={{ color: "#666" }}>
+                  <small style={{ color: "var(--text-muted)" }}>
                     {" "}
                     ({e.consumption === "once" ? "next hit" : "per hit"})
                   </small>
@@ -1900,7 +1900,7 @@ export function Dnd5eSheet({
           <div>
             Hit dice available: <strong>{sheet.hitDiceAvailable}</strong> / {sheet.hitDiceTotal}
           </div>
-          {restMessage && <p style={{ fontSize: "0.85rem", color: "#555", maxWidth: "16rem" }}>{restMessage}</p>}
+          {restMessage && <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", maxWidth: "16rem" }}>{restMessage}</p>}
         </div>
       </div>
 
@@ -1959,7 +1959,7 @@ export function Dnd5eSheet({
                   style={{ width: "7rem" }}
                 />
                 {atk.damageDice && (
-                  <small style={{ color: "#666" }}>
+                  <small style={{ color: "var(--text-muted)" }}>
                     Damage: {atk.damageDice}
                     {damageBonus !== 0 ? ` ${formatModifier(damageBonus)}` : ""} {atk.damageType.toLowerCase()}
                   </small>
@@ -1969,7 +1969,7 @@ export function Dnd5eSheet({
                 </button>
               </div>
               {atk.id === PACT_WEAPON_ATTACK_ID && (hasThirstingBlade || hasLifedrinker) && (
-                <p style={{ fontSize: "0.8rem", color: "#555", margin: "0.15rem 0" }}>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", margin: "0.15rem 0" }}>
                   {hasThirstingBlade && "Thirsting Blade: attacks twice with the Attack action. "}
                   {hasLifedrinker &&
                     `Lifedrinker: +${Math.max(1, abilityModifier(effectiveAbilityScore(sheet, "cha")))} necrotic damage on hit.`}
@@ -2095,7 +2095,7 @@ export function Dnd5eSheet({
               style={{ width: "2.8rem" }}
             />
             {slotsExpected[slot.level] !== undefined && slotsExpected[slot.level] !== slot.total && (
-              <small style={{ color: "#a60" }}> (expected {slotsExpected[slot.level]})</small>
+              <small style={{ color: "var(--warning)" }}> (expected {slotsExpected[slot.level]})</small>
             )}
           </span>
         ))}
@@ -2119,7 +2119,7 @@ export function Dnd5eSheet({
             const counter = (label: string, x: number, y: number | null | undefined) => {
               if (y === null || y === undefined || x === y) return null;
               return (
-                <small key={label} style={{ marginLeft: "0.6rem", fontWeight: "normal", color: x > y ? "crimson" : undefined }}>
+                <small key={label} style={{ marginLeft: "0.6rem", fontWeight: "normal", color: x > y ? "var(--danger)" : undefined }}>
                   {x}/{y} {label}
                 </small>
               );
@@ -2187,7 +2187,7 @@ export function Dnd5eSheet({
           }
 
           return (
-            <div key={sp.id} style={{ marginBottom: "0.5rem", paddingBottom: "0.5rem", borderBottom: "1px solid #eee" }}>
+            <div key={sp.id} style={{ marginBottom: "0.5rem", paddingBottom: "0.5rem", borderBottom: "1px solid var(--border-faint)" }}>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                 <strong style={{ minWidth: "8rem" }}>{sp.name || "(unnamed)"}</strong>
                 {isCustom && (
@@ -2241,14 +2241,14 @@ export function Dnd5eSheet({
                     Prepared
                   </label>
                 )}
-                {sp.atWill && <small style={{ color: "#666" }}>(at will)</small>}
+                {sp.atWill && <small style={{ color: "var(--text-muted)" }}>(at will)</small>}
                 <button type="button" onClick={() => set("spells", sheet.spells.filter((_, j) => j !== i))}>
                   Remove
                 </button>
               </div>
 
               {srdSpell && (
-                <div style={{ fontSize: "0.85rem", color: "#555", marginTop: "0.2rem" }}>
+                <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "0.2rem" }}>
                   {srdSpell.school} · {srdSpell.castingTime} · {srdSpell.range} · {srdSpell.duration}
                   {srdSpell.saveAbility && (
                     <>
@@ -2268,7 +2268,7 @@ export function Dnd5eSheet({
                 </div>
               )}
               {srdSpell?.description && (
-                <div style={{ fontSize: "0.85rem", color: "#555", marginTop: "0.1rem" }}>{srdSpell.description}</div>
+                <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "0.1rem" }}>{srdSpell.description}</div>
               )}
               {srdSpell?.id === "eldritch-blast" ? (
                 <EldritchBlastControl
@@ -2398,7 +2398,7 @@ export function Dnd5eSheet({
             {(() => {
               const attunedCount = sheet.items.filter((item) => item.attuned).length;
               return (
-                <small style={{ fontWeight: "normal", color: attunedCount > 3 ? "crimson" : "#666" }}>
+                <small style={{ fontWeight: "normal", color: attunedCount > 3 ? "var(--danger)" : "var(--text-muted)" }}>
                   Attuned: {attunedCount} / 3
                 </small>
               );
@@ -2558,7 +2558,7 @@ export function Dnd5eSheet({
                 </button>
               </div>
               {itemDescription && (
-                <div style={{ marginTop: "0.2rem", marginLeft: "0.5rem", fontSize: "0.85rem", color: "#555" }}>
+                <div style={{ marginTop: "0.2rem", marginLeft: "0.5rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
                   {itemDescription}
                 </div>
               )}
@@ -2572,7 +2572,7 @@ export function Dnd5eSheet({
                     marginTop: "0.25rem",
                     marginLeft: "0.5rem",
                     fontSize: "0.85rem",
-                    color: "#555",
+                    color: "var(--text-muted)",
                   }}
                 >
                   <span>When equipped:</span>
@@ -2701,7 +2701,7 @@ export function Dnd5eSheet({
                   <button type="button" onClick={() => setInvocationPickerOpen(true)}>
                     Add invocation
                   </button>{" "}
-                  <small style={{ color: "#666" }}>Manage individual invocations in Features &amp; traits below.</small>
+                  <small style={{ color: "var(--text-muted)" }}>Manage individual invocations in Features &amp; traits below.</small>
                   {invocationPickerOpen && (
                     <InvocationPickerModal
                       level={sheet.level}
@@ -2720,7 +2720,7 @@ export function Dnd5eSheet({
             {(() => {
               const unlocked = unlockedArcanumTiers(sheet.level);
               if (unlocked.length === 0) {
-                return <p style={{ color: "#888" }}>Unlocks at level 11 (one 6th-level spell, castable once per long rest).</p>;
+                return <p style={{ color: "var(--text-dim)" }}>Unlocks at level 11 (one 6th-level spell, castable once per long rest).</p>;
               }
               return (
                 <>
@@ -2763,7 +2763,7 @@ export function Dnd5eSheet({
           <div>
             <h4 style={{ marginBottom: "0.25rem" }}>Pact Boon</h4>
             {sheet.level < 3 ? (
-              <p style={{ color: "#888" }}>Unlocks at level 3.</p>
+              <p style={{ color: "var(--text-dim)" }}>Unlocks at level 3.</p>
             ) : (
               <>
                 <select value={sheet.pactBoon} onChange={(e) => changePactBoon(e.target.value as Dnd5eSheetData["pactBoon"])}>
@@ -2773,19 +2773,19 @@ export function Dnd5eSheet({
                   <option value="tome">Pact of the Tome</option>
                 </select>
                 {sheet.pactBoon === "chain" && (
-                  <p style={{ fontSize: "0.85rem", color: "#555" }}>
+                  <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
                     You learn the find familiar spell and can cast it as a ritual, with an expanded choice of familiar forms.
                     Summon and manage your familiar in the <strong>Familiar</strong> section above.
                   </p>
                 )}
                 {sheet.pactBoon === "blade" && (
                   <div>
-                    <p style={{ fontSize: "0.85rem", color: "#555" }}>
+                    <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
                       You can use your action to create a pact weapon in your empty hand, which counts as magical for overcoming
                       resistance.
                     </p>
                     {sheet.attacks.some((a) => a.id === PACT_WEAPON_ATTACK_ID) ? (
-                      <p style={{ fontSize: "0.85rem", color: "#555" }}>
+                      <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
                         Pact weapon created — set its damage dice/type in Attacks above.
                         {hasThirstingBlade && " Thirsting Blade: attacks twice."}
                         {hasLifedrinker && " Lifedrinker: bonus necrotic damage on hit."}
@@ -2799,7 +2799,7 @@ export function Dnd5eSheet({
                 )}
                 {sheet.pactBoon === "tome" && (
                   <div>
-                    <p style={{ fontSize: "0.85rem", color: "#555" }}>
+                    <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
                       Your patron gives you a Book of Shadows containing three cantrips of your choice from any class's spell list.
                     </p>
                     {(() => {
@@ -2825,7 +2825,7 @@ export function Dnd5eSheet({
                             Add cantrip
                           </button>
                           {hasBookOfAncientSecrets && (
-                            <p style={{ fontSize: "0.85rem", color: "#555" }}>
+                            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
                               Book of Ancient Secrets: ritual spells in your book are castable as rituals.
                             </p>
                           )}
@@ -2878,7 +2878,7 @@ export function Dnd5eSheet({
             set("feats", sheet.feats.map((x, j) => (j === i ? { ...x, ...patch } : x)));
           }
           return (
-            <div key={feat.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid #eee", paddingBottom: "0.5rem" }}>
+            <div key={feat.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid var(--border-faint)", paddingBottom: "0.5rem" }}>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                 <input
                   placeholder="Feat name"
@@ -2904,7 +2904,7 @@ export function Dnd5eSheet({
                   flexWrap: "wrap",
                   marginTop: "0.25rem",
                   fontSize: "0.85rem",
-                  color: "#555",
+                  color: "var(--text-muted)",
                 }}
               >
                 <span>Bonuses:</span>
@@ -2971,7 +2971,7 @@ export function Dnd5eSheet({
             set("features", sheet.features.map((x, j) => (j === i ? { ...x, ...patch } : x)));
           }
           return (
-            <div key={feature.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid #eee", paddingBottom: "0.5rem" }}>
+            <div key={feature.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid var(--border-faint)", paddingBottom: "0.5rem" }}>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                 <input
                   placeholder="Feature/trait name"
@@ -2997,7 +2997,7 @@ export function Dnd5eSheet({
                   flexWrap: "wrap",
                   marginTop: "0.25rem",
                   fontSize: "0.85rem",
-                  color: "#555",
+                  color: "var(--text-muted)",
                 }}
               >
                 <span>Bonuses:</span>
@@ -3061,7 +3061,7 @@ export function Dnd5eSheet({
           Add feature
         </button>
         <h4 style={{ marginTop: "0.75rem" }}>
-          Other notes / history <small style={{ color: "#777", fontWeight: "normal" }}>(freeform — the structured list above is now the source of truth)</small>
+          Other notes / history <small style={{ color: "var(--text-muted)", fontWeight: "normal" }}>(freeform — the structured list above is now the source of truth)</small>
         </h4>
         <textarea value={sheet.featuresText} onChange={(e) => set("featuresText", e.target.value)} rows={5} style={{ width: "100%" }} />
       </CollapsibleSection>
@@ -3086,7 +3086,7 @@ export function Dnd5eSheet({
           </label>
           {isOwner && (
             <label style={{ display: "block" }}>
-              Personal notes <small style={{ color: "#777" }}>(private — never visible to your DM)</small>
+              Personal notes <small style={{ color: "var(--text-muted)" }}>(private — never visible to your DM)</small>
               <textarea
                 value={sheet.privateNotes}
                 onChange={(e) => set("privateNotes", e.target.value)}
@@ -3098,14 +3098,14 @@ export function Dnd5eSheet({
         </CollapsibleSection>
       </div>
 
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
       {!readOnly && (
         <div style={{ fontSize: "1.1rem" }}>
-          {autosaveStatus === "saving" && <span style={{ color: "#666" }}>Saving…</span>}
-          {autosaveStatus === "pending" && <span style={{ color: "#666" }}>Unsaved changes…</span>}
-          {autosaveStatus === "saved" && <span style={{ color: "green" }}>All changes saved ✓</span>}
+          {autosaveStatus === "saving" && <span style={{ color: "var(--text-muted)" }}>Saving…</span>}
+          {autosaveStatus === "pending" && <span style={{ color: "var(--text-muted)" }}>Unsaved changes…</span>}
+          {autosaveStatus === "saved" && <span style={{ color: "var(--success)" }}>All changes saved ✓</span>}
           {autosaveStatus === "error" && (
-            <span style={{ color: "crimson" }}>
+            <span style={{ color: "var(--danger)" }}>
               Save failed{autosaveError ? `: ${autosaveError}` : ""} —{" "}
               <button type="button" onClick={persist}>
                 Retry

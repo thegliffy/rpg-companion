@@ -1,25 +1,7 @@
 import { useMemo, useState } from "react";
 import { SRD_SPELLS } from "shared";
-
-const overlayStyle: React.CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.4)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1000,
-};
-
-const dialogStyle: React.CSSProperties = {
-  background: "white",
-  color: "black",
-  borderRadius: 8,
-  padding: "1rem",
-  width: "min(600px, 92vw)",
-  maxHeight: "85vh",
-  overflowY: "auto",
-};
+import { modalOverlay as overlayStyle, modalDialog } from "../../styles";
+const dialogStyle = { ...modalDialog, width: "min(600px, 92vw)" };
 
 export interface PickedSpell {
   id: string;
@@ -108,7 +90,7 @@ export function WizardSpellbookPicker({
         </p>
         {byLevel.map(([level, spells]) => (
           <div key={level} style={{ marginBottom: "0.75rem" }}>
-            <div style={{ fontWeight: "bold", borderBottom: "1px solid #ddd" }}>{level === 0 ? "Cantrips" : `Level ${level}`}</div>
+            <div style={{ fontWeight: "bold", borderBottom: "1px solid var(--border-subtle)" }}>{level === 0 ? "Cantrips" : `Level ${level}`}</div>
             {spells.map((s) => (
               <label key={s.id} style={{ display: "flex", alignItems: "center", gap: "0.4rem", padding: "0.15rem 0" }}>
                 <input
@@ -118,7 +100,7 @@ export function WizardSpellbookPicker({
                   onChange={() => toggle({ id: s.id, name: s.name, level: s.level })}
                 />
                 <span style={{ flex: 1 }}>{s.name}</span>
-                <small style={{ color: "#777" }}>{s.school}</small>
+                <small style={{ color: "var(--text-muted)" }}>{s.school}</small>
               </label>
             ))}
           </div>

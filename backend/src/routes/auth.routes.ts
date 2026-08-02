@@ -1,14 +1,16 @@
 import { Router } from "express";
-import { registerSchema, loginSchema } from "shared";
+import { registerSchema, loginSchema, updatePreferencesSchema } from "shared";
 import {
   createUser,
   findUserByUsername,
   findUserById,
   verifyPassword,
   toPublicUser,
+  updateUserTheme,
   UsernameTakenError,
 } from "../services/users.service.js";
 import { rateLimit } from "../middleware/rateLimit.js";
+import { requireAuth } from "../middleware/auth.js";
 
 export const authRouter = Router();
 
@@ -104,4 +106,27 @@ authRouter.get("/session", (req, res) => {
   }
 
   res.json({ user: toPublicUser(user) });
+});
+
+// The app's first user preference (#154). Shaped as "preferences" rather than "set theme" so the
+// next one extends this route instead of adding a second. Token-authenticated callers are allowed:
+// unlike the token routes themselves, changing your own theme is harmless and inherits normally.
+authRouter.patch("/preferences", requireAuth, async (req, res) => {
+  const parsed = updatePreferencesSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });
+    return;
+  }
+
+  if (parsed.data.theme === undefined) {
+    res.json({ user: toPublicUser(findUserById(req.authUserId!)!) });
+    return;
+  }
+
+  const updated = await updateUserTheme(req.authUserId!, parsed.data.theme);
+  if (!updated) {
+    res.status(404).json({ error: "User not found" });
+    return;
+  }
+  res.json({ user: toPublicUser(updated) });
 });

@@ -43,13 +43,13 @@ export function CharacterPortrait({
   const boxStyle: React.CSSProperties = {
     width: size,
     height: size,
-    border: "1px solid #bbb",
+    border: "1px solid var(--border-strong)",
     borderRadius: 6,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    background: "#f4f4f4",
+    background: "var(--surface-sunken)",
     cursor: canEdit ? "pointer" : "default",
     flexShrink: 0,
   };
@@ -65,7 +65,7 @@ export function CharacterPortrait({
             onError={() => setHasImage(false)}
           />
         ) : (
-          <span style={{ fontSize: "0.8rem", color: "#888", textAlign: "center", padding: "0.5rem" }}>
+          <span style={{ fontSize: "0.8rem", color: "var(--text-dim)", textAlign: "center", padding: "0.5rem" }}>
             {canEdit ? "Click to upload portrait" : "No portrait"}
           </span>
         )}
@@ -80,7 +80,7 @@ export function CharacterPortrait({
         />
       )}
       {uploading && <small>Uploading…</small>}
-      {error && <p style={{ color: "crimson", fontSize: "0.8rem" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)", fontSize: "0.8rem" }}>{error}</p>}
     </div>
   );
 }

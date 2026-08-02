@@ -2,26 +2,8 @@ import { useState } from "react";
 import type { CustomContent, CustomFeatData, Dnd5eAbility, Dnd5eSheetData, GrantedSpell, SpellChoice } from "shared";
 import { DND5E_ABILITY_NAMES, effectiveAbilityScore, SRD_FEATS } from "shared";
 import { WizardSpellbookPicker, type PickedSpell } from "./WizardSpellbookPicker";
-
-const overlayStyle: React.CSSProperties = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.4)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1000,
-};
-
-const dialogStyle: React.CSSProperties = {
-  background: "white",
-  color: "black",
-  borderRadius: 8,
-  padding: "1rem",
-  width: "min(520px, 92vw)",
-  maxHeight: "85vh",
-  overflowY: "auto",
-};
+import { modalOverlay as overlayStyle, modalDialog } from "../../styles";
+const dialogStyle = modalDialog;
 
 type FeatEntry = Dnd5eSheetData["feats"][number];
 
@@ -150,7 +132,7 @@ export function FeatPickerModal({
     <div style={overlayStyle} onClick={onClose}>
       <div style={dialogStyle} onClick={(e) => e.stopPropagation()}>
         <h3>Add a feat</h3>
-        <div style={{ fontWeight: "bold", borderBottom: "1px solid #ddd" }}>SRD</div>
+        <div style={{ fontWeight: "bold", borderBottom: "1px solid var(--border-subtle)" }}>SRD</div>
         {SRD_FEATS.map((f) => (
           <button key={f.id} type="button" style={rowStyle} onClick={() => pickSrd(f.name)}>
             {f.name}
@@ -158,7 +140,7 @@ export function FeatPickerModal({
         ))}
         {customFeats.length > 0 && (
           <>
-            <div style={{ fontWeight: "bold", borderBottom: "1px solid #ddd", marginTop: "0.5rem" }}>Custom</div>
+            <div style={{ fontWeight: "bold", borderBottom: "1px solid var(--border-subtle)", marginTop: "0.5rem" }}>Custom</div>
             {customFeats.map((f) => {
               const prereq = prereqLine(f.data as CustomFeatData);
               return (
@@ -168,7 +150,7 @@ export function FeatPickerModal({
                   {prereq && (
                     <>
                       {" "}
-                      <small style={{ color: prereq.unmet ? "crimson" : "#888" }}>({prereq.text})</small>
+                      <small style={{ color: prereq.unmet ? "var(--danger)" : "var(--text-dim)" }}>({prereq.text})</small>
                     </>
                   )}
                 </button>

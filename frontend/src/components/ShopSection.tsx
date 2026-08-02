@@ -68,11 +68,11 @@ export function ShopSection({
   return (
     <div>
       <h2>Shop</h2>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
-      {message && <p style={{ color: "green" }}>{message}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
+      {message && <p style={{ color: "var(--success)" }}>{message}</p>}
 
       {role === "dm" && (
-        <div style={{ border: "1px solid #ddd", borderRadius: 6, padding: "0.75rem", marginBottom: "1rem" }}>
+        <div style={{ border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "0.75rem", marginBottom: "1rem" }}>
           <h3>Manage shop</h3>
           <label>
             <input

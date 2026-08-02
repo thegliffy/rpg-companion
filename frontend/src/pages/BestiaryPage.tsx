@@ -21,9 +21,9 @@ function sensesText(senses: SrdMonster["senses"]): string {
 
 function MonsterDetail({ monster }: { monster: SrdMonster }) {
   return (
-    <div style={{ border: "1px solid #bbb", borderRadius: 6, padding: "1rem" }}>
+    <div style={{ border: "1px solid var(--border-strong)", borderRadius: 6, padding: "1rem" }}>
       <h2 style={{ marginBottom: 0 }}>{monster.name}</h2>
-      <p style={{ marginTop: "0.2rem", fontStyle: "italic", color: "#666" }}>
+      <p style={{ marginTop: "0.2rem", fontStyle: "italic", color: "var(--text-muted)" }}>
         {monster.size} {monster.type}, {monster.alignment}
       </p>
 
@@ -134,7 +134,7 @@ function MonsterDetail({ monster }: { monster: SrdMonster }) {
       {monster.legendaryActions && monster.legendaryActions.length > 0 && (
         <div>
           <h3>Legendary Actions</h3>
-          <p style={{ fontSize: "0.85rem", color: "#666", marginTop: "-0.3rem" }}>
+          <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginTop: "-0.3rem" }}>
             {monster.name} can take {monster.legendaryActionsPerRound ?? 3} legendary action
             {(monster.legendaryActionsPerRound ?? 3) === 1 ? "" : "s"}, choosing from the options below. Only one
             option can be used at a time and only at the end of another creature's turn. {monster.name} regains
@@ -194,7 +194,7 @@ export function BestiaryPage({ onBack }: { onBack: () => void }) {
     <div style={{ maxWidth: 900, margin: "2rem auto", padding: "0 1rem" }}>
       <button onClick={onBack}>&larr; Back</button>
       <h1>Bestiary</h1>
-      <p style={{ color: "#666" }}>
+      <p style={{ color: "var(--text-muted)" }}>
         {SRD_MONSTERS.length} SRD monsters{customMonsters.length > 0 ? ` + ${customMonsters.length} homebrew` : ""}.
         Source: 5e SRD 5.1 (CC-BY-4.0, via the open 5e-bits/5e-database project).
       </p>
@@ -225,7 +225,7 @@ export function BestiaryPage({ onBack }: { onBack: () => void }) {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: "1rem", alignItems: "start" }}>
-        <div style={{ maxHeight: "70vh", overflowY: "auto", border: "1px solid #ccc", borderRadius: 6 }}>
+        <div style={{ maxHeight: "70vh", overflowY: "auto", border: "1px solid var(--border)", borderRadius: 6 }}>
           {filtered.length === 0 && <p style={{ padding: "0.5rem" }}>No monsters match.</p>}
           {filtered.map((m) => (
             <button
@@ -238,12 +238,12 @@ export function BestiaryPage({ onBack }: { onBack: () => void }) {
                 textAlign: "left",
                 padding: "0.4rem 0.6rem",
                 border: "none",
-                borderBottom: "1px solid #eee",
-                background: m.id === selectedId ? "#eef" : "transparent",
+                borderBottom: "1px solid var(--border-faint)",
+                background: m.id === selectedId ? "var(--surface-sunken)" : "transparent",
               }}
             >
-              {m.name} <small style={{ color: "#888" }}>(CR {formatMonsterCR(m.cr)})</small>
-              {customMonsterIds.has(m.id) && <small style={{ color: "#a60" }}> (homebrew)</small>}
+              {m.name} <small style={{ color: "var(--text-dim)" }}>(CR {formatMonsterCR(m.cr)})</small>
+              {customMonsterIds.has(m.id) && <small style={{ color: "var(--warning)" }}> (homebrew)</small>}
             </button>
           ))}
         </div>

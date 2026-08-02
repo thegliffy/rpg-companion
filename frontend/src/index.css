@@ -1,25 +1,55 @@
+/* Theme tokens (#150).
+ *
+ * Named by ROLE, never by look -- "--surface-raised", not "--parchment" -- so a theme is a block of
+ * value overrides and no component needs to know which theme is active. Every themed value in the
+ * app resolves through one of these; components must not carry literal colours (see #152).
+ *
+ * The values in this :root block reproduce the app's pre-theming appearance. That is deliberate and
+ * load-bearing: it's the acceptance test for the 38-file substitution, since a missed literal is
+ * invisible under Default and only surfaces once a dark theme is applied.
+ *
+ * One intentional normalization: the app previously used six near-identical greys for text
+ * (#666/#555/#777/#888/#999) and four for borders. Text collapses to two roles (muted/dim); borders
+ * keep four, because those genuinely read as different weights in the layout. */
 :root {
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f4f4f4;
+
   --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
+  --text-heading: #08060d;
+  --text-muted: #666666;
+  --text-dim: #888888;
+
+  --border-faint: #eeeeee;
+  --border-subtle: #dddddd;
+  --border: #cccccc;
+  --border-strong: #bbbbbb;
+  /* The app frame's own hairline, distinct from component borders. */
+  --frame-border: #e5e4e7;
+
   --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  --accent-contrast: #ffffff;
+  --danger: crimson;
+  --success: #1f6e1f;
+  --warning: #aa6600;
+  --warning-bg: #fff3cd;
+  --overlay: rgba(0, 0, 0, 0.4);
+  --code-bg: #f4f3ec;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --font-body: system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-body);
+  --font-data: ui-monospace, Consolas, monospace;
+  --radius: 6px;
 
-  font: 18px/145% var(--sans);
+  /* Decorative page texture -- only the paper/grid themes set these. */
+  --surface-texture: none;
+  --surface-texture-size: auto;
+
+  font: 18px/145% var(--font-body);
   letter-spacing: 0.18px;
-  color-scheme: light dark;
   color: var(--text);
-  background: var(--bg);
+  background: var(--surface);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -30,32 +60,12 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
 #root {
   width: 1126px;
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
-  border-inline: 1px solid var(--border);
+  border-inline: 1px solid var(--frame-border);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -64,20 +74,19 @@
 
 body {
   margin: 0;
-}
-
-/* Shared print helper — traditional sheet and app chrome use this class. */
-@media print {
-  .no-print {
-    display: none !important;
-  }
+  color: var(--text);
+  background-color: var(--surface);
+  background-image: var(--surface-texture);
+  background-size: var(--surface-texture-size);
+  background-attachment: fixed;
 }
 
 h1,
-h2 {
-  font-family: var(--heading);
+h2,
+h3 {
+  font-family: var(--font-display);
   font-weight: 500;
-  color: var(--text-h);
+  color: var(--text-heading);
 }
 
 h1 {
@@ -89,6 +98,7 @@ h1 {
     margin: 20px 0;
   }
 }
+
 h2 {
   font-size: 24px;
   line-height: 118%;
@@ -98,21 +108,53 @@ h2 {
     font-size: 20px;
   }
 }
+
 p {
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
+/* Form controls don't inherit font or colour, so without this they stay browser-default under every
+ * theme -- the single most visible way a dark theme looks half-applied. */
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+  color: var(--text);
+  background-color: var(--surface-raised);
+  border: 1px solid var(--border-strong);
   border-radius: 4px;
-  color: var(--text-h);
+  padding: 0.2rem 0.35rem;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 code {
+  font-family: var(--font-data);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-heading);
   font-size: 15px;
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+/* Shared print helper — traditional sheet and app chrome use this class. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }

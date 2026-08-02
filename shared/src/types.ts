@@ -1,10 +1,36 @@
 export type GlobalRole = "player" | "dm" | "admin";
 
+// Selectable themes (#153). "default" is the app's original appearance and has no override block --
+// it's the :root definition in index.css. Stored on the user (#154); null/absent means default.
+export const THEME_IDS = ["default", "ledger", "vellum", "graph", "console", "contrast"] as const;
+export type ThemeId = (typeof THEME_IDS)[number];
+
+export const THEME_LABELS: Record<ThemeId, string> = {
+  default: "Default",
+  ledger: "Ledger",
+  vellum: "Vellum",
+  graph: "Graph",
+  console: "Console",
+  contrast: "High contrast",
+};
+
+export const THEME_DESCRIPTIONS: Record<ThemeId, string> = {
+  default: "The original look.",
+  ledger: "Ruled off-white paper, oxblood and ink blue.",
+  vellum: "Aged warm parchment, umber and moss.",
+  graph: "Blueprint white on a drafting grid.",
+  console: "Dark slate and phosphor, monospaced.",
+  contrast: "Maximum legibility, heavy borders.",
+};
+
 export interface PublicUser {
   id: number;
   username: string;
   role: GlobalRole;
   createdAt: string;
+  // Null for users who've never chosen one -- the picker and ThemeProvider both read that as
+  // "default" rather than backfilling every existing row.
+  theme: ThemeId | null;
 }
 
 export type CustomContentType = "race" | "class" | "background" | "subrace" | "subclass" | "feat" | "spell" | "item" | "monster";

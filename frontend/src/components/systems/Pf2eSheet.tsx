@@ -13,8 +13,8 @@ import {
   formatModifier,
 } from "shared";
 import * as charactersApi from "../../api/characters";
+import { panel as box } from "../../styles";
 
-const box: React.CSSProperties = { border: "1px solid #bbb", borderRadius: 6, padding: "0.75rem" };
 const numInput: React.CSSProperties = { width: "3.5rem", textAlign: "center" };
 
 function RankSelect({ value, onChange }: { value: Pf2eRank; onChange: (r: Pf2eRank) => void }) {
@@ -247,12 +247,12 @@ export function Pf2eSheet({
         </label>
       </div>
 
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
       <div>
         <button onClick={save} disabled={saving} style={{ fontSize: "1.1rem", padding: "0.5rem 2rem" }}>
           {saving ? "Saving…" : "Save sheet"}
         </button>
-        {savedFlash && <span style={{ marginLeft: "1rem", color: "green" }}>Saved ✓</span>}
+        {savedFlash && <span style={{ marginLeft: "1rem", color: "var(--success)" }}>Saved ✓</span>}
       </div>
     </div>
   );

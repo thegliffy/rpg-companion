@@ -103,7 +103,7 @@ export function CollapsibleSection({
         <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", flexWrap: "wrap" }}>
           <h3 style={{ margin: 0 }}>{title}</h3>
           {!expanded && summary && (
-            <span style={{ color: "#666", fontSize: "0.9rem", fontWeight: "normal" }}>— {summary}</span>
+            <span style={{ color: "var(--text-muted)", fontSize: "0.9rem", fontWeight: "normal" }}>— {summary}</span>
           )}
         </div>
         <button type="button" onClick={() => setExpanded(!expanded)}>
