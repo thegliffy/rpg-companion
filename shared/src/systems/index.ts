@@ -9,6 +9,7 @@ export * from "./srd-class-proficiencies.js";
 export * from "./srd-races.js";
 export * from "./srd-magic-items.js";
 export * from "./srd-equipment.js";
+export * from "./srd-class-equipment.js";
 export * from "./srd-backgrounds.js";
 export * from "./srd-subraces.js";
 export * from "./srd-subclasses.js";

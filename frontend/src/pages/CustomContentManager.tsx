@@ -23,6 +23,9 @@ import {
   SRD_RACES,
   SRD_SPELLS,
   SRD_FEATS,
+  SRD_WEAPONS,
+  SRD_ARMOR,
+  SRD_GEAR,
   CUSTOM_CONTENT_TYPES_BY_SYSTEM,
   SYSTEM_IDS,
   customBackgroundDataSchema,
@@ -31,6 +34,7 @@ import {
   formatBackgroundGrants,
   formatModifier,
 } from "shared";
+import type { EquipmentEntry } from "shared";
 import * as customContentApi from "../api/customContent";
 import * as adminApi from "../api/admin";
 import { useAuth } from "../context/AuthContext";
@@ -469,6 +473,34 @@ const emptyResourceRow = (idPrefix: "class" | "subclass"): ResourceRow => ({
   note: "",
 });
 
+// A class's fixed starting-equipment grant (#158) -- `name` is typed against itemNameOptions and
+// resolved to an SRD id or `custom-${id}` on save (resolveItemId), same convention as a
+// background's grantedFeats. Quantity is a plain count, not a dice formula -- starting gear is
+// always a fixed amount (2 daggers, 20 arrows), never rolled.
+interface ClassEquipmentFixedRow {
+  id: string;
+  name: string;
+  quantity: string;
+}
+const emptyClassEquipmentFixedRow = (): ClassEquipmentFixedRow => ({
+  id: `class-equip-fixed-${crypto.randomUUID()}`,
+  name: "",
+  quantity: "1",
+});
+
+// One equipment CHOICE (e.g. "(a) a rapier or (b) a shortsword"), authored as one option per line
+// rather than a repeatable sub-row editor -- same pipe-delimited-text convention #125 used for
+// monster actions, chosen because a nested repeatable-of-repeatable editor for what's usually 2-3
+// options isn't worth the UI weight. Format: "Label | item xQty, item xQty" (qty defaults to 1).
+interface ClassEquipmentChoiceRow {
+  id: string;
+  optionsText: string;
+}
+const emptyClassEquipmentChoiceRow = (): ClassEquipmentChoiceRow => ({
+  id: `class-equip-choice-${crypto.randomUUID()}`,
+  optionsText: "",
+});
+
 const emptyFeatSpellChoiceRow = (): FeatSpellChoiceRow => ({
   id: `feat-spell-choice-${crypto.randomUUID()}`,
   count: "1",
@@ -553,6 +585,9 @@ export function CustomContentManager({
   // #115) so a subclass/subrace author picks from classes/races a character can actually have.
   const [visibleClasses, setVisibleClasses] = useState<CustomContent[]>([]);
   const [visibleRaces, setVisibleRaces] = useState<CustomContent[]>([]);
+  // Backs the starting-equipment name autocomplete/unresolved-name check (#158), same "visible,
+  // not just own" convention -- a class can grant a teammate's custom weapon.
+  const [visibleItems, setVisibleItems] = useState<CustomContent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -592,6 +627,8 @@ export function CustomContentManager({
   const [casterType, setCasterType] = useState<"none" | "prepared" | "known" | "pact">("none");
   const [classResourceRows, setClassResourceRows] = useState<ResourceRow[]>([]);
   const [levelRows, setLevelRows] = useState<LevelRow[]>([emptyLevelRow(1)]);
+  const [classEquipmentFixed, setClassEquipmentFixed] = useState<ClassEquipmentFixedRow[]>([]);
+  const [classEquipmentChoices, setClassEquipmentChoices] = useState<ClassEquipmentChoiceRow[]>([]);
 
   // Background fields
   const [bgSkillsFixed, setBgSkillsFixed] = useState<string[]>([]);
@@ -723,6 +760,7 @@ export function CustomContentManager({
         setVisibleFeats(all.filter((i) => i.type === "feat"));
         setVisibleClasses(all.filter((i) => i.type === "class"));
         setVisibleRaces(all.filter((i) => i.type === "race"));
+        setVisibleItems(all.filter((i) => i.type === "item"));
       })
       .catch((err) => setError(err.message));
     if (isAdmin) {
@@ -843,6 +881,108 @@ export function CustomContentManager({
     return null;
   }
 
+  // SRD weapons/armor/gear plus every visible custom item, deduped by name -- backs the class
+  // starting-equipment name autocomplete (#158) and its unresolved-name check.
+  const itemNameOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const name of [
+      ...SRD_WEAPONS.map((w) => w.name),
+      ...SRD_ARMOR.map((a) => a.name),
+      ...SRD_GEAR.map((g) => g.name),
+      ...visibleItems.map((i) => i.name.trim()),
+    ]) {
+      const key = name.trim().toLowerCase();
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        out.push(name);
+      }
+    }
+    return out;
+  }, [visibleItems]);
+  const knownItemNames = useMemo(() => new Set(itemNameOptions.map((n) => n.toLowerCase())), [itemNameOptions]);
+
+  /** Resolves a typed item name to the itemId a class's startingEquipment stores -- an SRD
+   * weapon/armor/gear id, or `custom-${id}` matching resolveEquipmentEntry's expectation. */
+  function resolveItemId(name: string): string | null {
+    const key = name.trim().toLowerCase();
+    if (!key) return null;
+    const weapon = SRD_WEAPONS.find((w) => w.name.toLowerCase() === key);
+    if (weapon) return weapon.id;
+    const armor = SRD_ARMOR.find((a) => a.name.toLowerCase() === key);
+    if (armor) return armor.id;
+    const gear = SRD_GEAR.find((g) => g.name.toLowerCase() === key);
+    if (gear) return gear.id;
+    const custom = visibleItems.find((i) => i.name.trim().toLowerCase() === key);
+    if (custom) return `custom-${custom.id}`;
+    return null;
+  }
+
+  /** Reverses resolveItemId for loading an existing class into the editor -- an itemId back to
+   * its display name, so the fixed-equipment rows show "Rapier" instead of the raw id. */
+  function itemNameFromId(itemId: string): string {
+    if (itemId.startsWith("custom-")) {
+      const custom = visibleItems.find((i) => `custom-${i.id}` === itemId);
+      if (custom) return custom.name;
+    }
+    const weapon = SRD_WEAPONS.find((w) => w.id === itemId);
+    if (weapon) return weapon.name;
+    const armor = SRD_ARMOR.find((a) => a.id === itemId);
+    if (armor) return armor.name;
+    const gear = SRD_GEAR.find((g) => g.id === itemId);
+    if (gear) return gear.name;
+    return itemId;
+  }
+
+  /** Parses one equipmentOptionsText line ("Label | item xQty, item xQty") into an EquipmentOption,
+   * resolving each item name through resolveItemId. Unresolved names fall back to the raw typed
+   * text as itemId (mirroring resolveFeatId's `?? name` fallback) so a typo is visibly wrong on
+   * the sheet rather than silently dropped. */
+  // Items within an option are ";"-separated, not ","  -- 24 SRD weapon/gear names contain a
+  // literal comma ("Crossbow, hand", "Hammer, sledge", "Pick, miner's", "Oil (flask)" and others),
+  // so splitting on "," silently shredded those names into two unresolvable fragments. No SRD
+  // name contains a semicolon.
+  function parseEquipmentOptionLine(line: string): { label: string; items: EquipmentEntry[] } | null {
+    const [labelPart, itemsPart] = line.split("|");
+    const label = labelPart?.trim();
+    if (!label) return null;
+    const items = (itemsPart ?? "")
+      .split(";")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((entry) => {
+        const match = entry.match(/^(.*?)(?:\s*x\s*(\d+))?$/i);
+        const rawName = (match?.[1] ?? entry).trim();
+        const quantity = match?.[2] ? Number(match[2]) : 1;
+        return { itemId: resolveItemId(rawName) ?? rawName, quantity };
+      });
+    return { label, items };
+  }
+
+  /** Every item name typed in an equipment-choices textarea, raw (pre-resolution) -- used only for
+   * the unresolved-name warning, kept separate from parseEquipmentOptionLine so the warning check
+   * never has to guess whether an already-resolved itemId was a match or a same-as-typed miss. */
+  function itemNamesInOptionsText(text: string): string[] {
+    return text
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .flatMap((line) =>
+        (line.split("|")[1] ?? "")
+          .split(";")
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .map((entry) => entry.replace(/\s*x\s*\d+$/i, "").trim()),
+      );
+  }
+
+  /** Reverse of parseEquipmentOptionLine, for loading an existing class's choices into the
+   * editor's textarea form. */
+  function formatEquipmentOptionLine(option: { label: string; items: EquipmentEntry[] }): string {
+    const itemsText = option.items.map((it) => (it.quantity > 1 ? `${itemNameFromId(it.itemId)} x${it.quantity}` : itemNameFromId(it.itemId))).join("; ");
+    return itemsText ? `${option.label} | ${itemsText}` : option.label;
+  }
+
   // Shared by the race and subrace save paths (#124) -- a closure (not a top-level helper) since
   // resolving a trait's granted spell names needs resolveSpellName's visibleSpells lookup, the
   // same resolver a feat's grantedSpells already uses.
@@ -884,6 +1024,8 @@ export function CustomContentManager({
     setCasterType("none");
     setClassResourceRows([]);
     setLevelRows([emptyLevelRow(1)]);
+    setClassEquipmentFixed([]);
+    setClassEquipmentChoices([]);
     setBgSkillsFixed([]);
     setBgSkillChoices([]);
     setBgToolsFixed("");
@@ -1005,6 +1147,7 @@ export function CustomContentManager({
         casterType: "none" | "prepared" | "known" | "pact";
         levels: { level: number; cantripsKnown?: number; spellsKnown?: number; slots?: Record<string, number>; features?: string[]; martial?: ParsedMartial }[];
         resources?: SubclassResource[];
+        startingEquipment?: { fixed: EquipmentEntry[]; choices: { options: { label: string; items: EquipmentEntry[] }[] }[] };
       };
       setHitDie(String(d.hitDie));
       setCasterType(d.casterType);
@@ -1017,6 +1160,19 @@ export function CustomContentManager({
           uses: String(r.uses),
           recharge: r.recharge,
           note: r.note,
+        })),
+      );
+      setClassEquipmentFixed(
+        (d.startingEquipment?.fixed ?? []).map((f) => ({
+          id: `class-equip-fixed-${crypto.randomUUID()}`,
+          name: itemNameFromId(f.itemId),
+          quantity: String(f.quantity),
+        })),
+      );
+      setClassEquipmentChoices(
+        (d.startingEquipment?.choices ?? []).map((c) => ({
+          id: `class-equip-choice-${crypto.randomUUID()}`,
+          optionsText: c.options.map(formatEquipmentOptionLine).join("\n"),
         })),
       );
     } else if (item.type === "background") {
@@ -1413,6 +1569,19 @@ export function CustomContentManager({
           casterType,
           levels: rowsToLevels(levelRows),
           resources: resourceRowsToData(classResourceRows),
+          startingEquipment: {
+            fixed: classEquipmentFixed
+              .filter((r) => r.name.trim() !== "")
+              .map((r) => ({ itemId: resolveItemId(r.name) ?? r.name.trim(), quantity: Number(r.quantity) || 1 })),
+            choices: classEquipmentChoices
+              .map((r) => ({
+                options: r.optionsText
+                  .split("\n")
+                  .map((line) => parseEquipmentOptionLine(line))
+                  .filter((o): o is { label: string; items: EquipmentEntry[] } => o !== null),
+              }))
+              .filter((c) => c.options.length > 0),
+          },
         };
       } else if (type === "background") {
         data = buildBackgroundData();
@@ -2060,6 +2229,106 @@ export function CustomContentManager({
               style={{ marginTop: "0.4rem" }}
             >
               Add resource
+            </button>
+
+            <h4 style={{ marginTop: "1.2rem" }}>Starting equipment (#156-161)</h4>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              Granted at character creation IN ADDITION to the background's equipment. Fixed items are always
+              granted; choices let the player pick one option per row in the creation wizard. Names match an SRD
+              weapon/armor/gear item or one of your own custom items.
+            </p>
+            <datalist id="item-name-list-class">
+              {itemNameOptions.map((n) => (
+                <option key={n} value={n} />
+              ))}
+            </datalist>
+
+            <p style={{ margin: "0.6rem 0 0.2rem", fontWeight: 600, fontSize: "0.9rem" }}>Fixed items</p>
+            {classEquipmentFixed.map((row, i) => (
+              <div key={row.id} style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.3rem" }}>
+                <input
+                  list="item-name-list-class"
+                  placeholder="Item name (e.g. Leather Armor)"
+                  value={row.name}
+                  onChange={(e) => setClassEquipmentFixed((prev) => prev.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))}
+                  style={{ flex: 1, minWidth: "10rem" }}
+                />
+                <label>
+                  Qty{" "}
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={row.quantity}
+                    onChange={(e) => setClassEquipmentFixed((prev) => prev.map((r, j) => (j === i ? { ...r, quantity: e.target.value } : r)))}
+                    style={{ width: "3.5rem" }}
+                  />
+                </label>
+                <button type="button" onClick={() => setClassEquipmentFixed((prev) => prev.filter((_, j) => j !== i))}>
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setClassEquipmentFixed((prev) => [...prev, emptyClassEquipmentFixedRow()])}
+              style={{ marginTop: "0.4rem" }}
+            >
+              Add fixed item
+            </button>
+            {(() => {
+              const unresolved = classEquipmentFixed
+                .map((r) => r.name.trim())
+                .filter(Boolean)
+                .filter((n) => !knownItemNames.has(n.toLowerCase()));
+              return (
+                unresolved.length > 0 && (
+                  <div style={{ color: "var(--danger)", fontSize: "0.85rem", marginTop: "0.2rem" }}>
+                    No SRD or custom item named {unresolved.map((n) => `“${n}”`).join(", ")} — create it under Type →
+                    Item first, then it will resolve by name.
+                  </div>
+                )
+              );
+            })()}
+
+            <p style={{ margin: "0.8rem 0 0.2rem", fontWeight: 600, fontSize: "0.9rem" }}>Equipment choices</p>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              One option per line: <code>Label | Item xQty; Item xQty</code> (semicolon-separated -- some item
+              names, like "Crossbow, hand", contain a comma). Quantity defaults to 1. Example for Rogue's second
+              choice:
+              <br />
+              <code>Shortbow and Quiver of 20 Arrows | Shortbow; Quiver; Arrow x20</code>
+              <br />
+              <code>Shortsword | Shortsword</code>
+            </p>
+            {classEquipmentChoices.map((row, i) => {
+              const unresolved = itemNamesInOptionsText(row.optionsText).filter((n) => !knownItemNames.has(n.toLowerCase()));
+              return (
+                <div key={row.id} style={{ marginTop: "0.5rem", padding: "0.5rem", border: "1px solid var(--border)", borderRadius: "var(--radius)" }}>
+                  <textarea
+                    value={row.optionsText}
+                    onChange={(e) => setClassEquipmentChoices((prev) => prev.map((r, j) => (j === i ? { ...r, optionsText: e.target.value } : r)))}
+                    rows={3}
+                    placeholder={"Rapier | Rapier\nShortsword | Shortsword"}
+                    style={{ width: "100%", fontFamily: "var(--font-data)" }}
+                  />
+                  {unresolved.length > 0 && (
+                    <div style={{ color: "var(--danger)", fontSize: "0.85rem", marginTop: "0.2rem" }}>
+                      No SRD or custom item named {unresolved.map((n) => `“${n}”`).join(", ")}.
+                    </div>
+                  )}
+                  <button type="button" onClick={() => setClassEquipmentChoices((prev) => prev.filter((_, j) => j !== i))} style={{ marginTop: "0.3rem" }}>
+                    Remove choice
+                  </button>
+                </div>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => setClassEquipmentChoices((prev) => [...prev, emptyClassEquipmentChoiceRow()])}
+              style={{ marginTop: "0.4rem" }}
+            >
+              Add choice
             </button>
           </>
         ) : type === "background" ? (

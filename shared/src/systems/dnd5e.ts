@@ -391,6 +391,20 @@ export function proficiencyBonus(level: number): number {
   return 2 + Math.floor((level - 1) / 4);
 }
 
+/** RAW default attack ability for a weapon: ranged weapons use DEX; finesse weapons use whichever
+ * of STR/DEX is currently higher; everything else defaults to STR. Takes raw ability SCORES (not
+ * a whole sheet) so it stays pure and reusable outside a sheet's own component -- e.g. character
+ * creation (#161), which has finalAbilities but no sheet yet. Shared by the sheet's "Add to
+ * Attacks" button and the creation wizard's auto-attack generation so the two can never drift. */
+export function weaponDefaultAbility(properties: string[], range: string, strScore: number, dexScore: number): Dnd5eAbility {
+  if (range === "Ranged") return "dex";
+  const isFinesse = properties.some((p) => p.toLowerCase() === "finesse");
+  if (isFinesse) {
+    return abilityModifier(dexScore) > abilityModifier(strScore) ? "dex" : "str";
+  }
+  return "str";
+}
+
 /** An item's equip/ability/AC bonuses apply only when equipped, and (if it requires attunement)
  * only once attuned -- so an unattuned magic item sits in inventory inert, same as unequipped. */
 export function itemBonusesActive(item: Dnd5eSheetData["items"][number]): boolean {

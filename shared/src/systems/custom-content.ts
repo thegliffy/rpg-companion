@@ -8,6 +8,8 @@ import { SRD_SPELL_SCALING } from "./srd-spell-scaling.js";
 import type { SpellScaling } from "./srd-spell-scaling.js";
 import type { SrdMonster } from "./srd-monsters.js";
 import { SRD_FEATS } from "./srd-feats.js";
+import { SRD_WEAPONS, SRD_ARMOR, SRD_GEAR, weaponDamageText, armorACFormulaText, srdArmorToInventoryArmor } from "./srd-equipment.js";
+import type { EquipmentEntry } from "./srd-class-equipment.js";
 import type { CustomContentType, CustomContentSystem, CustomContent } from "../types.js";
 import { newEntityId } from "../id.js";
 
@@ -131,6 +133,33 @@ const homebrewResourceSchema = z.object({
 export type SubclassResource = z.infer<typeof homebrewResourceSchema>;
 export type ClassResource = SubclassResource;
 
+// A single granted/grantable item -- itemId is an SRD weapon/armor/gear id, or `custom-${id}`
+// referencing a visible custom "item" content record (same SRD-then-custom convention as
+// grantedFeats/grantedSpells). Mirrors shared/systems/srd-class-equipment.ts's EquipmentEntry
+// exactly, so the same resolver (resolveEquipmentEntry, #159) reads both without a shim.
+const equipmentEntrySchema = z.object({
+  itemId: z.string().trim().min(1).max(80),
+  quantity: z.number().int().min(1).max(99).default(1),
+});
+
+const equipmentOptionSchema = z.object({
+  label: z.string().trim().max(80),
+  items: z.array(equipmentEntrySchema).max(10),
+});
+
+const equipmentChoiceSchema = z.object({
+  options: z.array(equipmentOptionSchema).min(1).max(60),
+});
+
+// Starting equipment a class grants at level 1, IN ADDITION to the character's background
+// (#156-161) -- e.g. "(a) a rapier or (b) a shortsword" is one choice with two options. Optional
+// with an empty default so classes authored before this existed keep parsing unchanged.
+export const classStartingEquipmentSchema = z.object({
+  fixed: z.array(equipmentEntrySchema).max(20).default([]),
+  choices: z.array(equipmentChoiceSchema).max(6).default([]),
+});
+export type ClassStartingEquipmentData = z.infer<typeof classStartingEquipmentSchema>;
+
 export const customClassDataSchema = z.object({
   hitDie: z.number().int().refine((v) => [6, 8, 10, 12].includes(v), { message: "Hit die must be 6, 8, 10, or 12" }),
   casterType: z.enum(["none", "prepared", "known", "pact"]).default("none"),
@@ -139,6 +168,7 @@ export const customClassDataSchema = z.object({
   // Hunter's hemocraft die. Same shape and rest-handling as a subclass's resources (#105); the
   // asymmetry where only a subclass could carry one was never intentional.
   resources: z.array(homebrewResourceSchema).max(10).default([]),
+  startingEquipment: classStartingEquipmentSchema.default({}),
 });
 export type CustomClassData = z.infer<typeof customClassDataSchema>;
 
@@ -746,6 +776,82 @@ export function customItemArmorPayload(d: CustomItemData): {
     category: d.armorCategory,
     stealthDisadvantage: d.stealthDisadvantage,
   };
+}
+
+export interface ResolvedInventoryItem {
+  name: string;
+  quantity: number;
+  // Per-unit weight, matching InventoryItem.weight's existing convention (see the SRD weapon/
+  // armor/gear pickers in Dnd5eSheet.tsx) -- NOT pre-multiplied by quantity.
+  weight: number;
+  value: number;
+  notes: string;
+  armor?: ReturnType<typeof srdArmorToInventoryArmor>;
+  // Present only for a resolved weapon -- lets the caller auto-generate an Attacks row (#161)
+  // without re-deriving these from the item's name. `range` is undefined for a custom weapon
+  // (CustomItemData has no melee/ranged distinction) -- callers pass "" to weaponDefaultAbility
+  // in that case, same as the sheet's own "Add to Attacks" button already does.
+  weapon?: { damageDice: string; damageType: string; properties: string[]; range?: "Melee" | "Ranged" };
+}
+
+/** Resolves one EquipmentEntry (an SRD weapon/armor/gear id, or `custom-${id}`) into one or more
+ * inventory-ready items -- more than one only when the id is a pack, which expands into its real
+ * contents (#156) instead of landing as a single opaque "Burglar's Pack" row. Packs never nest, so
+ * this recurses at most once. Unresolved ids fall back to an inert item using the raw id as its
+ * name, so a bad reference is visibly wrong on the sheet rather than silently dropped -- the same
+ * convention resolveFeatId's `?? name` fallback uses elsewhere in this file.
+ *
+ * `findCustomItem` looks up a visible custom "item" CustomContent by its bare (unprefixed) id;
+ * shared has no notion of "currently visible content", so callers (the wizard, the sheet's "Add
+ * to Attacks") pass their own visibleItems lookup. */
+export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id: string) => CustomContent | undefined): ResolvedInventoryItem[] {
+  const { itemId, quantity } = entry;
+
+  if (itemId.startsWith("custom-")) {
+    const custom = findCustomItem(itemId.slice("custom-".length));
+    if (!custom) return [{ name: itemId, quantity, weight: 0, value: 0, notes: "" }];
+    const d = custom.data as CustomItemData;
+    return [
+      {
+        name: custom.name,
+        quantity,
+        weight: d.weight,
+        value: d.value,
+        notes: customItemNotesText(custom),
+        armor: d.kind === "armor" ? customItemArmorPayload(d) : undefined,
+        weapon: d.kind === "weapon" ? { damageDice: d.damageDice, damageType: d.damageType, properties: d.properties } : undefined,
+      },
+    ];
+  }
+
+  const weapon = SRD_WEAPONS.find((w) => w.id === itemId);
+  if (weapon) {
+    return [
+      {
+        name: weapon.name,
+        quantity,
+        weight: weapon.weight,
+        value: 0,
+        notes: weaponDamageText(weapon),
+        weapon: { damageDice: weapon.damageDice, damageType: weapon.damageType, properties: weapon.properties, range: weapon.range },
+      },
+    ];
+  }
+
+  const armor = SRD_ARMOR.find((a) => a.id === itemId);
+  if (armor) {
+    return [{ name: armor.name, quantity, weight: armor.weight, value: 0, notes: armorACFormulaText(armor), armor: srdArmorToInventoryArmor(armor) }];
+  }
+
+  const gear = SRD_GEAR.find((g) => g.id === itemId);
+  if (gear) {
+    if (gear.contents && gear.contents.length > 0) {
+      return gear.contents.flatMap((c) => resolveEquipmentEntry({ itemId: c.itemId, quantity: c.quantity * quantity }, findCustomItem));
+    }
+    return [{ name: gear.name, quantity, weight: gear.weight, value: 0, notes: "" }];
+  }
+
+  return [{ name: itemId, quantity, weight: 0, value: 0, notes: "" }];
 }
 
 const monsterActionSchema = z.object({

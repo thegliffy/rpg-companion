@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { SystemId, Dnd5eAbility } from "shared";
-import type { CustomRaceData, CustomSubraceData, CustomBackgroundData } from "shared";
+import type { CustomRaceData, CustomSubraceData, CustomBackgroundData, EquipmentEntry, EquipmentChoice, ClassStartingEquipment } from "shared";
 import {
   SYSTEMS,
   DND5E_ABILITIES,
@@ -28,6 +28,12 @@ import {
   expectedCantripsKnown,
   expectedSlots,
   classProficiencies,
+  SRD_WEAPONS,
+  SRD_ARMOR,
+  SRD_GEAR,
+  resolveEquipmentEntry,
+  classStartingEquipment,
+  weaponDefaultAbility,
 } from "shared";
 import * as charactersApi from "../api/characters";
 import { useDiceRoll } from "../dice/DiceRollContext";
@@ -48,7 +54,7 @@ export function CharacterCreationWizard({
   campaignId: number | null;
   onDone: (characterId: number | null) => void;
 }) {
-  const [step, setStep] = useState<"system" | "basics" | "abilities" | "spellbook" | "warlock" | "review">("system");
+  const [step, setStep] = useState<"system" | "basics" | "equipment" | "abilities" | "spellbook" | "warlock" | "review">("system");
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const { session } = useDiceRoll();
@@ -58,6 +64,7 @@ export function CharacterCreationWizard({
     backgrounds: customBackgrounds,
     subraces: customSubraces,
     feats: customFeats,
+    customItems,
   } = useCustomContent();
 
   // step 1
@@ -386,7 +393,101 @@ export function CharacterCreationWizard({
   const classSkillRequiredCount = classProfs ? Math.min(classProfs.skillChoiceCount, classSkillOptions.length) : 0;
   const classChoicesComplete = !classProfs || classSkillSel.length === classSkillRequiredCount;
 
+  // Starting equipment (#156-161) -- SRD data for an SRD class, or the custom class's own
+  // authored equivalent (#158, same shape). null for a class name that resolves to neither
+  // (freeform text, or not yet chosen), same as classProfs above.
+  const resolvedClassStartingEquipment = useMemo((): ClassStartingEquipment | null => {
+    if (system !== "dnd5e" || !charClass.trim()) return null;
+    const custom = customClasses.find((c) => c.name.toLowerCase() === charClass.trim().toLowerCase());
+    if (custom) {
+      const d = custom.data as { startingEquipment?: ClassStartingEquipment };
+      return d.startingEquipment ?? { fixed: [], choices: [] };
+    }
+    return classStartingEquipment(charClass);
+  }, [system, charClass, customClasses]);
+
+  const hasEquipmentStep =
+    !!resolvedClassStartingEquipment &&
+    (resolvedClassStartingEquipment.fixed.length > 0 || resolvedClassStartingEquipment.choices.length > 0);
+
+  // One selected option index (as a string, "" = unpicked) per equipment choice, index-aligned
+  // with resolvedClassStartingEquipment.choices -- same convention as classSkillSel, reset when
+  // the class changes so a leftover pick from a different class's choice list can't carry over.
+  const [classEquipmentChoiceSel, setClassEquipmentChoiceSel] = useState<string[]>([]);
+  useEffect(() => {
+    setClassEquipmentChoiceSel([]);
+  }, [charClass]);
+
+  const equipmentChoicesComplete =
+    !resolvedClassStartingEquipment || resolvedClassStartingEquipment.choices.every((_, i) => classEquipmentChoiceSel[i] !== undefined && classEquipmentChoiceSel[i] !== "");
+
+  /** Every EquipmentEntry the class grants at creation: the fixed grants plus whichever option was
+   * picked for each choice. Empty array (not blocking) for an unresolved choice -- the Next button
+   * on the equipment step is what actually enforces equipmentChoicesComplete. */
+  const classEquipmentEntries = useMemo((): EquipmentEntry[] => {
+    if (!resolvedClassStartingEquipment) return [];
+    const fromChoices = resolvedClassStartingEquipment.choices.flatMap((choice: EquipmentChoice, i) => {
+      const idx = Number(classEquipmentChoiceSel[i]);
+      return Number.isInteger(idx) ? (choice.options[idx]?.items ?? []) : [];
+    });
+    return [...resolvedClassStartingEquipment.fixed, ...fromChoices];
+  }, [resolvedClassStartingEquipment, classEquipmentChoiceSel]);
+
+  // Running total weight for the equipment step, resolving packs into their real contents (#156)
+  // the same way classEquipmentGrants() does for the final sheet.
+  const classEquipmentWeight = useMemo(
+    () => classEquipmentEntries.reduce((sum, e) => sum + resolveEquipmentEntry(e, findCustomItem).reduce((s, r) => s + r.weight * r.quantity, 0), 0),
+    [classEquipmentEntries, customItems],
+  );
+
   // Text lines for the class's fixed (non-skill, non-save) proficiencies, for proficienciesText.
+  /** Resolves a visible custom "item" by the bare (unprefixed) id resolveEquipmentEntry passes in
+   * -- shared to compare custom content ids (number) against the string id resolveEquipmentEntry
+   * works with. */
+  function findCustomItem(id: string) {
+    return customItems.find((ci) => String(ci.id) === id);
+  }
+
+  /** Selects option index `optionIndex` for equipment choice `choiceIndex`; pads with "" so a pick
+   * on a later choice doesn't crash on a not-yet-touched earlier one. */
+  function setClassEquipmentChoice(choiceIndex: number, optionIndex: number) {
+    setClassEquipmentChoiceSel((prev) => {
+      const next = [...prev];
+      while (next.length <= choiceIndex) next.push("");
+      next[choiceIndex] = String(optionIndex);
+      return next;
+    });
+  }
+
+  /** Display name for an EquipmentEntry's itemId, for the equipment step's read-only fixed-items
+   * list -- an SRD weapon/armor/gear name, or a visible custom item's name. */
+  function itemDisplayName(itemId: string): string {
+    if (itemId.startsWith("custom-")) {
+      const custom = findCustomItem(itemId.slice("custom-".length));
+      if (custom) return custom.name;
+    }
+    return SRD_WEAPONS.find((w) => w.id === itemId)?.name ?? SRD_ARMOR.find((a) => a.id === itemId)?.name ?? SRD_GEAR.find((g) => g.id === itemId)?.name ?? itemId;
+  }
+
+  /** Best-effort name match for a background's free-text equipment item against an SRD weapon/
+   * armor/gear name or a visible custom item -- most background equipment text is prose ("a
+   * belt pouch containing 15 gp") that will never match, and stays an inert plain-name item
+   * exactly as before; anything typed as an exact item name now resolves to real weight/AC/damage
+   * data via resolveEquipmentEntry instead of landing inert. */
+  function resolveBackgroundItemId(name: string): string | null {
+    const key = name.trim().toLowerCase();
+    if (!key) return null;
+    const weapon = SRD_WEAPONS.find((w) => w.name.toLowerCase() === key);
+    if (weapon) return weapon.id;
+    const armor = SRD_ARMOR.find((a) => a.name.toLowerCase() === key);
+    if (armor) return armor.id;
+    const gear = SRD_GEAR.find((g) => g.name.toLowerCase() === key);
+    if (gear) return gear.id;
+    const custom = customItems.find((i) => i.name.trim().toLowerCase() === key);
+    if (custom) return `custom-${custom.id}`;
+    return null;
+  }
+
   function classProficiencyLines(): string[] {
     if (!classProfs) return [];
     const lines: string[] = [];
@@ -449,19 +550,43 @@ export function CharacterCreationWizard({
       });
     }
 
-    const items: ReturnType<typeof emptyDnd5eSheet>["items"] = data.equipment.items.map((name, i) => ({
-      id: `bg-item-${crypto.randomUUID()}-${i}`,
-      name,
-      quantity: 1,
-      weight: 0,
-      notes: "",
-      equipped: false,
-      abilityBonuses: {},
-      acBonus: 0,
-      requiresAttunement: false,
-      attuned: false,
-      value: 0,
-    }));
+    // Best-effort resolved (#156-161): an exact-name match against SRD/custom items gets real
+    // weight/AC/damage data (and a pack expands into its contents); prose that doesn't match
+    // stays an inert plain-name item, same as before this resolver existed.
+    const items: ReturnType<typeof emptyDnd5eSheet>["items"] = data.equipment.items.flatMap((name, i) => {
+      const itemId = resolveBackgroundItemId(name);
+      if (!itemId) {
+        return [
+          {
+            id: `bg-item-${crypto.randomUUID()}-${i}`,
+            name,
+            quantity: 1,
+            weight: 0,
+            notes: "",
+            equipped: false,
+            abilityBonuses: {},
+            acBonus: 0,
+            requiresAttunement: false,
+            attuned: false,
+            value: 0,
+          },
+        ];
+      }
+      return resolveEquipmentEntry({ itemId, quantity: 1 }, findCustomItem).map((r) => ({
+        id: `bg-item-${crypto.randomUUID()}`,
+        name: r.name,
+        quantity: r.quantity,
+        weight: r.weight,
+        notes: r.notes,
+        equipped: false,
+        abilityBonuses: {},
+        acBonus: 0,
+        armor: r.armor,
+        requiresAttunement: false,
+        attuned: false,
+        value: r.value,
+      }));
+    });
 
     // Feats the background grants outright (#126) -- resolved once at creation, same as every
     // other background grant here; a reference that no longer resolves (e.g. a deleted custom
@@ -499,6 +624,47 @@ export function CharacterCreationWizard({
     }
 
     return { proficienciesText: profLines.join("\n"), features, items, gold: data.equipment.gold, feats, grantedSpells };
+  }
+
+  // Class-granted starting equipment (#156-161): the fixed items plus whichever option was picked
+  // for each choice (classEquipmentEntries), resolved into real inventory items via
+  // resolveEquipmentEntry -- a pack expands into its contents rather than landing as one opaque
+  // row. Armor/shields are auto-equipped, and every resolved weapon gets an Attacks row using the
+  // same RAW weaponDefaultAbility logic as the sheet's own "Add to Attacks" button, so a Rogue
+  // created here already has the Rapier and Shortbow attacking correctly -- ammunition (arrows,
+  // bolts) never gets a row since gear-only items have no `.weapon`.
+  function classEquipmentGrants() {
+    const items: ReturnType<typeof emptyDnd5eSheet>["items"] = [];
+    const attacks: ReturnType<typeof emptyDnd5eSheet>["attacks"] = [];
+    for (const entry of classEquipmentEntries) {
+      for (const r of resolveEquipmentEntry(entry, findCustomItem)) {
+        items.push({
+          id: `class-item-${crypto.randomUUID()}`,
+          name: r.name,
+          quantity: r.quantity,
+          weight: r.weight,
+          notes: r.notes,
+          equipped: !!r.armor,
+          abilityBonuses: {},
+          acBonus: 0,
+          armor: r.armor,
+          requiresAttunement: false,
+          attuned: false,
+          value: r.value,
+        });
+        if (r.weapon) {
+          attacks.push({
+            id: `atk-${crypto.randomUUID()}`,
+            name: r.name,
+            ability: weaponDefaultAbility(r.weapon.properties, r.weapon.range ?? "", finalAbilities.str, finalAbilities.dex),
+            magicBonus: 0,
+            damageDice: r.weapon.damageDice,
+            damageType: r.weapon.damageType,
+          });
+        }
+      }
+    }
+    return { items, attacks };
   }
 
   // Everything race/subrace traits grant beyond ability bonuses (#124): speed, darkvision,
@@ -644,6 +810,7 @@ export function CharacterCreationWizard({
       let sheetData: unknown;
       if (system === "dnd5e") {
         const grants = backgroundGrants();
+        const classEquipment = classEquipmentGrants();
         const race = raceGrants();
         // Merge class + background grants: skill proficiencies (deduped), and class armor/weapon/
         // tool lines above the background's tool/language lines in proficienciesText.
@@ -668,7 +835,8 @@ export function CharacterCreationWizard({
           // Race/subrace trait features (#124) precede the background's, matching the order the
           // sheet's own Race/Background fields appear in.
           features: [...race.features, ...grants.features],
-          items: grants.items,
+          items: [...grants.items, ...classEquipment.items],
+          attacks: classEquipment.attacks,
           feats: grants.feats,
           currency: { ...emptyDnd5eSheet().currency, gp: grants.gold },
           hitDice: hitDieForClass(charClass) !== undefined ? `${level}d${hitDieForClass(charClass)}` : "",
@@ -1127,9 +1295,62 @@ export function CharacterCreationWizard({
           <p>
             <button onClick={() => setStep("system")}>Back</button>{" "}
             <button
-              onClick={() => setStep("abilities")}
+              onClick={() => setStep(hasEquipmentStep ? "equipment" : "abilities")}
               disabled={!backgroundChoicesComplete || !classChoicesComplete || !raceAbilityChoicesComplete}
             >
+              {hasEquipmentStep ? "Next: equipment" : "Next: ability scores"}
+            </button>
+          </p>
+        </div>
+      )}
+
+      {step === "equipment" && resolvedClassStartingEquipment && (
+        <div style={box}>
+          <h3>Starting equipment</h3>
+          <p style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
+            {charClass}'s equipment, in addition to what {background || "your background"} grants. Packs are expanded
+            into their real contents.
+          </p>
+          {resolvedClassStartingEquipment.fixed.length > 0 && (
+            <>
+              <h4 style={{ marginBottom: "0.3rem" }}>You start with</h4>
+              <ul style={{ margin: "0 0 0.8rem", paddingLeft: "1.2rem" }}>
+                {resolvedClassStartingEquipment.fixed.map((f: EquipmentEntry, i) => (
+                  <li key={i}>
+                    {itemDisplayName(f.itemId)}
+                    {f.quantity > 1 ? ` ×${f.quantity}` : ""}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {resolvedClassStartingEquipment.choices.map((choice: EquipmentChoice, i) => (
+            <div key={i} style={{ marginBottom: "0.8rem" }}>
+              <h4 style={{ marginBottom: "0.3rem" }}>Choice {i + 1}</h4>
+              {choice.options.map((option, j) => (
+                <label key={j} style={{ display: "block", marginTop: "0.2rem" }}>
+                  <input
+                    type="radio"
+                    name={`class-equip-choice-${i}`}
+                    checked={classEquipmentChoiceSel[i] === String(j)}
+                    onChange={() => setClassEquipmentChoice(i, j)}
+                  />{" "}
+                  {option.label}
+                </label>
+              ))}
+            </div>
+          ))}
+          <p style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
+            Total weight so far: {classEquipmentWeight.toFixed(1)} lb
+          </p>
+          {!equipmentChoicesComplete && (
+            <p>
+              <small style={{ color: "var(--danger)" }}>Pick one option for each choice above before continuing.</small>
+            </p>
+          )}
+          <p>
+            <button onClick={() => setStep("basics")}>Back</button>{" "}
+            <button onClick={() => setStep("abilities")} disabled={!equipmentChoicesComplete}>
               Next: ability scores
             </button>
           </p>
@@ -1262,7 +1483,7 @@ export function CharacterCreationWizard({
           )}
 
           <p>
-            <button onClick={() => setStep("basics")}>Back</button>{" "}
+            <button onClick={() => setStep(hasEquipmentStep ? "equipment" : "basics")}>Back</button>{" "}
             <button
               onClick={() => setStep(isWizardClass ? "spellbook" : isWarlockClass ? "warlock" : "review")}
               disabled={

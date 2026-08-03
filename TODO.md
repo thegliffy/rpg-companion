@@ -1673,3 +1673,145 @@ visibly snaps. Print guard confirmed parsed and live: with Console active, the `
 still pins `--surface`/`--ts-fill` to white and forces `body { background: #fff !important }`, so the
 printable character sheet cannot come out as a page of solid dark ink. Full build clean across all
 three workspaces; 21 backend + 22 shared tests green; test user and character cleaned up.
+
+## Theme: starting equipment — choices at creation, and gear that actually works
+
+Prompted by the Rogue's starting equipment: "(a) a rapier or (b) a shortsword / (a) a shortbow and
+quiver of 20 arrows or (b) a shortsword / (a) a burglar's pack, (b) a dungeoneer's pack, or (c) an
+explorer's pack / Leather armor, two daggers, and thieves' tools" -- wanted in the wizard, authorable
+for custom classes, and with the resulting gear equippable and able to produce attacks.
+
+**Class starting equipment is not modeled anywhere.** `ClassProficiencies`
+([srd-class-proficiencies.ts](shared/src/systems/srd-class-proficiencies.ts)) carries saving throws,
+armor/weapon/tool proficiencies and skill choices -- no equipment. There's no schema for it and no
+data, on SRD classes or custom ones. This is the bulk of the theme.
+
+**The good news: half of "produce attacks" already exists.** The inventory's per-row **"Add to
+Attacks"** button ([Dnd5eSheet.tsx](frontend/src/components/systems/Dnd5eSheet.tsx)) already resolves
+an item's name against `findSrdWeapon`, picks the RAW-correct default ability via
+`weaponDefaultAbility` (ranged -> DEX, finesse -> better of STR/DEX, else STR), and fills in damage
+dice and type -- falling back to a custom weapon item when the name isn't SRD. Nothing new is needed
+to *generate* an attack; what's missing is that granted equipment never reaches it.
+
+**Cross-cutting trap -- granted items arrive inert, and would stay inert.** `backgroundGrants()`
+([CharacterCreationWizard.tsx](frontend/src/pages/CharacterCreationWizard.tsx)) maps background
+equipment to `{ name, quantity: 1, weight: 0, equipped: false, ... }` -- a bare string with no SRD
+linkage, no real weight, and no `armor` sub-object. Class equipment naively added the same way would
+look right and do nothing: no encumbrance, no AC from armor, and `findSrdWeapon` never consulted.
+**Resolution against the SRD tables is the feature**, not the list of names. Worth fixing the
+background path in the same pass rather than leaving two grant paths with different fidelity.
+
+**Two data gaps found by checking rather than assuming.** Packs exist in `SRD_GEAR` as *empty
+shells* -- `{ id: "burglars-pack", name: "Burglar's Pack", cost: "16 gp", weight: 0 }` with no
+contents at all, so "a burglar's pack" is one weightless line. And `SRD_GEAR` has **116 entries and
+no tools category whatsoever**: no Thieves' Tools (which the Rogue list requires), no artisan's
+tools, gaming sets or instruments. Several existing backgrounds already grant tool *proficiencies*
+with no matching item to hold.
+
+**Decisions taken (all by the user):** packs **expand into their real contents**; the wizard
+**auto-equips armor and auto-creates weapon attacks**; and the **whole missing tools category** gets
+backfilled, not just the one item the Rogue needs.
+
+156. ✅ **Backfill the missing SRD gear: tools, and pack contents.** Pure data, and everything else
+    depends on it.
+    - **Tools:** thieves' tools, all artisan's tools, gaming sets, musical instruments, plus the
+      navigator's/disguise/forgery-style kits not already present. SRD 5.1 is CC-BY and ships
+      in-repo, same precedent as `srd-spell-scaling.ts` and #125's monster backfill.
+    - **Pack contents:** a `contents: { itemId, quantity }[]` on the seven pack entries, referencing
+      existing `SRD_GEAR` ids so a pack is defined in terms of real items rather than duplicating
+      their weights. Packs keep their own `cost`; the aggregate weight becomes derivable.
+    - **Verify by resolution, not by eye:** every id referenced by a pack must resolve in
+      `SRD_GEAR`, and every item named by #157's class lists must resolve in weapons/armor/gear.
+      A typo'd id here silently produces an empty pack later.
+
+157. ✅ **Model starting equipment, and backfill all 12 SRD classes.**
+    - **Shape:** `{ choices: EquipmentChoice[]; fixed: EquipmentEntry[] }`, where a choice is
+      `{ options: { label, items: EquipmentEntry[] }[] }` and an entry is
+      `{ itemId, quantity }`. That covers the Rogue's three either/or slots plus its fixed
+      leather/daggers/tools, and "a shortbow **and** quiver of 20 arrows" falls out of one option
+      carrying two entries rather than needing a special case.
+    - **Quantities are entries, not text:** "two daggers" is `{ itemId: "dagger", quantity: 2 }` and
+      "quiver of 20 arrows" is `{ itemId: "arrow", quantity: 20 }`, so the inventory shows a real
+      count instead of a name that happens to contain a number.
+    - Backfill all 12 SRD classes rather than only Rogue -- it's bounded data entry, and a wizard
+      that offers choices for one class and nothing for the other eleven is worse than none.
+
+158. ✅ **Custom classes can author the same thing.** Parity, so homebrew isn't a second-class citizen.
+    - `startingEquipment` on `customClassDataSchema`, reusing #157's exact shape.
+    - Manager UI: repeatable choice rows (each with 2-3 labelled options) plus a fixed-items list,
+      following the established repeatable-row convention (#124's trait cards, #105's resources).
+    - Item references autocomplete against SRD weapons/armor/gear **plus visible custom items**,
+      reusing the `visibleX` + unresolved-name-warning pattern #109/#126 established for spells and
+      feats -- a custom class pointing at a deleted custom item should say so, not silently grant
+      nothing.
+
+159. ✅ **Resolve granted equipment into real inventory items.** The trap above, closed.
+    - One shared `resolveEquipmentEntry(itemId, quantity)` in `shared`, used by both the class and
+      background grant paths: looks the id up across weapons/armor/gear, and returns an inventory
+      item with real `weight`, `value` parsed from `cost`, and -- for armor -- the `armor`
+      sub-object that `effectiveAC()` needs.
+    - **Also fix `backgroundGrants()`** to route through it, so background equipment stops being
+      weightless text. Its `equipment.items` is `string[]` of free text, so resolution is
+      best-effort by name with an unresolved entry falling back to today's plain-name item rather
+      than being dropped.
+    - Packs expand here, into their #156 contents.
+
+160. ✅ **The wizard's equipment step.** A new step between Basics and Abilities.
+    - One radio group per choice slot, labelled from the SRD text ("a rapier" / "a shortsword"), a
+      read-only list of the fixed items, and a running total weight so the encumbrance implication
+      of an explorer's pack is visible before committing.
+    - Gated like the existing background/class choice completeness checks -- can't continue with an
+      unanswered slot, matching how `backgroundChoicesComplete` already blocks the Basics step.
+    - Skipped entirely for classes with no starting equipment defined (custom classes that didn't
+      author any), rather than showing an empty step.
+
+161. ✅ **Auto-equip armor and auto-create weapon attacks.** What makes the gear actually work.
+    - Armor and shields arrive `equipped: true`, so a new Rogue's AC is right immediately rather
+      than reading 10 until someone finds the checkbox.
+    - Every granted weapon gets an Attacks row, built by **extracting the existing "Add to Attacks"
+      resolution into a shared helper** and calling it -- not a parallel implementation that would
+      drift from the finesse/ranged ability rules already encoded there.
+    - **Ammunition is not a weapon:** arrows resolve as gear with quantity 20 and must not generate
+      an attack row of their own. The generator keys off the item resolving in `SRD_WEAPONS`, which
+      excludes them naturally.
+    - **Verify on a real Rogue end to end:** create one, confirm leather armor equipped and AC 11+
+      DEX, Rapier and Shortbow both present in Attacks with DEX (finesse/ranged) and correct damage,
+      20 arrows as a single quantity-20 row, thieves' tools present, and the chosen pack expanded.
+
+**Verified (#156-161, done):** built a live Rogue through the actual wizard UI (browser-driven, not
+a script) -- Class = Rogue with 4 class skills, Background = Acolyte, then the new **equipment step**
+appeared automatically between Basics and Abilities, rendering exactly the SRD text the user quoted:
+"You start with" (Leather Armor, Dagger ×2, Thieves' Tools) plus three radio choices. Picked Rapier /
+Shortbow+Quiver+20 Arrows / Burglar's Pack; the step's own running weight read **85.5 lb**, and
+`13 (fixed) + 2 (rapier) + 23 (shortbow+quiver+20 arrows) + 47.5 (pack contents) = 85.5` checks out
+by hand. After character creation, the live `sheetData` showed: **Leather Armor `equipped: true`**
+with the real `armor` sub-object (AC read **14 = 11 + Dex +3** on the sheet, not the pre-existing-bug
+10); **Burglar's Pack expanded into its 14 real constituent items** (Backpack, Ball bearings, String,
+Bell, Candle ×5, Crowbar, Hammer, Piton ×10, Lantern hooded, Oil flask ×2, Rations ×5, Tinderbox,
+Waterskin, Rope hempen) with **no leftover opaque "Burglar's Pack" row**; **20 Arrows as one
+quantity-20 row**, not twenty; and **Thieves' Tools** present. Attacks held exactly three rows --
+Dagger, Rapier, Shortbow, all `ability: "dex"` (finesse picked DEX since the rolled Dex mod beat
+Str; ranged is always DEX) with correct dice/type -- and critically **no attack row for the
+Quiver or the 20 Arrows**, confirming the generator's "must resolve in `SRD_WEAPONS`" gate holds.
+
+**A real bug caught only by testing #158 with an adversarial name, not a clean one.** The equipment-
+choices textarea's `Label | item, item` format used `,` to separate items within an option -- but
+**24 SRD weapon/gear names contain a literal comma** ("Crossbow, hand", "Hammer, sledge", "Pick,
+miner's", "Mirror, steel", and 20 others). Typing `Crossbow | Crossbow, hand` silently shredded it
+into two unresolvable fragments, "Crossbow" and "hand", both flagged by the unresolved-name warning
+-- the exact kind of goal-post-shifted input a hand-picked "Rapier | Rapier" example would never
+surface. Fixed by switching the intra-option separator to `;` (verified zero SRD name contains one)
+across the parser, the unresolved-name check, and the reverse formatter used when loading a class
+back into the editor. Re-verified with the same adversarial input through a full save → reload →
+API-read round trip on a throwaway "Test Gunslinger" class: `"Crossbow, hand"` now resolves to
+`crossbow-hand` correctly, while a genuinely fake name (`"Musket"`) still -- correctly -- shows the
+red unresolved warning and persists as an inert fallback rather than silently vanishing.
+
+**One extraction, reused rather than duplicated.** `weaponDefaultAbility` (RAW: ranged -> DEX,
+finesse -> better of STR/DEX, else STR) moved out of `Dnd5eSheet.tsx`'s closure over `sheet` into a
+pure function in `shared` taking raw ability scores -- the sheet's "Add to Attacks" button and the
+wizard's creation-time attack generator now both call the identical function, so the two paths can
+never drift the way two independent implementations eventually would.
+
+All test data (character, custom class, throwaway user) deleted after verification; nothing left
+behind in the dev database.

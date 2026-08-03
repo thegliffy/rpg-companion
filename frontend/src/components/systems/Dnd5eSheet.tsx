@@ -73,6 +73,7 @@ import {
   effectiveAbilityScore,
   equippedAbilityBonus,
   effectiveAC,
+  weaponDefaultAbility,
   proficiencyBonus,
   saveBonus,
   skillBonus,
@@ -351,20 +352,6 @@ export function Dnd5eSheet({
 
   function set<K extends keyof Dnd5eSheetData>(key: K, value: Dnd5eSheetData[K]) {
     setSheet((prev) => ({ ...prev, [key]: value }));
-  }
-
-  // "Add to Attacks" default ability, RAW: ranged weapons use DEX; finesse weapons use whichever
-  // of STR/DEX is currently higher; everything else defaults to STR. Avoids every dagger/rapier
-  // silently defaulting to a STR-based attack bonus until the player notices and flips it.
-  function weaponDefaultAbility(properties: string[], range: string): Dnd5eAbility {
-    if (range === "Ranged") return "dex";
-    const isFinesse = properties.some((p) => p.toLowerCase() === "finesse");
-    if (isFinesse) {
-      const strMod = abilityModifier(effectiveAbilityScore(sheet, "str"));
-      const dexMod = abilityModifier(effectiveAbilityScore(sheet, "dex"));
-      return dexMod > strMod ? "dex" : "str";
-    }
-    return "str";
   }
 
   // Spends one use of a limited martial resource (Rage, Action Surge, Indomitable, Ki Points) --
@@ -2533,10 +2520,12 @@ export function Dnd5eSheet({
                     const customWeaponData = customWeapon?.data as CustomItemData | undefined;
                     // CustomItemData has no melee/ranged distinction -- only its Finesse property
                     // (if set) can inform the default, so pass an empty range (never "Ranged").
+                    const strScore = effectiveAbilityScore(sheet, "str");
+                    const dexScore = effectiveAbilityScore(sheet, "dex");
                     const ability = weapon
-                      ? weaponDefaultAbility(weapon.properties, weapon.range)
+                      ? weaponDefaultAbility(weapon.properties, weapon.range, strScore, dexScore)
                       : customWeaponData
-                        ? weaponDefaultAbility(customWeaponData.properties, "")
+                        ? weaponDefaultAbility(customWeaponData.properties, "", strScore, dexScore)
                         : "str";
                     set("attacks", [
                       ...sheet.attacks,
