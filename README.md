@@ -50,6 +50,38 @@ npm run dev
 
 The frontend dev server proxies API/socket calls to the backend.
 
+## API
+
+Everything under `/api/*` speaks JSON. Two ways to authenticate:
+
+- **Browser session** — the normal cookie-based login the frontend itself uses.
+- **API token** — an `Authorization: Bearer rpgc_...` header, for scripts and automation. Create
+  one from the home page (DM/admin accounts see an **API tokens** panel there): name it, optionally
+  set an expiry, then **Create token**. The plaintext value is shown exactly once — copy it
+  immediately, it can't be retrieved again. A token authenticates as its owner with their normal
+  permissions and can be revoked independently of changing your password; token requests never
+  touch the session store, so scripted calls don't leave rows behind. The token-creation UI also
+  hands you a ready-to-run `curl` example against `/api/custom-content/import`, the main scripted
+  use case (bulk-importing homebrew content as a JSON pack).
+
+| Base path | Covers |
+|---|---|
+| `/api/auth` | Register, login/logout, current session, account preferences (e.g. theme) |
+| `/api/characters` | CRUD, campaign attach/detach, read-only share links, portrait upload |
+| `/api/campaigns` | CRUD, membership/invite codes, and nested: notes, initiative tracker, dice-roll feed, DM shop |
+| `/api/notes` | Personal notes (no campaign required) |
+| `/api/encounters` | Personal (non-campaign) initiative tracker |
+| `/api/rolls` | Personal dice-roll history |
+| `/api/custom-content` | Homebrew races/subraces/classes/subclasses/backgrounds/feats/spells/items/monsters — CRUD, JSON pack import, admin approval |
+| `/api/tokens` | Manage your own API tokens (session auth only — a token can't mint or list its own successors) |
+| `/api/admin` | User/content/character management (admin role only) |
+| `/api/shared/characters/:token` | Public, unauthenticated read-only character view behind a share link |
+| `/api/health` | Liveness + DB check |
+
+There's no separate API reference document — request/response shapes live in the route handlers
+(`backend/src/routes/`) and the Zod schemas in `shared/src/`, which both the frontend and backend
+validate every request/response against, so the schemas are the source of truth for exact payloads.
+
 ## Production / deployment
 
 Every push to `main` triggers a GitHub Action
