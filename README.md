@@ -3,30 +3,38 @@
 A self-hosted tabletop RPG companion web app. Fully useful to a single solo player with no
 group at all — campaigns are an optional social layer on top of personal tools.
 
-
-
 ## Features
 
 - **Character sheets** for D&D 5e (deep, auto-calculating), Pathfinder 2e, and a generic
   custom-field system. Full-screen sheets with a guided multi-step creation wizard (four stat
-  methods: 4d6-drop-lowest, standard array, point buy, manual).
+  methods: 4d6-drop-lowest, standard array, point buy, manual; class/race/background choices;
+  starting-equipment picks that auto-equip armor and auto-generate attack rows). The 5e sheet
+  also has a toggleable printable/traditional layout alongside the structured editing view.
 - **D&D 5e depth**: SRD spells/casting with a class-restricted picker and cast/attack/damage
   rolls, per-class spellcasting + martial progression, level-up flow with ASI/feats, inventory
-  with weight/currency and equip effects, conditions, death saves, Wild Shape (Druid), Warlock
-  pact features, and more.
+  with weight/currency and equip effects (SRD and custom items — including equipment packs —
+  resolve to real weight/AC/damage, not just names), conditions, death saves, Wild Shape (Druid),
+  Warlock pact features, and more.
+- **Visual dice rolling** app-wide: animated die-face rolls for every d20/damage formula, with
+  automatic critical-hit/miss detection and crit damage doubling.
+- **Six selectable themes**, including a high-contrast mode — always renders paper-white on
+  print regardless of which theme is active on screen.
 - **Custom content**, system-scoped and admin-approved: homebrew races, subraces, classes,
   subclasses, backgrounds, feats, spells, items, and monsters — with the same mechanical depth
-  as the built-in SRD content.
+  as the built-in SRD content, plus a JSON pack importer for bulk authoring.
 - **Bestiary** (full SRD monster set) and an **Arena** to simulate turn-by-turn 1v1 fights.
 - **Campaigns** (optional): membership + roles, shared notes, a real-time initiative tracker,
   a live dice-roll feed, and a DM-run shop.
+- Read-only public share links and portrait uploads for any character; a Hall of Heroes for
+  characters marked dead or retired.
 - Personal dice roller and notes usable with no campaign at all.
+- Scriptable via [API tokens](#api) for automation outside the browser.
 
 ## Tech stack
 
 - **Monorepo** via npm workspaces: `backend/`, `frontend/`, `shared/`.
 - **Backend**: Express 5, Socket.IO, Drizzle ORM + better-sqlite3 (SQLite), express-session,
-  bcrypt.
+  bcrypt, multer (uploads), `@dice-roller/rpg-dice-roller` (server-authoritative dice).
 - **Frontend**: React 19 + TypeScript + Vite (SPA).
 - **Shared**: Zod schemas + a system-plugin architecture shared by both ends.
 - **Packaging**: Docker / docker-compose.
@@ -49,6 +57,14 @@ npm run dev
 ```
 
 The frontend dev server proxies API/socket calls to the backend.
+
+Tests (`backend/` and `shared/`, Node's built-in test runner) and lint (`frontend/`, oxlint):
+
+```bash
+npm test -w backend
+npm test -w shared
+npm run lint -w frontend
+```
 
 ## API
 
