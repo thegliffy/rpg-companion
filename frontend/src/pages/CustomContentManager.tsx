@@ -430,6 +430,8 @@ function resourceRowsToData(rows: ResourceRow[]): SubclassResource[] {
       name: r.name.trim(),
       level: Number(r.level) || 1,
       uses: Number(r.uses) || 1,
+      usesFormula: r.usesFormula,
+      usesAbility: r.usesFormula === "abilityModifier" ? r.usesAbility : undefined,
       recharge: r.recharge,
       note: r.note.trim(),
     }));
@@ -494,6 +496,8 @@ interface ResourceRow {
   name: string;
   level: string;
   uses: string;
+  usesFormula: "fixed" | "proficiencyBonus" | "abilityModifier";
+  usesAbility: Dnd5eAbility;
   recharge: "short" | "long";
   note: string;
 }
@@ -502,6 +506,8 @@ const emptyResourceRow = (idPrefix: "class" | "subclass"): ResourceRow => ({
   name: "",
   level: "1",
   uses: "1",
+  usesFormula: "fixed",
+  usesAbility: "cha",
   recharge: "long",
   note: "",
 });
@@ -1202,6 +1208,8 @@ export function CustomContentManager({
           name: r.name,
           level: String(r.level),
           uses: String(r.uses),
+          usesFormula: r.usesFormula,
+          usesAbility: r.usesAbility ?? "cha",
           recharge: r.recharge,
           note: r.note,
         })),
@@ -1324,6 +1332,8 @@ export function CustomContentManager({
           name: r.name,
           level: String(r.level),
           uses: String(r.uses),
+          usesFormula: r.usesFormula,
+          usesAbility: r.usesAbility ?? "cha",
           recharge: r.recharge,
           note: r.note,
         })),
@@ -2300,17 +2310,46 @@ export function CustomContentManager({
                   onChange={(e) => setClassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))}
                   style={{ flex: 1, minWidth: "10rem" }}
                 />
-                <label>
-                  Uses{" "}
-                  <input
-                    type="number"
-                    min={1}
-                    max={20}
-                    value={row.uses}
-                    onChange={(e) => setClassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, uses: e.target.value } : r)))}
-                    style={{ width: "3rem" }}
-                  />
-                </label>
+                <select
+                  value={row.usesFormula}
+                  onChange={(e) =>
+                    setClassResourceRows((prev) =>
+                      prev.map((r, j) => (j === i ? { ...r, usesFormula: e.target.value as ResourceRow["usesFormula"] } : r)),
+                    )
+                  }
+                  title="How many uses this resource has per rest"
+                >
+                  <option value="fixed">Fixed uses</option>
+                  <option value="proficiencyBonus">= Proficiency bonus</option>
+                  <option value="abilityModifier">= Ability modifier</option>
+                </select>
+                {row.usesFormula === "fixed" && (
+                  <label>
+                    Uses{" "}
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={row.uses}
+                      onChange={(e) => setClassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, uses: e.target.value } : r)))}
+                      style={{ width: "3rem" }}
+                    />
+                  </label>
+                )}
+                {row.usesFormula === "abilityModifier" && (
+                  <select
+                    value={row.usesAbility}
+                    onChange={(e) =>
+                      setClassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, usesAbility: e.target.value as Dnd5eAbility } : r)))
+                    }
+                  >
+                    {DND5E_ABILITIES.map((a) => (
+                      <option key={a} value={a}>
+                        {DND5E_ABILITY_NAMES[a]} (min 1)
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <select
                   value={row.recharge}
                   onChange={(e) =>
@@ -3252,17 +3291,46 @@ export function CustomContentManager({
                   onChange={(e) => setSubclassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))}
                   style={{ flex: 1, minWidth: "10rem" }}
                 />
-                <label>
-                  Uses{" "}
-                  <input
-                    type="number"
-                    min={1}
-                    max={20}
-                    value={row.uses}
-                    onChange={(e) => setSubclassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, uses: e.target.value } : r)))}
-                    style={{ width: "3rem" }}
-                  />
-                </label>
+                <select
+                  value={row.usesFormula}
+                  onChange={(e) =>
+                    setSubclassResourceRows((prev) =>
+                      prev.map((r, j) => (j === i ? { ...r, usesFormula: e.target.value as ResourceRow["usesFormula"] } : r)),
+                    )
+                  }
+                  title="How many uses this resource has per rest"
+                >
+                  <option value="fixed">Fixed uses</option>
+                  <option value="proficiencyBonus">= Proficiency bonus</option>
+                  <option value="abilityModifier">= Ability modifier</option>
+                </select>
+                {row.usesFormula === "fixed" && (
+                  <label>
+                    Uses{" "}
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={row.uses}
+                      onChange={(e) => setSubclassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, uses: e.target.value } : r)))}
+                      style={{ width: "3rem" }}
+                    />
+                  </label>
+                )}
+                {row.usesFormula === "abilityModifier" && (
+                  <select
+                    value={row.usesAbility}
+                    onChange={(e) =>
+                      setSubclassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, usesAbility: e.target.value as Dnd5eAbility } : r)))
+                    }
+                  >
+                    {DND5E_ABILITIES.map((a) => (
+                      <option key={a} value={a}>
+                        {DND5E_ABILITY_NAMES[a]} (min 1)
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <select
                   value={row.recharge}
                   onChange={(e) =>

@@ -1,7 +1,16 @@
 import { z } from "zod";
-import { DND5E_ABILITIES, DND5E_ABILITY_NAMES, DND5E_SKILLS, buffEffectSchema, hasBuffEffect } from "./dnd5e.js";
+import {
+  DND5E_ABILITIES,
+  DND5E_ABILITY_NAMES,
+  DND5E_SKILLS,
+  buffEffectSchema,
+  hasBuffEffect,
+  effectiveAbilityScore,
+  abilityModifier,
+  proficiencyBonus,
+} from "./dnd5e.js";
 import type { ClassLevelEntry, CasterType, MartialResourcePool } from "./class-progression.js";
-import type { BuffEffect } from "./dnd5e.js";
+import type { BuffEffect, Dnd5eSheetData } from "./dnd5e.js";
 import type { SrdSpell } from "./srd-spells.js";
 import { SRD_SPELL_EFFECTS } from "./srd-spell-effects.js";
 import { SRD_SPELL_SCALING } from "./srd-spell-scaling.js";
@@ -121,16 +130,23 @@ const classLevelEntrySchema = z.object({
 });
 
 // A limited-use resource (#105, generalized to classes in #127) -- e.g. Hexblade's Curse 1/short
-// rest, or an Artificer's infusions. `uses` is a fixed int on purpose: it covers the benchmark
-// case exactly, and proficiency-bonus/ability-mod scaling is a later extension rather than
-// speculative generality now. Named generically since #127 lifted this from subclass-only to
-// also cover customClassDataSchema -- a homebrew resource belongs wherever its owner (class or
+// rest, or an Artificer's infusions. Named generically since #127 lifted this from subclass-only
+// to also cover customClassDataSchema -- a homebrew resource belongs wherever its owner (class or
 // subclass) is authored, same shape either way.
+//
+// `uses` was fixed-int only until #165 -- real current-edition mechanics scale with a formula
+// (2024 Bardic Inspiration = Charisma modifier uses, Second Wind scales with level), so
+// `usesFormula` picks which of `uses` (fixed) / proficiency bonus / an ability modifier applies;
+// see resourceMaxUses() below for where this is actually computed.
 const homebrewResourceSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().max(40),
   level: z.number().int().min(1).max(20).default(1),
   uses: z.number().int().min(1).max(20).default(1),
+  usesFormula: z.enum(["fixed", "proficiencyBonus", "abilityModifier"]).default("fixed"),
+  // Which ability's modifier scales uses when usesFormula is "abilityModifier" -- e.g. Bardic
+  // Inspiration's Charisma. Unused (and unvalidated as required) for the other two formulas.
+  usesAbility: z.enum(DND5E_ABILITIES).optional(),
   recharge: z.enum(["short", "long"]).default("long"),
   note: z.string().trim().max(80).default(""),
 });
@@ -515,25 +531,37 @@ export const CLASS_RESOURCE_PREFIX = "class:";
 /** Maps a homebrew resource list onto the same MartialResourcePool shape the sheet already
  * renders and rests already reset (#105). Because longRest/shortRest clear via
  * martialResetKeys(pools, restType), pools returned here need no separate rest handling. */
-function homebrewResourcePools(resources: SubclassResource[], level: number, prefix: string): MartialResourcePool[] {
-  return subclassResourcesUpTo(resources, level).map((r) => ({
+/** The resource's actual max uses for this character (#165) -- `uses` verbatim for "fixed", or
+ * computed live from the sheet for the other two formulas. Ability-modifier scaling floors at 1
+ * (never 0 or negative), matching every RAW resource that scales this way -- e.g. a Charisma 8
+ * Bard still gets at least 1 Bardic Inspiration use, not a resource that's unusable by design. */
+export function resourceMaxUses(sheet: Dnd5eSheetData, resource: SubclassResource): number {
+  if (resource.usesFormula === "proficiencyBonus") return proficiencyBonus(sheet.level);
+  if (resource.usesFormula === "abilityModifier") {
+    return Math.max(1, abilityModifier(effectiveAbilityScore(sheet, resource.usesAbility ?? "cha")));
+  }
+  return resource.uses;
+}
+
+function homebrewResourcePools(resources: SubclassResource[], sheet: Dnd5eSheetData, prefix: string): MartialResourcePool[] {
+  return subclassResourcesUpTo(resources, sheet.level).map((r) => ({
     key: `${prefix}${r.id}`,
     label: r.name,
-    max: r.uses,
+    max: resourceMaxUses(sheet, r),
     resetOn: r.recharge,
     note: r.note || undefined,
   }));
 }
 
-export function subclassResourcePools(resources: SubclassResource[], level: number): MartialResourcePool[] {
-  return homebrewResourcePools(resources, level, SUBCLASS_RESOURCE_PREFIX);
+export function subclassResourcePools(resources: SubclassResource[], sheet: Dnd5eSheetData): MartialResourcePool[] {
+  return homebrewResourcePools(resources, sheet, SUBCLASS_RESOURCE_PREFIX);
 }
 
 /** Same as subclassResourcePools, for a homebrew *class*'s own resources (#127) -- e.g. an
  * Artificer's infusions, tracked the same way a subclass's Hexblade's Curse is. Distinct prefix
  * so a class and its subclass can each define a same-named/same-id resource without colliding. */
-export function classResourcePools(resources: ClassResource[], level: number): MartialResourcePool[] {
-  return homebrewResourcePools(resources, level, CLASS_RESOURCE_PREFIX);
+export function classResourcePools(resources: ClassResource[], sheet: Dnd5eSheetData): MartialResourcePool[] {
+  return homebrewResourcePools(resources, sheet, CLASS_RESOURCE_PREFIX);
 }
 
 // A feat's spell choice slot (e.g. Magic Initiate's "2 cantrips + 1 1st-level spell from a class

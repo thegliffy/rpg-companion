@@ -1867,9 +1867,24 @@ feature "Bonuses:" blocks, and the trait editor itself. `tsc -b` across `shared`
 `npm test -w backend`, 22 + 21 passing) still pass. Test race, character, and throwaway user
 deleted after verification.
 
-165. **Resource `uses` scaling (proficiency bonus / ability modifier).** `homebrewResourceSchema`
-    is fixed-int-only by original design -- real current-edition mechanics scale this way
-    (2024 Bardic Inspiration = Charisma modifier uses, Second Wind scales with level).
+165. ✅ **Resource `uses` scaling (proficiency bonus / ability modifier).** `homebrewResourceSchema`
+    was fixed-int-only by original design -- real current-edition mechanics scale this way
+    (2024 Bardic Inspiration = Charisma modifier uses, Second Wind scales with level). Added
+    `usesFormula` ("fixed" / "proficiencyBonus" / "abilityModifier") and `usesAbility`;
+    `resourceMaxUses(sheet, resource)` computes the real max live, floored at 1 for the
+    ability-modifier case (a Charisma 8 Bard still gets at least 1 Bardic Inspiration, not a
+    resource that's unusable by design). `homebrewResourcePools()` (and its
+    `classResourcePools`/`subclassResourcePools` wrappers) now take the whole sheet instead
+    of just `level`, since ability-modifier scaling needs `effectiveAbilityScore()`.
+
+**Verified (#165, done):** JSON-imported a class with a Charisma-scaled resource, confirmed
+the manager's **Edit** form round-tripped it correctly -- "= Ability modifier" selected with
+a "Charisma (min 1)" dropdown shown, exactly matching what was authored. Directly exercised
+`resourceMaxUses()` against the built package: fixed uses (3) unchanged, proficiency bonus
+at level 5 correctly returns 3, ability modifier at CHA 16 correctly returns 3, and a low
+STR-10 (+0 mod) case correctly floors at 1 rather than 0. `tsc -b` clean across all three
+packages; both test suites still pass. Test class and throwaway user deleted after
+verification.
 
 166. **Magic item depth.** Toggleable effects (Flame Tongue's activatable +2d6 fire) reusing
     the existing `activeEffects` buff plumbing wholesale; item-granted resistances (Dragon

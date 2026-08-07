@@ -315,8 +315,8 @@ export function Dnd5eSheet({
   // and the rest handlers reset them without any of them needing to know where a pool came from.
   const martialPools = [
     ...martialResourcePools(effectiveLevelEntry(sheet.class, sheet.level)?.martial),
-    ...classResourcePools(matchedCustomClass ? (matchedCustomClass.data as CustomClassData).resources : [], sheet.level),
-    ...subclassResourcePools(subclassData?.resources ?? [], sheet.level),
+    ...classResourcePools(matchedCustomClass ? (matchedCustomClass.data as CustomClassData).resources : [], sheet),
+    ...subclassResourcePools(subclassData?.resources ?? [], sheet),
   ];
 
   const pb = proficiencyBonus(sheet.level);
