@@ -14,6 +14,7 @@ const BLANK_BONUSES = {
   damageBonus: 0,
   spellDCBonus: 0,
   spellAttackBonus: 0,
+  saveBonus: 0,
   skillProficiencies: [] as string[],
 };
 
@@ -80,6 +81,7 @@ export function FeatPickerModal({
       damageBonus: d.damageBonus,
       spellDCBonus: d.spellDCBonus,
       spellAttackBonus: d.spellAttackBonus,
+      saveBonus: d.saveBonus,
       skillProficiencies: d.skillProficiencies,
     };
     if (d.spellChoices.length === 0) {

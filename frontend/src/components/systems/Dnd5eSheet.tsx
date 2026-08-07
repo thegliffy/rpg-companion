@@ -468,6 +468,7 @@ export function Dnd5eSheet({
         damageBonus: f.damageBonus,
         spellDCBonus: f.spellDCBonus,
         spellAttackBonus: f.spellAttackBonus,
+        saveBonus: f.saveBonus,
         skillProficiencies: f.skillProficiencies,
       }));
 
@@ -676,6 +677,7 @@ export function Dnd5eSheet({
       damageBonus: grants?.damageBonus ?? 0,
       spellDCBonus: grants?.spellDCBonus ?? 0,
       spellAttackBonus: grants?.spellAttackBonus ?? 0,
+      saveBonus: grants?.saveBonus ?? 0,
       skillProficiencies: grants?.skillProficiencies ?? [],
     };
     const grantedSpells: Dnd5eSheetData["spells"] = (grants?.grantedSpells ?? []).map((gs, i) => ({
@@ -2441,6 +2443,8 @@ export function Dnd5eSheet({
                 notes: customItemNotesText(customItem),
                 abilityBonuses: d.abilityBonuses,
                 acBonus: d.acBonus,
+                saveBonus: d.saveBonus,
+                requiresAttunement: d.requiresAttunement,
                 armor: d.kind === "armor" ? customItemArmorPayload(d) : undefined,
               });
             } else {
@@ -2448,7 +2452,11 @@ export function Dnd5eSheet({
             }
           }
           const hasBonuses =
-            item.equipped || item.acBonus !== 0 || item.requiresAttunement || Object.values(item.abilityBonuses).some((v) => v);
+            item.equipped ||
+            item.acBonus !== 0 ||
+            item.saveBonus !== 0 ||
+            item.requiresAttunement ||
+            Object.values(item.abilityBonuses).some((v) => v);
           // Reference-only (#121): shown for a matched custom item, never copied onto `notes`
           // (that field is the player's own editable mechanical summary, seeded once at pick
           // time by customItemNotesText -- overwriting it with prose would clobber their edits).
@@ -2533,7 +2541,10 @@ export function Dnd5eSheet({
                         id: `atk-${crypto.randomUUID()}`,
                         name: item.name,
                         ability,
-                        magicBonus: 0,
+                        // SRD weapons have no magic bonus field at all (SrdWeapon carries no
+                        // such data); only a custom weapon can seed this, from the flat +X the
+                        // item's author entered.
+                        magicBonus: customWeaponData?.magicBonus ?? 0,
                         damageDice: weapon?.damageDice ?? customWeaponData?.damageDice ?? "",
                         damageType: weapon?.damageType ?? customWeaponData?.damageType ?? "",
                       },
@@ -2582,6 +2593,15 @@ export function Dnd5eSheet({
                       style={{ width: "3rem" }}
                     />
                   </label>
+                  <label>
+                    Save{" "}
+                    <input
+                      type="number"
+                      value={item.saveBonus}
+                      onChange={(e) => updateItem({ saveBonus: Number(e.target.value) || 0 })}
+                      style={{ width: "3rem" }}
+                    />
+                  </label>
                   {DND5E_ABILITIES.map((a) => (
                     <label key={a}>
                       {a.toUpperCase()}{" "}
@@ -2616,6 +2636,7 @@ export function Dnd5eSheet({
                 equipped: false,
                 abilityBonuses: {},
                 acBonus: 0,
+                saveBonus: 0,
                 requiresAttunement: false,
                 attuned: false,
                 value: 0,
@@ -2930,6 +2951,10 @@ export function Dnd5eSheet({
                   Spell atk{" "}
                   <input type="number" value={feat.spellAttackBonus} onChange={(e) => updateFeat({ spellAttackBonus: Number(e.target.value) || 0 })} style={{ width: "2.6rem" }} />
                 </label>
+                <label>
+                  Save{" "}
+                  <input type="number" value={feat.saveBonus} onChange={(e) => updateFeat({ saveBonus: Number(e.target.value) || 0 })} style={{ width: "2.6rem" }} />
+                </label>
               </div>
             </div>
           );
@@ -3023,6 +3048,10 @@ export function Dnd5eSheet({
                   Spell atk{" "}
                   <input type="number" value={feature.spellAttackBonus} onChange={(e) => updateFeature({ spellAttackBonus: Number(e.target.value) || 0 })} style={{ width: "2.6rem" }} />
                 </label>
+                <label>
+                  Save{" "}
+                  <input type="number" value={feature.saveBonus} onChange={(e) => updateFeature({ saveBonus: Number(e.target.value) || 0 })} style={{ width: "2.6rem" }} />
+                </label>
               </div>
             </div>
           );
@@ -3042,6 +3071,7 @@ export function Dnd5eSheet({
                 damageBonus: 0,
                 spellDCBonus: 0,
                 spellAttackBonus: 0,
+                saveBonus: 0,
                 skillProficiencies: [],
               },
             ])

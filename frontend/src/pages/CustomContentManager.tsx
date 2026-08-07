@@ -213,6 +213,10 @@ function legendaryActionsToText(actions: MonsterLegendaryAction[]): string {
 // abilityBonuses. A trait's own granted spells (e.g. a Tiefling's Infernal Legacy) are authored as
 // pipe-delimited text nested inside the card rather than a third level of repeatable rows, the same
 // one-more-level-flat convention monster legendary actions use above.
+// abilityBonuses/acBonus/.../saveBonus mirror SubclassFeatureRow's shape exactly -- raceTraitSchema
+// extends the same effectBonusesSchema a subclass feature does, so a trait like Warforged's
+// Integrated Protection (+1 AC) needs the identical fields; before this they existed only on the
+// schema (reachable via direct API/JSON import) with no form field to reach them from the UI.
 interface TraitRow {
   id: string;
   name: string;
@@ -221,6 +225,13 @@ interface TraitRow {
   damageResistancesText: string; // comma-separated
   grantedSpellsText: string; // one per line: "Name | atWill(yes/no)"
   extraCritDice: string; // #144 -- e.g. a homebrew Savage-Attacks-alike
+  abilityBonuses: Partial<Record<Dnd5eAbility, string>>;
+  acBonus: string;
+  attackBonus: string;
+  damageBonus: string;
+  spellDCBonus: string;
+  spellAttackBonus: string;
+  saveBonus: string;
 }
 const emptyTraitRow = (): TraitRow => ({
   id: `trait-${crypto.randomUUID()}`,
@@ -230,6 +241,13 @@ const emptyTraitRow = (): TraitRow => ({
   damageResistancesText: "",
   grantedSpellsText: "",
   extraCritDice: "0",
+  abilityBonuses: {},
+  acBonus: "0",
+  attackBonus: "0",
+  damageBonus: "0",
+  spellDCBonus: "0",
+  spellAttackBonus: "0",
+  saveBonus: "0",
 });
 
 // "Name | atWill(yes/no)" per line -- atWill defaults to yes when omitted, since most racial
@@ -250,15 +268,26 @@ function traitGrantedSpellsToText(spells: { name: string; atWill: boolean }[]): 
 }
 
 function dataToTraitRows(traits: RaceTrait[]): TraitRow[] {
-  return traits.map((t) => ({
-    id: t.id,
-    name: t.name,
-    description: t.description,
-    darkvisionFeet: String(t.darkvisionFeet),
-    damageResistancesText: t.damageResistances.join(", "),
-    grantedSpellsText: traitGrantedSpellsToText(t.grantedSpells),
-    extraCritDice: String(t.extraCritDice),
-  }));
+  return traits.map((t) => {
+    const bonuses: Partial<Record<Dnd5eAbility, string>> = {};
+    for (const [k, v] of Object.entries(t.abilityBonuses)) bonuses[k as Dnd5eAbility] = String(v);
+    return {
+      id: t.id,
+      name: t.name,
+      description: t.description,
+      darkvisionFeet: String(t.darkvisionFeet),
+      damageResistancesText: t.damageResistances.join(", "),
+      grantedSpellsText: traitGrantedSpellsToText(t.grantedSpells),
+      extraCritDice: String(t.extraCritDice),
+      abilityBonuses: bonuses,
+      acBonus: String(t.acBonus),
+      attackBonus: String(t.attackBonus),
+      damageBonus: String(t.damageBonus),
+      spellDCBonus: String(t.spellDCBonus),
+      spellAttackBonus: String(t.spellAttackBonus),
+      saveBonus: String(t.saveBonus),
+    };
+  });
 }
 
 // One special ability per line: "Name: description".
@@ -356,6 +385,7 @@ interface BgFeatureRow {
   damageBonus: string;
   spellDCBonus: string;
   spellAttackBonus: string;
+  saveBonus: string;
 }
 const emptyBgFeatureRow = (): BgFeatureRow => ({
   id: `bg-feature-${crypto.randomUUID()}`,
@@ -367,6 +397,7 @@ const emptyBgFeatureRow = (): BgFeatureRow => ({
   damageBonus: "0",
   spellDCBonus: "0",
   spellAttackBonus: "0",
+  saveBonus: "0",
 });
 
 interface FeatGrantedSpellRow {
@@ -417,6 +448,7 @@ interface SubclassFeatureRow {
   damageBonus: string;
   spellDCBonus: string;
   spellAttackBonus: string;
+  saveBonus: string;
   skillProficiencies: string[];
   armorText: string; // comma-separated -- appended to the sheet's free-text proficiencies line
   weaponText: string;
@@ -433,6 +465,7 @@ const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
   damageBonus: "0",
   spellDCBonus: "0",
   spellAttackBonus: "0",
+  saveBonus: "0",
   skillProficiencies: [],
   armorText: "",
   weaponText: "",
@@ -710,6 +743,9 @@ export function CustomContentManager({
   const [itemCategory, setItemCategory] = useState("");
   const [itemRarity, setItemRarity] = useState("");
   const [itemAcBonus, setItemAcBonus] = useState("0");
+  const [itemSaveBonus, setItemSaveBonus] = useState("0");
+  const [itemMagicBonus, setItemMagicBonus] = useState("0");
+  const [itemRequiresAttunement, setItemRequiresAttunement] = useState(false);
 
   // Monster fields
   const [monsterSize, setMonsterSize] = useState("Medium");
@@ -1002,12 +1038,17 @@ export function CustomContentManager({
             return { name: s.name, srdId: resolved?.srdId, level: resolved?.level ?? 0, atWill: s.atWill };
           }),
         extraCritDice: Number(r.extraCritDice) || 0,
-        abilityBonuses: {},
-        acBonus: 0,
-        attackBonus: 0,
-        damageBonus: 0,
-        spellDCBonus: 0,
-        spellAttackBonus: 0,
+        abilityBonuses: Object.fromEntries(
+          Object.entries(r.abilityBonuses)
+            .map(([k, v]) => [k, Number(v) || 0])
+            .filter(([, v]) => v !== 0),
+        ),
+        acBonus: Number(r.acBonus) || 0,
+        attackBonus: Number(r.attackBonus) || 0,
+        damageBonus: Number(r.damageBonus) || 0,
+        spellDCBonus: Number(r.spellDCBonus) || 0,
+        spellAttackBonus: Number(r.spellAttackBonus) || 0,
+        saveBonus: Number(r.saveBonus) || 0,
       }));
   }
 
@@ -1092,6 +1133,9 @@ export function CustomContentManager({
     setItemCategory("");
     setItemRarity("");
     setItemAcBonus("0");
+    setItemSaveBonus("0");
+    setItemMagicBonus("0");
+    setItemRequiresAttunement(false);
     setMonsterSize("Medium");
     setMonsterType("beast");
     setMonsterAlignment("unaligned");
@@ -1207,6 +1251,7 @@ export function CustomContentManager({
           damageBonus: String(f.damageBonus),
           spellDCBonus: String(f.spellDCBonus),
           spellAttackBonus: String(f.spellAttackBonus),
+          saveBonus: String(f.saveBonus),
         })),
       );
       setBgVariants(d.variants);
@@ -1257,6 +1302,7 @@ export function CustomContentManager({
           damageBonus: String(f.damageBonus),
           spellDCBonus: String(f.spellDCBonus),
           spellAttackBonus: String(f.spellAttackBonus),
+          saveBonus: String(f.saveBonus),
           skillProficiencies: f.skillProficiencies,
           armorText: f.armorProficiencies.join(", "),
           weaponText: f.weaponProficiencies.join(", "),
@@ -1392,6 +1438,9 @@ export function CustomContentManager({
         rarity: string;
         abilityBonuses: Partial<Record<Dnd5eAbility, number>>;
         acBonus: number;
+        saveBonus?: number;
+        magicBonus?: number;
+        requiresAttunement?: boolean;
       };
       setItemDescription(d.description ?? "");
       setItemKind(d.kind);
@@ -1411,6 +1460,9 @@ export function CustomContentManager({
       for (const [k, v] of Object.entries(d.abilityBonuses)) bonuses[k as Dnd5eAbility] = String(v);
       setAbilityBonuses(bonuses);
       setItemAcBonus(String(d.acBonus));
+      setItemSaveBonus(String(d.saveBonus ?? 0));
+      setItemMagicBonus(String(d.magicBonus ?? 0));
+      setItemRequiresAttunement(d.requiresAttunement ?? false);
     } else {
       const d = item.data as {
         size: string;
@@ -1522,6 +1574,7 @@ export function CustomContentManager({
           damageBonus: Number(f.damageBonus) || 0,
           spellDCBonus: Number(f.spellDCBonus) || 0,
           spellAttackBonus: Number(f.spellAttackBonus) || 0,
+          saveBonus: Number(f.saveBonus) || 0,
         })),
       variants: bgVariants.filter((v) => v.title.trim() !== ""),
       variantPickCount: Number(bgVariantPickCount) || 1,
@@ -1608,6 +1661,7 @@ export function CustomContentManager({
               damageBonus: Number(f.damageBonus) || 0,
               spellDCBonus: Number(f.spellDCBonus) || 0,
               spellAttackBonus: Number(f.spellAttackBonus) || 0,
+              saveBonus: Number(f.saveBonus) || 0,
               skillProficiencies: f.skillProficiencies,
               armorProficiencies: splitCsv(f.armorText),
               weaponProficiencies: splitCsv(f.weaponText),
@@ -1719,6 +1773,9 @@ export function CustomContentManager({
           rarity: itemRarity.trim(),
           abilityBonuses: abilityBonusesObj,
           acBonus: Number(itemAcBonus) || 0,
+          saveBonus: Number(itemSaveBonus) || 0,
+          magicBonus: Number(itemMagicBonus) || 0,
+          requiresAttunement: itemRequiresAttunement,
         };
       } else {
         data = {
@@ -1810,7 +1867,7 @@ export function CustomContentManager({
                 <input
                   type="number"
                   min={0}
-                  max={120}
+                  max={300}
                   value={row.darkvisionFeet}
                   onChange={(e) =>
                     setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, darkvisionFeet: e.target.value } : r)))
@@ -1860,6 +1917,59 @@ export function CustomContentManager({
               rows={2}
               style={{ width: "100%", marginTop: "0.3rem" }}
             />
+            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.9rem" }}>
+              {DND5E_ABILITIES.map((a) => (
+                <label key={a}>
+                  {DND5E_ABILITY_NAMES[a]}{" "}
+                  <input
+                    type="number"
+                    style={{ width: "2.6rem" }}
+                    value={row.abilityBonuses[a] ?? ""}
+                    onChange={(e) =>
+                      setTraitRows((prev) =>
+                        prev.map((r, j) => (j === i ? { ...r, abilityBonuses: { ...r.abilityBonuses, [a]: e.target.value } } : r)),
+                      )
+                    }
+                  />
+                </label>
+              ))}
+              {(
+                [
+                  ["AC", "acBonus"],
+                  ["Attack", "attackBonus"],
+                  ["Damage", "damageBonus"],
+                  ["Spell DC", "spellDCBonus"],
+                  ["Spell atk", "spellAttackBonus"],
+                  ["Save", "saveBonus"],
+                ] as const
+              ).map(([label, key]) => (
+                <label key={key}>
+                  {label}{" "}
+                  <input
+                    type="number"
+                    style={{ width: "2.6rem" }}
+                    value={row[key]}
+                    onChange={(e) => setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, [key]: e.target.value } : r)))}
+                  />
+                </label>
+              ))}
+            </div>
+            {/* A trait authored (or imported) as a bare name with every mechanical field still at
+                its default looks identical, on save, to one that genuinely has no mechanics --
+                the exact "string trait silently became an empty shell" trap this warns about. */}
+            {row.name.trim() !== "" &&
+              Number(row.darkvisionFeet) === 0 &&
+              row.damageResistancesText.trim() === "" &&
+              row.grantedSpellsText.trim() === "" &&
+              Number(row.extraCritDice) === 0 &&
+              Object.values(row.abilityBonuses).every((v) => !v || Number(v) === 0) &&
+              [row.acBonus, row.attackBonus, row.damageBonus, row.spellDCBonus, row.spellAttackBonus, row.saveBonus].every(
+                (v) => Number(v) === 0,
+              ) && (
+                <p style={{ margin: "0.3rem 0 0", fontSize: "0.85rem", color: "var(--danger)" }}>
+                  This trait has no mechanical effect set -- it will grant "{row.name.trim()}" as a name only.
+                </p>
+              )}
           </div>
         ))}
         <button type="button" onClick={() => setTraitRows((prev) => [...prev, emptyTraitRow()])}>
@@ -2642,6 +2752,15 @@ export function CustomContentManager({
                       }
                     />
                   </label>
+                  <label>
+                    Save{" "}
+                    <input
+                      type="number"
+                      style={{ width: "2.6rem" }}
+                      value={f.saveBonus}
+                      onChange={(e) => setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, saveBonus: e.target.value } : r)))}
+                    />
+                  </label>
                 </div>
               </div>
             ))}
@@ -2958,6 +3077,7 @@ export function CustomContentManager({
                       ["Damage", "damageBonus"],
                       ["Spell DC", "spellDCBonus"],
                       ["Spell atk", "spellAttackBonus"],
+                      ["Save", "saveBonus"],
                     ] as const
                   ).map(([label, key]) => (
                     <label key={key}>
@@ -3623,6 +3743,18 @@ export function CustomContentManager({
                   Properties (comma-separated)
                   <input value={itemProperties} onChange={(e) => setItemProperties(e.target.value)} style={{ width: "100%" }} />
                 </label>
+                <label>
+                  Magic bonus{" "}
+                  <input
+                    type="number"
+                    min={-5}
+                    max={5}
+                    style={{ width: "3rem" }}
+                    value={itemMagicBonus}
+                    onChange={(e) => setItemMagicBonus(e.target.value)}
+                    title="A +1/+2/+3 weapon's flat bonus, applied equally to attack and damage rolls"
+                  />
+                </label>
               </div>
             )}
 
@@ -3691,6 +3823,17 @@ export function CustomContentManager({
               ))}
               <label>
                 AC <input type="number" style={{ width: "3rem" }} value={itemAcBonus} onChange={(e) => setItemAcBonus(e.target.value)} />
+              </label>
+              <label>
+                Save <input type="number" style={{ width: "3rem" }} value={itemSaveBonus} onChange={(e) => setItemSaveBonus(e.target.value)} />
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={itemRequiresAttunement}
+                  onChange={(e) => setItemRequiresAttunement(e.target.checked)}
+                />{" "}
+                Requires attunement
               </label>
             </div>
           </>

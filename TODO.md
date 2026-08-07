@@ -1815,3 +1815,77 @@ never drift the way two independent implementations eventually would.
 
 All test data (character, custom class, throwaway user) deleted after verification; nothing left
 behind in the dev database.
+
+## Theme: closing the custom-content modeling gaps a real test pass found
+
+A pass against the custom-content system (SRD magic items, spells, race traits, subclass
+resources) found two classes of problem: **hard validation failures** where real published
+content (Counterspell's casting time, Wildemount's 300ft darkvision, a magic item's full
+category string) got rejected by limits sized for the benchmark case rather than the real
+ceiling, and **silent modeling gaps** -- things that save but don't do what they claim: a
++1 weapon's bonus vanishes, a Cloak of Protection's save bonus has no field, a race trait
+authored through the UI can never carry the AC/attack/damage bonuses its own schema already
+supports (only direct API/JSON import could reach them).
+
+162. ✅ **Constraint bumps.** `castingTime` 60→120 (Counterspell's reaction trigger alone is
+    88 chars), `darkvisionFeet` 120→300 on *both* `raceTraitSchema` and the sheet's own
+    `dnd5eSheetSchema` (missing the second lets content validate but fail to seed onto a
+    character), item `category` 30→60 ("Wondrous item (requires attunement by a
+    spellcaster)" is 48 chars), background `equipment.items` line 100→200.
+
+163. ✅ **A flat `saveBonus` vocabulary, matching `acBonus`'s existing shape.** Added to
+    `effectBonusesSchema` (covers feats/background features/subclass features/race traits
+    for free, since they all extend it), `effectEntrySchema` and `inventoryItemSchema`
+    (`dnd5e.ts`), and `customItemDataSchema`. New `equippedItemBonus(sheet, key)` in
+    `dnd5e.ts` generalizes the inline reduce `effectiveAC()` already did for `acBonus`;
+    `saveBonus()` now folds in `featBonusTotal(sheet, "saveBonus")` and
+    `equippedItemBonus(sheet, "saveBonus")` the same way AC does. Also added
+    `magicBonus` (a weapon's flat +X, seeded into a generated attack row's existing
+    `magicBonus` field rather than inventing a parallel bonus channel) and
+    `requiresAttunement` to `customItemDataSchema` -- SRD magic item data has no attunement
+    info at all, so a custom item was the only source that *could* carry it, and didn't.
+
+164. ✅ **Trait editor UI parity + a warning for name-only traits.** The reported UI/schema
+    mismatch: `raceTraitSchema` extends `effectBonusesSchema`, but `TraitRow` in
+    `CustomContentManager.tsx` had none of those fields -- a trait like Warforged's
+    Integrated Protection could only be authored via direct API import, and
+    `traitRowsToData` was hard-zeroing every bonus field on save even before this, silently
+    discarding anything a JSON import route *did* set. Added the full bonus field set
+    (mirroring `SubclassFeatureRow`'s existing tuple-mapped UI pattern) plus a red warning
+    line when a trait has a name but every mechanical field is still at its default --
+    closing the "string trait silently became an empty shell" trap in the same pass.
+
+**Verified (#162-164, done):** authored a custom race ("Test Warforged") with a trait
+carrying `acBonus: 1` **through the actual form**, confirmed via direct API read that it
+persisted (`"acBonus": 1`, not silently zeroed). Created a live Fighter with that race:
+displayed **AC 19 (Chain Mail 16 + Shield +2)** -- the total correctly includes the trait's
++1 even though the breakdown text doesn't itemize it, confirming `effectiveAC()`'s
+`featBonusTotal` pickup works end to end from a UI-authored trait, not just a hand-crafted
+JSON payload. The new "Save" input rendered correctly on inventory item rows, the feat and
+feature "Bonuses:" blocks, and the trait editor itself. `tsc -b` across `shared` + `frontend`
++ `backend` came back clean, and both existing test suites (`npm test -w shared`,
+`npm test -w backend`, 22 + 21 passing) still pass. Test race, character, and throwaway user
+deleted after verification.
+
+165. **Resource `uses` scaling (proficiency bonus / ability modifier).** `homebrewResourceSchema`
+    is fixed-int-only by original design -- real current-edition mechanics scale this way
+    (2024 Bardic Inspiration = Charisma modifier uses, Second Wind scales with level).
+
+166. **Magic item depth.** Toggleable effects (Flame Tongue's activatable +2d6 fire) reusing
+    the existing `activeEffects` buff plumbing wholesale; item-granted resistances (Dragon
+    Scale Mail) mirroring `equippedItemBonus()`'s live-sum pattern; Bless's dice-based save
+    bonus (currently only the attack-roll half is modeled). Explicitly not included:
+    conditional advantage (no advantage/disadvantage rolling primitive exists anywhere in
+    the app yet -- foundational dice-engine work, its own pass).
+
+167. **Combat modifiers.** A generic optional attack modifier (Sharpshooter/GWM-style -5/+10)
+    and a generic ability-to-damage flag for homebrew feats/weapons -- note SRD's actual
+    Agonizing Blast already works via its own dedicated `ebDamagePerBeamAbility` mechanism,
+    this is about making the same *kind* of capability available outside that one hardcoded
+    Eldritch Blast path.
+
+168. **Spell-grant semantics.** Magic Initiate's player-chosen class (the `"class"` spellChoice
+    kind already exists and is wired end-to-end, but `classId` is author-fixed rather than
+    player-chosen); Infernal Legacy's level-gated spells (`grantedSpellSchema` needs
+    `minLevel`/`castAtLevel`, and race-trait spells need to be re-evaluated on level-up
+    instead of only seeded once at creation).

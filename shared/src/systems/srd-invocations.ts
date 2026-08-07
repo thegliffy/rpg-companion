@@ -24,6 +24,7 @@ export interface InvocationGrants {
   damageBonus?: number;
   spellDCBonus?: number;
   spellAttackBonus?: number;
+  saveBonus?: number;
   /** Agonizing Blast: add this ability's modifier to each Eldritch Blast beam's damage. */
   ebDamagePerBeamAbility?: Dnd5eAbility;
   /** Eldritch Spear: Eldritch Blast's range becomes this many feet. */

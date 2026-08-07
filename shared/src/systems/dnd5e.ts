@@ -153,6 +153,9 @@ const inventoryItemSchema = z.object({
   equipped: z.boolean().default(false),
   abilityBonuses: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(-10).max(10)).default({}),
   acBonus: z.number().int().min(-10).max(10).default(0),
+  // Flat bonus to every saving throw while equipped (and attuned-if-required) -- e.g. a Cloak of
+  // Protection's +1. Mirrors acBonus's shape; summed by equippedItemBonus() into saveBonus().
+  saveBonus: z.number().int().min(-10).max(10).default(0),
   // Present only for armor/shield items (from the SRD or custom armor picker) -- drives
   // effectiveAC()'s real AC formula instead of the flat acBonus above.
   armor: inventoryArmorSchema.optional(),
@@ -191,6 +194,9 @@ export const effectEntrySchema = z.object({
   damageBonus: z.number().int().min(-10).max(10).default(0),
   spellDCBonus: z.number().int().min(-10).max(10).default(0),
   spellAttackBonus: z.number().int().min(-10).max(10).default(0),
+  // Flat bonus to every saving throw, always active -- e.g. a homebrew Resilient-alike feat.
+  // Mirrors the other flat bonus fields above; summed by featBonusTotal() into saveBonus().
+  saveBonus: z.number().int().min(-10).max(10).default(0),
   // Skill ids this feat/feature/invocation grants proficiency in (e.g. Beguiling Influence ->
   // deception+persuasion) -- aggregated alongside sheet.skillProficiencies rather than merged
   // into it, so removing the entry (e.g. swapping invocations) automatically un-grants it.
@@ -260,7 +266,10 @@ export const dnd5eSheetSchema = z.object({
   // once from the chosen race/subrace's trait objects at character creation (max darkvision across
   // traits, deduped resistances), then a normal player-editable value afterward, not re-derived
   // live from race on every render.
-  darkvisionFeet: z.number().int().min(0).max(120).default(0),
+  // 300, matching custom-content.ts's raceTraitSchema.darkvisionFeet cap -- a homebrew race with
+  // published-lineage-level darkvision (e.g. 300 ft) must be able to seed this field without
+  // clamping, or granting it silently fails validation at character creation.
+  darkvisionFeet: z.number().int().min(0).max(300).default(0),
   damageResistances: z.array(z.string().trim().max(30)).max(20).default([]),
   // Natural d20 needed to crit (#143) -- 20 is the RAW baseline. Plain editable field, same
   // precedent as darkvisionFeet/speed above: the sheet suggests a value derived from subclass
@@ -416,6 +425,12 @@ export function equippedAbilityBonus(sheet: Dnd5eSheetData, ability: Dnd5eAbilit
   return sheet.items.reduce((sum, item) => (itemBonusesActive(item) ? sum + (item.abilityBonuses[ability] ?? 0) : sum), 0);
 }
 
+/** Sum of a numeric bonus field across every active (equipped + attuned-if-required) item, e.g.
+ * acBonus/saveBonus. Mirrors equipped AbilityBonus/featBonusTotal's shape for the item side. */
+export function equippedItemBonus(sheet: Dnd5eSheetData, key: "acBonus" | "saveBonus"): number {
+  return sheet.items.reduce((sum, item) => (itemBonusesActive(item) ? sum + item[key] : sum), 0);
+}
+
 /** Every feat and feature/trait entry, combined -- both arrays feed the same bonus totals. */
 function allEffectEntries(sheet: Dnd5eSheetData): EffectEntry[] {
   return [...sheet.feats, ...sheet.features];
@@ -429,7 +444,7 @@ export function featAbilityBonus(sheet: Dnd5eSheetData, ability: Dnd5eAbility): 
 /** Sum of a numeric bonus field across every feat/feature, e.g. acBonus/attackBonus/spellDCBonus. */
 export function featBonusTotal(
   sheet: Dnd5eSheetData,
-  key: "acBonus" | "attackBonus" | "damageBonus" | "spellDCBonus" | "spellAttackBonus",
+  key: "acBonus" | "attackBonus" | "damageBonus" | "spellDCBonus" | "spellAttackBonus" | "saveBonus",
 ): number {
   return allEffectEntries(sheet).reduce((sum, entry) => sum + entry[key], 0);
 }
@@ -474,7 +489,7 @@ function armorPieces(sheet: Dnd5eSheetData) {
 export function effectiveAC(sheet: Dnd5eSheetData): number {
   const { body, shield } = armorPieces(sheet);
   const dexMod = abilityModifier(effectiveAbilityScore(sheet, "dex"));
-  const itemAcBonus = sheet.items.reduce((sum, item) => (itemBonusesActive(item) ? sum + item.acBonus : sum), 0);
+  const itemAcBonus = equippedItemBonus(sheet, "acBonus");
   const base = body
     ? body.armor!.baseAC + (body.armor!.addDex ? Math.min(dexMod, body.armor!.maxDex ?? Infinity) : 0)
     : shield
@@ -520,7 +535,8 @@ export function armorOverlapWarning(sheet: Dnd5eSheetData): string | null {
 
 export function saveBonus(sheet: Dnd5eSheetData, ability: Dnd5eAbility): number {
   const mod = abilityModifier(effectiveAbilityScore(sheet, ability));
-  return sheet.saveProficiencies.includes(ability) ? mod + proficiencyBonus(sheet.level) : mod;
+  const base = sheet.saveProficiencies.includes(ability) ? mod + proficiencyBonus(sheet.level) : mod;
+  return base + featBonusTotal(sheet, "saveBonus") + equippedItemBonus(sheet, "saveBonus");
 }
 
 export function skillBonus(sheet: Dnd5eSheetData, skillId: string): number {

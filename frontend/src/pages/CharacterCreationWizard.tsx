@@ -530,6 +530,7 @@ export function CharacterCreationWizard({
         damageBonus: feature.damageBonus,
         spellDCBonus: feature.spellDCBonus,
         spellAttackBonus: feature.spellAttackBonus,
+        saveBonus: feature.saveBonus,
         skillProficiencies: [],
       });
     }
@@ -547,6 +548,7 @@ export function CharacterCreationWizard({
         damageBonus: 0,
         spellDCBonus: 0,
         spellAttackBonus: 0,
+        saveBonus: 0,
       });
     }
 
@@ -566,6 +568,8 @@ export function CharacterCreationWizard({
             equipped: false,
             abilityBonuses: {},
             acBonus: 0,
+            saveBonus: 0,
+            armor: undefined,
             requiresAttunement: false,
             attuned: false,
             value: 0,
@@ -581,8 +585,9 @@ export function CharacterCreationWizard({
         equipped: false,
         abilityBonuses: {},
         acBonus: 0,
+        saveBonus: r.saveBonus,
         armor: r.armor,
-        requiresAttunement: false,
+        requiresAttunement: r.requiresAttunement,
         attuned: false,
         value: r.value,
       }));
@@ -607,6 +612,7 @@ export function CharacterCreationWizard({
         damageBonus: resolved.damageBonus,
         spellDCBonus: resolved.spellDCBonus,
         spellAttackBonus: resolved.spellAttackBonus,
+        saveBonus: resolved.saveBonus,
         skillProficiencies: resolved.skillProficiencies,
       });
       // Same feat-spell-${feat.id}-${i} tagging addFeat() uses on the sheet, so removing this
@@ -647,8 +653,9 @@ export function CharacterCreationWizard({
           equipped: !!r.armor,
           abilityBonuses: {},
           acBonus: 0,
+          saveBonus: r.saveBonus,
           armor: r.armor,
-          requiresAttunement: false,
+          requiresAttunement: r.requiresAttunement,
           attuned: false,
           value: r.value,
         });
@@ -657,7 +664,7 @@ export function CharacterCreationWizard({
             id: `atk-${crypto.randomUUID()}`,
             name: r.name,
             ability: weaponDefaultAbility(r.weapon.properties, r.weapon.range ?? "", finalAbilities.str, finalAbilities.dex),
-            magicBonus: 0,
+            magicBonus: r.weapon.magicBonus,
             damageDice: r.weapon.damageDice,
             damageType: r.weapon.damageType,
           });
@@ -698,6 +705,7 @@ export function CharacterCreationWizard({
         damageBonus: trait.damageBonus,
         spellDCBonus: trait.spellDCBonus,
         spellAttackBonus: trait.spellAttackBonus,
+        saveBonus: trait.saveBonus,
         skillProficiencies: [],
       });
       darkvisionFeet = Math.max(darkvisionFeet, trait.darkvisionFeet);

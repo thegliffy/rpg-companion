@@ -23,6 +23,10 @@ export const effectBonusesSchema = z.object({
   damageBonus: z.number().int().min(-10).max(10).default(0),
   spellDCBonus: z.number().int().min(-10).max(10).default(0),
   spellAttackBonus: z.number().int().min(-10).max(10).default(0),
+  // Flat bonus to every saving throw, always active -- e.g. a homebrew Resilient-alike feat or a
+  // race trait like Warforged's Constructed Resilience. Mirrors dnd5e.ts's effectEntrySchema,
+  // which this feeds once a feat/feature/trait is granted onto a sheet.
+  saveBonus: z.number().int().min(-10).max(10).default(0),
 });
 export type EffectBonuses = z.infer<typeof effectBonusesSchema>;
 
@@ -45,7 +49,10 @@ export const raceTraitSchema = effectBonusesSchema.extend({
   id: z.string().min(1),
   name: z.string().trim().max(60),
   description: z.string().trim().max(1000).default(""),
-  darkvisionFeet: z.number().int().min(0).max(120).default(0),
+  // 120 was the RAW ceiling for every SRD/PHB darkvision source (Drow, Duergar), but published
+  // (non-SRD) lineages go further -- Wildemount's Twilight lineage grants 300 ft. Capped at 300
+  // rather than left unbounded since that's the highest real published value.
+  darkvisionFeet: z.number().int().min(0).max(300).default(0),
   // Damage type names (e.g. "fire", "poison"), same free-text shape customMonsterDataSchema
   // already uses for its damageResistances -- no fixed damage-type enum exists to validate against.
   damageResistances: z.array(z.string().trim().max(30)).max(10).default([]),
@@ -230,7 +237,9 @@ const rawCustomBackgroundDataSchema = z.object({
     .default({}),
   equipment: z
     .object({
-      items: z.array(z.string().trim().max(100)).max(20).default([]),
+      // 100 was too tight for a real multi-clause equipment line (e.g. a full pack description
+      // spelled out inline rather than referencing #156's pack ids).
+      items: z.array(z.string().trim().max(200)).max(20).default([]),
       gold: z.number().min(0).max(9999).default(0),
     })
     .default({}),
@@ -462,6 +471,7 @@ export function blankSubclassFeature(name: string, level: number): SubclassFeatu
     damageBonus: 0,
     spellDCBonus: 0,
     spellAttackBonus: 0,
+    saveBonus: 0,
     skillProficiencies: [],
     armorProficiencies: [],
     weaponProficiencies: [],
@@ -575,6 +585,7 @@ export interface ResolvedGrantedFeat {
   damageBonus: number;
   spellDCBonus: number;
   spellAttackBonus: number;
+  saveBonus: number;
   skillProficiencies: string[];
   grantedSpells: GrantedSpell[];
 }
@@ -597,6 +608,7 @@ export function resolveGrantedFeat(ref: string, customFeats: CustomContent[]): R
       damageBonus: 0,
       spellDCBonus: 0,
       spellAttackBonus: 0,
+      saveBonus: 0,
       skillProficiencies: [],
       grantedSpells: [],
     };
@@ -615,6 +627,7 @@ export function resolveGrantedFeat(ref: string, customFeats: CustomContent[]): R
     damageBonus: d.damageBonus,
     spellDCBonus: d.spellDCBonus,
     spellAttackBonus: d.spellAttackBonus,
+    saveBonus: d.saveBonus,
     skillProficiencies: d.skillProficiencies,
     grantedSpells: d.grantedSpells,
   };
@@ -629,7 +642,9 @@ export const customSpellDataSchema = z.object({
   description: z.string().trim().max(4000).default(""),
   level: z.number().int().min(0).max(9),
   school: z.string().trim().max(30).default(""),
-  castingTime: z.string().trim().max(60).default(""),
+  // 60 rejected real SRD text -- Counterspell's reaction trigger ("1 reaction, which you take
+  // when you see a creature within 60 feet of you casting a spell") alone runs to 88 chars.
+  castingTime: z.string().trim().max(120).default(""),
   range: z.string().trim().max(60).default(""),
   duration: z.string().trim().max(60).default(""),
   requiresAttackRoll: z.boolean().default(false),
@@ -736,12 +751,26 @@ export const customItemDataSchema = z.object({
   maxDexBonus: z.number().int().min(0).max(10).optional(),
   stealthDisadvantage: z.boolean().default(false),
   armorCategory: z.enum(["light", "medium", "heavy", "shield"]).default("medium"),
-  // Magic item reference fields (informational, like SrdMagicItem)
-  category: z.string().trim().max(30).default(""),
+  // Magic item reference fields (informational, like SrdMagicItem). 30 rejected real SRD text --
+  // "Wondrous item (requires attunement by a spellcaster)" alone runs to 48 chars.
+  category: z.string().trim().max(60).default(""),
   rarity: z.string().trim().max(30).default(""),
   // Effect bonuses applied to the inventory entry when picked (mirrors equipped-item bonuses).
   abilityBonuses: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(-10).max(10)).default({}),
   acBonus: z.number().int().min(-10).max(10).default(0),
+  // Flat bonus to every saving throw while equipped -- e.g. a Cloak of Protection's +1. Mirrors
+  // inventoryItemSchema.saveBonus (dnd5e.ts), which this seeds when the item is picked.
+  saveBonus: z.number().int().min(-10).max(10).default(0),
+  // A weapon's flat magic bonus (e.g. +1/+2/+3), applied equally to attack and damage rolls per
+  // RAW for the vast majority of magic weapons. Mirrors the sheet's own per-attack `magicBonus`
+  // field (attackSchema, dnd5e.ts) -- auto-generated Attacks rows (resolveEquipmentEntry, "Add to
+  // Attacks") seed it from here instead of leaving the player to notice and type it in by hand.
+  magicBonus: z.number().int().min(-5).max(5).default(0),
+  // SRD magic item data has no attunement info at all (name/category/rarity only), so a custom
+  // item is the only source that CAN carry this -- without it, a custom item can never seed
+  // InventoryItem.requiresAttunement (dnd5e.ts) when picked, and the player has to notice and
+  // check the box manually every time.
+  requiresAttunement: z.boolean().default(false),
 });
 export type CustomItemData = z.infer<typeof customItemDataSchema>;
 
@@ -786,12 +815,19 @@ export interface ResolvedInventoryItem {
   weight: number;
   value: number;
   notes: string;
+  // Flat saving-throw bonus while equipped (e.g. a Cloak of Protection's +1) -- 0 for every SRD
+  // item, since none of SRD_WEAPONS/SRD_ARMOR/SRD_GEAR carry structured bonuses at all.
+  saveBonus: number;
+  // Always false for an SRD item (SrdMagicItem has no attunement data); real only for a custom
+  // "magic" item that authored requiresAttunement: true.
+  requiresAttunement: boolean;
   armor?: ReturnType<typeof srdArmorToInventoryArmor>;
   // Present only for a resolved weapon -- lets the caller auto-generate an Attacks row (#161)
   // without re-deriving these from the item's name. `range` is undefined for a custom weapon
   // (CustomItemData has no melee/ranged distinction) -- callers pass "" to weaponDefaultAbility
-  // in that case, same as the sheet's own "Add to Attacks" button already does.
-  weapon?: { damageDice: string; damageType: string; properties: string[]; range?: "Melee" | "Ranged" };
+  // in that case, same as the sheet's own "Add to Attacks" button already does. `magicBonus` is
+  // the weapon's flat +X, applied to the generated attack's own magicBonus field.
+  weapon?: { damageDice: string; damageType: string; properties: string[]; range?: "Melee" | "Ranged"; magicBonus: number };
 }
 
 /** Resolves one EquipmentEntry (an SRD weapon/armor/gear id, or `custom-${id}`) into one or more
@@ -809,7 +845,7 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
 
   if (itemId.startsWith("custom-")) {
     const custom = findCustomItem(itemId.slice("custom-".length));
-    if (!custom) return [{ name: itemId, quantity, weight: 0, value: 0, notes: "" }];
+    if (!custom) return [{ name: itemId, quantity, weight: 0, value: 0, notes: "", saveBonus: 0, requiresAttunement: false }];
     const d = custom.data as CustomItemData;
     return [
       {
@@ -818,8 +854,11 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
         weight: d.weight,
         value: d.value,
         notes: customItemNotesText(custom),
+        saveBonus: d.saveBonus,
+        requiresAttunement: d.requiresAttunement,
         armor: d.kind === "armor" ? customItemArmorPayload(d) : undefined,
-        weapon: d.kind === "weapon" ? { damageDice: d.damageDice, damageType: d.damageType, properties: d.properties } : undefined,
+        weapon:
+          d.kind === "weapon" ? { damageDice: d.damageDice, damageType: d.damageType, properties: d.properties, magicBonus: d.magicBonus } : undefined,
       },
     ];
   }
@@ -833,14 +872,27 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
         weight: weapon.weight,
         value: 0,
         notes: weaponDamageText(weapon),
-        weapon: { damageDice: weapon.damageDice, damageType: weapon.damageType, properties: weapon.properties, range: weapon.range },
+        saveBonus: 0,
+        requiresAttunement: false,
+        weapon: { damageDice: weapon.damageDice, damageType: weapon.damageType, properties: weapon.properties, range: weapon.range, magicBonus: 0 },
       },
     ];
   }
 
   const armor = SRD_ARMOR.find((a) => a.id === itemId);
   if (armor) {
-    return [{ name: armor.name, quantity, weight: armor.weight, value: 0, notes: armorACFormulaText(armor), armor: srdArmorToInventoryArmor(armor) }];
+    return [
+      {
+        name: armor.name,
+        quantity,
+        weight: armor.weight,
+        value: 0,
+        notes: armorACFormulaText(armor),
+        saveBonus: 0,
+        requiresAttunement: false,
+        armor: srdArmorToInventoryArmor(armor),
+      },
+    ];
   }
 
   const gear = SRD_GEAR.find((g) => g.id === itemId);
@@ -848,10 +900,10 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
     if (gear.contents && gear.contents.length > 0) {
       return gear.contents.flatMap((c) => resolveEquipmentEntry({ itemId: c.itemId, quantity: c.quantity * quantity }, findCustomItem));
     }
-    return [{ name: gear.name, quantity, weight: gear.weight, value: 0, notes: "" }];
+    return [{ name: gear.name, quantity, weight: gear.weight, value: 0, notes: "", saveBonus: 0, requiresAttunement: false }];
   }
 
-  return [{ name: itemId, quantity, weight: 0, value: 0, notes: "" }];
+  return [{ name: itemId, quantity, weight: 0, value: 0, notes: "", saveBonus: 0, requiresAttunement: false }];
 }
 
 const monsterActionSchema = z.object({
