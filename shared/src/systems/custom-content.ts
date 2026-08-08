@@ -41,6 +41,16 @@ export const effectBonusesSchema = z.object({
   // check, save, and AC. Alert's other halves (can't be surprised, hidden attackers gain no
   // advantage) stay description text -- they aren't numbers.
   initiativeBonus: z.number().int().min(-10).max(10).default(0),
+  // A Sharpshooter/GWM-style optional attack-roll-penalty-for-damage-bonus tradeoff (#167, #178).
+  // Originally feat-only; moved up here so a subclass feature or race trait can carry one too
+  // (a homebrew "reckless strike"-alike race trait, a subclass feature granting the same
+  // tradeoff). Mirrors effectEntrySchema's field exactly (dnd5e.ts), which this seeds onto the
+  // sheet when granted. Genuinely optional (no default): almost nothing has one, and making it
+  // required would force every construction site in the codebase to specify "no tradeoff".
+  optionalAttackModifier: z.object({ attackPenalty: z.number().int().min(0).max(10), damageBonus: z.number().int().min(0).max(20) }).optional(),
+  // Adds this ability's modifier to damage on every hit (#167, #178) -- the generic version of
+  // what Agonizing Blast already does specifically for Eldritch Blast.
+  damageAbilityBonus: z.enum(DND5E_ABILITIES).optional(),
 }).strict();
 export type EffectBonuses = z.infer<typeof effectBonusesSchema>;
 
@@ -619,13 +629,8 @@ export const customFeatDataSchema = effectBonusesSchema.extend({
   prereqAbility: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(1).max(30)).default({}),
   prereqLevel: z.number().int().min(0).max(20).default(0),
   prereqText: z.string().trim().max(120).default(""),
-  // A Sharpshooter/GWM-style optional attack-roll-penalty-for-damage-bonus tradeoff (#167),
-  // chosen per-attack on the sheet rather than always-on. Mirrors effectEntrySchema's field
-  // exactly (dnd5e.ts), which this seeds when the feat is picked.
-  optionalAttackModifier: z.object({ attackPenalty: z.number().int().min(0).max(10), damageBonus: z.number().int().min(0).max(20) }).optional(),
-  // Adds this ability's modifier to damage on every hit (#167) -- the generic version of what
-  // Agonizing Blast already does specifically for Eldritch Blast.
-  damageAbilityBonus: z.enum(DND5E_ABILITIES).optional(),
+  // optionalAttackModifier/damageAbilityBonus (#167) now live on effectBonusesSchema (#178), so
+  // every feat already has them via the extend() below without repeating the fields here.
 });
 export type CustomFeatData = z.infer<typeof customFeatDataSchema>;
 

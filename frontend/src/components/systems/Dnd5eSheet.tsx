@@ -505,6 +505,8 @@ export function Dnd5eSheet({
         saveBonus: f.saveBonus,
         initiativeBonus: f.initiativeBonus,
         skillProficiencies: f.skillProficiencies,
+        optionalAttackModifier: f.optionalAttackModifier,
+        damageAbilityBonus: f.damageAbilityBonus,
       }));
 
     const existingSpellIds = new Set(prev.spells.map((s) => s.id));

@@ -548,6 +548,8 @@ export function CharacterCreationWizard({
         saveBonus: feature.saveBonus,
         initiativeBonus: feature.initiativeBonus,
         skillProficiencies: [],
+        optionalAttackModifier: feature.optionalAttackModifier,
+        damageAbilityBonus: feature.damageAbilityBonus,
       });
     }
     for (const variantId of bgVariantSel) {
@@ -733,6 +735,8 @@ export function CharacterCreationWizard({
         saveBonus: trait.saveBonus,
         initiativeBonus: trait.initiativeBonus,
         skillProficiencies: [],
+        optionalAttackModifier: trait.optionalAttackModifier,
+        damageAbilityBonus: trait.damageAbilityBonus,
       });
       darkvisionFeet = Math.max(darkvisionFeet, trait.darkvisionFeet);
       for (const r of trait.damageResistances) damageResistances.add(r);

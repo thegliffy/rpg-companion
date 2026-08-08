@@ -223,7 +223,7 @@ interface TraitRow {
   description: string;
   darkvisionFeet: string;
   damageResistancesText: string; // comma-separated
-  grantedSpellsText: string; // one per line: "Name | atWill(yes/no)"
+  grantedSpells: TraitGrantedSpellRow[];
   extraCritDice: string; // #144 -- e.g. a homebrew Savage-Attacks-alike
   abilityBonuses: Partial<Record<Dnd5eAbility, string>>;
   acBonus: string;
@@ -233,6 +233,11 @@ interface TraitRow {
   spellAttackBonus: string;
   saveBonus: string;
   initiativeBonus: string;
+  // Sharpshooter/GWM-style optional per-attack tradeoff (#178) -- was feat-only, now available
+  // here too since effectEntrySchema (dnd5e.ts) already carries it for any feat/feature/trait.
+  optAttackPenalty: string;
+  optDamageBonus: string;
+  damageAbilityBonus: Dnd5eAbility | "";
 }
 const emptyTraitRow = (): TraitRow => ({
   id: `trait-${crypto.randomUUID()}`,
@@ -240,7 +245,7 @@ const emptyTraitRow = (): TraitRow => ({
   description: "",
   darkvisionFeet: "0",
   damageResistancesText: "",
-  grantedSpellsText: "",
+  grantedSpells: [],
   extraCritDice: "0",
   abilityBonuses: {},
   acBonus: "0",
@@ -250,40 +255,29 @@ const emptyTraitRow = (): TraitRow => ({
   spellAttackBonus: "0",
   saveBonus: "0",
   initiativeBonus: "0",
+  optAttackPenalty: "0",
+  optDamageBonus: "0",
+  damageAbilityBonus: "",
 });
 
-// "Name | atWill(yes/no)" per line -- atWill defaults to yes when omitted, since most racial
-// innate cantrips (e.g. a High Elf's bonus cantrip) are at-will; "no" marks a once-per-rest grant
-// like the higher tiers of Infernal Legacy.
-// "Name | atWill(yes/no) | minLevel | castAtLevel" -- the last two are optional (#168, e.g.
-// Infernal Legacy's Hellish Rebuke unlocking at 3rd level, cast as a 2nd-level spell). Blank or
-// omitted means "available from 1st level" / "cast at the spell's own level", same as before
-// these existed.
-function parseTraitGrantedSpellsText(text: string): { name: string; atWill: boolean; minLevel?: number; castAtLevel?: number }[] {
-  return text
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [name, atWillText, minLevelText, castAtLevelText] = line.split("|").map((s) => s.trim());
-      return {
-        name: name || "",
-        atWill: (atWillText ?? "yes").toLowerCase() !== "no",
-        minLevel: minLevelText ? Number(minLevelText) || undefined : undefined,
-        castAtLevel: castAtLevelText ? Number(castAtLevelText) || undefined : undefined,
-      };
-    });
+// A trait's granted spell as labeled row state (#178) -- was a positional
+// "Name | atWill | minLevel | castAtLevel" line in a shared textarea, easy to get wrong and
+// impossible to validate as you type. minLevel/castAtLevel (#168) are blank = "no gate" /
+// "cast at the spell's own level", same meaning the old omitted-column form had.
+interface TraitGrantedSpellRow {
+  id: string;
+  name: string;
+  atWill: boolean;
+  minLevel: string;
+  castAtLevel: string;
 }
-function traitGrantedSpellsToText(spells: { name: string; atWill: boolean; minLevel?: number; castAtLevel?: number }[]): string {
-  return spells
-    .map((s) => {
-      const parts = [s.name, s.atWill ? "yes" : "no"];
-      if (s.minLevel || s.castAtLevel) parts.push(s.minLevel ? String(s.minLevel) : "");
-      if (s.castAtLevel) parts.push(String(s.castAtLevel));
-      return parts.join(" | ");
-    })
-    .join("\n");
-}
+const emptyTraitGrantedSpellRow = (): TraitGrantedSpellRow => ({
+  id: `tgs-${crypto.randomUUID()}`,
+  name: "",
+  atWill: true,
+  minLevel: "",
+  castAtLevel: "",
+});
 
 function dataToTraitRows(traits: RaceTrait[]): TraitRow[] {
   return traits.map((t) => {
@@ -295,7 +289,13 @@ function dataToTraitRows(traits: RaceTrait[]): TraitRow[] {
       description: t.description,
       darkvisionFeet: String(t.darkvisionFeet),
       damageResistancesText: t.damageResistances.join(", "),
-      grantedSpellsText: traitGrantedSpellsToText(t.grantedSpells),
+      grantedSpells: t.grantedSpells.map((s) => ({
+        id: `tgs-${crypto.randomUUID()}`,
+        name: s.name,
+        atWill: s.atWill,
+        minLevel: s.minLevel ? String(s.minLevel) : "",
+        castAtLevel: s.castAtLevel !== undefined ? String(s.castAtLevel) : "",
+      })),
       extraCritDice: String(t.extraCritDice),
       abilityBonuses: bonuses,
       acBonus: String(t.acBonus),
@@ -305,6 +305,9 @@ function dataToTraitRows(traits: RaceTrait[]): TraitRow[] {
       spellAttackBonus: String(t.spellAttackBonus),
       saveBonus: String(t.saveBonus),
       initiativeBonus: String(t.initiativeBonus),
+      optAttackPenalty: String(t.optionalAttackModifier?.attackPenalty ?? 0),
+      optDamageBonus: String(t.optionalAttackModifier?.damageBonus ?? 0),
+      damageAbilityBonus: t.damageAbilityBonus ?? "",
     };
   });
 }
@@ -477,6 +480,11 @@ interface SubclassFeatureRow {
   armorText: string; // comma-separated -- appended to the sheet's free-text proficiencies line
   weaponText: string;
   toolText: string;
+  // Optional per-attack tradeoff (#178) -- was feat-only; effectBonusesSchema carries it for any
+  // feat/feature/trait now.
+  optAttackPenalty: string;
+  optDamageBonus: string;
+  damageAbilityBonus: Dnd5eAbility | "";
 }
 const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
   id: `subclass-feature-${crypto.randomUUID()}`,
@@ -495,6 +503,9 @@ const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
   armorText: "",
   weaponText: "",
   toolText: "",
+  optAttackPenalty: "0",
+  optDamageBonus: "0",
+  damageAbilityBonus: "",
 });
 
 interface SubclassSpellRow {
@@ -1100,17 +1111,17 @@ export function CustomContentManager({
         description: r.description.trim(),
         darkvisionFeet: Number(r.darkvisionFeet) || 0,
         damageResistances: splitCsv(r.damageResistancesText),
-        grantedSpells: parseTraitGrantedSpellsText(r.grantedSpellsText)
-          .filter((s) => s.name !== "")
+        grantedSpells: r.grantedSpells
+          .filter((s) => s.name.trim() !== "")
           .map((s) => {
-            const resolved = resolveSpellName(s.name);
+            const resolved = resolveSpellName(s.name.trim());
             return {
-              name: s.name,
+              name: s.name.trim(),
               srdId: resolved?.srdId,
               level: resolved?.level ?? 0,
               atWill: s.atWill,
-              minLevel: s.minLevel,
-              castAtLevel: s.castAtLevel,
+              minLevel: s.minLevel.trim() ? Number(s.minLevel) || undefined : undefined,
+              castAtLevel: s.castAtLevel.trim() ? Number(s.castAtLevel) || undefined : undefined,
             };
           }),
         extraCritDice: Number(r.extraCritDice) || 0,
@@ -1126,6 +1137,11 @@ export function CustomContentManager({
         spellAttackBonus: Number(r.spellAttackBonus) || 0,
         saveBonus: Number(r.saveBonus) || 0,
         initiativeBonus: Number(r.initiativeBonus) || 0,
+        optionalAttackModifier:
+          Number(r.optAttackPenalty) > 0 || Number(r.optDamageBonus) > 0
+            ? { attackPenalty: Number(r.optAttackPenalty) || 0, damageBonus: Number(r.optDamageBonus) || 0 }
+            : undefined,
+        damageAbilityBonus: r.damageAbilityBonus || undefined,
       }));
   }
 
@@ -1409,6 +1425,9 @@ export function CustomContentManager({
           armorText: f.armorProficiencies.join(", "),
           weaponText: f.weaponProficiencies.join(", "),
           toolText: f.toolProficiencies.join(", "),
+          optAttackPenalty: String(f.optionalAttackModifier?.attackPenalty ?? 0),
+          optDamageBonus: String(f.optionalAttackModifier?.damageBonus ?? 0),
+          damageAbilityBonus: f.damageAbilityBonus ?? "",
         })),
       );
       setSubclassSpellRows(
@@ -1815,6 +1834,11 @@ export function CustomContentManager({
               armorProficiencies: splitCsv(f.armorText),
               weaponProficiencies: splitCsv(f.weaponText),
               toolProficiencies: splitCsv(f.toolText),
+              optionalAttackModifier:
+                Number(f.optAttackPenalty) > 0 || Number(f.optDamageBonus) > 0
+                  ? { attackPenalty: Number(f.optAttackPenalty) || 0, damageBonus: Number(f.optDamageBonus) || 0 }
+                  : undefined,
+              damageAbilityBonus: f.damageAbilityBonus || undefined,
             })),
           spells: subclassSpellRows
             .filter((s) => s.name.trim() !== "")
@@ -2082,18 +2106,110 @@ export function CustomContentManager({
               }
               style={{ width: "100%", marginTop: "0.3rem" }}
             />
-            <textarea
-              placeholder={
-                "Granted spells, one per line: Name | atWill(yes/no) | minLevel | castAtLevel -- last two optional, e.g.\n" +
-                "Thaumaturgy | yes\nHellish Rebuke | no | 3 | 2\nDarkness | no | 5"
-              }
-              value={row.grantedSpellsText}
-              onChange={(e) =>
-                setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, grantedSpellsText: e.target.value } : r)))
-              }
-              rows={2}
-              style={{ width: "100%", marginTop: "0.3rem" }}
-            />
+            <datalist id="srd-spells-list-trait">
+              {spellNameOptions.map((n) => (
+                <option key={n} value={n} />
+              ))}
+            </datalist>
+            <div style={{ marginTop: "0.3rem" }}>
+              <small style={{ color: "var(--text-muted)" }}>Granted spells</small>
+              {row.grantedSpells.map((sp, si) => (
+                <div key={sp.id} style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap", marginTop: "0.2rem" }}>
+                  <input
+                    placeholder="Spell name (matches an SRD spell if spelled exactly)"
+                    list="srd-spells-list-trait"
+                    value={sp.name}
+                    onChange={(e) =>
+                      setTraitRows((prev) =>
+                        prev.map((r, j) =>
+                          j === i
+                            ? { ...r, grantedSpells: r.grantedSpells.map((s, k) => (k === si ? { ...s, name: e.target.value } : s)) }
+                            : r,
+                        ),
+                      )
+                    }
+                    style={{ flex: 1, minWidth: "10rem" }}
+                  />
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={sp.atWill}
+                      onChange={(e) =>
+                        setTraitRows((prev) =>
+                          prev.map((r, j) =>
+                            j === i
+                              ? { ...r, grantedSpells: r.grantedSpells.map((s, k) => (k === si ? { ...s, atWill: e.target.checked } : s)) }
+                              : r,
+                          ),
+                        )
+                      }
+                    />{" "}
+                    At will
+                  </label>
+                  <label title="Character level required before this spell is granted -- blank means available from 1st level">
+                    Min level{" "}
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      placeholder="—"
+                      value={sp.minLevel}
+                      onChange={(e) =>
+                        setTraitRows((prev) =>
+                          prev.map((r, j) =>
+                            j === i
+                              ? { ...r, grantedSpells: r.grantedSpells.map((s, k) => (k === si ? { ...s, minLevel: e.target.value } : s)) }
+                              : r,
+                          ),
+                        )
+                      }
+                      style={{ width: "3.2rem" }}
+                    />
+                  </label>
+                  <label title="Fixed slot level this is cast at when granted, e.g. Infernal Legacy's Hellish Rebuke at 2nd -- blank means the spell's own level">
+                    Cast at{" "}
+                    <input
+                      type="number"
+                      min={0}
+                      max={9}
+                      placeholder="—"
+                      value={sp.castAtLevel}
+                      onChange={(e) =>
+                        setTraitRows((prev) =>
+                          prev.map((r, j) =>
+                            j === i
+                              ? { ...r, grantedSpells: r.grantedSpells.map((s, k) => (k === si ? { ...s, castAtLevel: e.target.value } : s)) }
+                              : r,
+                          ),
+                        )
+                      }
+                      style={{ width: "3.2rem" }}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setTraitRows((prev) =>
+                        prev.map((r, j) => (j === i ? { ...r, grantedSpells: r.grantedSpells.filter((_, k) => k !== si) } : r)),
+                      )
+                    }
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() =>
+                  setTraitRows((prev) =>
+                    prev.map((r, j) => (j === i ? { ...r, grantedSpells: [...r.grantedSpells, emptyTraitGrantedSpellRow()] } : r)),
+                  )
+                }
+                style={{ marginTop: "0.2rem" }}
+              >
+                Add granted spell
+              </button>
+            </div>
             <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.9rem" }}>
               {DND5E_ABILITIES.map((a) => (
                 <label key={a}>
@@ -2132,13 +2248,57 @@ export function CustomContentManager({
                 </label>
               ))}
             </div>
+            {/* Optional per-attack tradeoff (#178) -- was feat-only; effectBonusesSchema carries it
+                for any feat/feature/trait now, so a homebrew race/subclass can grant one too. */}
+            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.9rem", alignItems: "center" }}>
+              <label title="Sharpshooter/GWM-style optional -N attack for +N damage, chosen per-attack on the sheet. 0/0 = no tradeoff.">
+                Opt. attack penalty{" "}
+                <input
+                  type="number"
+                  min={0}
+                  max={10}
+                  style={{ width: "2.6rem" }}
+                  value={row.optAttackPenalty}
+                  onChange={(e) => setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, optAttackPenalty: e.target.value } : r)))}
+                />
+              </label>
+              <label>
+                Opt. damage bonus{" "}
+                <input
+                  type="number"
+                  min={0}
+                  max={20}
+                  style={{ width: "2.6rem" }}
+                  value={row.optDamageBonus}
+                  onChange={(e) => setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, optDamageBonus: e.target.value } : r)))}
+                />
+              </label>
+              <label title="Adds this ability's modifier to damage on every hit (Agonizing Blast-style)">
+                Damage ability{" "}
+                <select
+                  value={row.damageAbilityBonus}
+                  onChange={(e) =>
+                    setTraitRows((prev) =>
+                      prev.map((r, j) => (j === i ? { ...r, damageAbilityBonus: e.target.value as Dnd5eAbility | "" } : r)),
+                    )
+                  }
+                >
+                  <option value="">None</option>
+                  {DND5E_ABILITIES.map((a) => (
+                    <option key={a} value={a}>
+                      {DND5E_ABILITY_NAMES[a]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
             {/* A trait authored (or imported) as a bare name with every mechanical field still at
                 its default looks identical, on save, to one that genuinely has no mechanics --
                 the exact "string trait silently became an empty shell" trap this warns about. */}
             {row.name.trim() !== "" &&
               Number(row.darkvisionFeet) === 0 &&
               row.damageResistancesText.trim() === "" &&
-              row.grantedSpellsText.trim() === "" &&
+              row.grantedSpells.every((s) => s.name.trim() === "") &&
               Number(row.extraCritDice) === 0 &&
               Object.values(row.abilityBonuses).every((v) => !v || Number(v) === 0) &&
               [row.acBonus, row.attackBonus, row.damageBonus, row.spellDCBonus, row.spellAttackBonus, row.saveBonus].every(
@@ -3326,6 +3486,54 @@ export function CustomContentManager({
                     }
                     style={{ flex: 1, minWidth: "10rem" }}
                   />
+                </div>
+                {/* Optional per-attack tradeoff (#178) -- was feat-only; effectBonusesSchema
+                    carries it for any feat/feature/trait now. */}
+                <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.9rem", alignItems: "center" }}>
+                  <label title="Sharpshooter/GWM-style optional -N attack for +N damage, chosen per-attack on the sheet. 0/0 = no tradeoff.">
+                    Opt. attack penalty{" "}
+                    <input
+                      type="number"
+                      min={0}
+                      max={10}
+                      style={{ width: "2.6rem" }}
+                      value={row.optAttackPenalty}
+                      onChange={(e) =>
+                        setSubclassFeatureRows((prev) => prev.map((r, j) => (j === i ? { ...r, optAttackPenalty: e.target.value } : r)))
+                      }
+                    />
+                  </label>
+                  <label>
+                    Opt. damage bonus{" "}
+                    <input
+                      type="number"
+                      min={0}
+                      max={20}
+                      style={{ width: "2.6rem" }}
+                      value={row.optDamageBonus}
+                      onChange={(e) =>
+                        setSubclassFeatureRows((prev) => prev.map((r, j) => (j === i ? { ...r, optDamageBonus: e.target.value } : r)))
+                      }
+                    />
+                  </label>
+                  <label title="Adds this ability's modifier to damage on every hit (Agonizing Blast-style)">
+                    Damage ability{" "}
+                    <select
+                      value={row.damageAbilityBonus}
+                      onChange={(e) =>
+                        setSubclassFeatureRows((prev) =>
+                          prev.map((r, j) => (j === i ? { ...r, damageAbilityBonus: e.target.value as Dnd5eAbility | "" } : r)),
+                        )
+                      }
+                    >
+                      <option value="">None</option>
+                      {DND5E_ABILITIES.map((a) => (
+                        <option key={a} value={a}>
+                          {DND5E_ABILITY_NAMES[a]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
                 <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.85rem" }}>
                   {DND5E_SKILLS.map((s) => (

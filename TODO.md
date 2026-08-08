@@ -2278,3 +2278,41 @@ Not built this pass. Recorded so the next one starts from an assessment rather t
   `advantageOn: ["saving throws against poison"]` and surface a one-click "roll with advantage"
   next to the matching save. Deliberately a hint, not auto-application: nothing tells the app what
   a save is *against* at the moment it's rolled, so auto-detection would be guesswork.
+
+178. ✅ **Reach and discoverability for combat modifiers already in the schema.** Two mechanics
+    from #167 worked but were only reachable from the feat editor, and one mechanic from #168 was
+    correct but encoded as a positional text line instead of labeled fields.
+
+    - **`optionalAttackModifier` and `damageAbilityBonus` moved from `customFeatDataSchema` up to
+      `effectBonusesSchema`** (`custom-content.ts`) -- the shared base feat, background-feature,
+      subclass-feature, and race-trait all extend. Previously feat-only (duplicated, not shared),
+      so a homebrew race trait or subclass feature could never carry a Sharpshooter-style tradeoff
+      or an Agonizing-Blast-style damage-ability bonus, even though `effectEntrySchema` (the
+      sheet-side twin) and `featOptionalAttackModifiers()`/`featDamageAbilityBonus()` already read
+      across every source uniformly. Added the matching "Opt. attack penalty / Opt. damage bonus /
+      Damage ability" section to the race-trait and subclass-feature editors (same fields, same
+      layout the feat editor already had), and wired the grant-time copy in the three places a
+      feature/trait becomes a sheet entry: `raceGrants()`, `backgroundGrants()` (free, since the
+      schema move covers background features too), and `mergeGrants()` (subclass features).
+    - **Race trait granted spells: positional text → labeled rows.** The
+      `"Name | atWill | minLevel | castAtLevel"` textarea (one typo away from silently losing the
+      level gate) is now a `TraitGrantedSpellRow` list -- name (with the same SRD-spell datalist
+      the feat editor's granted-spells section already uses), an "At will" checkbox, and labeled
+      "Min level"/"Cast at" number inputs, mirroring the feat editor's `FeatGrantedSpellRow`
+      pattern exactly. No data migration needed: the schema already stored `grantedSpells` as
+      structured objects, so this only changed how the editor represents them in memory, not what
+      was persisted.
+
+**Verified (#178, done):** `tsc`/both suites clean throughout (no regression: shared 66/66, backend
+28/28). Live: authored a race trait through the real form with a granted spell (Hellish Rebuke,
+min level 3, cast at 2) via the new labeled row and an optional attack tradeoff (-5 attack / +10
+damage / CHA-to-damage) -- the API response showed the full structured object, no stray text
+parsing. Drove the actual character-creation wizard with this race at level 3: Hellish Rebuke
+appeared with `level: 2` (from the cast-at override), and the sheet's Features & traits stored
+`optionalAttackModifier`/`damageAbilityBonus` on the granted feature. Added a weapon attack and
+confirmed `AttackRollControl` rendered the checkbox "Test Innate Caster (-5/+10)", and the damage
+line correctly netted the character's CHA modifier (-1) against STR's +2 into "+1" total -- proving
+`featDamageAbilityBonus()` folds in alongside the ability-mod-to-damage rather than replacing it.
+Separately authored a subclass feature through the same new section and confirmed its own
+`optionalAttackModifier`/`damageAbilityBonus` round-tripped through the API unchanged. Test
+character and both custom-content items deleted after verification.
