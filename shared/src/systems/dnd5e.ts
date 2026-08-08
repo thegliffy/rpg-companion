@@ -332,6 +332,11 @@ export const dnd5eSheetSchema = z.object({
   // max die value. Combined with the current CON modifier in computeHpMax() so a later
   // CON change (ASI, item, feature) retroactively corrects every level already gained.
   hpDiceHistory: z.array(z.number().int().min(0).max(30)).max(20).default([]),
+  // Temporary hit points (#173) -- a separate pool that damage depletes before real HP and that
+  // never exceeds a maximum of its own (PHB 198: temp HP aren't healing, don't stack, and are
+  // lost on a long rest). Lives on the sheet rather than alongside hpCurrent/hpMax (which are
+  // columns on the character row) because it's a D&D-specific pool, not a system-agnostic one.
+  tempHp: z.number().int().min(0).max(999).default(0),
   deathSaveSuccesses: z.number().int().min(0).max(3).default(0),
   deathSaveFailures: z.number().int().min(0).max(3).default(0),
   attacks: z.array(attackSchema).max(20).default([]),
@@ -741,6 +746,94 @@ export function concentrationSaveDC(damage: number): number {
 export function computeHpMax(sheet: Dnd5eSheetData): number {
   const diceSum = sheet.hpDiceHistory.reduce((sum, v) => sum + v, 0);
   return diceSum + sheet.level * abilityModifier(effectiveAbilityScore(sheet, "con"));
+}
+
+/** What applying damage or healing works out to (#173). Pure -- the caller decides what to write
+ * back, so the same math can drive the sheet's own panel and (later) anything else that damages a
+ * character. Every field is the *resulting* state or a thing that happened, never a delta to apply
+ * on top of something else. */
+export interface HpChange {
+  /** HP after the change, floored at 0 -- 5e has no negative hit points. */
+  hpCurrent: number;
+  /** Temp HP after the change. */
+  tempHp: number;
+  /** How much of the damage the temp HP pool soaked (0 for healing). */
+  tempAbsorbed: number;
+  /** Real HP actually lost or gained -- what a concentration save is computed from, and what the
+   * "you took N" message should report. Excludes anything temp HP absorbed. */
+  hpDelta: number;
+  /** Death-save failures this damage *adds* (PHB 197: taking damage at 0 HP is one failure, or
+   * two from a critical hit). Never set by healing, and never set alongside `died`. */
+  deathSaveFailures: number;
+  /** True when the character dropped to exactly 0 from above it -- unconscious, and (since
+   * unconscious is incapacitated) concentration ends outright rather than getting a save. */
+  droppedToZero: boolean;
+  /** Massive damage: the leftover after hitting 0 met or exceeded max HP, or damage landed on an
+   * already-0 character and met or exceeded max HP (PHB 197). Instant death, no save. */
+  died: boolean;
+  /** True when healing brought a character up from 0 -- death saves reset (PHB 197). */
+  revived: boolean;
+}
+
+/** Applies `damage` to a character, spending temporary hit points first (PHB 198) and applying
+ * 5e's instant-death and damage-at-0 rules (PHB 197). `isCrit` only matters at 0 HP, where a
+ * critical hit costs two death-save failures instead of one. */
+export function applyDamage(opts: {
+  hpCurrent: number;
+  hpMax: number;
+  tempHp: number;
+  damage: number;
+  isCrit?: boolean;
+}): HpChange {
+  const damage = Math.max(0, Math.floor(opts.damage));
+  const tempAbsorbed = Math.min(Math.max(0, opts.tempHp), damage);
+  const tempHp = Math.max(0, opts.tempHp) - tempAbsorbed;
+  // Damage left after temp HP soaks its share -- everything below keys off this, not the raw
+  // damage, so a fully-absorbed hit is genuinely a no-op (no save, no death-save failure).
+  const afterTemp = damage - tempAbsorbed;
+  const base: HpChange = {
+    hpCurrent: Math.max(0, opts.hpCurrent),
+    tempHp,
+    tempAbsorbed,
+    hpDelta: 0,
+    deathSaveFailures: 0,
+    droppedToZero: false,
+    died: false,
+    revived: false,
+  };
+  if (afterTemp === 0) return base;
+
+  if (opts.hpCurrent <= 0) {
+    // Already down: no HP left to lose, so this is purely a death-save (or instant-death) event.
+    if (afterTemp >= opts.hpMax) return { ...base, died: true };
+    return { ...base, deathSaveFailures: opts.isCrit ? 2 : 1 };
+  }
+
+  const remaining = opts.hpCurrent - afterTemp;
+  if (remaining > 0) return { ...base, hpCurrent: remaining, hpDelta: -afterTemp };
+
+  // Reduced to 0. `-remaining` is the damage that carried past 0 -- instant death when it alone
+  // meets or exceeds max HP, otherwise just unconscious.
+  return { ...base, hpCurrent: 0, hpDelta: -opts.hpCurrent, droppedToZero: true, died: -remaining >= opts.hpMax };
+}
+
+/** Applies healing, capped at max HP. Healing never touches temporary hit points (PHB 198: they
+ * aren't hit points and can't be restored by healing), and any healing from 0 restores
+ * consciousness, which resets death saves (PHB 197). */
+export function applyHealing(opts: { hpCurrent: number; hpMax: number; tempHp: number; healing: number }): HpChange {
+  const healing = Math.max(0, Math.floor(opts.healing));
+  const from = Math.max(0, opts.hpCurrent);
+  const hpCurrent = Math.min(opts.hpMax, from + healing);
+  return {
+    hpCurrent,
+    tempHp: Math.max(0, opts.tempHp),
+    tempAbsorbed: 0,
+    hpDelta: hpCurrent - from,
+    deathSaveFailures: 0,
+    droppedToZero: false,
+    died: false,
+    revived: from === 0 && hpCurrent > 0,
+  };
 }
 
 export function totalInventoryWeight(sheet: Dnd5eSheetData): number {

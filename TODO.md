@@ -2105,3 +2105,43 @@ in the browser on a level-17 wizard: the three new notes render under Wall of Ic
 and Dominate Monster, and selecting a 9th-level slot for Wall of Ice shows "(at 9: 10d6+6d6
 cold)" -- the corrected value. `tsc` clean across all three packages; both suites pass (shared
 22/22, backend 21/21). Test character and throwaway user deleted after verification.
+
+173. ✅ **HP damage/healing panel with concentration interaction.** Editing HP meant typing a
+    corrected number into the raw input and doing the 5e bookkeeping in your head. Clicking the
+    **HP** label now opens an inline panel (matching the Concentration/level-up prompts rather
+    than a modal, since this is a per-turn action) with an amount box plus **Damage** and
+    **Heal**. The raw HP inputs stay directly editable -- the *label* is the button, not the
+    numbers, so corrections that aren't damage or healing still work.
+
+    The rules live in two pure functions in `dnd5e.ts` (`applyDamage`/`applyHealing`) returning
+    an `HpChange` describing the resulting state, so the math is unit-testable and reusable by
+    anything else that damages a character later:
+    - **Temporary hit points** are new (`tempHp` on the sheet schema, editable in the panel and
+      shown as "+N temp" beside HP). Damage spends them first (PHB 198), healing never restores
+      them, and a long rest clears them.
+    - **Concentration** resolves off the damage that actually reached HP, not the raw amount --
+      a hit fully absorbed by temp HP triggers no save at all. Surviving damage auto-rolls the
+      DC 10-or-half CON save; dropping to 0 or dying ends concentration *outright* with no save,
+      since unconscious counts as incapacitated.
+    - **Downed rules** (PHB 197): damage at 0 HP adds a death-save failure, or two when the
+      "Critical hit" box is ticked; leftover damage meeting or exceeding max HP is instant death
+      (recorded as three failures so the existing "Character has died" block handles it, rather
+      than inventing a second death state); healing from 0 resets death saves.
+
+    Also fixed a latent hazard while threading the damage through: `rollConcentrationSave` was
+    wired as `onClick={rollConcentrationSave}`, so adding its new optional `damageOverride`
+    parameter would have silently passed a `MouseEvent` as the damage. Changed to
+    `onClick={() => rollConcentrationSave()}`.
+
+**Verified (#173, done):** 16 new unit tests in `shared/src/systems/hp.test.ts` cover temp-HP
+absorption, the fully-absorbed no-op, flooring at 0, the massive-damage boundary (49 vs 50 damage
+on a 40-max character), temp HP counting against that threshold, one-vs-two failures at 0 HP,
+healing caps, and revive detection. Live on a level-5 wizard (30/40 HP, 5 temp, concentrating on
+Hold Person): 12 damage read "5 absorbed by temp HP, 7 HP lost" and auto-rolled a DC 10
+concentration save **computed from 7, not 12** (it failed, and Hold Person ended); 30 more read
+"23 HP lost, dropped to 0 — unconscious" and surfaced the death-save button; 5 damage at 0 with
+Critical hit ticked added exactly 2 failures (confirmed via the API); 9 healing read "Back up from
+0 — death saves reset"; and 60 damage read "massive damage — instant death" with "Character has
+died" appearing. Separately confirmed that dropping to 0 in one hit ends concentration with
+**no save rolled** ("Knocked unconscious: Hold Person ends.", and no new entry in the dice log).
+All suites pass (shared 38/38, backend 21/21). Test character and throwaway user deleted.

@@ -109,6 +109,8 @@ import {
   formatDiceTerm,
   activeEffectSpellAttackDice,
   activeEffectSpellDamageDice,
+  applyDamage,
+  applyHealing,
 } from "shared";
 import * as charactersApi from "../../api/characters";
 import { useDiceRoll } from "../../dice/DiceRollContext";
@@ -192,6 +194,12 @@ export function Dnd5eSheet({
   const [concentrationDamage, setConcentrationDamage] = useState("");
   const [concentrationMessage, setConcentrationMessage] = useState<string | null>(null);
   const [concentrationBusy, setConcentrationBusy] = useState(false);
+  // Damage/heal panel (#173) -- opened by clicking the HP label, so the raw HP inputs stay
+  // directly editable for corrections that aren't damage or healing.
+  const [hpPanelOpen, setHpPanelOpen] = useState(false);
+  const [hpAmount, setHpAmount] = useState("");
+  const [hpWasCrit, setHpWasCrit] = useState(false);
+  const [hpMessage, setHpMessage] = useState<string | null>(null);
 
   const {
     classes: customClasses,
@@ -844,9 +852,11 @@ export function Dnd5eSheet({
   }
 
   /** Rolls the Constitution save to maintain concentration after taking damage: DC 10 or half the
-   * damage, whichever is higher. Failing breaks concentration. */
-  async function rollConcentrationSave() {
-    const damage = Number(concentrationDamage) || 0;
+   * damage, whichever is higher. Failing breaks concentration. `damageOverride` is passed by the
+   * damage panel (#173) so the save uses the damage just applied without round-tripping through
+   * the manual input; the manual button passes nothing and reads that input as before. */
+  async function rollConcentrationSave(damageOverride?: number) {
+    const damage = damageOverride ?? (Number(concentrationDamage) || 0);
     const dc = concentrationSaveDC(damage);
     const bonus = abilityModifier(effectiveAbilityScore(sheet, "con")) + (sheet.saveProficiencies.includes("con") ? pb : 0);
     setConcentrationBusy(true);
@@ -866,6 +876,68 @@ export function Dnd5eSheet({
     }
   }
 
+  /** Current/max HP as numbers for the damage panel. Max falls back to the computed value and
+   * current to full, matching what the rest of the sheet does with a blank field. */
+  function hpNumbers(): { current: number; max: number } {
+    const max = hpMax !== "" ? Number(hpMax) : computeHpMax(sheet);
+    return { current: hpCurrent !== "" ? Number(hpCurrent) : max, max };
+  }
+
+  /** Applies damage through applyDamage() (temp HP first, then 5e's death rules), then resolves
+   * the concentration consequence: dropping to 0 or dying ends it outright (unconscious counts as
+   * incapacitated), while surviving damage triggers the usual DC 10-or-half CON save. */
+  async function takeDamage() {
+    const amount = Number(hpAmount) || 0;
+    if (amount <= 0) return;
+    const { current, max } = hpNumbers();
+    const r = applyDamage({ hpCurrent: current, hpMax: max, tempHp: sheet.tempHp, damage: amount, isCrit: hpWasCrit });
+
+    setHpCurrent(String(r.hpCurrent));
+    setSheet((prev) => ({
+      ...prev,
+      tempHp: r.tempHp,
+      // Instant death is recorded as a full set of failures so the existing "Character has died"
+      // block below the death saves picks it up, rather than inventing a second death state.
+      deathSaveFailures: r.died ? 3 : Math.min(3, prev.deathSaveFailures + r.deathSaveFailures),
+    }));
+
+    const parts: string[] = [];
+    if (r.tempAbsorbed > 0) parts.push(`${r.tempAbsorbed} absorbed by temp HP`);
+    parts.push(`${-r.hpDelta} HP lost`);
+    if (r.died) parts.push("massive damage — instant death");
+    else if (r.droppedToZero) parts.push("dropped to 0 — unconscious");
+    else if (r.deathSaveFailures > 0) parts.push(`${r.deathSaveFailures} death save failure${r.deathSaveFailures > 1 ? "s" : ""}`);
+    setHpMessage(`Took ${amount}: ${parts.join(", ")}.`);
+    setHpAmount("");
+    setHpWasCrit(false);
+
+    if (!sheet.concentratingOn) return;
+    if (r.died || r.droppedToZero) {
+      breakConcentration(r.died ? "Died" : "Knocked unconscious");
+    } else if (r.hpDelta < 0) {
+      await rollConcentrationSave(-r.hpDelta);
+    }
+  }
+
+  /** Applies healing through applyHealing() (capped at max, never restores temp HP), clearing
+   * death saves when it brings someone back from 0. */
+  function heal() {
+    const amount = Number(hpAmount) || 0;
+    if (amount <= 0) return;
+    const { current, max } = hpNumbers();
+    const r = applyHealing({ hpCurrent: current, hpMax: max, tempHp: sheet.tempHp, healing: amount });
+
+    setHpCurrent(String(r.hpCurrent));
+    if (r.revived) {
+      setSheet((prev) => ({ ...prev, deathSaveSuccesses: 0, deathSaveFailures: 0 }));
+      setDeathSaveMessage(null);
+    }
+    setHpMessage(
+      `Healed ${r.hpDelta}${r.hpDelta < amount ? ` (${amount} rolled, capped at max)` : ""}.${r.revived ? " Back up from 0 — death saves reset." : ""}`,
+    );
+    setHpAmount("");
+  }
+
   function longRest() {
     setSheet((prev) => {
       const bonusDice = Math.max(1, Math.floor(prev.hitDiceTotal / 2));
@@ -881,6 +953,8 @@ export function Dnd5eSheet({
         // Nothing survives a long rest -- you can't sustain a spell (or its buff) while resting.
         concentratingOn: null,
         activeEffects: [],
+        // "Temporary hit points last until they're depleted or you finish a long rest" (PHB 198).
+        tempHp: 0,
       };
     });
     if (hpMax !== "") setHpCurrent(hpMax);
@@ -1714,10 +1788,27 @@ export function Dnd5eSheet({
                 </button>
               )}
             </span>
-            <span>HP</span>
+            <span>
+              {/* The label opens the damage/heal panel rather than the number inputs themselves,
+                  so typing a corrected HP value directly still works. */}
+              <button
+                type="button"
+                onClick={() => setHpPanelOpen((v) => !v)}
+                title="Take damage or healing"
+                style={{ background: "none", border: "none", padding: 0, font: "inherit", color: "inherit", cursor: "pointer", textDecoration: "underline dotted" }}
+              >
+                HP
+              </button>
+            </span>
             <span>
               <input type="number" value={hpCurrent} onChange={(e) => setHpCurrent(e.target.value)} style={numInput} /> /{" "}
               <input type="number" value={hpMax} onChange={(e) => setHpMax(e.target.value)} style={numInput} />
+              {sheet.tempHp > 0 && (
+                <span title="Temporary hit points -- spent before real HP, and not restored by healing" style={{ color: "var(--success)" }}>
+                  {" "}
+                  +{sheet.tempHp} temp
+                </span>
+              )}
               {hpMax !== "" && Number(hpMax) !== computeHpMax(sheet) && (
                 <button
                   type="button"
@@ -1778,6 +1869,50 @@ export function Dnd5eSheet({
               />
             </span>
           </div>
+          {/* Damage/heal panel (#173) -- inline rather than a modal, matching the Concentration
+              and level-up prompts, since this is a very frequent in-combat action. */}
+          {hpPanelOpen && !readOnly && (
+            <div style={{ marginTop: "0.5rem", padding: "0.5rem", border: "1px solid var(--border-subtle)", borderRadius: 4 }}>
+              <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", flexWrap: "wrap" }}>
+                <input
+                  type="number"
+                  min={0}
+                  value={hpAmount}
+                  onChange={(e) => setHpAmount(e.target.value)}
+                  placeholder="Amount"
+                  style={{ width: "5rem" }}
+                  autoFocus
+                />
+                <button type="button" onClick={takeDamage} disabled={hpAmount === "" || Number(hpAmount) <= 0}>
+                  Damage
+                </button>
+                <button type="button" onClick={heal} disabled={hpAmount === "" || Number(hpAmount) <= 0}>
+                  Heal
+                </button>
+                <label title="A critical hit against a character at 0 HP costs two death save failures instead of one">
+                  <input type="checkbox" checked={hpWasCrit} onChange={(e) => setHpWasCrit(e.target.checked)} /> Critical hit
+                </label>
+                <label style={{ marginLeft: "auto" }} title="Temporary hit points -- damage spends these first, and healing never restores them">
+                  Temp HP{" "}
+                  <input
+                    type="number"
+                    min={0}
+                    value={sheet.tempHp}
+                    onChange={(e) => set("tempHp", Math.max(0, Number(e.target.value) || 0))}
+                    style={{ width: "3.5rem" }}
+                  />
+                </label>
+                <button type="button" onClick={() => { setHpPanelOpen(false); setHpMessage(null); }}>
+                  Close
+                </button>
+              </div>
+              {hpMessage && (
+                <div style={{ marginTop: "0.3rem" }}>
+                  <small>{hpMessage}</small>
+                </div>
+              )}
+            </div>
+          )}
           {hpCurrent === "0" && sheet.deathSaveSuccesses < 3 && sheet.deathSaveFailures < 3 && (
             <div style={{ marginTop: "0.5rem" }}>
               <button type="button" onClick={rollDeathSave} disabled={deathSaveBusy}>
@@ -1826,7 +1961,7 @@ export function Dnd5eSheet({
                   style={{ width: "4rem" }}
                 />
               </label>
-              <button type="button" onClick={rollConcentrationSave} disabled={concentrationBusy || concentrationDamage === ""}>
+              <button type="button" onClick={() => rollConcentrationSave()} disabled={concentrationBusy || concentrationDamage === ""}>
                 Roll DC {concentrationSaveDC(Number(concentrationDamage) || 0)} CON save
               </button>
               <button type="button" onClick={() => breakConcentration("Concentration dropped")}>
