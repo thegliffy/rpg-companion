@@ -174,6 +174,21 @@ const homebrewResourceSchema = z.object({
   usesAbility: z.enum(DND5E_ABILITIES).optional(),
   recharge: z.enum(["short", "long"]).default("long"),
   note: z.string().trim().max(80).default(""),
+  // Names another resource pool this one draws from instead of minting its own counter (#179) --
+  // e.g. Way of Mercy's Hand of Healing/Harm spending the monk's existing Ki Points rather than
+  // getting a second tracker. Matched case-insensitively against every other pool's label
+  // (resolveSpendsFromPools, class-progression.ts) at render time, once every base/class/subclass
+  // pool a character actually has is known -- authoring time has no such list to validate against,
+  // so this is unresolved-tolerant like every other name reference in this file (feat/spell
+  // names): an unmatched name just leaves the resource with its own independent counter rather
+  // than erroring. `uses`/`usesFormula`/`recharge` above are ignored when this resolves, since the
+  // target pool's own numbers apply instead.
+  spendsFrom: z.string().trim().max(40).optional(),
+  // Named choices sharing this one counter (#179) -- e.g. Channel Divinity: Turn Undead vs. a
+  // domain-specific option. Display-only (the "use" is still just spending the one shared use);
+  // names only, no separate mechanics per option, since nothing here differs between them besides
+  // flavor.
+  options: z.array(z.string().trim().max(60)).max(6).default([]),
 }).strict();
 // Kept as "SubclassResource" (rather than renamed) since it's the established public name and
 // every existing call site/import uses it -- ClassResource is a same-shape alias for clarity at
@@ -576,6 +591,10 @@ function homebrewResourcePools(resources: SubclassResource[], sheet: Dnd5eSheetD
     max: resourceMaxUses(sheet, r),
     resetOn: r.recharge,
     note: r.note || undefined,
+    // Resolved against the full pool list (base martial + class + subclass) by the caller, once
+    // every pool a character has is known -- see resolveSpendsFromPools (class-progression.ts).
+    spendsFrom: r.spendsFrom,
+    options: r.options.length > 0 ? r.options : undefined,
   }));
 }
 

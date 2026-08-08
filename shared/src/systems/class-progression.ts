@@ -623,6 +623,15 @@ export interface MartialResourcePool {
   // recovery); "long" resources need a full long rest.
   resetOn: "short" | "long";
   note?: string;
+  // The pool this one draws from instead of tracking its own uses (#179), by the target's label --
+  // e.g. Way of Mercy's Hand of Healing/Harm "spends from" Ki Points. Set from the authored
+  // resource's own field; resolveSpendsFromPools() below does the actual key-swap once every pool
+  // a character has is known. Left on the returned pool either way so the UI can still show which
+  // pool a resource is meant to share, even when the target wasn't found.
+  spendsFrom?: string;
+  // Named choices sharing this one counter (#179) -- e.g. Channel Divinity: Turn Undead vs. a
+  // domain option. Display-only.
+  options?: string[];
 }
 
 /** Limited-use martial resources for the sheet's Use/Reset counters. Empty for non-martial
@@ -655,4 +664,22 @@ export function martialResourceAvailable(sheet: Dnd5eSheetData, pool: MartialRes
  * short-rest-recovering pools. Used by longRest()/shortRest() to reset sheet.martialUsed. */
 export function martialResetKeys(pools: MartialResourcePool[], restType: "short" | "long"): MartialResourceKey[] {
   return pools.filter((p) => restType === "long" || p.resetOn === "short").map((p) => p.key);
+}
+
+/** Resolves each pool's `spendsFrom` (#179) to its target pool's key/max/resetOn, so Use/Reset and
+ * the available count all read and write the *same* sheet.martialUsed entry as the pool it names --
+ * Way of Mercy's Hand of Healing/Harm shares Ki Points' counter instead of getting a second one.
+ * Call once on the *complete* pool list (base martial + class + subclass) since a spendsFrom target
+ * can be any of the three. Matched case-insensitively against every other pool's label; a name that
+ * matches nothing (typo, or the referenced pool doesn't exist for this character) leaves that pool
+ * independent rather than dropping it, the same "unresolved reference degrades, doesn't break"
+ * convention every other name lookup in this app follows. */
+export function resolveSpendsFromPools(pools: MartialResourcePool[]): MartialResourcePool[] {
+  const byLabel = new Map(pools.map((p) => [p.label.trim().toLowerCase(), p]));
+  return pools.map((p) => {
+    if (!p.spendsFrom) return p;
+    const target = byLabel.get(p.spendsFrom.trim().toLowerCase());
+    if (!target || target === p) return p;
+    return { ...p, key: target.key, max: target.max, resetOn: target.resetOn };
+  });
 }

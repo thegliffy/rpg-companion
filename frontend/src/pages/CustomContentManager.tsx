@@ -458,6 +458,8 @@ function resourceRowsToData(rows: ResourceRow[]): SubclassResource[] {
       usesAbility: r.usesFormula === "abilityModifier" ? r.usesAbility : undefined,
       recharge: r.recharge,
       note: r.note.trim(),
+      spendsFrom: r.spendsFrom.trim() || undefined,
+      options: splitCsv(r.optionsText),
     }));
 }
 
@@ -534,6 +536,10 @@ interface ResourceRow {
   usesAbility: Dnd5eAbility;
   recharge: "short" | "long";
   note: string;
+  // Draws from another pool instead of getting its own counter (#179) -- e.g. Way of Mercy
+  // spending Ki Points. Blank = independent, the existing behavior.
+  spendsFrom: string;
+  optionsText: string; // comma-separated, e.g. "Turn Undead, Radiance of the Dawn"
 }
 const emptyResourceRow = (idPrefix: "class" | "subclass"): ResourceRow => ({
   id: `${idPrefix}-resource-${crypto.randomUUID()}`,
@@ -544,6 +550,8 @@ const emptyResourceRow = (idPrefix: "class" | "subclass"): ResourceRow => ({
   usesAbility: "cha",
   recharge: "long",
   note: "",
+  spendsFrom: "",
+  optionsText: "",
 });
 
 // A class's fixed starting-equipment grant (#158) -- `name` is typed against itemNameOptions and
@@ -1320,6 +1328,8 @@ export function CustomContentManager({
           usesAbility: r.usesAbility ?? "cha",
           recharge: r.recharge,
           note: r.note,
+          spendsFrom: r.spendsFrom ?? "",
+          optionsText: (r.options ?? []).join(", "),
         })),
       );
       setClassEquipmentFixed(
@@ -1449,6 +1459,8 @@ export function CustomContentManager({
           usesAbility: r.usesAbility ?? "cha",
           recharge: r.recharge,
           note: r.note,
+          spendsFrom: r.spendsFrom ?? "",
+          optionsText: (r.options ?? []).join(", "),
         })),
       );
     } else if (item.type === "feat") {
@@ -2695,6 +2707,20 @@ export function CustomContentManager({
                   onChange={(e) => setClassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, note: e.target.value } : r)))}
                   style={{ flex: 1, minWidth: "8rem" }}
                 />
+                <input
+                  placeholder="Spends from (optional, e.g. Ki Points)"
+                  title="Draws from another pool instead of getting its own counter -- e.g. Way of Mercy spending Ki Points. Must match that pool's name exactly."
+                  value={row.spendsFrom}
+                  onChange={(e) => setClassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, spendsFrom: e.target.value } : r)))}
+                  style={{ flex: 1, minWidth: "9rem" }}
+                />
+                <input
+                  placeholder="Options (comma-separated, optional)"
+                  title="Named choices sharing this one counter, e.g. Turn Undead, Radiance of the Dawn"
+                  value={row.optionsText}
+                  onChange={(e) => setClassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, optionsText: e.target.value } : r)))}
+                  style={{ flex: 1, minWidth: "9rem" }}
+                />
                 <button type="button" onClick={() => setClassResourceRows((prev) => prev.filter((_, j) => j !== i))}>
                   Remove
                 </button>
@@ -3724,6 +3750,20 @@ export function CustomContentManager({
                   value={row.note}
                   onChange={(e) => setSubclassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, note: e.target.value } : r)))}
                   style={{ flex: 1, minWidth: "8rem" }}
+                />
+                <input
+                  placeholder="Spends from (optional, e.g. Ki Points)"
+                  title="Draws from another pool instead of getting its own counter -- e.g. Way of Mercy spending Ki Points. Must match that pool's name exactly."
+                  value={row.spendsFrom}
+                  onChange={(e) => setSubclassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, spendsFrom: e.target.value } : r)))}
+                  style={{ flex: 1, minWidth: "9rem" }}
+                />
+                <input
+                  placeholder="Options (comma-separated, optional)"
+                  title="Named choices sharing this one counter, e.g. Turn Undead, Radiance of the Dawn"
+                  value={row.optionsText}
+                  onChange={(e) => setSubclassResourceRows((prev) => prev.map((r, j) => (j === i ? { ...r, optionsText: e.target.value } : r)))}
+                  style={{ flex: 1, minWidth: "9rem" }}
                 />
                 <button type="button" onClick={() => setSubclassResourceRows((prev) => prev.filter((_, j) => j !== i))}>
                   Remove

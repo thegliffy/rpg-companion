@@ -2316,3 +2316,38 @@ line correctly netted the character's CHA modifier (-1) against STR's +2 into "+
 Separately authored a subclass feature through the same new section and confirmed its own
 `optionalAttackModifier`/`damageAbilityBonus` round-tripped through the API unchanged. Test
 character and both custom-content items deleted after verification.
+
+179. ✅ **Resource pools that borrow and share.** `homebrewResourceSchema` always minted a
+    completely independent counter per resource, so two real patterns couldn't be modeled: a
+    feature that spends from a pool it doesn't own (Way of Mercy's Hand of Healing/Harm spending
+    the monk's Ki Points, rather than getting a second "1/1" tracker no one asked for), and several
+    named choices sharing one counter (Channel Divinity: Turn Undead vs. a domain option -- one
+    "1 per short rest" resource, not two).
+
+    Added two fields: `spendsFrom` (names another pool by label) and `options` (a plain name list,
+    display-only -- the mechanic is still just one shared counter, so per-option state would model
+    nothing real). New `resolveSpendsFromPools()` (`class-progression.ts`) runs once over the
+    *complete* assembled pool list (base martial + class + subclass -- a spendsFrom target can be
+    any of the three) and swaps a matching resource's `key`/`max`/`resetOn` to its target's, so
+    Use/Reset/available all read and write the exact same `sheet.martialUsed` entry rather than a
+    parallel one. Unmatched names (typo, or the target genuinely doesn't exist on this character)
+    leave the resource independent rather than dropping it -- the same "unresolved reference
+    degrades gracefully" convention every other name lookup in this codebase already follows.
+
+    One correctness fix needed along the way: the pool list's React `key` prop was `pool.key`
+    itself, which was always unique before this -- now two rows can legitimately share one
+    underlying key (that's the whole point), so the render key had to become `${pool.key}-${index}`
+    to avoid a collision.
+
+**Verified (#179, done):** 8 new unit tests cover the swap itself, case/whitespace-insensitive
+matching, the typo-tolerant fallback, self-reference (a pool whose own label happens to equal its
+`spendsFrom`), that the actual spent count is shared post-resolution, that `martialResetKeys`
+naturally dedupes the now-shared key, and that `options` passes through untouched. Live: authored a
+homebrew class with 3 Ki Points and a subclass with "Hand of Healing/Harm" (`spendsFrom: "Ki
+Points"`) and "Channel Divinity" (`options: ["Turn Undead", "Radiance of the Dawn"]`) through the
+real API -- both accepted cleanly under #177's strict schemas. On a live character: the sheet
+showed "Ki Points: 3/3", "Hand of Healing/Harm: 3/3 (spends from Ki Points)", and "Channel Divinity:
+1/1 -- options: Turn Undead, Radiance of the Dawn". Clicking **Use** on Hand of Healing/Harm dropped
+**both** rows to 2/3 together, and the API confirmed `martialUsed` held exactly one key (`ki: 1`),
+not two -- proving the counters are genuinely shared, not just coincidentally matching numbers. All
+suites pass (shared 74/74, backend 28/28).

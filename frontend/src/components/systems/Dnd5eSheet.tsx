@@ -69,6 +69,7 @@ import {
   blankSubclassFeature,
   martialResourceAvailable,
   martialResetKeys,
+  resolveSpendsFromPools,
   naturalD20,
   suggestedCritThreshold,
   abilityModifier,
@@ -342,11 +343,14 @@ export function Dnd5eSheet({
   // Base-class pools (Rage/Action Surge/Indomitable/Ki) plus any the class (#127) or subclass
   // (#105) contributes. All three use the same MartialResourcePool shape, so the counters render
   // and the rest handlers reset them without any of them needing to know where a pool came from.
-  const martialPools = [
+  // resolveSpendsFromPools (#179) needs the *complete* list before it can match a "spends from"
+  // name against every pool a character actually has -- a spendsFrom target can be any of the
+  // three sources (a subclass resource sharing the base class's Ki Points, for instance).
+  const martialPools = resolveSpendsFromPools([
     ...martialResourcePools(effectiveLevelEntry(sheet.class, sheet.level)?.martial),
     ...classResourcePools(matchedCustomClass ? (matchedCustomClass.data as CustomClassData).resources : [], sheet),
     ...subclassResourcePools(subclassData?.resources ?? [], sheet),
-  ];
+  ]);
 
   const pb = proficiencyBonus(sheet.level);
   const saveDC = spellSaveDC(sheet);
@@ -1682,14 +1686,26 @@ export function Dnd5eSheet({
             <h3>Martial features</h3>
             {martialPools.length > 0 && (
               <div style={{ fontSize: "0.9rem", marginBottom: martialLines.length > 0 ? "0.5rem" : 0 }}>
-                {martialPools.map((pool) => {
+                {martialPools.map((pool, poolIndex) => {
                   const available = martialResourceAvailable(sheet, pool);
                   const unlimited = available === -1;
                   return (
-                    <div key={pool.key} style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.3rem" }}>
+                    // Index, not pool.key -- a resolved "spends from" pool (#179) shares its
+                    // target's key on purpose (Use/Reset must hit the same counter), so pool.key
+                    // is no longer unique across rows the way it always was before.
+                    <div key={`${pool.key}-${poolIndex}`} style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginBottom: "0.3rem", flexWrap: "wrap" }}>
                       <span>
                         {pool.label}: <strong>{unlimited ? "Unlimited" : `${available} / ${pool.max}`}</strong>
                         {pool.note ? ` (${pool.note})` : ""}
+                        {pool.spendsFrom && (
+                          <small style={{ color: "var(--text-muted)" }} title="Shares its counter with this pool rather than tracking separately">
+                            {" "}
+                            (spends from {pool.spendsFrom})
+                          </small>
+                        )}
+                        {pool.options && pool.options.length > 0 && (
+                          <small style={{ color: "var(--text-muted)" }}> -- options: {pool.options.join(", ")}</small>
+                        )}
                       </span>
                       {!unlimited && (
                         <>
