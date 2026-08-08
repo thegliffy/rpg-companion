@@ -752,6 +752,15 @@ export function CustomContentManager({
   const [itemSaveBonus, setItemSaveBonus] = useState("0");
   const [itemMagicBonus, setItemMagicBonus] = useState("0");
   const [itemRequiresAttunement, setItemRequiresAttunement] = useState(false);
+  const [itemGrantedResistancesText, setItemGrantedResistancesText] = useState(""); // comma-separated
+  // A toggleable effect (#166) -- e.g. Flame Tongue's activatable +2d6 fire. Same field set and
+  // "always present, hasBuffEffect() decides if it's meaningful" convention as the spell buff
+  // fields above (spellBuffAttackBonus etc.).
+  const [itemToggleAttackBonus, setItemToggleAttackBonus] = useState("0");
+  const [itemToggleAttackDice, setItemToggleAttackDice] = useState("");
+  const [itemToggleDamageBonus, setItemToggleDamageBonus] = useState("0");
+  const [itemToggleDamageDice, setItemToggleDamageDice] = useState("");
+  const [itemToggleDamageType, setItemToggleDamageType] = useState("");
 
   // Monster fields
   const [monsterSize, setMonsterSize] = useState("Medium");
@@ -1142,6 +1151,12 @@ export function CustomContentManager({
     setItemSaveBonus("0");
     setItemMagicBonus("0");
     setItemRequiresAttunement(false);
+    setItemGrantedResistancesText("");
+    setItemToggleAttackBonus("0");
+    setItemToggleAttackDice("");
+    setItemToggleDamageBonus("0");
+    setItemToggleDamageDice("");
+    setItemToggleDamageType("");
     setMonsterSize("Medium");
     setMonsterType("beast");
     setMonsterAlignment("unaligned");
@@ -1451,6 +1466,8 @@ export function CustomContentManager({
         saveBonus?: number;
         magicBonus?: number;
         requiresAttunement?: boolean;
+        grantedResistances?: string[];
+        toggledEffect?: { attackBonus: number; attackDice: string; damageBonus: number; damageDice: string; damageType: string };
       };
       setItemDescription(d.description ?? "");
       setItemKind(d.kind);
@@ -1473,6 +1490,12 @@ export function CustomContentManager({
       setItemSaveBonus(String(d.saveBonus ?? 0));
       setItemMagicBonus(String(d.magicBonus ?? 0));
       setItemRequiresAttunement(d.requiresAttunement ?? false);
+      setItemGrantedResistancesText((d.grantedResistances ?? []).join(", "));
+      setItemToggleAttackBonus(String(d.toggledEffect?.attackBonus ?? 0));
+      setItemToggleAttackDice(d.toggledEffect?.attackDice ?? "");
+      setItemToggleDamageBonus(String(d.toggledEffect?.damageBonus ?? 0));
+      setItemToggleDamageDice(d.toggledEffect?.damageDice ?? "");
+      setItemToggleDamageType(d.toggledEffect?.damageType ?? "");
     } else {
       const d = item.data as {
         size: string;
@@ -1786,6 +1809,14 @@ export function CustomContentManager({
           saveBonus: Number(itemSaveBonus) || 0,
           magicBonus: Number(itemMagicBonus) || 0,
           requiresAttunement: itemRequiresAttunement,
+          grantedResistances: splitCsv(itemGrantedResistancesText),
+          toggledEffect: {
+            attackBonus: Number(itemToggleAttackBonus) || 0,
+            attackDice: itemToggleAttackDice.trim(),
+            damageBonus: Number(itemToggleDamageBonus) || 0,
+            damageDice: itemToggleDamageDice.trim(),
+            damageType: itemToggleDamageType.trim(),
+          },
         };
       } else {
         data = {
@@ -3902,6 +3933,63 @@ export function CustomContentManager({
                   onChange={(e) => setItemRequiresAttunement(e.target.checked)}
                 />{" "}
                 Requires attunement
+              </label>
+            </div>
+            <label style={{ display: "block", marginTop: "0.5rem" }}>
+              Grants resistances while equipped (comma-separated, e.g. fire)
+              <input value={itemGrantedResistancesText} onChange={(e) => setItemGrantedResistancesText(e.target.value)} style={{ width: "100%" }} />
+            </label>
+
+            <h4 style={{ marginTop: "1rem" }}>Toggleable effect (optional)</h4>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              Switched on and off from the sheet (e.g. Flame Tongue's activatable +2d6 fire) rather than always
+              active like the bonuses above. Leave blank for an item with no toggle.
+            </p>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+              <label>
+                Attack bonus{" "}
+                <input
+                  type="number"
+                  value={itemToggleAttackBonus}
+                  onChange={(e) => setItemToggleAttackBonus(e.target.value)}
+                  style={{ width: "3rem" }}
+                />
+              </label>
+              <label>
+                Attack dice{" "}
+                <input
+                  value={itemToggleAttackDice}
+                  onChange={(e) => setItemToggleAttackDice(e.target.value)}
+                  placeholder="e.g. 1d4"
+                  style={{ width: "5rem" }}
+                />
+              </label>
+              <label>
+                Damage bonus{" "}
+                <input
+                  type="number"
+                  value={itemToggleDamageBonus}
+                  onChange={(e) => setItemToggleDamageBonus(e.target.value)}
+                  style={{ width: "3rem" }}
+                />
+              </label>
+              <label>
+                Damage dice{" "}
+                <input
+                  value={itemToggleDamageDice}
+                  onChange={(e) => setItemToggleDamageDice(e.target.value)}
+                  placeholder="e.g. 2d6"
+                  style={{ width: "5rem" }}
+                />
+              </label>
+              <label>
+                Damage type{" "}
+                <input
+                  value={itemToggleDamageType}
+                  onChange={(e) => setItemToggleDamageType(e.target.value)}
+                  placeholder="e.g. fire"
+                  style={{ width: "6rem" }}
+                />
               </label>
             </div>
           </>

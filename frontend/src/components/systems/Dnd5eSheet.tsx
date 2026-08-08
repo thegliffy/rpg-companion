@@ -73,6 +73,10 @@ import {
   effectiveAbilityScore,
   equippedAbilityBonus,
   effectiveAC,
+  effectiveDamageResistances,
+  hasBuffEffect,
+  activeEffectSaveDice,
+  itemBonusesActive,
   weaponDefaultAbility,
   proficiencyBonus,
   saveBonus,
@@ -404,10 +408,16 @@ export function Dnd5eSheet({
     }));
   }
 
-  async function rollCheck(key: string, bonus: number, label: string) {
+  // extraDice: dice terms an active buff adds to the roll (Bless's +1d4 on a saving throw) --
+  // combined into the same 1d20 formula as the flat bonus, matching how AttackRollControl builds
+  // its own attack-roll formula. Only the saving-throw call site passes any; skill/ability checks
+  // never do, since Bless (and buffs like it) affect only attack rolls and saving throws.
+  async function rollCheck(key: string, bonus: number, label: string, extraDice: string[] = []) {
     if (readOnly) return;
     try {
-      const formula = bonus === 0 ? "1d20" : `1d20${bonus > 0 ? "+" : ""}${bonus}`;
+      const terms = extraDice.map((d) => (d.startsWith("-") ? d : `+${d}`));
+      if (bonus !== 0) terms.push(bonus > 0 ? `+${bonus}` : `${bonus}`);
+      const formula = `1d20${terms.join("")}`;
       const roll = await diceRoll(character.campaignId, formula, label);
       setRollResults((prev) => ({ ...prev, [key]: roll.breakdown }));
     } catch (err) {
@@ -1458,7 +1468,7 @@ export function Dnd5eSheet({
                 <span
                   style={{ width: "6.5rem", cursor: "pointer", textDecoration: "underline dotted" }}
                   title="Click to roll"
-                  onClick={() => rollCheck(`save-${a}`, saveBonus(sheet, a), `${DND5E_ABILITY_NAMES[a]} save`)}
+                  onClick={() => rollCheck(`save-${a}`, saveBonus(sheet, a), `${DND5E_ABILITY_NAMES[a]} save`, activeEffectSaveDice(sheet))}
                 >
                   {DND5E_ABILITY_NAMES[a]}
                 </span>
@@ -1622,7 +1632,7 @@ export function Dnd5eSheet({
               <input
                 type="number"
                 min={0}
-                max={120}
+                max={300}
                 value={sheet.darkvisionFeet}
                 onChange={(e) => set("darkvisionFeet", Number(e.target.value) || 0)}
                 style={numInput}
@@ -1639,6 +1649,17 @@ export function Dnd5eSheet({
               placeholder="e.g. fire, poison"
               style={{ ...numInput, width: "10rem" }}
             />
+            {(() => {
+              const fromItems = effectiveDamageResistances(sheet).filter((r) => !sheet.damageResistances.includes(r));
+              return (
+                fromItems.length > 0 && (
+                  <>
+                    <span />
+                    <small style={{ color: "var(--text-muted)" }}>Also from equipped items: {fromItems.join(", ")}</small>
+                  </>
+                )
+              );
+            })()}
             <span>Crit on</span>
             <span>
               <input
@@ -2445,6 +2466,8 @@ export function Dnd5eSheet({
                 acBonus: d.acBonus,
                 saveBonus: d.saveBonus,
                 requiresAttunement: d.requiresAttunement,
+                grantedResistances: d.grantedResistances,
+                toggledEffect: d.toggledEffect,
                 armor: d.kind === "armor" ? customItemArmorPayload(d) : undefined,
               });
             } else {
@@ -2553,6 +2576,32 @@ export function Dnd5eSheet({
                 >
                   Add to Attacks
                 </button>
+                {hasBuffEffect(item.toggledEffect) &&
+                  (() => {
+                    const toggleId = `item-toggle-${item.id}`;
+                    const active = sheet.activeEffects.some((e) => e.id === toggleId);
+                    // Turning ON requires the item to actually be equipped (and attuned, if it
+                    // needs it) -- a Flame Tongue sitting in a backpack can't flare with fire.
+                    // Turning OFF stays available regardless, so unequipping doesn't strand an
+                    // active effect the player has no way left to clear.
+                    if (!active && !itemBonusesActive(item)) return null;
+                    return (
+                      <button
+                        type="button"
+                        title={active ? "Turn off this item's toggled effect" : "Turn on this item's toggled effect (e.g. Flame Tongue's fire)"}
+                        onClick={() =>
+                          set(
+                            "activeEffects",
+                            active
+                              ? sheet.activeEffects.filter((e) => e.id !== toggleId)
+                              : [...sheet.activeEffects, { id: toggleId, name: item.name, ...item.toggledEffect, endsWithConcentration: false }],
+                          )
+                        }
+                      >
+                        {active ? "Deactivate" : "Activate"}
+                      </button>
+                    );
+                  })()}
                 <button type="button" onClick={() => set("items", sheet.items.filter((_, j) => j !== i))}>
                   Remove
                 </button>
@@ -2640,6 +2689,8 @@ export function Dnd5eSheet({
                 requiresAttunement: false,
                 attuned: false,
                 value: 0,
+                grantedResistances: [],
+                toggledEffect: { attackBonus: 0, attackDice: "", damageBonus: 0, damageDice: "", damageType: "", saveDice: "", consumption: "per-hit" as const },
               },
             ])
           }

@@ -145,6 +145,8 @@ export async function buyItem(campaignId: number, characterId: number, shopItemI
           requiresAttunement: false,
           attuned: false,
           value: itemRow.basePrice,
+          grantedResistances: [],
+          toggledEffect: { attackBonus: 0, attackDice: "", damageBonus: 0, damageDice: "", damageType: "", saveDice: "", consumption: "per-hit" as const },
         },
       ],
     };

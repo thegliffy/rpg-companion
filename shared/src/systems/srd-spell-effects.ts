@@ -18,13 +18,14 @@ const per = (buff: Partial<BuffEffect>): BuffEffect => ({
   damageBonus: 0,
   damageDice: "",
   damageType: "",
+  saveDice: "",
   consumption: "per-hit",
   ...buff,
 });
 
 export const SRD_SPELL_EFFECTS: Record<string, BuffEffect> = {
-  // "you or a creature you touch... adds 1d4 to any attack roll... until the spell ends."
-  bless: per({ attackDice: "1d4" }),
+  // "you or a creature you touch... adds 1d4 to any attack roll or saving throw... until the spell ends."
+  bless: per({ attackDice: "1d4", saveDice: "1d4" }),
   // "as a bonus action... for the duration you gain a +1d4 bonus to weapon damage rolls."
   "divine-favor": per({ damageDice: "1d4", damageType: "radiant" }),
   // "you always know the mark's direction... and add 1d6 damage to your weapon attacks against

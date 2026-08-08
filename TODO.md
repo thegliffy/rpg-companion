@@ -1886,12 +1886,35 @@ STR-10 (+0 mod) case correctly floors at 1 rather than 0. `tsc -b` clean across 
 packages; both test suites still pass. Test class and throwaway user deleted after
 verification.
 
-166. **Magic item depth.** Toggleable effects (Flame Tongue's activatable +2d6 fire) reusing
-    the existing `activeEffects` buff plumbing wholesale; item-granted resistances (Dragon
-    Scale Mail) mirroring `equippedItemBonus()`'s live-sum pattern; Bless's dice-based save
-    bonus (currently only the attack-roll half is modeled). Explicitly not included:
-    conditional advantage (no advantage/disadvantage rolling primitive exists anywhere in
-    the app yet -- foundational dice-engine work, its own pass).
+166. ✅ **Magic item depth.** Toggleable effects (Flame Tongue's activatable +2d6 fire) reusing
+    the existing `activeEffects` buff plumbing wholesale -- activating pushes an
+    `item-toggle-${item.id}`-tagged entry, deactivating filters it back out, no changes needed
+    to the aggregation functions that already sum `activeEffects`. The Activate button only
+    renders once the item is actually equipped (and attuned, if required) -- Deactivate stays
+    available regardless, so unequipping never strands an effect with no way left to clear it.
+    Item-granted resistances (Dragon Scale Mail) via new `effectiveDamageResistances(sheet)`,
+    mirroring `equippedItemBonus()`'s live-sum pattern; the sheet's Resistances field stays the
+    manual/base list, with a read-only "Also from equipped items: ..." line for the rest.
+    Bless's dice-based save bonus (`buffEffectSchema.saveDice`, previously only the attack-roll
+    half was modeled) -- `rollCheck()`'s save-roll button now builds its 1d20 formula the way
+    `AttackRollControl` already does, appending any active save-dice terms instead of just a
+    flat bonus. Explicitly not included: conditional advantage (no advantage/disadvantage
+    rolling primitive exists anywhere in the app yet -- foundational dice-engine work, its own
+    pass).
+
+**Verified (#166, done):** JSON-imported a Flame Tongue-alike (`toggledEffect: {damageDice:
+"2d6", damageType:"fire"}`, `requiresAttunement: true`) and a Dragon Scale Mail-alike
+(`grantedResistances: ["fire"]`), added both to a live character through the actual item-name
+autocomplete, and confirmed via direct API read that both items picked up their full custom
+data automatically (not just name/weight). Equipped + attuned the weapon: the Activate button
+appeared (it hadn't before equipping), clicking it pushed exactly the expected entry into
+`sheet.activeEffects` (`damageDice: "2d6", damageType: "fire"`), and the button flipped to
+"Deactivate". Equipped the armor: AC breakdown showed "Test Dragon Scale 14 + Dex +0" and the
+Resistances row showed "Also from equipped items: fire" live, with no change needed to the
+underlying free-text field. Directly confirmed `SRD_SPELL_EFFECTS.bless` now carries
+`saveDice: "1d4"` alongside its existing `attackDice: "1d4"`, and `hasBuffEffect()` correctly
+distinguishes it from a no-op. `tsc -b` clean across all three packages; both test suites
+still pass. Test items, character, and throwaway user deleted after verification.
 
 167. **Combat modifiers.** A generic optional attack modifier (Sharpshooter/GWM-style -5/+10)
     and a generic ability-to-damage flag for homebrew feats/weapons -- note SRD's actual

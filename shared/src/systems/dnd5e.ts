@@ -130,6 +130,42 @@ const spellSchema = z.object({
   atWill: z.boolean().default(false),
 });
 
+// The attack/damage side of what a buff spell grants (#110) -- deliberately separate from
+// effectEntrySchema below: feats/features/items are flat-int, always-on bonuses, while a spell's
+// buff needs dice terms (Bless's +1d4, Wrathful Smite's +1d6 psychic) and a consumption rule
+// (per-hit vs the next hit only). Shared between a custom spell's authored buff and the curated
+// SRD_SPELL_EFFECTS table (srd-spell-effects.ts) so both resolve through the same shape. Defined
+// ahead of inventoryItemSchema (rather than near activeEffectSchema, its other user) because
+// #166's item toggles need it there too.
+export const buffEffectSchema = z.object({
+  attackBonus: z.number().int().min(-10).max(10).default(0),
+  attackDice: z.string().trim().max(20).default(""),
+  damageBonus: z.number().int().min(-10).max(10).default(0),
+  damageDice: z.string().trim().max(20).default(""),
+  damageType: z.string().trim().max(30).default(""),
+  // Extra dice added to a saving throw roll (#166) -- e.g. Bless's +1d4, alongside its existing
+  // attackDice bonus. Previously only the attack-roll half of Bless was modelable at all.
+  saveDice: z.string().trim().max(20).default(""),
+  // "per-hit" applies every time (Bless, Magic Weapon); "once" is consumed by the next damage
+  // roll it contributes to (Wrathful Smite, Divine Favor, Branding Smite) and then removed.
+  consumption: z.enum(["per-hit", "once"]).default("per-hit"),
+});
+export type BuffEffect = z.infer<typeof buffEffectSchema>;
+
+/** True when a buff actually contributes something -- a spell with no buff fields set still
+ * parses to an all-default BuffEffect, which should never create a no-op activeEffect entry.
+ * Also reused by #166's item toggles, where the same "is this actually a no-op" question
+ * decides whether an equipped item's Activate button renders at all. */
+export function hasBuffEffect(buff: BuffEffect): boolean {
+  return (
+    buff.attackBonus !== 0 ||
+    buff.attackDice.trim() !== "" ||
+    buff.damageBonus !== 0 ||
+    buff.damageDice.trim() !== "" ||
+    buff.saveDice.trim() !== ""
+  );
+}
+
 // Structured armor data copied from SRD_ARMOR/CustomItemData onto an inventory item when picked
 // from the armor dropdown -- lets effectiveAC() compute real 5e AC (base + capped Dex, one body
 // armor + one shield) instead of flat-adding a manually-entered acBonus.
@@ -165,6 +201,17 @@ const inventoryItemSchema = z.object({
   attuned: z.boolean().default(false),
   // Sell value in gp, manually entered -- used by the campaign shop's "sell" transaction.
   value: z.number().min(0).max(999999).default(0),
+  // Damage types this item grants resistance to while equipped (#166) -- e.g. Dragon Scale
+  // Mail's fire resistance. Summed live by effectiveDamageResistances(), the same
+  // equipped-items-contribute-while-active pattern equippedItemBonus() uses for acBonus/saveBonus.
+  grantedResistances: z.array(z.string().trim().max(30)).max(10).default([]),
+  // A toggleable magic effect (#166) -- e.g. Flame Tongue's activatable +2d6 fire. Always a full
+  // BuffEffect (defaults to a no-op), same "always present, hasBuffEffect() decides if it's
+  // meaningful" convention customSpellDataSchema.buff already uses -- the Activate button on the
+  // sheet only renders when hasBuffEffect(item.toggledEffect) is true. Activating pushes a
+  // matching entry (id `item-toggle-${item.id}`) onto sheet.activeEffects, reusing that array's
+  // existing attack/damage-bonus aggregation wholesale rather than a parallel mechanism.
+  toggledEffect: buffEffectSchema.default({}),
 });
 
 const currencySchema = z.object({
@@ -204,29 +251,6 @@ export const effectEntrySchema = z.object({
 });
 
 export type EffectEntry = z.infer<typeof effectEntrySchema>;
-
-// The attack/damage side of what a buff spell grants (#110) -- deliberately separate from
-// effectEntrySchema above: feats/features/items are flat-int, always-on bonuses, while a spell's
-// buff needs dice terms (Bless's +1d4, Wrathful Smite's +1d6 psychic) and a consumption rule
-// (per-hit vs the next hit only). Shared between a custom spell's authored buff and the curated
-// SRD_SPELL_EFFECTS table (srd-spell-effects.ts) so both resolve through the same shape.
-export const buffEffectSchema = z.object({
-  attackBonus: z.number().int().min(-10).max(10).default(0),
-  attackDice: z.string().trim().max(20).default(""),
-  damageBonus: z.number().int().min(-10).max(10).default(0),
-  damageDice: z.string().trim().max(20).default(""),
-  damageType: z.string().trim().max(30).default(""),
-  // "per-hit" applies every time (Bless, Magic Weapon); "once" is consumed by the next damage
-  // roll it contributes to (Wrathful Smite, Divine Favor, Branding Smite) and then removed.
-  consumption: z.enum(["per-hit", "once"]).default("per-hit"),
-});
-export type BuffEffect = z.infer<typeof buffEffectSchema>;
-
-/** True when a buff actually contributes something -- a spell with no buff fields set still
- * parses to an all-default BuffEffect, which should never create a no-op activeEffect entry. */
-export function hasBuffEffect(buff: BuffEffect): boolean {
-  return buff.attackBonus !== 0 || buff.attackDice.trim() !== "" || buff.damageBonus !== 0 || buff.damageDice.trim() !== "";
-}
 
 // A buff spell's effect once cast, sitting on the sheet until consumed or its concentration ends
 // (#111). Only the mechanical bonus is tracked -- like activeEffects' sibling arrays (feats,
@@ -431,6 +455,15 @@ export function equippedItemBonus(sheet: Dnd5eSheetData, key: "acBonus" | "saveB
   return sheet.items.reduce((sum, item) => (itemBonusesActive(item) ? sum + item[key] : sum), 0);
 }
 
+/** sheet.damageResistances (the manual/base list -- race traits seed it once at creation, then
+ * it's a normal player-editable value) plus every active equipped item's grantedResistances
+ * (#166) -- e.g. Dragon Scale Mail's fire resistance, live: gained on equip, lost on unequip,
+ * same as acBonus/saveBonus. Deduped since a race trait and an item could name the same type. */
+export function effectiveDamageResistances(sheet: Dnd5eSheetData): string[] {
+  const fromItems = sheet.items.filter(itemBonusesActive).flatMap((item) => item.grantedResistances);
+  return [...new Set([...sheet.damageResistances, ...fromItems])];
+}
+
 /** Every feat and feature/trait entry, combined -- both arrays feed the same bonus totals. */
 function allEffectEntries(sheet: Dnd5eSheetData): EffectEntry[] {
   return [...sheet.feats, ...sheet.features];
@@ -561,6 +594,14 @@ export function activeEffectAttackBonus(sheet: Dnd5eSheetData): number {
  * carry multiple dice terms and an attack roll (unlike damage) has only one number to report. */
 export function activeEffectAttackDice(sheet: Dnd5eSheetData): string[] {
   return sheet.activeEffects.filter((e) => e.attackDice.trim() !== "").map((e) => e.attackDice.trim());
+}
+
+/** Same as activeEffectAttackDice, for saving throws (#166) -- e.g. Bless's +1d4. Kept as its own
+ * function rather than a shared "any d20 roll" helper since attack and save rolls are built by
+ * different call sites (AttackRollControl vs. the sheet's own save-roll button) with no common
+ * formula-building code today. */
+export function activeEffectSaveDice(sheet: Dnd5eSheetData): string[] {
+  return sheet.activeEffects.filter((e) => e.saveDice.trim() !== "").map((e) => e.saveDice.trim());
 }
 
 /** Sum of active buff effects' flat damageBonus. */

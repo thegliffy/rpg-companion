@@ -799,6 +799,15 @@ export const customItemDataSchema = z.object({
   // InventoryItem.requiresAttunement (dnd5e.ts) when picked, and the player has to notice and
   // check the box manually every time.
   requiresAttunement: z.boolean().default(false),
+  // Damage types this item grants resistance to while equipped (#166) -- e.g. Dragon Scale
+  // Mail's fire resistance. Mirrors inventoryItemSchema.grantedResistances (dnd5e.ts), which
+  // this seeds when the item is picked; summed live by effectiveDamageResistances().
+  grantedResistances: z.array(z.string().trim().max(30)).max(10).default([]),
+  // A toggleable magic effect (#166) -- e.g. Flame Tongue's activatable +2d6 fire, switched on
+  // and off via the sheet's Activate button rather than always-on like acBonus/saveBonus above.
+  // Mirrors inventoryItemSchema.toggledEffect exactly, including the "always a full object,
+  // hasBuffEffect() decides if it's meaningful" convention customSpellDataSchema.buff also uses.
+  toggledEffect: buffEffectSchema.default({}),
 });
 export type CustomItemData = z.infer<typeof customItemDataSchema>;
 
@@ -849,6 +858,13 @@ export interface ResolvedInventoryItem {
   // Always false for an SRD item (SrdMagicItem has no attunement data); real only for a custom
   // "magic" item that authored requiresAttunement: true.
   requiresAttunement: boolean;
+  // Damage types granted while equipped (#166) -- empty for every SRD item, same "only a custom
+  // item can carry this" reasoning as requiresAttunement above.
+  grantedResistances: string[];
+  // A toggleable magic effect template (#166) -- always a full BuffEffect (zero/no-op for SRD
+  // items and custom items that didn't author one); the caller checks hasBuffEffect() before
+  // treating it as real, same convention buff-bearing spells already use.
+  toggledEffect: BuffEffect;
   armor?: ReturnType<typeof srdArmorToInventoryArmor>;
   // Present only for a resolved weapon -- lets the caller auto-generate an Attacks row (#161)
   // without re-deriving these from the item's name. `range` is undefined for a custom weapon
@@ -868,12 +884,18 @@ export interface ResolvedInventoryItem {
  * `findCustomItem` looks up a visible custom "item" CustomContent by its bare (unprefixed) id;
  * shared has no notion of "currently visible content", so callers (the wizard, the sheet's "Add
  * to Attacks") pass their own visibleItems lookup. */
+// No-op BuffEffect for SRD items and the unresolved fallback, none of which can carry a
+// toggleable effect -- avoids repeating the same all-defaults literal at every return site below.
+const NO_TOGGLE: BuffEffect = { attackBonus: 0, attackDice: "", damageBonus: 0, damageDice: "", damageType: "", saveDice: "", consumption: "per-hit" };
+
 export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id: string) => CustomContent | undefined): ResolvedInventoryItem[] {
   const { itemId, quantity } = entry;
 
   if (itemId.startsWith("custom-")) {
     const custom = findCustomItem(itemId.slice("custom-".length));
-    if (!custom) return [{ name: itemId, quantity, weight: 0, value: 0, notes: "", saveBonus: 0, requiresAttunement: false }];
+    if (!custom) {
+      return [{ name: itemId, quantity, weight: 0, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE }];
+    }
     const d = custom.data as CustomItemData;
     return [
       {
@@ -884,6 +906,8 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
         notes: customItemNotesText(custom),
         saveBonus: d.saveBonus,
         requiresAttunement: d.requiresAttunement,
+        grantedResistances: d.grantedResistances,
+        toggledEffect: d.toggledEffect,
         armor: d.kind === "armor" ? customItemArmorPayload(d) : undefined,
         weapon:
           d.kind === "weapon" ? { damageDice: d.damageDice, damageType: d.damageType, properties: d.properties, magicBonus: d.magicBonus } : undefined,
@@ -902,6 +926,8 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
         notes: weaponDamageText(weapon),
         saveBonus: 0,
         requiresAttunement: false,
+        grantedResistances: [],
+        toggledEffect: NO_TOGGLE,
         weapon: { damageDice: weapon.damageDice, damageType: weapon.damageType, properties: weapon.properties, range: weapon.range, magicBonus: 0 },
       },
     ];
@@ -918,6 +944,8 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
         notes: armorACFormulaText(armor),
         saveBonus: 0,
         requiresAttunement: false,
+        grantedResistances: [],
+        toggledEffect: NO_TOGGLE,
         armor: srdArmorToInventoryArmor(armor),
       },
     ];
@@ -928,10 +956,10 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
     if (gear.contents && gear.contents.length > 0) {
       return gear.contents.flatMap((c) => resolveEquipmentEntry({ itemId: c.itemId, quantity: c.quantity * quantity }, findCustomItem));
     }
-    return [{ name: gear.name, quantity, weight: gear.weight, value: 0, notes: "", saveBonus: 0, requiresAttunement: false }];
+    return [{ name: gear.name, quantity, weight: gear.weight, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE }];
   }
 
-  return [{ name: itemId, quantity, weight: 0, value: 0, notes: "", saveBonus: 0, requiresAttunement: false }];
+  return [{ name: itemId, quantity, weight: 0, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE }];
 }
 
 const monsterActionSchema = z.object({
