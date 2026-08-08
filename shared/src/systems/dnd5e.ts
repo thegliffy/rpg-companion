@@ -593,6 +593,22 @@ export function effectiveAC(sheet: Dnd5eSheetData): number {
   return base + shieldBonus + itemAcBonus + featBonusTotal(sheet, "acBonus") + activeEffectAcBonus(sheet);
 }
 
+/** How a d20 roll is made (#176). 5e resolves advantage/disadvantage by rolling two d20s and
+ * keeping the higher/lower -- which the dice notation already expresses as `2d20kh1`/`2d20kl1`,
+ * and which `naturalD20()` (crit.ts) already reads correctly because it picks the *kept* die. So
+ * this needed no dice-engine change at all. */
+export type RollMode = "normal" | "advantage" | "disadvantage";
+
+/** Builds a d20 roll formula: the mode's base dice, then any extra dice terms (Bless's +1d4,
+ * Bane's -1d4), then the flat bonus. Every d20 call site in the app funnels through this, so the
+ * sign handling that was previously copy-pasted into each one lives in exactly one place. */
+export function d20Formula(mode: RollMode, bonus: number, extraDice: string[] = []): string {
+  const base = mode === "advantage" ? "2d20kh1" : mode === "disadvantage" ? "2d20kl1" : "1d20";
+  const terms = extraDice.filter((d) => d.trim() !== "").map((d) => (d.trim().startsWith("-") ? d.trim() : `+${d.trim()}`));
+  if (bonus !== 0) terms.push(bonus > 0 ? `+${bonus}` : `${bonus}`);
+  return `${base}${terms.join("")}`;
+}
+
 /** Initiative modifier (#175): a Dexterity check, plus any flat feat/feature initiative bonus
  * (Alert's +5). Kept as its own function rather than inlined at the display so the Arena/tracker
  * can reuse it, and so the "initiative is Dex, but not *only* Dex" rule lives in one place. */

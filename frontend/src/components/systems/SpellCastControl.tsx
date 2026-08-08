@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
-import type { BuffEffect, SpellScaling, SrdSpell, DiceRoll } from "shared";
-import { scaledSpellDamage, naturalD20, critFormula, formatModifier, formatDiceTerm } from "shared";
+import type { BuffEffect, SpellScaling, SrdSpell, DiceRoll, RollMode } from "shared";
+import { scaledSpellDamage, naturalD20, critFormula, formatModifier, formatDiceTerm, d20Formula } from "shared";
+import { RollModeSelect } from "./RollModeSelect";
 import { useDiceRoll } from "../../dice/DiceRollContext";
 
 type Phase = "idle" | "rolling" | "done";
@@ -89,6 +90,7 @@ export function SpellCastControl({
   // Slot level this cast will spend. Defaults to the spell's own level; only adjustable when the
   // character actually has a higher slot free (see availableSlotLevels).
   const [castLevel, setCastLevel] = useState(spell.level);
+  const [rollMode, setRollMode] = useState<RollMode>("normal");
   const scopedRollRef = useRef<((formula: string, label?: string) => Promise<DiceRoll>) | null>(null);
 
   const upcastLevels = consumesSlot ? availableSlotLevels.filter((l) => l >= spell.level) : [];
@@ -137,10 +139,7 @@ export function SpellCastControl({
       try {
         await session(campaignId, spell.name, async (scopedRoll) => {
           scopedRollRef.current = scopedRoll;
-          const bonus = spellAttackBonus ?? 0;
-          const terms = [...extraAttackDice.map((d) => (d.startsWith("-") ? d : `+${d}`))];
-          if (bonus !== 0) terms.push(bonus > 0 ? `+${bonus}` : `${bonus}`);
-          const formula = `1d20${terms.join("")}`;
+          const formula = d20Formula(rollMode, spellAttackBonus ?? 0, extraAttackDice);
           const attackRoll = await scopedRoll(formula, `${spell.name} attack roll`);
 
           if (!spell.damageDice) {
@@ -213,6 +212,8 @@ export function SpellCastControl({
       >
         {ritualOnly ? "Cast as ritual" : "Cast"}
       </button>
+      {" "}
+      <RollModeSelect value={rollMode} onChange={setRollMode} />
       {canUpcast && (
         <label style={{ marginLeft: "0.4rem", fontSize: "0.85rem" }}>
           at level{" "}

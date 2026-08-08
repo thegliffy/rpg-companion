@@ -1,6 +1,7 @@
 import { useState } from "react";
-import type { EldritchBlastProfile } from "shared";
-import { naturalD20, critFormula } from "shared";
+import type { EldritchBlastProfile, RollMode } from "shared";
+import { naturalD20, critFormula, d20Formula } from "shared";
+import { RollModeSelect } from "./RollModeSelect";
 import { useDiceRoll } from "../../dice/DiceRollContext";
 
 interface ExtraDamage {
@@ -40,16 +41,14 @@ export function EldritchBlastControl({
 }) {
   const { session } = useDiceRoll();
   const [rolling, setRolling] = useState(false);
+  const [rollMode, setRollMode] = useState<RollMode>("normal");
   const [error, setError] = useState<string | null>(null);
 
   async function cast() {
     setRolling(true);
     setError(null);
     try {
-      const bonus = spellAttackBonus ?? 0;
-      const terms = [...extraAttackDice.map((d) => (d.startsWith("-") ? d : `+${d}`))];
-      if (bonus !== 0) terms.push(bonus > 0 ? `+${bonus}` : `${bonus}`);
-      const attackFormula = `1d20${terms.join("")}`;
+      const attackFormula = d20Formula(rollMode, spellAttackBonus ?? 0, extraAttackDice);
       // Every beam's attack + damage joins one session/modal (#138) rather than popping a dialog
       // per beam -- each beam still crits independently (#145).
       await session(campaignId, `Eldritch Blast (${profile.beams} beam${profile.beams > 1 ? "s" : ""})`, async (roll) => {
@@ -78,6 +77,7 @@ export function EldritchBlastControl({
       <button type="button" onClick={cast} disabled={rolling}>
         Cast Eldritch Blast ({profile.beams} beam{profile.beams > 1 ? "s" : ""})
       </button>{" "}
+      <RollModeSelect value={rollMode} onChange={setRollMode} />{" "}
       <small style={{ color: "var(--text-muted)" }}>
         {profile.rangeFeet} ft · {profile.damageDice} force per beam
         {profile.agonizing ? " (Agonizing Blast)" : ""}

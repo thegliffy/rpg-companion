@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { dnd5eSheetSchema, activeEffectAcBonus, effectiveSpeed, hasBuffEffect, buffEffectSchema, initiativeBonus, effectiveAbilityScore } from "./dnd5e.js";
+import { dnd5eSheetSchema, activeEffectAcBonus, effectiveSpeed, hasBuffEffect, buffEffectSchema, initiativeBonus, effectiveAbilityScore, d20Formula } from "./dnd5e.js";
 import type { Dnd5eSheetData } from "./dnd5e.js";
+import { naturalD20, isCriticalHit, isCriticalMiss } from "./crit.js";
+import type { RollDetail } from "../types.js";
 
 /** A sheet with the given active effects; every other field takes its schema default. `abilities`
  * is passed explicitly because the object itself has no default -- only its six members do. */
@@ -115,5 +117,68 @@ describe("initiativeBonus", () => {
     assert.equal(initiativeBonus(viaAbility), 4);
     assert.equal(effectiveAbilityScore(viaInitiative, "dex"), 14);
     assert.equal(effectiveAbilityScore(viaAbility, "dex"), 18);
+  });
+});
+
+describe("d20Formula", () => {
+  it("uses a single d20 at normal", () => {
+    assert.equal(d20Formula("normal", 0), "1d20");
+    assert.equal(d20Formula("normal", 5), "1d20+5");
+    assert.equal(d20Formula("normal", -2), "1d20-2");
+  });
+
+  it("keeps the higher of two d20s for advantage, the lower for disadvantage", () => {
+    assert.equal(d20Formula("advantage", 5), "2d20kh1+5");
+    assert.equal(d20Formula("disadvantage", 5), "2d20kl1+5");
+  });
+
+  it("omits a zero bonus rather than emitting '+0'", () => {
+    assert.equal(d20Formula("advantage", 0), "2d20kh1");
+  });
+
+  it("puts extra dice before the flat bonus and preserves their own sign", () => {
+    assert.equal(d20Formula("normal", 5, ["1d4"]), "1d20+1d4+5");
+    assert.equal(d20Formula("normal", 5, ["-1d4"]), "1d20-1d4+5");
+    // Bless and Bane at once, on an advantage roll.
+    assert.equal(d20Formula("advantage", 3, ["1d4", "-1d4"]), "2d20kh1+1d4-1d4+3");
+  });
+
+  it("ignores blank dice entries", () => {
+    assert.equal(d20Formula("normal", 2, ["", "  "]), "1d20+2");
+  });
+
+  it("trims whitespace around a dice term", () => {
+    assert.equal(d20Formula("normal", 0, [" 1d6 "]), "1d20+1d6");
+  });
+});
+
+describe("naturalD20 on advantage/disadvantage rolls (#176)", () => {
+  /** A RollDetail shaped like what the backend produces for a 2d20kh1/kl1 roll. */
+  function twoD20(a: { value: number; kept: boolean }, b: { value: number; kept: boolean }): RollDetail {
+    return {
+      terms: [{ kind: "dice", sides: 20, dice: [a, b], subtotal: (a.kept ? a.value : 0) + (b.kept ? b.value : 0) }],
+      total: (a.kept ? a.value : 0) + (b.kept ? b.value : 0),
+    };
+  }
+
+  it("reads the kept die, not the first one", () => {
+    assert.equal(naturalD20(twoD20({ value: 3, kept: false }, { value: 17, kept: true })), 17);
+  });
+
+  it("does NOT crit on a DROPPED natural 20 -- the whole risk of two-d20 rolls", () => {
+    // Disadvantage: a 20 was rolled but discarded, so this is a 5, not a critical hit.
+    const detail = twoD20({ value: 20, kept: false }, { value: 5, kept: true });
+    assert.equal(naturalD20(detail), 5);
+    assert.equal(isCriticalHit(detail, 20), false);
+  });
+
+  it("still crits on a KEPT natural 20", () => {
+    const detail = twoD20({ value: 20, kept: true }, { value: 2, kept: false });
+    assert.equal(isCriticalHit(detail, 20), true);
+  });
+
+  it("does not treat a dropped natural 1 as a critical miss", () => {
+    assert.equal(isCriticalMiss(twoD20({ value: 1, kept: false }, { value: 12, kept: true })), false);
+    assert.equal(isCriticalMiss(twoD20({ value: 1, kept: true }, { value: 12, kept: false })), true);
   });
 });

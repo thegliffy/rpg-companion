@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
-import type { DiceRoll } from "shared";
-import { naturalD20, critFormula, critDamageFormula } from "shared";
+import type { DiceRoll, RollMode } from "shared";
+import { naturalD20, critFormula, critDamageFormula, d20Formula } from "shared";
+import { RollModeSelect } from "./RollModeSelect";
 import { useDiceRoll } from "../../dice/DiceRollContext";
 
 type Phase = "idle" | "rolling" | "done";
@@ -69,6 +70,8 @@ export function AttackRollControl({
   // it resets to "off" on every remount (a fresh roll never silently inherits the last roll's
   // choice).
   const [checkedModifiers, setCheckedModifiers] = useState<Set<string>>(new Set());
+  // Same per-roll scoping as checkedModifiers: a fresh mount never inherits the last roll's mode.
+  const [rollMode, setRollMode] = useState<RollMode>("normal");
   const activeModifiers = optionalModifiers.filter((m) => checkedModifiers.has(m.id));
   const activePenalty = activeModifiers.reduce((sum, m) => sum + m.attackPenalty, 0);
   const activeDamageBonus = activeModifiers.reduce((sum, m) => sum + m.damageBonus, 0);
@@ -108,10 +111,7 @@ export function AttackRollControl({
       await session(campaignId, `${name || "Attack"}`, async (scopedRoll) => {
         scopedRollRef.current = scopedRoll;
 
-        const terms = [...extraAttackDice.map((d) => (d.startsWith("-") ? d : `+${d}`))];
-        const totalAttackBonus = attackBonus - activePenalty;
-        if (totalAttackBonus !== 0) terms.push(totalAttackBonus > 0 ? `+${totalAttackBonus}` : `${totalAttackBonus}`);
-        const formula = `1d20${terms.join("")}`;
+        const formula = d20Formula(rollMode, attackBonus - activePenalty, extraAttackDice);
         const attackRoll = await scopedRoll(formula, `${name || "Attack"} attack roll`);
 
         if (!damageDice) {
@@ -168,6 +168,8 @@ export function AttackRollControl({
       <button type="button" onClick={roll} disabled={phase === "rolling"}>
         Roll
       </button>
+      {" "}
+      <RollModeSelect value={rollMode} onChange={setRollMode} />
       {error && <span style={{ color: "var(--danger)", marginLeft: "0.5rem" }}>{error}</span>}
       {damageType && <small style={{ marginLeft: "0.5rem", color: "var(--text-dim)" }}>({damageType})</small>}
       {optionalModifiers.map((m) => (

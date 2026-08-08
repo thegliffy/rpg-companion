@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
+  RollMode,
   Character,
   Dnd5eSheetData,
   Dnd5eAbility,
@@ -113,6 +114,7 @@ import {
   applyHealing,
   effectiveSpeed,
   initiativeBonus,
+  d20Formula,
 } from "shared";
 import * as charactersApi from "../../api/characters";
 import { useDiceRoll } from "../../dice/DiceRollContext";
@@ -127,6 +129,7 @@ import { SpellPickerModal } from "./SpellPickerModal";
 import { WizardSpellbookPicker } from "./WizardSpellbookPicker";
 import { PrepareSpellsModal } from "./PrepareSpellsModal";
 import { FeatPickerModal } from "./FeatPickerModal";
+import { RollModeSelect } from "./RollModeSelect";
 import { WildShapePanel } from "./WildShapePanel";
 import { FamiliarPanel } from "./FamiliarPanel";
 import { InvocationPickerModal, INVOCATION_PREFIX } from "./InvocationPickerModal";
@@ -202,6 +205,10 @@ export function Dnd5eSheet({
   const [hpAmount, setHpAmount] = useState("");
   const [hpWasCrit, setHpWasCrit] = useState(false);
   const [hpMessage, setHpMessage] = useState<string | null>(null);
+  // Advantage mode for sheet-initiated d20 rolls -- checks, saves, death saves, concentration
+  // (#176). One selector rather than one per skill row, and it resets to normal after each roll
+  // so a roll never silently inherits the previous one's mode.
+  const [rollMode, setRollMode] = useState<RollMode>("normal");
 
   const {
     classes: customClasses,
@@ -433,11 +440,9 @@ export function Dnd5eSheet({
   async function rollCheck(key: string, bonus: number, label: string, extraDice: string[] = []) {
     if (readOnly) return;
     try {
-      const terms = extraDice.map((d) => (d.startsWith("-") ? d : `+${d}`));
-      if (bonus !== 0) terms.push(bonus > 0 ? `+${bonus}` : `${bonus}`);
-      const formula = `1d20${terms.join("")}`;
-      const roll = await diceRoll(character.campaignId, formula, label);
+      const roll = await diceRoll(character.campaignId, d20Formula(rollMode, bonus, extraDice), label);
       setRollResults((prev) => ({ ...prev, [key]: roll.breakdown }));
+      setRollMode("normal");
     } catch (err) {
       setRollResults((prev) => ({ ...prev, [key]: err instanceof Error ? err.message : "Roll failed" }));
     }
@@ -447,7 +452,8 @@ export function Dnd5eSheet({
     setDeathSaveBusy(true);
     setError(null);
     try {
-      const roll = await diceRoll(character.campaignId, "1d20", "Death save");
+      const roll = await diceRoll(character.campaignId, d20Formula(rollMode, 0), "Death save");
+      setRollMode("normal");
       // naturalD20() rather than roll.total directly (#141) -- coincidentally the same value for
       // this bare "1d20" formula, but one definition of "natural" now covers every roll, not just
       // ones with no other terms.
@@ -865,8 +871,8 @@ export function Dnd5eSheet({
     const bonus = abilityModifier(effectiveAbilityScore(sheet, "con")) + (sheet.saveProficiencies.includes("con") ? pb : 0);
     setConcentrationBusy(true);
     try {
-      const formula = bonus === 0 ? "1d20" : `1d20${bonus > 0 ? "+" : ""}${bonus}`;
-      const roll = await diceRoll(character.campaignId, formula, `Concentration save (DC ${dc})`);
+      const roll = await diceRoll(character.campaignId, d20Formula(rollMode, bonus), `Concentration save (DC ${dc})`);
+      setRollMode("normal");
       if (roll.total >= dc) {
         setConcentrationDamage("");
         setConcentrationMessage(`${roll.breakdown} vs DC ${dc} — held.`);
@@ -1711,6 +1717,13 @@ export function Dnd5eSheet({
         {/* Combat */}
         <div style={{ ...box, flex: "0 0 auto" }}>
           <h3>Combat</h3>
+          {!readOnly && (
+            <div style={{ marginBottom: "0.4rem" }}>
+              {/* Applies to the next check/save/death save rolled from this sheet, then resets.
+                  Attack and spell surfaces carry their own selector (#176). */}
+              <RollModeSelect value={rollMode} onChange={setRollMode} label="Next d20 roll:" />
+            </div>
+          )}
           <div style={{ display: "grid", gridTemplateColumns: "auto auto", gap: "0.4rem 0.8rem", alignItems: "center" }}>
             <span>AC</span>
             <span>

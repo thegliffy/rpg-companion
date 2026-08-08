@@ -2194,3 +2194,27 @@ Dex-14 character, but only the ability route moves the underlying score from 14 
 a Dex-16 rogue (Initiative **+3**), authored a "Test Alert" feat through the real API carrying
 `initiativeBonus: 5` (confirmed stored, not stripped), picked it through the Feat Picker, and the
 sheet moved to **+8**. All suites pass (shared 56/56, backend 21/21).
+
+176. ✅ **Advantage / disadvantage.** #166 deferred this as "foundational dice-engine work --
+    nothing rolls 2d20", which turned out to be wrong. `DICE_FORMULA_PATTERN` already permitted
+    `k`/`h`/`l`, the dice library rolls `2d20kh1` correctly, `buildRollDetail()` already handled
+    kh/kl drops, and -- the load-bearing part -- `naturalD20()` already picks the *kept* die. So
+    the engine needed **no change at all**; the work was the ~6 places that hand-built a `1d20…`
+    string and the UI.
+
+    Added `RollMode` and `d20Formula(mode, bonus, extraDice)` to `dnd5e.ts`, which also absorbs
+    the sign-aware term joining that was previously copy-pasted into every call site. Replaced all
+    six: `AttackRollControl`, `SpellCastControl`, `EldritchBlastControl`, and the sheet's
+    `rollCheck` / `rollDeathSave` / `rollConcentrationSave`. New shared `RollModeSelect` control
+    renders on each attack/spell surface, plus one "Next d20 roll" selector in the Combat box
+    covering every check, save, and death save the sheet initiates -- one control rather than one
+    per skill row, and it resets to normal after each roll so a roll never silently inherits the
+    previous one's mode.
+
+**Verified (#176, done):** 10 new unit tests. Six cover `d20Formula` (base dice per mode, omitting
+a zero bonus, extra dice ordered before the flat bonus with their own signs preserved, Bless and
+Bane together on an advantage roll). Four cover the real hazard deterministically rather than
+waiting on a random 20: a **dropped** natural 20 must not register as a critical hit, a kept one
+must, and the same for a dropped natural 1 and critical misses. Live: a Strength save at ADV rolled
+`2d20` [18, 19] keeping **19** (+7 = 26); the selector then reset itself to normal; a Longsword
+attack at DIS rolled [4, 8] keeping **4**. All suites pass (shared 66/66, backend 21/21).
