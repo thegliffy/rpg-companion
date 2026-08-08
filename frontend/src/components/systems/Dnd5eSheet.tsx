@@ -77,6 +77,8 @@ import {
   hasBuffEffect,
   activeEffectSaveDice,
   itemBonusesActive,
+  featDamageAbilityBonus,
+  featOptionalAttackModifiers,
   weaponDefaultAbility,
   proficiencyBonus,
   saveBonus,
@@ -1931,7 +1933,8 @@ export function Dnd5eSheet({
             abilityModifier(effectiveAbilityScore(sheet, atk.ability)) +
             atk.magicBonus +
             featBonusTotal(sheet, "damageBonus") +
-            activeEffectDamageBonus(sheet);
+            activeEffectDamageBonus(sheet) +
+            featDamageAbilityBonus(sheet);
           return (
             <div key={atk.id} style={{ marginBottom: "0.5rem" }}>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -2001,6 +2004,7 @@ export function Dnd5eSheet({
                 }))}
                 critThreshold={sheet.critThreshold}
                 extraCritDice={totalExtraCritDice}
+                optionalModifiers={featOptionalAttackModifiers(sheet)}
                 onHit={() =>
                   setSheet((prev) => ({
                     ...prev,

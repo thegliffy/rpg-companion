@@ -83,6 +83,8 @@ export function FeatPickerModal({
       spellAttackBonus: d.spellAttackBonus,
       saveBonus: d.saveBonus,
       skillProficiencies: d.skillProficiencies,
+      optionalAttackModifier: d.optionalAttackModifier,
+      damageAbilityBonus: d.damageAbilityBonus,
     };
     if (d.spellChoices.length === 0) {
       onPick(feat, d.grantedSpells);

@@ -599,6 +599,13 @@ export const customFeatDataSchema = effectBonusesSchema.extend({
   prereqAbility: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(1).max(30)).default({}),
   prereqLevel: z.number().int().min(0).max(20).default(0),
   prereqText: z.string().trim().max(120).default(""),
+  // A Sharpshooter/GWM-style optional attack-roll-penalty-for-damage-bonus tradeoff (#167),
+  // chosen per-attack on the sheet rather than always-on. Mirrors effectEntrySchema's field
+  // exactly (dnd5e.ts), which this seeds when the feat is picked.
+  optionalAttackModifier: z.object({ attackPenalty: z.number().int().min(0).max(10), damageBonus: z.number().int().min(0).max(20) }).optional(),
+  // Adds this ability's modifier to damage on every hit (#167) -- the generic version of what
+  // Agonizing Blast already does specifically for Eldritch Blast.
+  damageAbilityBonus: z.enum(DND5E_ABILITIES).optional(),
 });
 export type CustomFeatData = z.infer<typeof customFeatDataSchema>;
 

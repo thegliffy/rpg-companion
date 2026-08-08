@@ -248,6 +248,15 @@ export const effectEntrySchema = z.object({
   // deception+persuasion) -- aggregated alongside sheet.skillProficiencies rather than merged
   // into it, so removing the entry (e.g. swapping invocations) automatically un-grants it.
   skillProficiencies: z.array(z.string().max(40)).default([]),
+  // A Sharpshooter/GWM-style optional tradeoff (#167) -- take a flat penalty to the attack roll
+  // for a flat bonus to damage, chosen per-attack rather than always-on. Genuinely optional (no
+  // default): almost no feat/feature has one, and making it required would force every
+  // feat/feature construction site in the codebase to specify "no tradeoff" explicitly.
+  optionalAttackModifier: z.object({ attackPenalty: z.number().int().min(0).max(10), damageBonus: z.number().int().min(0).max(20) }).optional(),
+  // Adds this ability's modifier to damage on every hit (#167) -- a generic version of what
+  // Agonizing Blast already does specifically for Eldritch Blast (ebDamagePerBeamAbility,
+  // srd-invocations.ts), available to a homebrew feat/weapon outside that one hardcoded path.
+  damageAbilityBonus: z.enum(DND5E_ABILITIES).optional(),
 });
 
 export type EffectEntry = z.infer<typeof effectEntrySchema>;
@@ -480,6 +489,26 @@ export function featBonusTotal(
   key: "acBonus" | "attackBonus" | "damageBonus" | "spellDCBonus" | "spellAttackBonus" | "saveBonus",
 ): number {
   return allEffectEntries(sheet).reduce((sum, entry) => sum + entry[key], 0);
+}
+
+/** Sum of every feat/feature's damageAbilityBonus modifier (#167) -- e.g. a homebrew
+ * Agonizing-Blast-alike adding Charisma to damage. Summed rather than "first match wins" since a
+ * character could in principle have more than one such source; each contributes independently,
+ * same as flat damageBonus already does. */
+export function featDamageAbilityBonus(sheet: Dnd5eSheetData): number {
+  return allEffectEntries(sheet).reduce(
+    (sum, entry) => sum + (entry.damageAbilityBonus ? abilityModifier(effectiveAbilityScore(sheet, entry.damageAbilityBonus)) : 0),
+    0,
+  );
+}
+
+/** Every feat/feature's optional Sharpshooter/GWM-style attack tradeoff (#167), as a flat list --
+ * the caller (AttackRollControl) renders one checkbox per entry and sums whichever are checked
+ * into that specific roll, rather than something always-on like the other feat bonuses. */
+export function featOptionalAttackModifiers(sheet: Dnd5eSheetData): { id: string; label: string; attackPenalty: number; damageBonus: number }[] {
+  return allEffectEntries(sheet)
+    .filter((entry) => entry.optionalAttackModifier)
+    .map((entry) => ({ id: entry.id, label: entry.name, ...entry.optionalAttackModifier! }));
 }
 
 /** Skill ids granted by any feat/feature (e.g. an invocation like Beguiling Influence) --

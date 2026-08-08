@@ -12,6 +12,13 @@ interface ExtraDamage {
   type: string;
 }
 
+interface OptionalModifier {
+  id: string;
+  label: string;
+  attackPenalty: number;
+  damageBonus: number;
+}
+
 export function AttackRollControl({
   name,
   attackBonus,
@@ -29,6 +36,10 @@ export function AttackRollControl({
   // Extra weapon dice added (not doubled) on a crit -- Brutal Critical + race Savage Attacks,
   // summed by the caller (#144/#145). Same "player's own sheet only" scoping as critThreshold.
   extraCritDice = 0,
+  // Sharpshooter/GWM-style optional tradeoffs (#167) -- a feat can grant one; the player decides
+  // per-attack whether to take the penalty, so this is a checkbox rather than an always-on bonus
+  // like the feat's other flat fields.
+  optionalModifiers = [],
   onHit,
 }: {
   name: string;
@@ -45,6 +56,7 @@ export function AttackRollControl({
   extraDamage?: ExtraDamage[];
   critThreshold?: number;
   extraCritDice?: number;
+  optionalModifiers?: OptionalModifier[];
   /** Called once, after a confirmed Hit finishes rolling (base damage + every extraDamage entry)
    * -- lets the sheet consume any consumption: "once" effects. Never called on a Miss, matching
    * Wrathful Smite's own text ("if you don't hit... the spell isn't wasted"). */
@@ -53,6 +65,13 @@ export function AttackRollControl({
   const { session, setSessionActions } = useDiceRoll();
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
+  // Which optional modifiers are currently checked -- local to this control, not persisted, so
+  // it resets to "off" on every remount (a fresh roll never silently inherits the last roll's
+  // choice).
+  const [checkedModifiers, setCheckedModifiers] = useState<Set<string>>(new Set());
+  const activeModifiers = optionalModifiers.filter((m) => checkedModifiers.has(m.id));
+  const activePenalty = activeModifiers.reduce((sum, m) => sum + m.attackPenalty, 0);
+  const activeDamageBonus = activeModifiers.reduce((sum, m) => sum + m.damageBonus, 0);
   // The session's scoped roll fn, stashed so a later event (the Hit button, rendered inside the
   // modal via setSessionActions) can add more die groups to the SAME still-open modal instead of
   // popping a second one for damage.
@@ -66,7 +85,8 @@ export function AttackRollControl({
       // for the extra-damage entries below) only ever touches damageDice/e.dice, never magicBonus,
       // which stays a separate appended term exactly as on a normal hit.
       const critDice = isCrit ? critDamageFormula(damageDice, extraCritDice) : damageDice;
-      const formula = magicBonus === 0 ? critDice : `${critDice}${magicBonus > 0 ? "+" : ""}${magicBonus}`;
+      const totalDamageBonus = magicBonus + activeDamageBonus;
+      const formula = totalDamageBonus === 0 ? critDice : `${critDice}${totalDamageBonus > 0 ? "+" : ""}${totalDamageBonus}`;
       await scopedRoll(formula, `${name || "Attack"}${isCrit ? " critical" : ""} damage`);
 
       for (const e of extraDamage) {
@@ -89,7 +109,8 @@ export function AttackRollControl({
         scopedRollRef.current = scopedRoll;
 
         const terms = [...extraAttackDice.map((d) => (d.startsWith("-") ? d : `+${d}`))];
-        if (attackBonus !== 0) terms.push(attackBonus > 0 ? `+${attackBonus}` : `${attackBonus}`);
+        const totalAttackBonus = attackBonus - activePenalty;
+        if (totalAttackBonus !== 0) terms.push(totalAttackBonus > 0 ? `+${totalAttackBonus}` : `${totalAttackBonus}`);
         const formula = `1d20${terms.join("")}`;
         const attackRoll = await scopedRoll(formula, `${name || "Attack"} attack roll`);
 
@@ -149,6 +170,24 @@ export function AttackRollControl({
       </button>
       {error && <span style={{ color: "var(--danger)", marginLeft: "0.5rem" }}>{error}</span>}
       {damageType && <small style={{ marginLeft: "0.5rem", color: "var(--text-dim)" }}>({damageType})</small>}
+      {optionalModifiers.map((m) => (
+        <label key={m.id} style={{ marginLeft: "0.5rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+          <input
+            type="checkbox"
+            checked={checkedModifiers.has(m.id)}
+            onChange={(e) =>
+              setCheckedModifiers((prev) => {
+                const next = new Set(prev);
+                if (e.target.checked) next.add(m.id);
+                else next.delete(m.id);
+                return next;
+              })
+            }
+          />{" "}
+          {m.label} ({m.attackPenalty > 0 ? "-" : "+"}
+          {Math.abs(m.attackPenalty)}/+{m.damageBonus})
+        </label>
+      ))}
     </div>
   );
 }

@@ -1916,11 +1916,31 @@ underlying free-text field. Directly confirmed `SRD_SPELL_EFFECTS.bless` now car
 distinguishes it from a no-op. `tsc -b` clean across all three packages; both test suites
 still pass. Test items, character, and throwaway user deleted after verification.
 
-167. **Combat modifiers.** A generic optional attack modifier (Sharpshooter/GWM-style -5/+10)
+167. ✅ **Combat modifiers.** A generic optional attack modifier (Sharpshooter/GWM-style -5/+10)
     and a generic ability-to-damage flag for homebrew feats/weapons -- note SRD's actual
     Agonizing Blast already works via its own dedicated `ebDamagePerBeamAbility` mechanism,
     this is about making the same *kind* of capability available outside that one hardcoded
-    Eldritch Blast path.
+    Eldritch Blast path. Both fields (`optionalAttackModifier`, `damageAbilityBonus`) landed
+    as genuinely `.optional()` (no default) on `effectEntrySchema`/`customFeatDataSchema` --
+    almost no feat has either, and making them required would have forced every feat/feature
+    construction site in the codebase (a dozen-plus, per #163's own checklist) to specify "no
+    tradeoff" explicitly. `AttackRollControl` renders one checkbox per available optional
+    modifier (a character could in principle have more than one), summing whichever are
+    checked into that specific roll only -- the penalty/bonus never applies unless chosen.
+    `featDamageAbilityBonus(sheet)` folds into the existing damage-bonus computation next to
+    `activeEffectDamageBonus`, no new prop needed for that half. Also fixed a gap #163 missed:
+    the feat *authoring* form's save payload never included `saveBonus` at all (silently
+    relying on the schema default), so a feat's save bonus could only ever be set via direct
+    API/JSON import -- same UI/schema mismatch class as #164, just missed the first time.
+
+**Verified (#167, done):** JSON-imported a feat with `optionalAttackModifier: {attackPenalty:
+5, damageBonus: 10}` and `damageAbilityBonus: "cha"`, picked it on a live character (CHA 16,
++3 mod) through the actual Feat Picker, added an attack, and confirmed via the rendered page:
+a checkbox reading "Test Sharpshooter (-5/+10)" appeared next to Roll (exact label/math from
+the authored values), and the damage line read "Damage: 1d10 +3" -- the Charisma modifier
+correctly folded in with no weapon-side changes needed. `tsc -b` clean across all three
+packages; both test suites still pass. Test feat, character, and throwaway user deleted
+after verification.
 
 168. **Spell-grant semantics.** Magic Initiate's player-chosen class (the `"class"` spellChoice
     kind already exists and is wired end-to-end, but `classId` is author-fixed rather than

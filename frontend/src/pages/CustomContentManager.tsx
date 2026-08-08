@@ -698,12 +698,19 @@ export function CustomContentManager({
   const [featDmg, setFeatDmg] = useState("0");
   const [featDC, setFeatDC] = useState("0");
   const [featSpellAtk, setFeatSpellAtk] = useState("0");
+  const [featSaveBonus, setFeatSaveBonus] = useState("0");
   const [featSkillProficiencies, setFeatSkillProficiencies] = useState<string[]>([]);
   const [featGrantedSpells, setFeatGrantedSpells] = useState<FeatGrantedSpellRow[]>([]);
   const [featSpellChoices, setFeatSpellChoices] = useState<FeatSpellChoiceRow[]>([]);
   const [featPrereqAbility, setFeatPrereqAbility] = useState<Partial<Record<Dnd5eAbility, string>>>({});
   const [featPrereqLevel, setFeatPrereqLevel] = useState("0");
   const [featPrereqText, setFeatPrereqText] = useState("");
+  // Sharpshooter/GWM-style optional attack tradeoff (#167) -- attackPenalty 0 means "no tradeoff
+  // authored", matching how the other optional-feature fields here use a zero/blank sentinel.
+  const [featOptAttackPenalty, setFeatOptAttackPenalty] = useState("0");
+  const [featOptDamageBonus, setFeatOptDamageBonus] = useState("0");
+  // "" = no ability-to-damage bonus (#167) -- the generic Agonizing-Blast-alike.
+  const [featDamageAbilityBonus, setFeatDamageAbilityBonus] = useState<Dnd5eAbility | "">("");
 
   // Spell fields
   const [spellDescription, setSpellDescription] = useState("");
@@ -1106,6 +1113,10 @@ export function CustomContentManager({
     setFeatDmg("0");
     setFeatDC("0");
     setFeatSpellAtk("0");
+    setFeatSaveBonus("0");
+    setFeatOptAttackPenalty("0");
+    setFeatOptDamageBonus("0");
+    setFeatDamageAbilityBonus("");
     setFeatSkillProficiencies([]);
     setFeatGrantedSpells([]);
     setFeatSpellChoices([]);
@@ -1362,12 +1373,15 @@ export function CustomContentManager({
         damageBonus: number;
         spellDCBonus: number;
         spellAttackBonus: number;
+        saveBonus?: number;
         skillProficiencies?: string[];
         grantedSpells?: { name: string; level: number; atWill: boolean }[];
         spellChoices?: SpellChoice[];
         prereqAbility?: Partial<Record<Dnd5eAbility, number>>;
         prereqLevel?: number;
         prereqText?: string;
+        optionalAttackModifier?: { attackPenalty: number; damageBonus: number };
+        damageAbilityBonus?: Dnd5eAbility;
       };
       setFeatDescription(d.description);
       const bonuses: Partial<Record<Dnd5eAbility, string>> = {};
@@ -1378,6 +1392,10 @@ export function CustomContentManager({
       setFeatDmg(String(d.damageBonus));
       setFeatDC(String(d.spellDCBonus));
       setFeatSpellAtk(String(d.spellAttackBonus));
+      setFeatSaveBonus(String(d.saveBonus ?? 0));
+      setFeatOptAttackPenalty(String(d.optionalAttackModifier?.attackPenalty ?? 0));
+      setFeatOptDamageBonus(String(d.optionalAttackModifier?.damageBonus ?? 0));
+      setFeatDamageAbilityBonus(d.damageAbilityBonus ?? "");
       setFeatSkillProficiencies(d.skillProficiencies ?? []);
       setFeatGrantedSpells(
         (d.grantedSpells ?? []).map((gs) => ({ name: gs.name, level: String(gs.level), atWill: gs.atWill })),
@@ -1725,7 +1743,13 @@ export function CustomContentManager({
           damageBonus: Number(featDmg) || 0,
           spellDCBonus: Number(featDC) || 0,
           spellAttackBonus: Number(featSpellAtk) || 0,
+          saveBonus: Number(featSaveBonus) || 0,
           skillProficiencies: featSkillProficiencies,
+          optionalAttackModifier:
+            Number(featOptAttackPenalty) > 0 || Number(featOptDamageBonus) > 0
+              ? { attackPenalty: Number(featOptAttackPenalty) || 0, damageBonus: Number(featOptDamageBonus) || 0 }
+              : undefined,
+          damageAbilityBonus: featDamageAbilityBonus || undefined,
           grantedSpells: featGrantedSpells
             .filter((r) => r.name.trim() !== "")
             .map((r) => {
@@ -3431,6 +3455,50 @@ export function CustomContentManager({
               </label>
               <label>
                 Spell attack <input type="number" style={{ width: "3rem" }} value={featSpellAtk} onChange={(e) => setFeatSpellAtk(e.target.value)} />
+              </label>
+              <label>
+                Save <input type="number" style={{ width: "3rem" }} value={featSaveBonus} onChange={(e) => setFeatSaveBonus(e.target.value)} />
+              </label>
+            </div>
+
+            <h4>Optional attack tradeoff (Sharpshooter/GWM-style, optional)</h4>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              A checkbox on each attack the player chooses per-roll, not an always-on bonus. Leave both at 0 for a
+              feat with no such tradeoff.
+            </p>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+              <label>
+                Attack penalty{" "}
+                <input
+                  type="number"
+                  min={0}
+                  max={10}
+                  style={{ width: "3rem" }}
+                  value={featOptAttackPenalty}
+                  onChange={(e) => setFeatOptAttackPenalty(e.target.value)}
+                />
+              </label>
+              <label>
+                Damage bonus{" "}
+                <input
+                  type="number"
+                  min={0}
+                  max={20}
+                  style={{ width: "3rem" }}
+                  value={featOptDamageBonus}
+                  onChange={(e) => setFeatOptDamageBonus(e.target.value)}
+                />
+              </label>
+              <label>
+                Adds ability modifier to damage (Agonizing Blast-style){" "}
+                <select value={featDamageAbilityBonus} onChange={(e) => setFeatDamageAbilityBonus(e.target.value as Dnd5eAbility | "")}>
+                  <option value="">None</option>
+                  {DND5E_ABILITIES.map((a) => (
+                    <option key={a} value={a}>
+                      {DND5E_ABILITY_NAMES[a]}
+                    </option>
+                  ))}
+                </select>
               </label>
             </div>
 
