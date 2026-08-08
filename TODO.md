@@ -1942,8 +1942,33 @@ correctly folded in with no weapon-side changes needed. `tsc -b` clean across al
 packages; both test suites still pass. Test feat, character, and throwaway user deleted
 after verification.
 
-168. **Spell-grant semantics.** Magic Initiate's player-chosen class (the `"class"` spellChoice
-    kind already exists and is wired end-to-end, but `classId` is author-fixed rather than
-    player-chosen); Infernal Legacy's level-gated spells (`grantedSpellSchema` needs
-    `minLevel`/`castAtLevel`, and race-trait spells need to be re-evaluated on level-up
-    instead of only seeded once at creation).
+168. ✅ **Spell-grant semantics.** Magic Initiate's player-chosen class (the `"class"` spellChoice
+    kind already existed and was already wired end-to-end -- `classId` was just author-fixed
+    rather than player-chosen, so the real gap was narrower than it first looked: made
+    `classId` `.optional()` on the `"class"` variant, and `FeatPickerModal` now inserts a
+    class-select step before handing off to `WizardSpellbookPicker` when it's unset, reusing
+    the same multi-step `Resolving` state machine that already chains multiple `spellChoices`
+    rows. Infernal Legacy's level-gated spells: `grantedSpellSchema` gained `minLevel` (character
+    level required before the grant applies) and `castAtLevel` (fixed slot-level override, fed
+    straight into the granted sheet-spell's `level` field -- `effectiveCastLevel` already just
+    reads that, so no new casting-level machinery was needed). Race-trait spells were previously
+    seeded once at creation only (`raceGrants()`); `levelUp()` now re-scans race traits on every
+    level gain and grants anything newly unlocked, using the same
+    `race-trait-spell-${trait.id}-${i}` id convention at both seed and re-check time so a spell
+    already granted is never duplicated.
+
+**Verified (#168, done):** JSON-imported "Test Tiefling" with an Infernal Legacy trait granting
+Thaumaturgy (at will, no gate), Hellish Rebuke (`minLevel: 3`, `castAtLevel: 2`), and Darkness
+(`minLevel: 5`); drove the actual character-creation wizard to create a level-1 character with
+that race and confirmed only Thaumaturgy was granted. Leveled up live via the sheet's "Level Up"
+button: at level 3 the reminder read "Newly unlocked: Hellish Rebuke" and the API confirmed it
+was stored with `level: 2` (from `castAtLevel`); at level 5 "Newly unlocked: Darkness" appeared
+and it was added. Separately imported "Test Magic Initiate" (a `spellChoices` row of kind
+`"class"` with no `classId`), picked it through the Feat Picker on the same character, and
+confirmed a "choose a class" dialog appeared before the spell picker; picking Wizard filtered
+the cantrip list to the Wizard spell list (Fire Bolt, Prestidigitation, etc.), and confirming
+granted exactly those two spells tagged to the feat. Both `npm test -w shared` (22/22) and
+`npm test -w backend` (21/21) still pass. Test character, custom content, dice-roll rows, and
+throwaway user deleted after verification.
+
+This closes out the full WP1-WP7 plan from the July 2026 custom-content bug report.

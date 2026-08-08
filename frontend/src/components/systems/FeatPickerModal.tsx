@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { CustomContent, CustomFeatData, Dnd5eAbility, Dnd5eSheetData, GrantedSpell, SpellChoice } from "shared";
-import { DND5E_ABILITY_NAMES, effectiveAbilityScore, SRD_FEATS } from "shared";
+import { DND5E_ABILITY_NAMES, DND5E_CLASSES, normalizeClassId, effectiveAbilityScore, SRD_FEATS } from "shared";
 import { WizardSpellbookPicker, type PickedSpell } from "./WizardSpellbookPicker";
 import { modalOverlay as overlayStyle, modalDialog } from "../../styles";
 const dialogStyle = modalDialog;
@@ -28,6 +28,11 @@ interface Resolving {
   choices: SpellChoice[];
   stepIndex: number;
   collected: GrantedSpell[];
+  // Set once the player picks a class for the current step's "class"-kind choice when its
+  // classId was left unauthored (#168, real Magic Initiate's "choose a class") -- undefined
+  // means either the choice doesn't need one, or it does and hasn't been picked yet. Reset to
+  // undefined on every step advance so the next class-kind choice (if any) prompts again.
+  pendingClassId?: string;
 }
 
 /** Picks a feat (SRD, approved/own-pending custom, or a blank custom) and hands back a sheet
@@ -104,12 +109,42 @@ export function FeatPickerModal({
       setResolving(null);
       return;
     }
-    setResolving({ ...resolving, stepIndex: nextIndex, collected: nextCollected });
+    setResolving({ ...resolving, stepIndex: nextIndex, collected: nextCollected, pendingClassId: undefined });
   }
 
   if (resolving) {
     const choice = resolving.choices[resolving.stepIndex];
     const levelLabel = choice.maxLevel === 0 ? "cantrip" : `level-${choice.maxLevel}`;
+    // "class" kind with no authored classId (#168) means the player picks -- prompt for that
+    // before handing off to WizardSpellbookPicker, which needs a concrete classId to filter by.
+    if (choice.from.kind === "class" && !choice.from.classId && !resolving.pendingClassId) {
+      return (
+        <div style={overlayStyle} onClick={onClose}>
+          <div style={dialogStyle} onClick={(e) => e.stopPropagation()}>
+            <h3>{resolving.feat.name}: choose a class</h3>
+            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              Which class's spell list do the {choice.count} {levelLabel} spell{choice.count === 1 ? "" : "s"} come from?
+            </p>
+            {DND5E_CLASSES.map((c) => (
+              <button
+                key={c.name}
+                type="button"
+                style={{ display: "block", width: "100%", textAlign: "left", padding: "0.3rem 0" }}
+                onClick={() => setResolving({ ...resolving, pendingClassId: normalizeClassId(c.name) })}
+              >
+                {c.name}
+              </button>
+            ))}
+            <div style={{ marginTop: "0.75rem" }}>
+              <button type="button" onClick={onClose}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    const classId = choice.from.kind === "class" ? (choice.from.classId ?? resolving.pendingClassId) : undefined;
     return (
       <WizardSpellbookPicker
         key={resolving.stepIndex}
@@ -121,7 +156,7 @@ export function FeatPickerModal({
           ...sheet.spells.map((s) => s.srdId).filter((id): id is string => id !== undefined),
           ...resolving.collected.map((s) => s.srdId).filter((id): id is string => id !== undefined),
         ]}
-        classId={choice.from.kind === "class" ? choice.from.classId : undefined}
+        classId={classId}
         anyClass={choice.from.kind === "any"}
         srdIds={choice.from.kind === "list" ? choice.from.srdIds : undefined}
         onConfirm={resolveStep}

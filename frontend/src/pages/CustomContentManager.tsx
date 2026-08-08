@@ -253,18 +253,34 @@ const emptyTraitRow = (): TraitRow => ({
 // "Name | atWill(yes/no)" per line -- atWill defaults to yes when omitted, since most racial
 // innate cantrips (e.g. a High Elf's bonus cantrip) are at-will; "no" marks a once-per-rest grant
 // like the higher tiers of Infernal Legacy.
-function parseTraitGrantedSpellsText(text: string): { name: string; atWill: boolean }[] {
+// "Name | atWill(yes/no) | minLevel | castAtLevel" -- the last two are optional (#168, e.g.
+// Infernal Legacy's Hellish Rebuke unlocking at 3rd level, cast as a 2nd-level spell). Blank or
+// omitted means "available from 1st level" / "cast at the spell's own level", same as before
+// these existed.
+function parseTraitGrantedSpellsText(text: string): { name: string; atWill: boolean; minLevel?: number; castAtLevel?: number }[] {
   return text
     .split("\n")
     .map((l) => l.trim())
     .filter(Boolean)
     .map((line) => {
-      const [name, atWillText] = line.split("|").map((s) => s.trim());
-      return { name: name || "", atWill: (atWillText ?? "yes").toLowerCase() !== "no" };
+      const [name, atWillText, minLevelText, castAtLevelText] = line.split("|").map((s) => s.trim());
+      return {
+        name: name || "",
+        atWill: (atWillText ?? "yes").toLowerCase() !== "no",
+        minLevel: minLevelText ? Number(minLevelText) || undefined : undefined,
+        castAtLevel: castAtLevelText ? Number(castAtLevelText) || undefined : undefined,
+      };
     });
 }
-function traitGrantedSpellsToText(spells: { name: string; atWill: boolean }[]): string {
-  return spells.map((s) => `${s.name} | ${s.atWill ? "yes" : "no"}`).join("\n");
+function traitGrantedSpellsToText(spells: { name: string; atWill: boolean; minLevel?: number; castAtLevel?: number }[]): string {
+  return spells
+    .map((s) => {
+      const parts = [s.name, s.atWill ? "yes" : "no"];
+      if (s.minLevel || s.castAtLevel) parts.push(s.minLevel ? String(s.minLevel) : "");
+      if (s.castAtLevel) parts.push(String(s.castAtLevel));
+      return parts.join(" | ");
+    })
+    .join("\n");
 }
 
 function dataToTraitRows(traits: RaceTrait[]): TraitRow[] {
@@ -1057,7 +1073,14 @@ export function CustomContentManager({
           .filter((s) => s.name !== "")
           .map((s) => {
             const resolved = resolveSpellName(s.name);
-            return { name: s.name, srdId: resolved?.srdId, level: resolved?.level ?? 0, atWill: s.atWill };
+            return {
+              name: s.name,
+              srdId: resolved?.srdId,
+              level: resolved?.level ?? 0,
+              atWill: s.atWill,
+              minLevel: s.minLevel,
+              castAtLevel: s.castAtLevel,
+            };
           }),
         extraCritDice: Number(r.extraCritDice) || 0,
         abilityBonuses: Object.fromEntries(
@@ -1405,7 +1428,7 @@ export function CustomContentManager({
           id: `feat-spell-choice-${crypto.randomUUID()}`,
           count: String(sc.count),
           kind: sc.from.kind,
-          classId: sc.from.kind === "class" ? sc.from.classId : "wizard",
+          classId: sc.from.kind === "class" ? (sc.from.classId ?? "") : "wizard",
           srdIdsText: sc.from.kind === "list" ? sc.from.srdIds.join(", ") : "",
           maxLevel: String(sc.maxLevel),
           atWill: sc.atWill,
@@ -1767,7 +1790,7 @@ export function CustomContentManager({
               count: Number(r.count) || 1,
               from:
                 r.kind === "class"
-                  ? { kind: "class" as const, classId: r.classId.trim().toLowerCase() }
+                  ? { kind: "class" as const, classId: r.classId.trim() ? r.classId.trim().toLowerCase() : undefined }
                   : r.kind === "list"
                     ? {
                         kind: "list" as const,
@@ -1974,7 +1997,10 @@ export function CustomContentManager({
               style={{ width: "100%", marginTop: "0.3rem" }}
             />
             <textarea
-              placeholder={"Granted spells, one per line: Name | atWill(yes/no) -- e.g.\nThaumaturgy | yes\nHellish Rebuke | no"}
+              placeholder={
+                "Granted spells, one per line: Name | atWill(yes/no) | minLevel | castAtLevel -- last two optional, e.g.\n" +
+                "Thaumaturgy | yes\nHellish Rebuke | no | 3 | 2\nDarkness | no | 5"
+              }
               value={row.grantedSpellsText}
               onChange={(e) =>
                 setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, grantedSpellsText: e.target.value } : r)))
@@ -3645,7 +3671,9 @@ export function CustomContentManager({
                     <select
                       value={row.classId}
                       onChange={(e) => setFeatSpellChoices((prev) => prev.map((r, j) => (j === i ? { ...r, classId: e.target.value } : r)))}
+                      title="Blank = the player picks a class when they take the feat (real Magic Initiate)"
                     >
+                      <option value="">— player chooses —</option>
                       {DND5E_CLASSES.map((c) => (
                         <option key={c.name} value={c.name.toLowerCase()}>
                           {c.name}

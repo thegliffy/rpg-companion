@@ -721,13 +721,17 @@ export function CharacterCreationWizard({
       for (const r of trait.damageResistances) damageResistances.add(r);
       // Same feat-spell-${feat.id}-${i} tagging addFeat()/backgroundGrants() use, so removing
       // this trait's source race later would clean up the same way (traits aren't individually
-      // removable post-creation today, but the tag keeps the convention consistent).
+      // removable post-creation today, but the tag keeps the convention consistent). The same
+      // id shape lets levelUp() (Dnd5eSheet.tsx) recognize "already granted" and re-check for
+      // newly-unlocked ones -- only what's already available at the creation level gets seeded
+      // here; anything gated behind a higher minLevel is picked up later at level-up instead.
       trait.grantedSpells.forEach((gs, i) => {
+        if (gs.minLevel && level < gs.minLevel) return;
         grantedSpells.push({
           id: `race-trait-spell-${trait.id}-${i}`,
           srdId: gs.srdId,
           name: gs.name,
-          level: gs.level,
+          level: gs.castAtLevel ?? gs.level,
           prepared: false,
           atWill: gs.atWill,
         });

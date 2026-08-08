@@ -7,6 +7,7 @@ import type {
   CustomRaceData,
   CustomClassData,
   CustomSubraceData,
+  RaceTrait,
   CustomSubclassData,
   SubclassFeature,
   SubclassSpell,
@@ -578,6 +579,25 @@ export function Dnd5eSheet({
     const invocationUnlocked = newInvocationsExpected > oldInvocationsExpected;
     const pactBoonUnlocked = isWarlock && newLevel === 3 && sheet.pactBoon === "";
 
+    // Race/subrace trait spells gated behind a higher character level (#168, e.g. Infernal
+    // Legacy's Hellish Rebuke at 3rd) -- raceGrants() (the wizard) only seeds what's available at
+    // the creation level, so anything unlocked later has to be picked up here instead. Same
+    // race-trait-spell-${trait.id}-${i} id shape as raceGrants() uses, so a spell already granted
+    // (seeded at creation, or by an earlier level-up) is recognized and skipped rather than
+    // duplicated. Legacy string[] traits (no structured grantedSpells) are filtered out.
+    const traitsWithSpells = [...(raceInfo?.traits ?? []), ...(subraceInfo?.traits ?? [])].filter(
+      (t): t is RaceTrait => typeof t !== "string" && "grantedSpells" in t,
+    );
+    const newlyUnlockedSpells: Dnd5eSheetData["spells"] = [];
+    for (const trait of traitsWithSpells) {
+      trait.grantedSpells.forEach((gs, i) => {
+        if (!gs.minLevel || gs.minLevel > newLevel) return;
+        const id = `race-trait-spell-${trait.id}-${i}`;
+        if (sheet.spells.some((s) => s.id === id)) return;
+        newlyUnlockedSpells.push({ id, srdId: gs.srdId, name: gs.name, level: gs.castAtLevel ?? gs.level, prepared: false, atWill: gs.atWill });
+      });
+    }
+
     setSheet((prev) => {
       const spellSlots =
         Object.keys(newSlots).length > 0
@@ -592,13 +612,15 @@ export function Dnd5eSheet({
       // Features, granted spells and proficiency lines all go through the same merge
       // chooseSubclass() uses, so the two paths can't drift apart. "list" spells are not granted
       // here -- they only widen what the pickers offer.
+      const merged = mergeGrants(prev, grantedFeatures, subclassSpellsUpTo(subclassData?.spells ?? [], newLevel, "granted"), newLevel);
       return {
         ...prev,
         level: newLevel,
         hitDiceTotal: prev.hitDiceTotal + 1,
         hitDiceAvailable: prev.hitDiceAvailable + 1,
         spellSlots,
-        ...mergeGrants(prev, grantedFeatures, subclassSpellsUpTo(subclassData?.spells ?? [], newLevel, "granted"), newLevel),
+        ...merged,
+        spells: [...merged.spells, ...newlyUnlockedSpells],
       };
     });
 
@@ -614,6 +636,9 @@ export function Dnd5eSheet({
     }
     if (pactBoonUnlocked) {
       reminders.push("Pact Boon unlocked — choose one below.");
+    }
+    if (newlyUnlockedSpells.length > 0) {
+      reminders.push(`Newly unlocked: ${newlyUnlockedSpells.map((s) => s.name).join(", ")}.`);
     }
     setLevelUpReminders(reminders);
     setLevelUpMessage(null);

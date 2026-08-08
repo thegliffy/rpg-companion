@@ -47,6 +47,16 @@ export const grantedSpellSchema = z.object({
   srdId: z.string().trim().max(80).optional(),
   level: z.number().int().min(0).max(9),
   atWill: z.boolean().default(false),
+  // Character level required before this grant applies (#168) -- e.g. Infernal Legacy's Hellish
+  // Rebuke unlocking at 3rd level, Darkness at 5th. Undefined/0 means "available from 1st level",
+  // same as every grant before this field existed. Race-trait grants are seeded once at creation
+  // (raceGrants()) but re-checked on every level-up (levelUp(), Dnd5eSheet.tsx) so a spell that
+  // unlocks later actually gets added when the character reaches that level, not only at creation.
+  minLevel: z.number().int().min(1).max(20).optional(),
+  // Fixed slot level to cast this at when granted without expending a real slot (#168) -- e.g.
+  // Infernal Legacy's Hellish Rebuke is "cast once... as a 2nd-level spell" regardless of
+  // character level. Undefined means "cast at the spell's own level", the existing behavior.
+  castAtLevel: z.number().int().min(0).max(9).optional(),
 });
 export type GrantedSpell = z.infer<typeof grantedSpellSchema>;
 
@@ -570,7 +580,11 @@ export function classResourcePools(resources: ClassResource[], sheet: Dnd5eSheet
 export const spellChoiceSchema = z.object({
   count: z.number().int().min(1).max(6),
   from: z.discriminatedUnion("kind", [
-    z.object({ kind: z.literal("class"), classId: z.string().trim().toLowerCase().max(30) }),
+    // classId omitted (#168) means "the player picks a class when they take the feat" -- real
+    // Magic Initiate ("choose a class: Wizard, Cleric, or Druid...") can't be expressed with a
+    // fixed classId, since the author of the custom feat isn't the one taking it. A fixed
+    // classId is still supported for the narrower "always this class" case.
+    z.object({ kind: z.literal("class"), classId: z.string().trim().toLowerCase().max(30).optional() }),
     z.object({ kind: z.literal("list"), srdIds: z.array(z.string().trim().max(80)).min(1).max(20) }),
     z.object({ kind: z.literal("any") }),
   ]),
