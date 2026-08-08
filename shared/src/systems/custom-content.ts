@@ -907,7 +907,16 @@ export interface ResolvedInventoryItem {
  * to Attacks") pass their own visibleItems lookup. */
 // No-op BuffEffect for SRD items and the unresolved fallback, none of which can carry a
 // toggleable effect -- avoids repeating the same all-defaults literal at every return site below.
-const NO_TOGGLE: BuffEffect = { attackBonus: 0, attackDice: "", damageBonus: 0, damageDice: "", damageType: "", saveDice: "", consumption: "per-hit" };
+const NO_TOGGLE: BuffEffect = {
+  attackBonus: 0,
+  attackDice: "",
+  damageBonus: 0,
+  damageDice: "",
+  damageType: "",
+  saveDice: "",
+  consumption: "per-hit",
+  appliesToSpellAttacks: false,
+};
 
 export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id: string) => CustomContent | undefined): ResolvedInventoryItem[] {
   const { itemId, quantity } = entry;

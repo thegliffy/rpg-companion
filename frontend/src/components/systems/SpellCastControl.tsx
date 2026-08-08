@@ -1,9 +1,16 @@
 import { useRef, useState } from "react";
 import type { BuffEffect, SpellScaling, SrdSpell, DiceRoll } from "shared";
-import { scaledSpellDamage, naturalD20, critFormula } from "shared";
+import { scaledSpellDamage, naturalD20, critFormula, formatModifier, formatDiceTerm } from "shared";
 import { useDiceRoll } from "../../dice/DiceRollContext";
 
 type Phase = "idle" | "rolling" | "done";
+
+interface ExtraDamage {
+  id: string;
+  label: string;
+  dice: string;
+  type: string;
+}
 
 export function SpellCastControl({
   spell,
@@ -24,6 +31,13 @@ export function SpellCastControl({
   // written as "melee weapon attack" only (PHB/Volo's), so neither ever applies to spell damage --
   // only the base doubling (critFormula) does, same as any other attack roll.
   critThreshold = 20,
+  // Active effects broadly scoped to "any attack" (Bless/Bane, or a homebrew Hex-alike) rather
+  // than weapon-only (#169) -- same shapes AttackRollControl already takes, sourced from
+  // activeEffectSpellAttackDice/activeEffectSpellDamageDice rather than the unfiltered weapon-
+  // attack aggregators.
+  extraAttackDice = [],
+  extraDamage = [],
+  onHit,
 }: {
   spell: SrdSpell;
   spellAttackBonus: number | null;
@@ -58,6 +72,16 @@ export function SpellCastControl({
   /** Called when a spell with a resolved buff is cast, so the sheet can add an activeEffect. */
   onBuff?: (buff: BuffEffect) => void;
   critThreshold?: number;
+  /** Extra dice terms active effects add to this spell's attack ROLL (Bless's +1d4) -- only the
+   * ones scoped to spell attacks, not every active effect. */
+  extraAttackDice?: string[];
+  /** Active effects that add extra damage dice on a hit with this spell (a Hex-alike). Each is
+   * rolled and reported as its own line since it can carry its own damage type. */
+  extraDamage?: ExtraDamage[];
+  /** Called once, after a confirmed Hit finishes rolling (base damage + every extraDamage entry)
+   * -- lets the sheet consume any consumption: "once" effects. Never called on a Miss or on a
+   * non-attack-roll spell (a save spell was never "an attack" to trigger them). */
+  onHit?: () => void;
 }) {
   const { session, setSessionActions } = useDiceRoll();
   const [phase, setPhase] = useState<Phase>("idle");
@@ -88,7 +112,13 @@ export function SpellCastControl({
     try {
       const formula = isCrit ? critFormula(scaledDamage!) : scaledDamage!;
       await scopedRoll(formula, `${spell.name}${isCrit ? " critical" : ""} damage${levelsAbove > 0 ? ` (lvl ${effectiveCastLevel})` : ""}`);
+
+      for (const e of extraDamage) {
+        const dice = isCrit ? critFormula(e.dice) : e.dice;
+        await scopedRoll(dice, `${spell.name} bonus damage (${e.label}${e.type ? `, ${e.type}` : ""})`);
+      }
       setPhase("done");
+      onHit?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Roll failed");
       setPhase("idle");
@@ -108,7 +138,9 @@ export function SpellCastControl({
         await session(campaignId, spell.name, async (scopedRoll) => {
           scopedRollRef.current = scopedRoll;
           const bonus = spellAttackBonus ?? 0;
-          const formula = bonus === 0 ? "1d20" : `1d20${bonus > 0 ? "+" : ""}${bonus}`;
+          const terms = [...extraAttackDice.map((d) => (d.startsWith("-") ? d : `+${d}`))];
+          if (bonus !== 0) terms.push(bonus > 0 ? `+${bonus}` : `${bonus}`);
+          const formula = `1d20${terms.join("")}`;
           const attackRoll = await scopedRoll(formula, `${spell.name} attack roll`);
 
           if (!spell.damageDice) {
@@ -206,10 +238,11 @@ export function SpellCastControl({
         <small style={{ marginLeft: "0.4rem", color: "var(--text-muted)" }}>
           (buffs your attacks:{" "}
           {[
-            buff.attackDice ? `+${buff.attackDice} to hit` : "",
-            buff.attackBonus ? `+${buff.attackBonus} to hit` : "",
-            buff.damageDice ? `+${buff.damageDice}${buff.damageType ? ` ${buff.damageType}` : ""} dmg` : "",
-            buff.damageBonus ? `+${buff.damageBonus} dmg` : "",
+            buff.attackDice ? `${formatDiceTerm(buff.attackDice)} to hit` : "",
+            buff.attackBonus ? `${formatModifier(buff.attackBonus)} to hit` : "",
+            buff.damageDice ? `${formatDiceTerm(buff.damageDice)}${buff.damageType ? ` ${buff.damageType}` : ""} dmg` : "",
+            buff.damageBonus ? `${formatModifier(buff.damageBonus)} dmg` : "",
+            buff.saveDice ? `${formatDiceTerm(buff.saveDice)} to saves` : "",
           ]
             .filter(Boolean)
             .join(", ")}

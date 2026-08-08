@@ -149,6 +149,16 @@ export const buffEffectSchema = z.object({
   // "per-hit" applies every time (Bless, Magic Weapon); "once" is consumed by the next damage
   // roll it contributes to (Wrathful Smite, Divine Favor, Branding Smite) and then removed.
   consumption: z.enum(["per-hit", "once"]).default("per-hit"),
+  // Whether this whole buff (attack-roll AND damage-roll contributions together) also applies to
+  // a spell attack (a cantrip, Eldritch Blast), not just a weapon attack (#169). Defaults false
+  // to match most curated/authored buffs, which really are weapon-scoped by their own text
+  // (Divine Favor, Hunter's Mark, Magic Weapon, Branding Smite all say "weapon attack(s)") --
+  // Bless/Bane ("any attack roll or saving throw") and a homebrew Hex-alike (not SRD content,
+  // see srd-spell-effects.ts's comment -- authored as a custom spell) are the exceptions that set
+  // this true. Weapon attacks (AttackRollControl) always read every active effect regardless of
+  // this flag; only the spell-attack aggregators (activeEffectSpellAttackDice etc., below) filter
+  // on it.
+  appliesToSpellAttacks: z.boolean().default(false),
 });
 export type BuffEffect = z.infer<typeof buffEffectSchema>;
 
@@ -612,6 +622,14 @@ export function formatModifier(value: number): string {
   return value >= 0 ? `+${value}` : `${value}`;
 }
 
+/** Same idea as formatModifier, for a dice-notation string that may already carry its own sign
+ * (e.g. Bane's "-1d4") -- every formula-building call site (AttackRollControl.roll(),
+ * Dnd5eSheet's rollCheck()) already special-cases a leading "-" this same way; this is the
+ * matching helper for *displaying* a signed dice term rather than building a roll formula. */
+export function formatDiceTerm(dice: string): string {
+  return dice.startsWith("-") ? dice : `+${dice}`;
+}
+
 /** Sum of active buff effects' flat attackBonus (e.g. a +1 weapon buff) -- folded into
  * attackBonus() below alongside feat bonuses. */
 export function activeEffectAttackBonus(sheet: Dnd5eSheetData): number {
@@ -645,6 +663,28 @@ export function activeEffectDamageDice(sheet: Dnd5eSheetData): ActiveEffect[] {
   return sheet.activeEffects.filter((e) => e.damageDice.trim() !== "");
 }
 
+/** Same as activeEffectAttackDice, but filtered to effects marked appliesToSpellAttacks (#169) --
+ * for a spell's own attack roll (SpellCastControl/EldritchBlastControl), which should only pick
+ * up broadly-scoped effects like Bless, not weapon-specific ones like Magic Weapon. The unfiltered
+ * activeEffectAttackDice above keeps feeding AttackRollControl unchanged -- a weapon attack always
+ * gets both weapon-scoped and any-scoped effects. */
+export function activeEffectSpellAttackDice(sheet: Dnd5eSheetData): string[] {
+  return sheet.activeEffects.filter((e) => e.appliesToSpellAttacks && e.attackDice.trim() !== "").map((e) => e.attackDice.trim());
+}
+
+/** Same idea as activeEffectSpellAttackDice, for the flat attackBonus half -- folded into
+ * spellAttackBonusForAbility() below. */
+export function activeEffectSpellAttackBonus(sheet: Dnd5eSheetData): number {
+  return sheet.activeEffects.filter((e) => e.appliesToSpellAttacks).reduce((sum, e) => sum + e.attackBonus, 0);
+}
+
+/** Same idea as activeEffectSpellAttackDice, for bonus damage dice (a Hex-alike custom spell
+ * buff) -- rolled as extra lines on a spell's own attack, same shape activeEffectDamageDice
+ * already returns for AttackRollControl. */
+export function activeEffectSpellDamageDice(sheet: Dnd5eSheetData): ActiveEffect[] {
+  return sheet.activeEffects.filter((e) => e.appliesToSpellAttacks && e.damageDice.trim() !== "");
+}
+
 /** Attack bonus = ability modifier + proficiency bonus (always proficient) + magic bonus + feat
  * attack bonuses + active buff effects' flat attack bonuses. */
 export function attackBonus(sheet: Dnd5eSheetData, attack: { ability: Dnd5eAbility; magicBonus: number }): number {
@@ -671,7 +711,10 @@ export function spellSaveDCForAbility(sheet: Dnd5eSheetData, ability: Dnd5eAbili
 export function spellAttackBonusForAbility(sheet: Dnd5eSheetData, ability: Dnd5eAbility | ""): number | null {
   if (!ability) return null;
   return (
-    proficiencyBonus(sheet.level) + abilityModifier(effectiveAbilityScore(sheet, ability)) + featBonusTotal(sheet, "spellAttackBonus")
+    proficiencyBonus(sheet.level) +
+    abilityModifier(effectiveAbilityScore(sheet, ability)) +
+    featBonusTotal(sheet, "spellAttackBonus") +
+    activeEffectSpellAttackBonus(sheet)
   );
 }
 

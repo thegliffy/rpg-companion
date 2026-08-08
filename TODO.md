@@ -1972,3 +1972,95 @@ granted exactly those two spells tagged to the feat. Both `npm test -w shared` (
 throwaway user deleted after verification.
 
 This closes out the full WP1-WP7 plan from the July 2026 custom-content bug report.
+
+## Theme: DM content parity, quick-toggle conditions, any-attack buffs
+
+169. ✅ **DM content-management parity.** Admins already had a full "edit/delete any custom
+    content" power (`CustomContentManager.tsx`'s "All items" list, backed by
+    `requireCustomContentOwnerOrAdmin`) -- extended to the `dm` role too, since DMs are
+    already the only non-admin role that can create custom content at all
+    (`requireGlobalRole("dm", "admin")` on POST/import). Added `isGlobalDmOrAdmin()`
+    (`users.service.ts`); renamed the middleware to `requireCustomContentOwnerOrManager`
+    and broadened its check; moved the site-wide summary list from admin-only
+    `GET /api/admin/content` to `GET /api/custom-content/all` (gated `requireGlobalRole("dm",
+    "admin")`) since it's no longer admin-exclusive. Frontend: `isAdmin` became
+    `canManageAllContent` in `CustomContentManager.tsx`. Approval/unapproval (`AdminPanel.tsx`,
+    `/:id/approve`, `/:id/unapprove`) stays admin-only -- a deliberate scope boundary, not
+    touched.
+
+    **Verified:** as one DM, created an item; as a *different* DM, confirmed it appeared
+    under "All items" (both via direct API calls and the live UI, including seeing other
+    users' pre-existing pending content), edited its name, and confirmed the edit persisted.
+    A `player` account got a 403 on both `GET /api/custom-content/all` and
+    `PATCH /api/custom-content/:id` against someone else's item. Test item and users deleted
+    after verification.
+
+170. ✅ **Quick-toggle common conditions (Blessed / Bane).** Previously the only way to get
+    Bless's buff onto `sheet.activeEffects` was to actually cast it (`SpellCastControl`'s
+    `onBuff`), which requires the caster to own and prepare the spell -- no way to just mark
+    "I'm currently Blessed" (someone else cast it, or an NPC/monster sheet with no spell
+    list). Added `bane: per({ attackDice: "-1d4", saveDice: "-1d4" })` to
+    `SRD_SPELL_EFFECTS` (`srd-spell-effects.ts`) and a curated `QUICK_CONDITIONS` list
+    (`[{srdId: "bless", name: "Blessed"}, {srdId: "bane", name: "Bane"}]`). The Active
+    effects box (`Dnd5eSheet.tsx`) now always renders (previously hidden at zero effects) and
+    shows a checkbox per quick condition; toggling checks/adds or removes by matching
+    `sourceSpellId`, so casting the real spell and the quick toggle are recognized as the
+    same status and can't double-stack. `endsWithConcentration: false` deliberately -- there's
+    no way to know from a quick toggle whether *your* future concentration should break
+    someone else's Bless on you, so it's "on until manually toggled off," matching how
+    toggled item effects already behave. The roll-formula layer needed zero changes: both
+    `AttackRollControl.roll()` and `Dnd5eSheet`'s `rollCheck()` already special-case a
+    leading `-` on a dice term, and the dice library already computes subtracted-dice
+    formulas correctly. Added `formatDiceTerm()` (`dnd5e.ts`) and fixed a latent sign-display
+    bug in both the sheet's Active-effects summary and `SpellCastControl`'s cast-preview text
+    (raw `` `+${dice}` `` string-building, which would have shown Bane's `-1d4` as `+-1d4`);
+    also added the `saveDice` line to both displays, missing since #166 even for Bless.
+
+    **Verified:** toggled Blessed on a live character with no Bless prepared -- Active
+    effects showed "Blessed: +1d4 to hit, +1d4 to saves"; toggled Bane too -- showed "Bane:
+    -1d4 to hit, -1d4 to saves" (correct sign, not "+-1d4"). Rolled an attack with both
+    active: `1d20+1d4-1d4+5`, individual rolls 9/1/4/+5 = 11 (9+1-4+5), confirming the
+    formula mathematically subtracts, not just displays a sign. Toggled both off and
+    confirmed the entries were removed.
+
+171. ✅ **Effects that apply to any attack, not just weapon attacks.** Found while
+    implementing #170: `activeEffectAttackDice`/`activeEffectDamageDice` (Bless's roll die,
+    a Hex/Hunter's-Mark-style bonus-damage buff) were wired into `AttackRollControl` only
+    (the sheet's weapon "Attacks" list) -- neither `SpellCastControl` nor
+    `EldritchBlastControl` read them, so Bless never helped a spell attack roll and a
+    Hex-style damage buff could never apply to one, even though Bless's own text ("any
+    attack roll") and Hex's ("whenever you hit it with an attack") both RAW-apply to spell
+    attacks too -- unlike Hunter's Mark/Divine Favor/Magic Weapon/Branding Smite, which are
+    explicitly weapon-scoped. Added `appliesToSpellAttacks: z.boolean().default(false)` to
+    `buffEffectSchema`, defaulting every existing curated/authored buff to weapon-only
+    (matching their real text) except Bless and Bane, which get the override (both say "any
+    attack roll or saving throw"). Added `activeEffectSpellAttackDice`/
+    `activeEffectSpellAttackBonus`/`activeEffectSpellDamageDice` (`dnd5e.ts`) -- filtered
+    variants of the existing aggregators, following their own "separate named function per
+    call site" convention rather than an optional param; the unfiltered originals keep
+    feeding `AttackRollControl` unchanged, since a weapon attack should always get both
+    weapon-scoped and any-scoped effects. Folded `activeEffectSpellAttackBonus` into
+    `spellAttackBonusForAbility()`. Threaded new `extraAttackDice`/`extraDamage` props into
+    `SpellCastControl.tsx` and `EldritchBlastControl.tsx` (same shapes/roll-building pattern
+    `AttackRollControl` already uses, including a new `onHit` consumption callback on
+    `SpellCastControl`); non-attack-roll spells (Fireball) never get `extraDamage` -- a save
+    spell was never "an attack" to trigger an attack-triggered rider. Added the missing
+    `saveDice` field (another #166 gap) and a new "Applies to spell attacks too" checkbox to
+    both the custom-spell buff editor and the item toggle-effect editor in
+    `CustomContentManager.tsx`.
+
+    **Verified:** gave a level-3 Wizard Fire Bolt (a cantrip with an attack roll) and no
+    weapon attacks. With no active effects, "Fire Bolt attack roll" was a plain
+    `1d20+5`. Toggled Blessed: the roll became `1d20+1d4+5`. Authored a custom "Test Hex
+    Alike" spell (`buff: {damageDice: "1d6", damageType: "necrotic", appliesToSpellAttacks:
+    true}`), cast it, then cast Fire Bolt again and hit -- got a separate "Fire Bolt bonus
+    damage (Test Hex Alike, necrotic)" roll line, absent entirely on a Miss (matching
+    "attack-triggered, not automatic"). Set that effect's `appliesToSpellAttacks` to `false`
+    directly and recast Fire Bolt: the bonus-damage line disappeared from the spell roll, but
+    rolling a separately-added weapon attack (`Test Shortsword`) still produced both "Test
+    Shortsword bonus damage (Test Hex Alike, necrotic)" *and* the Blessed `+1d4` on its
+    attack roll -- confirming the weapon path stays unfiltered regardless of the flag. Also
+    confirmed `EldritchBlastControl`'s "Beam 1 attack" picked up Blessed's `+1d4` the same
+    way. `npx tsc --noEmit -p shared` / `npx tsc -b` clean throughout; both test suites still
+    pass (shared 22/22, backend 21/21). Test character, custom spell, and throwaway users
+    deleted after verification.

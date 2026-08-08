@@ -48,7 +48,16 @@ type Abilities = Record<Dnd5eAbility, number>;
 const DEFAULT_ABILITIES: Abilities = { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
 
 // A no-op BuffEffect, for an inventory item with no toggleable effect (#166) -- most items.
-const EMPTY_BUFF = { attackBonus: 0, attackDice: "", damageBonus: 0, damageDice: "", damageType: "", saveDice: "", consumption: "per-hit" as const };
+const EMPTY_BUFF = {
+  attackBonus: 0,
+  attackDice: "",
+  damageBonus: 0,
+  damageDice: "",
+  damageType: "",
+  saveDice: "",
+  consumption: "per-hit" as const,
+  appliesToSpellAttacks: false,
+};
 
 export function CharacterCreationWizard({
   campaignId,

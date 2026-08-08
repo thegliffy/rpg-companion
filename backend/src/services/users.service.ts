@@ -83,6 +83,14 @@ export function isGlobalAdmin(userId: number): boolean {
   return findUserById(userId)?.role === "admin";
 }
 
+// DMs are already the only non-admin role that can create custom content
+// (requireGlobalRole("dm", "admin") gates POST/import) -- this lets them also manage
+// anyone's item, not just their own, the same power an admin already has.
+export function isGlobalDmOrAdmin(userId: number): boolean {
+  const role = findUserById(userId)?.role;
+  return role === "dm" || role === "admin";
+}
+
 // Six of the eight FKs to users.id are NOT NULL (only encounters.ownerUserId and
 // customContent.approvedByUserId are nullable) and foreign_keys=ON is set in db/client.ts, so a
 // bare user delete fails at the DB with an opaque constraint error. Counted up front (#135) so the

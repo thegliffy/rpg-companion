@@ -54,8 +54,10 @@ export async function deleteUser(id: number): Promise<void> {
   await parseOrThrow(res);
 }
 
+// Moved off /api/admin/* (#169) -- DMs can now reach this too, not just admins, so it lives
+// under /api/custom-content instead of the admin-only router.
 export async function listAllContent(): Promise<AdminContentSummary[]> {
-  const res = await fetch("/api/admin/content");
+  const res = await fetch("/api/custom-content/all");
   const data = await parseOrThrow(res);
   return data.items;
 }

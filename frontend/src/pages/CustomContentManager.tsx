@@ -628,11 +628,15 @@ export function CustomContentManager({
   editContentId?: number;
 }) {
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  // Any DM or admin can manage anyone's content (#169), not just their own -- DMs are already
+  // the only non-admin role that can create custom content at all (requireGlobalRole("dm",
+  // "admin") on POST/import), so extending "manage anyone's" to them too is the same trust
+  // level, just broader scope. Approval stays a separate, admin-only decision (AdminPanel.tsx).
+  const canManageAllContent = user?.role === "dm" || user?.role === "admin";
   const [items, setItems] = useState<CustomContent[]>([]);
-  // Site-wide, every item regardless of owner/status (#134) -- admin-only, lean (no `data`), backs
-  // the "All items" list in place of the own-items-only `items` above. Edit still fetches the full
-  // item by id (getCustomContent) since this summary shape doesn't carry it.
+  // Site-wide, every item regardless of owner/status (#134) -- DM-or-admin only, lean (no
+  // `data`), backs the "All items" list in place of the own-items-only `items` above. Edit still
+  // fetches the full item by id (getCustomContent) since this summary shape doesn't carry it.
   const [allContentSummaries, setAllContentSummaries] = useState<AdminContentSummary[]>([]);
   const [visibleSpells, setVisibleSpells] = useState<CustomContent[]>([]);
   const [visibleFeats, setVisibleFeats] = useState<CustomContent[]>([]);
@@ -750,7 +754,15 @@ export function CustomContentManager({
   const [spellBuffDamageBonus, setSpellBuffDamageBonus] = useState("0");
   const [spellBuffDamageDice, setSpellBuffDamageDice] = useState("");
   const [spellBuffDamageType, setSpellBuffDamageType] = useState("");
+  // Extra dice added to a saving throw roll (e.g. Bless's +1d4 to saves) -- schema field existed
+  // since #166 but this form never exposed it until now (#169), same class of gap as the trait/
+  // feat editors already found and fixed.
+  const [spellBuffSaveDice, setSpellBuffSaveDice] = useState("");
   const [spellBuffConsumption, setSpellBuffConsumption] = useState<"per-hit" | "once">("per-hit");
+  // Whether this buff also applies to a spell attack (a cantrip, Eldritch Blast), not just a
+  // weapon attack (#169) -- e.g. Hex's "whenever you hit it with an attack", vs. Hunter's Mark's
+  // weapon-only text.
+  const [spellBuffAppliesToSpellAttacks, setSpellBuffAppliesToSpellAttacks] = useState(false);
   // "At Higher Levels" scaling (#117-120) -- dice appended per slot level above the spell's own
   // level, plus a freeform note for upcasts that aren't extra dice on one roll.
   const [spellScalingDicePerLevel, setSpellScalingDicePerLevel] = useState("");
@@ -784,6 +796,9 @@ export function CustomContentManager({
   const [itemToggleDamageBonus, setItemToggleDamageBonus] = useState("0");
   const [itemToggleDamageDice, setItemToggleDamageDice] = useState("");
   const [itemToggleDamageType, setItemToggleDamageType] = useState("");
+  // Same two additions as the spell buff editor above, same reason (#169).
+  const [itemToggleSaveDice, setItemToggleSaveDice] = useState("");
+  const [itemToggleAppliesToSpellAttacks, setItemToggleAppliesToSpellAttacks] = useState(false);
 
   // Monster fields
   const [monsterSize, setMonsterSize] = useState("Medium");
@@ -837,7 +852,7 @@ export function CustomContentManager({
         setVisibleItems(all.filter((i) => i.type === "item"));
       })
       .catch((err) => setError(err.message));
-    if (isAdmin) {
+    if (canManageAllContent) {
       adminApi.listAllContent().then(setAllContentSummaries).catch((err) => setError(err.message));
     }
   }
@@ -1164,7 +1179,9 @@ export function CustomContentManager({
     setSpellBuffDamageBonus("0");
     setSpellBuffDamageDice("");
     setSpellBuffDamageType("");
+    setSpellBuffSaveDice("");
     setSpellBuffConsumption("per-hit");
+    setSpellBuffAppliesToSpellAttacks(false);
     setSpellScalingDicePerLevel("");
     setSpellScalingNote("");
     setItemDescription("");
@@ -1191,6 +1208,8 @@ export function CustomContentManager({
     setItemToggleDamageBonus("0");
     setItemToggleDamageDice("");
     setItemToggleDamageType("");
+    setItemToggleSaveDice("");
+    setItemToggleAppliesToSpellAttacks(false);
     setMonsterSize("Medium");
     setMonsterType("beast");
     setMonsterAlignment("unaligned");
@@ -1460,7 +1479,9 @@ export function CustomContentManager({
           damageBonus: number;
           damageDice: string;
           damageType: string;
+          saveDice: string;
           consumption: "per-hit" | "once";
+          appliesToSpellAttacks: boolean;
         };
         scalingDicePerLevel?: string;
         scalingNote?: string;
@@ -1483,7 +1504,9 @@ export function CustomContentManager({
       setSpellBuffDamageBonus(String(d.buff?.damageBonus ?? 0));
       setSpellBuffDamageDice(d.buff?.damageDice ?? "");
       setSpellBuffDamageType(d.buff?.damageType ?? "");
+      setSpellBuffSaveDice(d.buff?.saveDice ?? "");
       setSpellBuffConsumption(d.buff?.consumption ?? "per-hit");
+      setSpellBuffAppliesToSpellAttacks(d.buff?.appliesToSpellAttacks ?? false);
       setSpellScalingDicePerLevel(d.scalingDicePerLevel ?? "");
       setSpellScalingNote(d.scalingNote ?? "");
     } else if (item.type === "item") {
@@ -1508,7 +1531,15 @@ export function CustomContentManager({
         magicBonus?: number;
         requiresAttunement?: boolean;
         grantedResistances?: string[];
-        toggledEffect?: { attackBonus: number; attackDice: string; damageBonus: number; damageDice: string; damageType: string };
+        toggledEffect?: {
+          attackBonus: number;
+          attackDice: string;
+          damageBonus: number;
+          damageDice: string;
+          damageType: string;
+          saveDice: string;
+          appliesToSpellAttacks: boolean;
+        };
       };
       setItemDescription(d.description ?? "");
       setItemKind(d.kind);
@@ -1537,6 +1568,8 @@ export function CustomContentManager({
       setItemToggleDamageBonus(String(d.toggledEffect?.damageBonus ?? 0));
       setItemToggleDamageDice(d.toggledEffect?.damageDice ?? "");
       setItemToggleDamageType(d.toggledEffect?.damageType ?? "");
+      setItemToggleSaveDice(d.toggledEffect?.saveDice ?? "");
+      setItemToggleAppliesToSpellAttacks(d.toggledEffect?.appliesToSpellAttacks ?? false);
     } else {
       const d = item.data as {
         size: string;
@@ -1830,7 +1863,9 @@ export function CustomContentManager({
             damageBonus: Number(spellBuffDamageBonus) || 0,
             damageDice: spellBuffDamageDice.trim(),
             damageType: spellBuffDamageType.trim(),
+            saveDice: spellBuffSaveDice.trim(),
             consumption: spellBuffConsumption,
+            appliesToSpellAttacks: spellBuffAppliesToSpellAttacks,
           },
           scalingDicePerLevel: spellScalingDicePerLevel.trim(),
           scalingNote: spellScalingNote.trim(),
@@ -1863,6 +1898,8 @@ export function CustomContentManager({
             damageBonus: Number(itemToggleDamageBonus) || 0,
             damageDice: itemToggleDamageDice.trim(),
             damageType: itemToggleDamageType.trim(),
+            saveDice: itemToggleSaveDice.trim(),
+            appliesToSpellAttacks: itemToggleAppliesToSpellAttacks,
           },
         };
       } else {
@@ -2083,8 +2120,8 @@ export function CustomContentManager({
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       <div style={box}>
-        <h3>{isAdmin ? "All items" : "My items"}</h3>
-        {isAdmin ? (
+        <h3>{canManageAllContent ? "All items" : "My items"}</h3>
+        {canManageAllContent ? (
           <>
             {allContentSummaries.length === 0 && <p>None yet.</p>}
             {allContentSummaries.map((item) => (
@@ -3801,11 +3838,11 @@ export function CustomContentManager({
               </label>
             </div>
 
-            <h4 style={{ marginTop: "1rem" }}>Attack/damage buff (optional)</h4>
+            <h4 style={{ marginTop: "1rem" }}>Attack/damage/save buff (optional)</h4>
             <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-              Bonus applied to the caster's <em>own later weapon attack</em> when this spell is cast — e.g. Wrathful
-              Smite's next-hit 1d6 psychic, or Bless's +1d4 to hit. Separate from "Damage dice" above, which is
-              damage the spell itself deals on cast (Magic Missile).
+              Bonus applied to the caster's own later attack or a target's saving throw when this spell is cast —
+              e.g. Wrathful Smite's next-hit 1d6 psychic, or Bless's +1d4 to hit and saves. Separate from "Damage
+              dice" above, which is damage the spell itself deals on cast (Magic Missile).
             </p>
             <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
               <label>
@@ -3854,11 +3891,28 @@ export function CustomContentManager({
                 />
               </label>
               <label>
+                Save dice{" "}
+                <input
+                  value={spellBuffSaveDice}
+                  onChange={(e) => setSpellBuffSaveDice(e.target.value)}
+                  placeholder="e.g. 1d4"
+                  style={{ width: "5rem" }}
+                />
+              </label>
+              <label>
                 Applies{" "}
                 <select value={spellBuffConsumption} onChange={(e) => setSpellBuffConsumption(e.target.value as "per-hit" | "once")}>
                   <option value="per-hit">Every hit, until it ends</option>
                   <option value="once">Next hit only</option>
                 </select>
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={spellBuffAppliesToSpellAttacks}
+                  onChange={(e) => setSpellBuffAppliesToSpellAttacks(e.target.checked)}
+                />{" "}
+                Applies to spell attacks too (not just weapon attacks) — e.g. Hex
               </label>
             </div>
 
@@ -4086,6 +4140,23 @@ export function CustomContentManager({
                   placeholder="e.g. fire"
                   style={{ width: "6rem" }}
                 />
+              </label>
+              <label>
+                Save dice{" "}
+                <input
+                  value={itemToggleSaveDice}
+                  onChange={(e) => setItemToggleSaveDice(e.target.value)}
+                  placeholder="e.g. 1d4"
+                  style={{ width: "5rem" }}
+                />
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={itemToggleAppliesToSpellAttacks}
+                  onChange={(e) => setItemToggleAppliesToSpellAttacks(e.target.checked)}
+                />{" "}
+                Applies to spell attacks too (not just weapon attacks)
               </label>
             </div>
           </>

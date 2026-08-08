@@ -16,12 +16,13 @@ import {
 } from "shared";
 import type { CustomContentType, ImportCustomContentResult } from "shared";
 import { requireAuth, requireGlobalRole, requireAdmin } from "../middleware/auth.js";
-import { requireCustomContentOwnerOrAdmin } from "../middleware/customContent.js";
+import { requireCustomContentOwnerOrManager } from "../middleware/customContent.js";
 import {
   createCustomContent,
   getCustomContent,
   listVisibleCustomContent,
   listPendingCustomContent,
+  listAllCustomContent,
   updateCustomContent,
   approveCustomContent,
   unapproveCustomContent,
@@ -58,6 +59,12 @@ function dataSchemaFor(type: CustomContentType) {
 // Static routes first, before the /:id param routes.
 customContentRouter.get("/pending", requireAdmin, (_req, res) => {
   res.json({ items: listPendingCustomContent() });
+});
+
+// Site-wide, every item regardless of status or owner (moved from /api/admin/content) -- DM or
+// admin, matching requireCustomContentOwnerOrManager's "any DM/admin can manage any item" below.
+customContentRouter.get("/all", requireGlobalRole("dm", "admin"), (_req, res) => {
+  res.json({ items: listAllCustomContent() });
 });
 
 customContentRouter.get("/", (req, res) => {
@@ -169,16 +176,16 @@ customContentRouter.post("/import", requireGlobalRole("dm", "admin"), async (req
   res.json({ results });
 });
 
-// Single-item fetch with the full `data` payload (#134) -- same owner-or-admin gate as PATCH/DELETE
-// below, since a pending item that's neither the requester's own nor approved shouldn't be
-// fetchable just by guessing an id. Needed so an admin can open the full editor for an item that
-// only shows up in their site-wide summary list (GET /api/admin/content), not the approved-plus-
-// own-pending set GET / already returns.
-customContentRouter.get("/:id", requireCustomContentOwnerOrAdmin, (req, res) => {
+// Single-item fetch with the full `data` payload (#134) -- same owner-or-manager gate as
+// PATCH/DELETE below, since a pending item that's neither the requester's own nor approved
+// shouldn't be fetchable just by guessing an id. Needed so a DM/admin can open the full editor
+// for an item that only shows up in their site-wide summary list (GET /all above), not the
+// approved-plus-own-pending set GET / already returns.
+customContentRouter.get("/:id", requireCustomContentOwnerOrManager, (req, res) => {
   res.json({ item: getCustomContent(req.customContentRow!.id) });
 });
 
-customContentRouter.patch("/:id", requireCustomContentOwnerOrAdmin, async (req, res) => {
+customContentRouter.patch("/:id", requireCustomContentOwnerOrManager, async (req, res) => {
   const parsed = updateCustomContentSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });
@@ -199,7 +206,7 @@ customContentRouter.patch("/:id", requireCustomContentOwnerOrAdmin, async (req, 
   res.json({ item: getCustomContent(updated.id) });
 });
 
-customContentRouter.delete("/:id", requireCustomContentOwnerOrAdmin, async (req, res) => {
+customContentRouter.delete("/:id", requireCustomContentOwnerOrManager, async (req, res) => {
   await deleteCustomContent(req.customContentRow!.id);
   res.status(204).send();
 });

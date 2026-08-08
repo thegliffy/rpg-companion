@@ -104,6 +104,11 @@ import {
   eldritchBlastProfile,
   customSpellToSrdShape,
   customItemNotesText,
+  SRD_SPELL_EFFECTS,
+  QUICK_CONDITIONS,
+  formatDiceTerm,
+  activeEffectSpellAttackDice,
+  activeEffectSpellDamageDice,
 } from "shared";
 import * as charactersApi from "../../api/characters";
 import { useDiceRoll } from "../../dice/DiceRollContext";
@@ -1847,41 +1852,82 @@ export function Dnd5eSheet({
           </div>
         )}
 
-        {/* Active effects -- buffs currently in effect from a cast spell (#110-113). Only
-            rendered when there's at least one, same convention as the Concentration box above. */}
-        {sheet.activeEffects.length > 0 && (
-          <div style={{ ...box, flex: "0 0 auto" }}>
-            <h3>Active effects</h3>
-            {sheet.activeEffects.map((e) => (
-              <div key={e.id} style={{ display: "flex", gap: "0.4rem", alignItems: "center", marginBottom: "0.3rem" }}>
-                <span>
-                  <strong>{e.name}</strong>
-                  {": "}
-                  {[
-                    e.attackDice ? `+${e.attackDice} to hit` : "",
-                    e.attackBonus ? formatModifier(e.attackBonus) + " to hit" : "",
-                    e.damageDice ? `+${e.damageDice}${e.damageType ? ` ${e.damageType}` : ""} dmg` : "",
-                    e.damageBonus ? formatModifier(e.damageBonus) + " dmg" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(", ")}
-                  <small style={{ color: "var(--text-muted)" }}>
-                    {" "}
-                    ({e.consumption === "once" ? "next hit" : "per hit"})
-                  </small>
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSheet((prev) => ({ ...prev, activeEffects: prev.activeEffects.filter((x) => x.id !== e.id) }))
-                  }
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
+        {/* Active effects -- buffs currently in effect from a cast spell (#110-113), a toggled
+            item, or a quick-toggled common condition (#169). Always rendered (not gated on
+            having any yet) so the quick-toggle checkboxes below stay reachable at zero. */}
+        <div style={{ ...box, flex: "0 0 auto" }}>
+          <h3>Active effects</h3>
+          <div style={{ marginBottom: sheet.activeEffects.length > 0 ? "0.5rem" : 0 }}>
+            {QUICK_CONDITIONS.map((c) => {
+              const buff = SRD_SPELL_EFFECTS[c.srdId];
+              if (!buff) return null;
+              // Checked against sourceSpellId, not a fixed id, so this reads as the same status
+              // whether it came from actually casting the spell (SpellCastControl's onBuff,
+              // which stamps sourceSpellId) or from this toggle -- prevents double-stacking if a
+              // player casts Bless on themselves and also flips the quick toggle.
+              const active = sheet.activeEffects.some((e) => e.sourceSpellId === c.srdId);
+              return (
+                <label key={c.srdId} style={{ marginRight: "1rem" }}>
+                  <input
+                    type="checkbox"
+                    checked={active}
+                    onChange={() =>
+                      set(
+                        "activeEffects",
+                        active
+                          ? sheet.activeEffects.filter((e) => e.sourceSpellId !== c.srdId)
+                          : [
+                              ...sheet.activeEffects,
+                              {
+                                id: `quick-condition-${c.srdId}`,
+                                name: c.name,
+                                sourceSpellId: c.srdId,
+                                ...buff,
+                                // Unlike a spell you cast yourself, there's no way to know here
+                                // whether your own future concentration should break someone
+                                // else's Bless on you -- this is "on until manually toggled off",
+                                // matching how a toggled item's effect already behaves.
+                                endsWithConcentration: false,
+                              },
+                            ],
+                      )
+                    }
+                  />{" "}
+                  {c.name}
+                </label>
+              );
+            })}
           </div>
-        )}
+          {sheet.activeEffects.map((e) => (
+            <div key={e.id} style={{ display: "flex", gap: "0.4rem", alignItems: "center", marginBottom: "0.3rem" }}>
+              <span>
+                <strong>{e.name}</strong>
+                {": "}
+                {[
+                  e.attackDice ? `${formatDiceTerm(e.attackDice)} to hit` : "",
+                  e.attackBonus ? formatModifier(e.attackBonus) + " to hit" : "",
+                  e.damageDice ? `${formatDiceTerm(e.damageDice)}${e.damageType ? ` ${e.damageType}` : ""} dmg` : "",
+                  e.damageBonus ? formatModifier(e.damageBonus) + " dmg" : "",
+                  e.saveDice ? `${formatDiceTerm(e.saveDice)} to saves` : "",
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
+                <small style={{ color: "var(--text-muted)" }}>
+                  {" "}
+                  ({e.consumption === "once" ? "next hit" : "per hit"})
+                </small>
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  setSheet((prev) => ({ ...prev, activeEffects: prev.activeEffects.filter((x) => x.id !== e.id) }))
+                }
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
 
         {/* Conditions */}
         <div style={{ ...box, flex: "0 0 auto" }}>
@@ -2316,6 +2362,13 @@ export function Dnd5eSheet({
                   spellAttackBonus={effectiveAtkBonus}
                   campaignId={character.campaignId}
                   critThreshold={sheet.critThreshold}
+                  extraAttackDice={activeEffectSpellAttackDice(sheet)}
+                  extraDamage={activeEffectSpellDamageDice(sheet).map((e) => ({
+                    id: e.id,
+                    label: e.name,
+                    dice: e.damageDice,
+                    type: e.damageType,
+                  }))}
                 />
               ) : (
                 srdSpell &&
@@ -2366,6 +2419,19 @@ export function Dnd5eSheet({
                       }))
                     }
                     critThreshold={sheet.critThreshold}
+                    extraAttackDice={activeEffectSpellAttackDice(sheet)}
+                    extraDamage={activeEffectSpellDamageDice(sheet).map((e) => ({
+                      id: e.id,
+                      label: e.name,
+                      dice: e.damageDice,
+                      type: e.damageType,
+                    }))}
+                    onHit={() =>
+                      setSheet((prev) => ({
+                        ...prev,
+                        activeEffects: prev.activeEffects.filter((e) => e.consumption !== "once"),
+                      }))
+                    }
                   />
                 )
               )}
@@ -2719,7 +2785,7 @@ export function Dnd5eSheet({
                 attuned: false,
                 value: 0,
                 grantedResistances: [],
-                toggledEffect: { attackBonus: 0, attackDice: "", damageBonus: 0, damageDice: "", damageType: "", saveDice: "", consumption: "per-hit" as const },
+                toggledEffect: { attackBonus: 0, attackDice: "", damageBonus: 0, damageDice: "", damageType: "", saveDice: "", consumption: "per-hit" as const, appliesToSpellAttacks: false },
               },
             ])
           }

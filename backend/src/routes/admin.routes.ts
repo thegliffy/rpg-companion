@@ -12,7 +12,6 @@ import {
   countAdmins,
   deleteUser,
 } from "../services/users.service.js";
-import { listAllCustomContent } from "../services/customContent.service.js";
 import { listAllCharacters, reassignCharacterOwner } from "../services/characters.service.js";
 
 export const adminRouter = Router();
@@ -22,10 +21,6 @@ adminRouter.use(requireAuth, requireAdmin);
 adminRouter.get("/users", (_req, res) => {
   const users = listUsers().map(toPublicUser);
   res.json({ users });
-});
-
-adminRouter.get("/content", (_req, res) => {
-  res.json({ items: listAllCustomContent() });
 });
 
 adminRouter.get("/characters", (_req, res) => {
