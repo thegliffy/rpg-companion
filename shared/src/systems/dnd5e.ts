@@ -168,7 +168,7 @@ export const buffEffectSchema = z.object({
   // without knowing the base. Applied as (base + bonus) * multiplier by effectiveSpeed().
   speedBonus: z.number().int().min(-60).max(60).default(0),
   speedMultiplier: z.number().min(0.5).max(3).default(1),
-});
+}).strict();
 export type BuffEffect = z.infer<typeof buffEffectSchema>;
 
 /** True when a buff actually contributes something -- a spell with no buff fields set still

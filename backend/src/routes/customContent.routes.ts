@@ -17,6 +17,7 @@ import {
 import type { CustomContentType, ImportCustomContentResult } from "shared";
 import { requireAuth, requireGlobalRole, requireAdmin } from "../middleware/auth.js";
 import { requireCustomContentOwnerOrManager } from "../middleware/customContent.js";
+import { describeSchemaIssues } from "../lib/schemaErrors.js";
 import {
   createCustomContent,
   getCustomContent,
@@ -83,9 +84,14 @@ customContentRouter.post("/", requireGlobalRole("dm", "admin"), async (req, res)
     return;
   }
 
-  const dataParsed = dataSchemaFor(parsed.data.type).safeParse(parsed.data.data);
+  const dataSchema = dataSchemaFor(parsed.data.type);
+  const dataParsed = dataSchema.safeParse(parsed.data.data);
   if (!dataParsed.success) {
-    res.status(400).json({ error: "Invalid data", issues: dataParsed.error.issues });
+    res.status(400).json({
+      error: "Invalid data",
+      messages: describeSchemaIssues(dataSchema, dataParsed.error.issues),
+      issues: dataParsed.error.issues,
+    });
     return;
   }
 
@@ -131,15 +137,17 @@ customContentRouter.post("/import", requireGlobalRole("dm", "admin"), async (req
       continue;
     }
 
-    const dataParsed = dataSchemaFor(row.type).safeParse(row.data);
+    const rowSchema = dataSchemaFor(row.type);
+    const dataParsed = rowSchema.safeParse(row.data);
     if (!dataParsed.success) {
+      const described = describeSchemaIssues(rowSchema, dataParsed.error.issues);
       results.push({
         index,
         name: row.name,
         type: row.type,
         status: "error",
         error: "Invalid data",
-        issues: dataParsed.error.issues.map((i) => ({ path: i.path, message: i.message })),
+        issues: dataParsed.error.issues.map((i, n) => ({ path: i.path, message: described[n] ?? i.message })),
       });
       continue;
     }
@@ -194,9 +202,14 @@ customContentRouter.patch("/:id", requireCustomContentOwnerOrManager, async (req
 
   const updates: { name?: string; data?: unknown } = { name: parsed.data.name };
   if (parsed.data.data !== undefined) {
-    const dataParsed = dataSchemaFor(req.customContentRow!.type as CustomContentType).safeParse(parsed.data.data);
+    const patchSchema = dataSchemaFor(req.customContentRow!.type as CustomContentType);
+    const dataParsed = patchSchema.safeParse(parsed.data.data);
     if (!dataParsed.success) {
-      res.status(400).json({ error: "Invalid data", issues: dataParsed.error.issues });
+      res.status(400).json({
+        error: "Invalid data",
+        messages: describeSchemaIssues(patchSchema, dataParsed.error.issues),
+        issues: dataParsed.error.issues,
+      });
       return;
     }
     updates.data = dataParsed.data;

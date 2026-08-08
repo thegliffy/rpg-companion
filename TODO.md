@@ -2218,3 +2218,63 @@ waiting on a random 20: a **dropped** natural 20 must not register as a critical
 must, and the same for a dropped natural 1 and critical misses. Live: a Strength save at ADV rolled
 `2d20` [18, 19] keeping **19** (+7 = 26); the selector then reset itself to normal; a Longsword
 attack at DIS rolled [4, 8] keeping **4**. All suites pass (shared 66/66, backend 21/21).
+
+177. ✅ **Strict validation — no more silent field stripping.** The root cause behind several
+    reported "it saved but did nothing" bugs: zod strips unknown keys by default and still returns
+    **success**, so an author could write `initiativeBonus: 5` (or `components`, or a typo'd
+    `acBonuss`), get a 200, and never learn the field went nowhere. Added `.strict()` to 27
+    schemas — every custom-content data schema plus its nested objects, and `buffEffectSchema`.
+    `.extend()` inherits the policy, so making `effectBonusesSchema` strict covers the feat,
+    background-feature, subclass-feature and race-trait schemas built from it.
+
+    New `describeSchemaIssues()` (`backend/src/lib/schemaErrors.ts`) turns zod's
+    `unrecognized_keys` into something an author can act on: it names the key, locates it
+    (`at "buff"`), and suggests the nearest real field by edit distance — walking the schema down
+    the issue's own path so a nested object suggests *its* fields, not the top-level ones. The
+    threshold scales with key length so short names don't match everything, and no suggestion is
+    offered when nothing is close rather than a misleading one. Wired into all three write paths
+    (POST, PATCH, and per-row on import).
+
+**Verified (#177, done):** 7 new backend tests covering rejection, the typo suggestion, the nested
+path, the deliberate absence of a bad suggestion, and that every real field (including this pass's
+new ones) still parses. Two risks were checked explicitly rather than assumed:
+- **Legacy migrations still work.** The three `z.preprocess` schemas run before the object schema,
+  so they normalize old shapes first. Confirmed all four legacy forms still parse: a pre-#124 race
+  with `traits: string[]`, a legacy subrace, and both older background shapes.
+- **The frontend still round-trips.** Strict would 400 on any key the authoring form sends that
+  the schema doesn't have. Instrumented the real form and created **all 9 content types** through
+  it (9× 201), then GET-and-PATCHed each stored payload straight back (9× 200). No mismatches.
+
+Live: `POST /api/custom-content` with `initiativeBonis` returns 400 with *"Unknown field:
+"initiativeBonis" (did you mean "initiativeBonus"?)"*. All suites pass (shared 66/66, backend
+28/28).
+
+### Deferred, with what each would actually take
+
+Not built this pass. Recorded so the next one starts from an assessment rather than rediscovery:
+
+- **Auras / area effects** (Spirit Guardians' 15-ft emanation and its half-speed rider; Mercy's
+  aura). The app models a character sheet, not a battlefield — there are no positions, so
+  "creatures within 15 feet" has nothing to resolve against. Needs a spatial or at least a
+  "who is adjacent" model shared with the initiative tracker before any of it means anything.
+- **Ki-tied subclass features and shared Channel Divinity options.** `homebrewResourceSchema`
+  mints one counter per resource; Way of Mercy spends the monk's *ki*, and Channel Divinity's
+  several options share one pool. Needs `spendsFrom` (name another pool) and `options[]` (named
+  choices over one counter) plus pool-rendering changes. Schema work is small; the sheet's
+  resource panel is the real surface.
+- **Multi-table backgrounds, tenets, split damage.** Far Traveler wants two independent variant
+  tables; today there is one `variants` list and one `variantPickCount`. Restructuring to
+  `variantTables: [{title, pickCount, variants}]` also gives oath tenets and Mercy masks a home
+  (a titled table with `pickCount: 0`). Spirit Guardians' radiant-vs-necrotic needs
+  `damageTypeOptions[]` with a pick at cast time.
+- **Reach and discoverability for fields that already exist.** `optionalAttackModifier` and
+  `damageAbilityBonus` work but are only exposed in the *feat* editor, and `minLevel`/`castAtLevel`
+  are positional entries in a text box (`"Name | atWill | minLevel | castAtLevel"`) rather than
+  labeled fields. Pure authoring-UI work, no schema change.
+- **Immunities as data.** `damageImmunities`/`conditionImmunities` on race traits, displayed
+  beside the existing resistances line. Small; grouped here because it pairs with the advantage
+  hints below.
+- **`advantageOn` hints.** Now that #176 exists, a trait could carry
+  `advantageOn: ["saving throws against poison"]` and surface a one-click "roll with advantage"
+  next to the matching save. Deliberately a hint, not auto-application: nothing tells the app what
+  a save is *against* at the moment it's rolled, so auto-detection would be guesswork.

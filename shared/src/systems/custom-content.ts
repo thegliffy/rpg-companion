@@ -41,7 +41,7 @@ export const effectBonusesSchema = z.object({
   // check, save, and AC. Alert's other halves (can't be surprised, hidden attackers gain no
   // advantage) stay description text -- they aren't numbers.
   initiativeBonus: z.number().int().min(-10).max(10).default(0),
-});
+}).strict();
 export type EffectBonuses = z.infer<typeof effectBonusesSchema>;
 
 // A spell granted by a feat or race trait (e.g. Magic Initiate, or a Tiefling's Infernal Legacy)
@@ -62,7 +62,7 @@ export const grantedSpellSchema = z.object({
   // Infernal Legacy's Hellish Rebuke is "cast once... as a 2nd-level spell" regardless of
   // character level. Undefined means "cast at the spell's own level", the existing behavior.
   castAtLevel: z.number().int().min(0).max(9).optional(),
-});
+}).strict();
 export type GrantedSpell = z.infer<typeof grantedSpellSchema>;
 
 // A race/subrace trait (#124) -- was a bare display-only string, making darkvision, resistances
@@ -108,7 +108,7 @@ const rawCustomRaceDataSchema = z.object({
   size: z.string().trim().max(20).default("Medium"),
   languages: z.array(z.string().trim().max(40)).max(20).default([]),
   traits: z.array(raceTraitSchema).max(20).default([]),
-});
+}).strict();
 export const customRaceDataSchema = z.preprocess((raw) => {
   const input = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   return { ...input, traits: upgradeTraitStrings(input.traits) };
@@ -133,7 +133,7 @@ const martialLevelEntrySchema = z.object({
   auraRange: z.number().int().min(0).max(120).optional(),
   favoredEnemies: z.number().int().min(0).max(5).optional(),
   favoredTerrain: z.number().int().min(0).max(5).optional(),
-});
+}).strict();
 
 const classLevelEntrySchema = z.object({
   level: z.number().int().min(1).max(20),
@@ -142,7 +142,7 @@ const classLevelEntrySchema = z.object({
   slots: z.record(z.string(), z.number().int().min(0).max(20)).optional(),
   features: z.array(z.string().trim().max(60)).max(10).optional(),
   martial: martialLevelEntrySchema.optional(),
-});
+}).strict();
 
 // A limited-use resource (#105, generalized to classes in #127) -- e.g. Hexblade's Curse 1/short
 // rest, or an Artificer's infusions. Named generically since #127 lifted this from subclass-only
@@ -164,7 +164,7 @@ const homebrewResourceSchema = z.object({
   usesAbility: z.enum(DND5E_ABILITIES).optional(),
   recharge: z.enum(["short", "long"]).default("long"),
   note: z.string().trim().max(80).default(""),
-});
+}).strict();
 // Kept as "SubclassResource" (rather than renamed) since it's the established public name and
 // every existing call site/import uses it -- ClassResource is a same-shape alias for clarity at
 // the class-side call sites #127 adds.
@@ -178,16 +178,16 @@ export type ClassResource = SubclassResource;
 const equipmentEntrySchema = z.object({
   itemId: z.string().trim().min(1).max(80),
   quantity: z.number().int().min(1).max(99).default(1),
-});
+}).strict();
 
 const equipmentOptionSchema = z.object({
   label: z.string().trim().max(80),
   items: z.array(equipmentEntrySchema).max(10),
-});
+}).strict();
 
 const equipmentChoiceSchema = z.object({
   options: z.array(equipmentOptionSchema).min(1).max(60),
-});
+}).strict();
 
 // Starting equipment a class grants at level 1, IN ADDITION to the character's background
 // (#156-161) -- e.g. "(a) a rapier or (b) a shortsword" is one choice with two options. Optional
@@ -195,7 +195,7 @@ const equipmentChoiceSchema = z.object({
 export const classStartingEquipmentSchema = z.object({
   fixed: z.array(equipmentEntrySchema).max(20).default([]),
   choices: z.array(equipmentChoiceSchema).max(6).default([]),
-});
+}).strict();
 export type ClassStartingEquipmentData = z.infer<typeof classStartingEquipmentSchema>;
 
 export const customClassDataSchema = z.object({
@@ -207,7 +207,7 @@ export const customClassDataSchema = z.object({
   // asymmetry where only a subclass could carry one was never intentional.
   resources: z.array(homebrewResourceSchema).max(10).default([]),
   startingEquipment: classStartingEquipmentSchema.default({}),
-});
+}).strict();
 export type CustomClassData = z.infer<typeof customClassDataSchema>;
 
 // A skill grant can come from a fixed choice ("choose from this exact list"), an ability-group
@@ -221,18 +221,18 @@ const skillChoiceSourceSchema = z.discriminatedUnion("kind", [
 const skillChoiceSchema = z.object({
   count: z.number().int().min(1).max(18),
   from: skillChoiceSourceSchema,
-});
+}).strict();
 
 const toolChoiceSchema = z.object({
   count: z.number().int().min(1).max(10),
   from: z.array(z.string().trim().max(40)).max(20),
-});
+}).strict();
 
 const backgroundVariantSchema = z.object({
   id: z.string().min(1),
   title: z.string().trim().max(60),
   description: z.string().trim().max(500).default(""),
-});
+}).strict();
 
 // A background feature (#100) -- some SRD-parity backgrounds grant more than one distinct
 // feature, so this is a repeatable array rather than the single {name, description} pair it
@@ -289,7 +289,7 @@ const rawCustomBackgroundDataSchema = z.object({
   // spellChoices rows (#102) has those left unresolved when granted this way, since the character
   // creation wizard has no multi-step picker to resolve them through.
   grantedFeats: z.array(z.string().trim().max(100)).max(5).default([]),
-});
+}).strict();
 
 /** A legacy or pre-#100 singular {name, description} feature, upgraded into a one-element
  * features[] array; blank name upgrades to an empty array (nothing to migrate). */
@@ -433,7 +433,7 @@ const rawCustomSubraceDataSchema = z.object({
   // a subrace (Drow's Superior Darkvision, Duergar's resistances/innate spells) needs the exact
   // same mechanics a race trait does, not a lesser version of them.
   traits: z.array(raceTraitSchema).max(20).default([]),
-});
+}).strict();
 export const customSubraceDataSchema = z.preprocess((raw) => {
   const input = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   return { ...input, traits: upgradeTraitStrings(input.traits) };
@@ -476,7 +476,7 @@ const subclassSpellSchema = z.object({
   spellLevel: z.number().int().min(0).max(9).default(0),
   mode: z.enum(["list", "granted"]).default("list"),
   atWill: z.boolean().default(false),
-});
+}).strict();
 export type SubclassSpell = z.infer<typeof subclassSpellSchema>;
 
 export const customSubclassDataSchema = z.object({
@@ -485,7 +485,7 @@ export const customSubclassDataSchema = z.object({
   features: z.array(subclassFeatureSchema).max(30).default([]),
   spells: z.array(subclassSpellSchema).max(30).default([]),
   resources: z.array(homebrewResourceSchema).max(10).default([]),
-});
+}).strict();
 export type CustomSubclassData = z.infer<typeof customSubclassDataSchema>;
 
 /** A name-only subclass feature (SRD data, or a pre-#103 custom subclass) as a rich entry with
@@ -596,7 +596,7 @@ export const spellChoiceSchema = z.object({
   ]),
   maxLevel: z.number().int().min(0).max(9),
   atWill: z.boolean().default(false),
-});
+}).strict();
 export type SpellChoice = z.infer<typeof spellChoiceSchema>;
 
 export const customFeatDataSchema = effectBonusesSchema.extend({
@@ -724,7 +724,7 @@ export const customSpellDataSchema = z.object({
   // level); `scalingNote` covers upcasts that aren't extra dice on one roll.
   scalingDicePerLevel: z.string().trim().max(20).default(""),
   scalingNote: z.string().trim().max(300).default(""),
-});
+}).strict();
 export type CustomSpellData = z.infer<typeof customSpellDataSchema>;
 
 /** Maps a "spell"-type custom-content row onto the SrdSpell shape, id-prefixed to avoid
@@ -838,7 +838,7 @@ export const customItemDataSchema = z.object({
   // Mirrors inventoryItemSchema.toggledEffect exactly, including the "always a full object,
   // hasBuffEffect() decides if it's meaningful" convention customSpellDataSchema.buff also uses.
   toggledEffect: buffEffectSchema.default({}),
-});
+}).strict();
 export type CustomItemData = z.infer<typeof customItemDataSchema>;
 
 /** Human-readable mechanical notes for a custom item, matching weaponDamageText/
@@ -1010,12 +1010,12 @@ const monsterActionSchema = z.object({
   attackBonus: z.number().int().min(-5).max(20).optional(),
   damageDice: z.string().trim().max(30).optional(),
   damageType: z.string().trim().max(30).optional(),
-});
+}).strict();
 
 const monsterSpecialAbilitySchema = z.object({
   name: z.string().trim().max(60),
   desc: z.string().trim().max(500).default(""),
-});
+}).strict();
 
 // Same shape as monsterActionSchema plus the action-point cost (#125) -- see the
 // MonsterLegendaryAction comment in srd-monsters.ts for why this isn't monsterActionSchema with
@@ -1027,12 +1027,12 @@ const monsterLegendaryActionSchema = z.object({
   attackBonus: z.number().int().min(-5).max(20).optional(),
   damageDice: z.string().trim().max(30).optional(),
   damageType: z.string().trim().max(30).optional(),
-});
+}).strict();
 
 const monsterSkillSchema = z.object({
   name: z.string().trim().max(30),
   bonus: z.number().int().min(-5).max(20),
-});
+}).strict();
 
 // Mirrors the Bestiary's SrdMonster field set exactly (srd-monsters.ts) -- so a homebrew
 // monster shows in the Bestiary and fights in the Arena identically to an SRD one.
@@ -1078,7 +1078,7 @@ export const customMonsterDataSchema = z.object({
   legendaryActions: z.array(monsterLegendaryActionSchema).max(10).default([]),
   // Only meaningful when legendaryActions is non-empty; 3 is the near-universal 5e default.
   legendaryActionsPerRound: z.number().int().min(1).max(5).default(3),
-});
+}).strict();
 export type CustomMonsterData = z.infer<typeof customMonsterDataSchema>;
 
 /** Maps a "monster"-type custom-content row onto the SrdMonster shape, id-prefixed to avoid
