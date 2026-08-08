@@ -111,6 +111,7 @@ import {
   activeEffectSpellDamageDice,
   applyDamage,
   applyHealing,
+  effectiveSpeed,
 } from "shared";
 import * as charactersApi from "../../api/characters";
 import { useDiceRoll } from "../../dice/DiceRollContext";
@@ -1732,7 +1733,17 @@ export function Dnd5eSheet({
             <span>Initiative</span>
             <strong>{formatModifier(abilityModifier(effectiveAbilityScore(sheet, "dex")))}</strong>
             <span>Speed</span>
-            <input type="number" value={sheet.speed} onChange={(e) => set("speed", Number(e.target.value) || 0)} style={numInput} />
+            <span>
+              <input type="number" value={sheet.speed} onChange={(e) => set("speed", Number(e.target.value) || 0)} style={numInput} />
+              {/* Only shown when an active effect actually changes it, so the common case stays
+                  the plain editable number (#174). */}
+              {effectiveSpeed(sheet) !== sheet.speed && (
+                <strong title="After active effects (e.g. Longstrider, Boots of Speed)" style={{ color: "var(--success)" }}>
+                  {" "}
+                  → {effectiveSpeed(sheet)}
+                </strong>
+              )}
+            </span>
             <span>Darkvision</span>
             <span>
               <input
@@ -2044,6 +2055,9 @@ export function Dnd5eSheet({
                   e.damageDice ? `${formatDiceTerm(e.damageDice)}${e.damageType ? ` ${e.damageType}` : ""} dmg` : "",
                   e.damageBonus ? formatModifier(e.damageBonus) + " dmg" : "",
                   e.saveDice ? `${formatDiceTerm(e.saveDice)} to saves` : "",
+                  e.acBonus ? `${formatModifier(e.acBonus)} AC` : "",
+                  e.speedBonus ? `${formatModifier(e.speedBonus)} ft speed` : "",
+                  e.speedMultiplier !== 1 ? `speed x${e.speedMultiplier}` : "",
                 ]
                   .filter(Boolean)
                   .join(", ")}
@@ -2920,7 +2934,7 @@ export function Dnd5eSheet({
                 attuned: false,
                 value: 0,
                 grantedResistances: [],
-                toggledEffect: { attackBonus: 0, attackDice: "", damageBonus: 0, damageDice: "", damageType: "", saveDice: "", consumption: "per-hit" as const, appliesToSpellAttacks: false },
+                toggledEffect: { attackBonus: 0, attackDice: "", damageBonus: 0, damageDice: "", damageType: "", saveDice: "", consumption: "per-hit" as const, appliesToSpellAttacks: false, acBonus: 0, speedBonus: 0, speedMultiplier: 1 },
               },
             ])
           }

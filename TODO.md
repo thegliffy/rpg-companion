@@ -2145,3 +2145,32 @@ Critical hit ticked added exactly 2 failures (confirmed via the API); 9 healing 
 died" appearing. Separately confirmed that dropping to 0 in one hit ends concentration with
 **no save rolled** ("Knocked unconscious: Hold Person ends.", and no new entry in the dice log).
 All suites pass (shared 38/38, backend 21/21). Test character and throwaway user deleted.
+
+## Theme: second-round custom-content gaps
+
+174. ✅ **Spell-buff AC and toggle speed.** `buffEffectSchema` could only express attack/damage/save
+    riders, so the Shield spell's +5 AC and Boots of Speed's doubled movement had nowhere to live
+    (an authored `acBonus` on a spell buff was silently stripped -- see #180 for the root cause).
+    Added three fields: `acBonus`, plus a `speedBonus`/`speedMultiplier` **pair**, because real
+    content does both -- Longstrider *adds* 10 ft while Boots of Speed *doubles* the base, and
+    neither expresses the other without knowing the starting number. New `activeEffectAcBonus()`
+    folds into `effectiveAC()` beside the existing equipped-item and feat terms, and a new
+    `effectiveSpeed()` applies every flat bonus first, then every multiplier -- so the two compose
+    the way the rules read (you double your *current* speed). Added `shield` and `longstrider` to
+    `SRD_SPELL_EFFECTS`, and the three inputs to both the custom-spell buff editor and the item
+    toggle-effect editor.
+
+    Critically, `hasBuffEffect()` had to learn the new fields: it decides whether an item's
+    Activate button renders at all, so without that a pure-AC or pure-speed toggle would have
+    parsed fine, saved fine, and then been permanently unreachable on the sheet -- exactly the
+    trap that function's own comment warns about.
+
+**Verified (#174, done):** 14 new unit tests in `shared/src/systems/effects.test.ts` cover AC
+summing, flat-then-multiply ordering (asserting array order doesn't matter), multiplier stacking
+with rounding, the 0 floor, and every `hasBuffEffect` branch including the "damage type with no
+dice behind it" false positive. Live on a level-5 wizard (AC 12, speed 30): casting Shield moved
+AC to **→ 17**; casting Longstrider moved speed to **→ 40**; activating a Boots-of-Speed item
+(`speedMultiplier: 2`) took it to **→ 80**, i.e. (30+10)×2 rather than 30×2+10, confirming the
+compose order end-to-end. The pure-speed item rendered its Activate button (the `hasBuffEffect`
+trap). Removing Shield dropped AC back to base while speed stayed at 80. All suites pass (shared
+52/52, backend 21/21).

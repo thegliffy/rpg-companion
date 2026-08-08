@@ -159,6 +159,15 @@ export const buffEffectSchema = z.object({
   // this flag; only the spell-attack aggregators (activeEffectSpellAttackDice etc., below) filter
   // on it.
   appliesToSpellAttacks: z.boolean().default(false),
+  // AC while the effect is up (#174) -- e.g. the Shield spell's +5, or a Cloak of Displacement
+  // style item toggle. Distinct from inventoryItemSchema.acBonus, which is always-on while
+  // equipped; this one only counts while the effect sits in sheet.activeEffects.
+  acBonus: z.number().int().min(-10).max(10).default(0),
+  // Speed while the effect is up. Two knobs because real content does both: Longstrider *adds*
+  // 10 ft while Boots of Speed *doubles* the walking speed, and neither expresses the other
+  // without knowing the base. Applied as (base + bonus) * multiplier by effectiveSpeed().
+  speedBonus: z.number().int().min(-60).max(60).default(0),
+  speedMultiplier: z.number().min(0.5).max(3).default(1),
 });
 export type BuffEffect = z.infer<typeof buffEffectSchema>;
 
@@ -172,7 +181,12 @@ export function hasBuffEffect(buff: BuffEffect): boolean {
     buff.attackDice.trim() !== "" ||
     buff.damageBonus !== 0 ||
     buff.damageDice.trim() !== "" ||
-    buff.saveDice.trim() !== ""
+    buff.saveDice.trim() !== "" ||
+    // #174: without these a pure-AC buff (Shield) or pure-speed toggle (Boots of Speed) would
+    // read as a no-op, and an item carrying one would never render its Activate button.
+    buff.acBonus !== 0 ||
+    buff.speedBonus !== 0 ||
+    buff.speedMultiplier !== 1
   );
 }
 
@@ -573,7 +587,24 @@ export function effectiveAC(sheet: Dnd5eSheetData): number {
       ? 10 + dexMod
       : sheet.ac;
   const shieldBonus = shield ? shield.armor!.baseAC : 0;
-  return base + shieldBonus + itemAcBonus + featBonusTotal(sheet, "acBonus");
+  return base + shieldBonus + itemAcBonus + featBonusTotal(sheet, "acBonus") + activeEffectAcBonus(sheet);
+}
+
+/** Sum of active buff effects' AC bonus (#174) -- the Shield spell's +5, a toggled item's ward.
+ * Folded into effectiveAC() alongside the always-on equipped-item and feat bonuses. */
+export function activeEffectAcBonus(sheet: Dnd5eSheetData): number {
+  return sheet.activeEffects.reduce((sum, e) => sum + e.acBonus, 0);
+}
+
+/** Walking speed after active effects (#174): every effect's flat bonus is added first, then
+ * every multiplier applied, so Longstrider's +10 and Boots of Speed's doubling compose the way
+ * the rules read (you double your *current* speed). Floored at 0 and rounded down -- 5e speeds
+ * are whole feet. */
+export function effectiveSpeed(sheet: Dnd5eSheetData): number {
+  let speed = sheet.speed;
+  for (const e of sheet.activeEffects) speed += e.speedBonus;
+  for (const e of sheet.activeEffects) speed *= e.speedMultiplier;
+  return Math.max(0, Math.floor(speed));
 }
 
 /** A human-readable AC breakdown ("Chain Shirt 13 + Dex +2 + Shield +2"), or null when no

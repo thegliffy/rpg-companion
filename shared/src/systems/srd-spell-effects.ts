@@ -21,6 +21,9 @@ const per = (buff: Partial<BuffEffect>): BuffEffect => ({
   saveDice: "",
   consumption: "per-hit",
   appliesToSpellAttacks: false,
+  acBonus: 0,
+  speedBonus: 0,
+  speedMultiplier: 1,
   ...buff,
 });
 
@@ -46,6 +49,13 @@ export const SRD_SPELL_EFFECTS: Record<string, BuffEffect> = {
   // term is already handled by every formula-building call site (AttackRollControl.roll(),
   // Dnd5eSheet's rollCheck()), so this rolls correctly with no engine changes.
   bane: per({ attackDice: "-1d4", saveDice: "-1d4", appliesToSpellAttacks: true }),
+  // "an invisible barrier of magic appears... you have a +5 bonus to AC, including against the
+  // triggering attack." Not an attack/damage rider like the rest of this table -- it's here
+  // because #174 gave BuffEffect an acBonus, which finally makes Shield expressible.
+  shield: per({ acBonus: 5 }),
+  // "your speed is doubled" -- the SRD Longstrider adds 10 ft instead, so the two together are
+  // the reason speed needs both a bonus and a multiplier.
+  longstrider: per({ speedBonus: 10 }),
 };
 
 // Common named conditions a player can toggle directly on the sheet without owning/casting the

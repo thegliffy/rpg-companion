@@ -916,6 +916,9 @@ const NO_TOGGLE: BuffEffect = {
   saveDice: "",
   consumption: "per-hit",
   appliesToSpellAttacks: false,
+  acBonus: 0,
+  speedBonus: 0,
+  speedMultiplier: 1,
 };
 
 export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id: string) => CustomContent | undefined): ResolvedInventoryItem[] {

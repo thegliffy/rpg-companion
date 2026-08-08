@@ -763,6 +763,11 @@ export function CustomContentManager({
   // weapon attack (#169) -- e.g. Hex's "whenever you hit it with an attack", vs. Hunter's Mark's
   // weapon-only text.
   const [spellBuffAppliesToSpellAttacks, setSpellBuffAppliesToSpellAttacks] = useState(false);
+  // AC/speed while the buff is up (#174) -- Shield's +5 AC, Longstrider's +10 ft, Boots of
+  // Speed's doubling. Kept as strings like every other numeric field in this form.
+  const [spellBuffAcBonus, setSpellBuffAcBonus] = useState("0");
+  const [spellBuffSpeedBonus, setSpellBuffSpeedBonus] = useState("0");
+  const [spellBuffSpeedMultiplier, setSpellBuffSpeedMultiplier] = useState("1");
   // "At Higher Levels" scaling (#117-120) -- dice appended per slot level above the spell's own
   // level, plus a freeform note for upcasts that aren't extra dice on one roll.
   const [spellScalingDicePerLevel, setSpellScalingDicePerLevel] = useState("");
@@ -799,6 +804,9 @@ export function CustomContentManager({
   // Same two additions as the spell buff editor above, same reason (#169).
   const [itemToggleSaveDice, setItemToggleSaveDice] = useState("");
   const [itemToggleAppliesToSpellAttacks, setItemToggleAppliesToSpellAttacks] = useState(false);
+  const [itemToggleAcBonus, setItemToggleAcBonus] = useState("0");
+  const [itemToggleSpeedBonus, setItemToggleSpeedBonus] = useState("0");
+  const [itemToggleSpeedMultiplier, setItemToggleSpeedMultiplier] = useState("1");
 
   // Monster fields
   const [monsterSize, setMonsterSize] = useState("Medium");
@@ -1182,6 +1190,9 @@ export function CustomContentManager({
     setSpellBuffSaveDice("");
     setSpellBuffConsumption("per-hit");
     setSpellBuffAppliesToSpellAttacks(false);
+    setSpellBuffAcBonus("0");
+    setSpellBuffSpeedBonus("0");
+    setSpellBuffSpeedMultiplier("1");
     setSpellScalingDicePerLevel("");
     setSpellScalingNote("");
     setItemDescription("");
@@ -1210,6 +1221,9 @@ export function CustomContentManager({
     setItemToggleDamageType("");
     setItemToggleSaveDice("");
     setItemToggleAppliesToSpellAttacks(false);
+    setItemToggleAcBonus("0");
+    setItemToggleSpeedBonus("0");
+    setItemToggleSpeedMultiplier("1");
     setMonsterSize("Medium");
     setMonsterType("beast");
     setMonsterAlignment("unaligned");
@@ -1482,6 +1496,9 @@ export function CustomContentManager({
           saveDice: string;
           consumption: "per-hit" | "once";
           appliesToSpellAttacks: boolean;
+          acBonus: number;
+          speedBonus: number;
+          speedMultiplier: number;
         };
         scalingDicePerLevel?: string;
         scalingNote?: string;
@@ -1507,6 +1524,9 @@ export function CustomContentManager({
       setSpellBuffSaveDice(d.buff?.saveDice ?? "");
       setSpellBuffConsumption(d.buff?.consumption ?? "per-hit");
       setSpellBuffAppliesToSpellAttacks(d.buff?.appliesToSpellAttacks ?? false);
+      setSpellBuffAcBonus(String(d.buff?.acBonus ?? 0));
+      setSpellBuffSpeedBonus(String(d.buff?.speedBonus ?? 0));
+      setSpellBuffSpeedMultiplier(String(d.buff?.speedMultiplier ?? 1));
       setSpellScalingDicePerLevel(d.scalingDicePerLevel ?? "");
       setSpellScalingNote(d.scalingNote ?? "");
     } else if (item.type === "item") {
@@ -1539,6 +1559,9 @@ export function CustomContentManager({
           damageType: string;
           saveDice: string;
           appliesToSpellAttacks: boolean;
+          acBonus: number;
+          speedBonus: number;
+          speedMultiplier: number;
         };
       };
       setItemDescription(d.description ?? "");
@@ -1570,6 +1593,9 @@ export function CustomContentManager({
       setItemToggleDamageType(d.toggledEffect?.damageType ?? "");
       setItemToggleSaveDice(d.toggledEffect?.saveDice ?? "");
       setItemToggleAppliesToSpellAttacks(d.toggledEffect?.appliesToSpellAttacks ?? false);
+      setItemToggleAcBonus(String(d.toggledEffect?.acBonus ?? 0));
+      setItemToggleSpeedBonus(String(d.toggledEffect?.speedBonus ?? 0));
+      setItemToggleSpeedMultiplier(String(d.toggledEffect?.speedMultiplier ?? 1));
     } else {
       const d = item.data as {
         size: string;
@@ -1866,6 +1892,9 @@ export function CustomContentManager({
             saveDice: spellBuffSaveDice.trim(),
             consumption: spellBuffConsumption,
             appliesToSpellAttacks: spellBuffAppliesToSpellAttacks,
+            acBonus: Number(spellBuffAcBonus) || 0,
+            speedBonus: Number(spellBuffSpeedBonus) || 0,
+            speedMultiplier: Number(spellBuffSpeedMultiplier) || 1,
           },
           scalingDicePerLevel: spellScalingDicePerLevel.trim(),
           scalingNote: spellScalingNote.trim(),
@@ -1900,6 +1929,9 @@ export function CustomContentManager({
             damageType: itemToggleDamageType.trim(),
             saveDice: itemToggleSaveDice.trim(),
             appliesToSpellAttacks: itemToggleAppliesToSpellAttacks,
+            acBonus: Number(itemToggleAcBonus) || 0,
+            speedBonus: Number(itemToggleSpeedBonus) || 0,
+            speedMultiplier: Number(itemToggleSpeedMultiplier) || 1,
           },
         };
       } else {
@@ -3900,6 +3932,37 @@ export function CustomContentManager({
                 />
               </label>
               <label>
+                AC bonus{" "}
+                <input
+                  type="number"
+                  value={spellBuffAcBonus}
+                  onChange={(e) => setSpellBuffAcBonus(e.target.value)}
+                  style={{ width: "3rem" }}
+                  title="AC while the buff is up, e.g. the Shield spell's +5"
+                />
+              </label>
+              <label>
+                Speed +ft{" "}
+                <input
+                  type="number"
+                  value={spellBuffSpeedBonus}
+                  onChange={(e) => setSpellBuffSpeedBonus(e.target.value)}
+                  style={{ width: "3.5rem" }}
+                  title="Flat speed change in feet, e.g. Longstrider's +10"
+                />
+              </label>
+              <label>
+                Speed x{" "}
+                <input
+                  type="number"
+                  step="0.5"
+                  value={spellBuffSpeedMultiplier}
+                  onChange={(e) => setSpellBuffSpeedMultiplier(e.target.value)}
+                  style={{ width: "3.5rem" }}
+                  title="Speed multiplier, e.g. 2 for Boots of Speed. Applied after the flat bonus."
+                />
+              </label>
+              <label>
                 Applies{" "}
                 <select value={spellBuffConsumption} onChange={(e) => setSpellBuffConsumption(e.target.value as "per-hit" | "once")}>
                   <option value="per-hit">Every hit, until it ends</option>
@@ -4148,6 +4211,37 @@ export function CustomContentManager({
                   onChange={(e) => setItemToggleSaveDice(e.target.value)}
                   placeholder="e.g. 1d4"
                   style={{ width: "5rem" }}
+                />
+              </label>
+              <label>
+                AC bonus{" "}
+                <input
+                  type="number"
+                  value={itemToggleAcBonus}
+                  onChange={(e) => setItemToggleAcBonus(e.target.value)}
+                  style={{ width: "3rem" }}
+                  title="AC while the toggle is active, e.g. a warding item"
+                />
+              </label>
+              <label>
+                Speed +ft{" "}
+                <input
+                  type="number"
+                  value={itemToggleSpeedBonus}
+                  onChange={(e) => setItemToggleSpeedBonus(e.target.value)}
+                  style={{ width: "3.5rem" }}
+                  title="Flat speed change in feet, e.g. Longstrider's +10"
+                />
+              </label>
+              <label>
+                Speed x{" "}
+                <input
+                  type="number"
+                  step="0.5"
+                  value={itemToggleSpeedMultiplier}
+                  onChange={(e) => setItemToggleSpeedMultiplier(e.target.value)}
+                  style={{ width: "3.5rem" }}
+                  title="Speed multiplier, e.g. 2 for Boots of Speed. Applied after the flat bonus."
                 />
               </label>
               <label>

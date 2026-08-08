@@ -57,6 +57,9 @@ const EMPTY_BUFF = {
   saveDice: "",
   consumption: "per-hit" as const,
   appliesToSpellAttacks: false,
+  acBonus: 0,
+  speedBonus: 0,
+  speedMultiplier: 1,
 };
 
 export function CharacterCreationWizard({
