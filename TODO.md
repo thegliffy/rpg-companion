@@ -2174,3 +2174,23 @@ AC to **→ 17**; casting Longstrider moved speed to **→ 40**; activating a Bo
 compose order end-to-end. The pure-speed item rendered its Activate button (the `hasBuffEffect`
 trap). Removing Shield dropped AC back to base while speed stayed at 80. All suites pass (shared
 52/52, backend 21/21).
+
+175. ✅ **Feat/feature initiative bonus.** Alert's +5 was description-only -- an authored
+    `initiativeBonus` was silently stripped, and the sheet computed Initiative as a bare Dexterity
+    modifier with nothing else able to reach it. Added `initiativeBonus` to `effectBonusesSchema`
+    (which propagates to feat / background-feature / subclass-feature / race-trait in one edit) and
+    to `effectEntrySchema`, widened `featBonusTotal()`'s key union, and added `initiativeBonus(sheet)`
+    = Dex modifier + the summed feat/feature bonus. The sheet's Initiative display now reads from it,
+    and the feat editor plus the tuple-mapped bonus rows on the trait/feature editors gained an
+    "Init" input.
+
+    Deliberately a separate field from `abilityBonuses.dex`: a Dex bonus would also move AC, every
+    Dexterity check, and Dex saves, which is not what Alert does. Alert's other halves (can't be
+    surprised, hidden attackers gain no advantage) stay description text -- they aren't numbers.
+
+**Verified (#175, done):** 4 new unit tests, including one asserting the two routes stay distinct
+-- a `initiativeBonus: 2` feat and an `abilityBonuses: {dex: 4}` feat both yield +4 initiative on a
+Dex-14 character, but only the ability route moves the underlying score from 14 to 18. Live: created
+a Dex-16 rogue (Initiative **+3**), authored a "Test Alert" feat through the real API carrying
+`initiativeBonus: 5` (confirmed stored, not stripped), picked it through the Feat Picker, and the
+sheet moved to **+8**. All suites pass (shared 56/56, backend 21/21).

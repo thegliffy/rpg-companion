@@ -268,6 +268,9 @@ export const effectEntrySchema = z.object({
   // Flat bonus to every saving throw, always active -- e.g. a homebrew Resilient-alike feat.
   // Mirrors the other flat bonus fields above; summed by featBonusTotal() into saveBonus().
   saveBonus: z.number().int().min(-10).max(10).default(0),
+  // Flat bonus to initiative (#175) -- Alert's +5. Separate from a Dex bonus on purpose: this
+  // moves only the initiative roll, not every Dex check/save/AC.
+  initiativeBonus: z.number().int().min(-10).max(10).default(0),
   // Skill ids this feat/feature/invocation grants proficiency in (e.g. Beguiling Influence ->
   // deception+persuasion) -- aggregated alongside sheet.skillProficiencies rather than merged
   // into it, so removing the entry (e.g. swapping invocations) automatically un-grants it.
@@ -515,7 +518,7 @@ export function featAbilityBonus(sheet: Dnd5eSheetData, ability: Dnd5eAbility): 
 /** Sum of a numeric bonus field across every feat/feature, e.g. acBonus/attackBonus/spellDCBonus. */
 export function featBonusTotal(
   sheet: Dnd5eSheetData,
-  key: "acBonus" | "attackBonus" | "damageBonus" | "spellDCBonus" | "spellAttackBonus" | "saveBonus",
+  key: "acBonus" | "attackBonus" | "damageBonus" | "spellDCBonus" | "spellAttackBonus" | "saveBonus" | "initiativeBonus",
 ): number {
   return allEffectEntries(sheet).reduce((sum, entry) => sum + entry[key], 0);
 }
@@ -588,6 +591,13 @@ export function effectiveAC(sheet: Dnd5eSheetData): number {
       : sheet.ac;
   const shieldBonus = shield ? shield.armor!.baseAC : 0;
   return base + shieldBonus + itemAcBonus + featBonusTotal(sheet, "acBonus") + activeEffectAcBonus(sheet);
+}
+
+/** Initiative modifier (#175): a Dexterity check, plus any flat feat/feature initiative bonus
+ * (Alert's +5). Kept as its own function rather than inlined at the display so the Arena/tracker
+ * can reuse it, and so the "initiative is Dex, but not *only* Dex" rule lives in one place. */
+export function initiativeBonus(sheet: Dnd5eSheetData): number {
+  return abilityModifier(effectiveAbilityScore(sheet, "dex")) + featBonusTotal(sheet, "initiativeBonus");
 }
 
 /** Sum of active buff effects' AC bonus (#174) -- the Shield spell's +5, a toggled item's ward.

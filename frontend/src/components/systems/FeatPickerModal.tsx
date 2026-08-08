@@ -15,6 +15,7 @@ const BLANK_BONUSES = {
   spellDCBonus: 0,
   spellAttackBonus: 0,
   saveBonus: 0,
+  initiativeBonus: 0,
   skillProficiencies: [] as string[],
 };
 
@@ -87,6 +88,7 @@ export function FeatPickerModal({
       spellDCBonus: d.spellDCBonus,
       spellAttackBonus: d.spellAttackBonus,
       saveBonus: d.saveBonus,
+      initiativeBonus: d.initiativeBonus,
       skillProficiencies: d.skillProficiencies,
       optionalAttackModifier: d.optionalAttackModifier,
       damageAbilityBonus: d.damageAbilityBonus,

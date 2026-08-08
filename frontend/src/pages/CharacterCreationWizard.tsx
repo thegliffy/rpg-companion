@@ -546,6 +546,7 @@ export function CharacterCreationWizard({
         spellDCBonus: feature.spellDCBonus,
         spellAttackBonus: feature.spellAttackBonus,
         saveBonus: feature.saveBonus,
+        initiativeBonus: feature.initiativeBonus,
         skillProficiencies: [],
       });
     }
@@ -564,6 +565,7 @@ export function CharacterCreationWizard({
         spellDCBonus: 0,
         spellAttackBonus: 0,
         saveBonus: 0,
+        initiativeBonus: 0,
       });
     }
 
@@ -584,6 +586,7 @@ export function CharacterCreationWizard({
             abilityBonuses: {},
             acBonus: 0,
             saveBonus: 0,
+        initiativeBonus: 0,
             armor: undefined,
             requiresAttunement: false,
             attuned: false,
@@ -632,6 +635,7 @@ export function CharacterCreationWizard({
         spellDCBonus: resolved.spellDCBonus,
         spellAttackBonus: resolved.spellAttackBonus,
         saveBonus: resolved.saveBonus,
+        initiativeBonus: resolved.initiativeBonus,
         skillProficiencies: resolved.skillProficiencies,
       });
       // Same feat-spell-${feat.id}-${i} tagging addFeat() uses on the sheet, so removing this
@@ -727,6 +731,7 @@ export function CharacterCreationWizard({
         spellDCBonus: trait.spellDCBonus,
         spellAttackBonus: trait.spellAttackBonus,
         saveBonus: trait.saveBonus,
+        initiativeBonus: trait.initiativeBonus,
         skillProficiencies: [],
       });
       darkvisionFeet = Math.max(darkvisionFeet, trait.darkvisionFeet);

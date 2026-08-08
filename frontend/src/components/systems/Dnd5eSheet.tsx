@@ -112,6 +112,7 @@ import {
   applyDamage,
   applyHealing,
   effectiveSpeed,
+  initiativeBonus,
 } from "shared";
 import * as charactersApi from "../../api/characters";
 import { useDiceRoll } from "../../dice/DiceRollContext";
@@ -496,6 +497,7 @@ export function Dnd5eSheet({
         spellDCBonus: f.spellDCBonus,
         spellAttackBonus: f.spellAttackBonus,
         saveBonus: f.saveBonus,
+        initiativeBonus: f.initiativeBonus,
         skillProficiencies: f.skillProficiencies,
       }));
 
@@ -729,6 +731,7 @@ export function Dnd5eSheet({
       spellDCBonus: grants?.spellDCBonus ?? 0,
       spellAttackBonus: grants?.spellAttackBonus ?? 0,
       saveBonus: grants?.saveBonus ?? 0,
+      initiativeBonus: 0,
       skillProficiencies: grants?.skillProficiencies ?? [],
     };
     const grantedSpells: Dnd5eSheetData["spells"] = (grants?.grantedSpells ?? []).map((gs, i) => ({
@@ -1731,7 +1734,7 @@ export function Dnd5eSheet({
               )}
             </span>
             <span>Initiative</span>
-            <strong>{formatModifier(abilityModifier(effectiveAbilityScore(sheet, "dex")))}</strong>
+            <strong title="Dexterity modifier plus any feat/feature initiative bonus (e.g. Alert)">{formatModifier(initiativeBonus(sheet))}</strong>
             <span>Speed</span>
             <span>
               <input type="number" value={sheet.speed} onChange={(e) => set("speed", Number(e.target.value) || 0)} style={numInput} />
@@ -3367,6 +3370,7 @@ export function Dnd5eSheet({
                 spellDCBonus: 0,
                 spellAttackBonus: 0,
                 saveBonus: 0,
+                initiativeBonus: 0,
                 skillProficiencies: [],
               },
             ])

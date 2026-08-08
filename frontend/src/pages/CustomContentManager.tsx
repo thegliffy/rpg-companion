@@ -232,6 +232,7 @@ interface TraitRow {
   spellDCBonus: string;
   spellAttackBonus: string;
   saveBonus: string;
+  initiativeBonus: string;
 }
 const emptyTraitRow = (): TraitRow => ({
   id: `trait-${crypto.randomUUID()}`,
@@ -248,6 +249,7 @@ const emptyTraitRow = (): TraitRow => ({
   spellDCBonus: "0",
   spellAttackBonus: "0",
   saveBonus: "0",
+  initiativeBonus: "0",
 });
 
 // "Name | atWill(yes/no)" per line -- atWill defaults to yes when omitted, since most racial
@@ -302,6 +304,7 @@ function dataToTraitRows(traits: RaceTrait[]): TraitRow[] {
       spellDCBonus: String(t.spellDCBonus),
       spellAttackBonus: String(t.spellAttackBonus),
       saveBonus: String(t.saveBonus),
+      initiativeBonus: String(t.initiativeBonus),
     };
   });
 }
@@ -402,6 +405,7 @@ interface BgFeatureRow {
   spellDCBonus: string;
   spellAttackBonus: string;
   saveBonus: string;
+  initiativeBonus: string;
 }
 const emptyBgFeatureRow = (): BgFeatureRow => ({
   id: `bg-feature-${crypto.randomUUID()}`,
@@ -414,6 +418,7 @@ const emptyBgFeatureRow = (): BgFeatureRow => ({
   spellDCBonus: "0",
   spellAttackBonus: "0",
   saveBonus: "0",
+  initiativeBonus: "0",
 });
 
 interface FeatGrantedSpellRow {
@@ -467,6 +472,7 @@ interface SubclassFeatureRow {
   spellDCBonus: string;
   spellAttackBonus: string;
   saveBonus: string;
+  initiativeBonus: string;
   skillProficiencies: string[];
   armorText: string; // comma-separated -- appended to the sheet's free-text proficiencies line
   weaponText: string;
@@ -484,6 +490,7 @@ const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
   spellDCBonus: "0",
   spellAttackBonus: "0",
   saveBonus: "0",
+  initiativeBonus: "0",
   skillProficiencies: [],
   armorText: "",
   weaponText: "",
@@ -719,6 +726,7 @@ export function CustomContentManager({
   const [featDC, setFeatDC] = useState("0");
   const [featSpellAtk, setFeatSpellAtk] = useState("0");
   const [featSaveBonus, setFeatSaveBonus] = useState("0");
+  const [featInitiativeBonus, setFeatInitiativeBonus] = useState("0");
   const [featSkillProficiencies, setFeatSkillProficiencies] = useState<string[]>([]);
   const [featGrantedSpells, setFeatGrantedSpells] = useState<FeatGrantedSpellRow[]>([]);
   const [featSpellChoices, setFeatSpellChoices] = useState<FeatSpellChoiceRow[]>([]);
@@ -1117,6 +1125,7 @@ export function CustomContentManager({
         spellDCBonus: Number(r.spellDCBonus) || 0,
         spellAttackBonus: Number(r.spellAttackBonus) || 0,
         saveBonus: Number(r.saveBonus) || 0,
+        initiativeBonus: Number(r.initiativeBonus) || 0,
       }));
   }
 
@@ -1160,6 +1169,7 @@ export function CustomContentManager({
     setFeatDC("0");
     setFeatSpellAtk("0");
     setFeatSaveBonus("0");
+    setFeatInitiativeBonus("0");
     setFeatOptAttackPenalty("0");
     setFeatOptDamageBonus("0");
     setFeatDamageAbilityBonus("");
@@ -1342,6 +1352,7 @@ export function CustomContentManager({
           spellDCBonus: String(f.spellDCBonus),
           spellAttackBonus: String(f.spellAttackBonus),
           saveBonus: String(f.saveBonus),
+          initiativeBonus: String(f.initiativeBonus),
         })),
       );
       setBgVariants(d.variants);
@@ -1393,6 +1404,7 @@ export function CustomContentManager({
           spellDCBonus: String(f.spellDCBonus),
           spellAttackBonus: String(f.spellAttackBonus),
           saveBonus: String(f.saveBonus),
+          initiativeBonus: String(f.initiativeBonus),
           skillProficiencies: f.skillProficiencies,
           armorText: f.armorProficiencies.join(", "),
           weaponText: f.weaponProficiencies.join(", "),
@@ -1430,6 +1442,7 @@ export function CustomContentManager({
         spellDCBonus: number;
         spellAttackBonus: number;
         saveBonus?: number;
+        initiativeBonus?: number;
         skillProficiencies?: string[];
         grantedSpells?: { name: string; level: number; atWill: boolean }[];
         spellChoices?: SpellChoice[];
@@ -1449,6 +1462,7 @@ export function CustomContentManager({
       setFeatDC(String(d.spellDCBonus));
       setFeatSpellAtk(String(d.spellAttackBonus));
       setFeatSaveBonus(String(d.saveBonus ?? 0));
+      setFeatInitiativeBonus(String(d.initiativeBonus ?? 0));
       setFeatOptAttackPenalty(String(d.optionalAttackModifier?.attackPenalty ?? 0));
       setFeatOptDamageBonus(String(d.optionalAttackModifier?.damageBonus ?? 0));
       setFeatDamageAbilityBonus(d.damageAbilityBonus ?? "");
@@ -1708,6 +1722,7 @@ export function CustomContentManager({
           spellDCBonus: Number(f.spellDCBonus) || 0,
           spellAttackBonus: Number(f.spellAttackBonus) || 0,
           saveBonus: Number(f.saveBonus) || 0,
+          initiativeBonus: Number(f.initiativeBonus) || 0,
         })),
       variants: bgVariants.filter((v) => v.title.trim() !== ""),
       variantPickCount: Number(bgVariantPickCount) || 1,
@@ -1795,6 +1810,7 @@ export function CustomContentManager({
               spellDCBonus: Number(f.spellDCBonus) || 0,
               spellAttackBonus: Number(f.spellAttackBonus) || 0,
               saveBonus: Number(f.saveBonus) || 0,
+              initiativeBonus: Number(f.initiativeBonus) || 0,
               skillProficiencies: f.skillProficiencies,
               armorProficiencies: splitCsv(f.armorText),
               weaponProficiencies: splitCsv(f.weaponText),
@@ -1826,6 +1842,7 @@ export function CustomContentManager({
           spellDCBonus: Number(featDC) || 0,
           spellAttackBonus: Number(featSpellAtk) || 0,
           saveBonus: Number(featSaveBonus) || 0,
+          initiativeBonus: Number(featInitiativeBonus) || 0,
           skillProficiencies: featSkillProficiencies,
           optionalAttackModifier:
             Number(featOptAttackPenalty) > 0 || Number(featOptDamageBonus) > 0
@@ -2101,6 +2118,7 @@ export function CustomContentManager({
                   ["Spell DC", "spellDCBonus"],
                   ["Spell atk", "spellAttackBonus"],
                   ["Save", "saveBonus"],
+                  ["Init", "initiativeBonus"],
                 ] as const
               ).map(([label, key]) => (
                 <label key={key}>
@@ -3267,6 +3285,7 @@ export function CustomContentManager({
                       ["Spell DC", "spellDCBonus"],
                       ["Spell atk", "spellAttackBonus"],
                       ["Save", "saveBonus"],
+                      ["Init", "initiativeBonus"],
                     ] as const
                   ).map(([label, key]) => (
                     <label key={key}>
@@ -3553,6 +3572,9 @@ export function CustomContentManager({
               </label>
               <label>
                 Save <input type="number" style={{ width: "3rem" }} value={featSaveBonus} onChange={(e) => setFeatSaveBonus(e.target.value)} />
+              </label>{" "}
+              <label title="Flat bonus to initiative only -- e.g. Alert's +5. Use an ability bonus instead if it should move every Dexterity check.">
+                Init <input type="number" style={{ width: "3rem" }} value={featInitiativeBonus} onChange={(e) => setFeatInitiativeBonus(e.target.value)} />
               </label>
             </div>
 

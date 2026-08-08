@@ -36,6 +36,11 @@ export const effectBonusesSchema = z.object({
   // race trait like Warforged's Constructed Resilience. Mirrors dnd5e.ts's effectEntrySchema,
   // which this feeds once a feat/feature/trait is granted onto a sheet.
   saveBonus: z.number().int().min(-10).max(10).default(0),
+  // Flat bonus to initiative (#175) -- e.g. Alert's +5. Initiative is a Dexterity check, so this
+  // is deliberately separate from abilityBonuses.dex, which would also move every other Dex
+  // check, save, and AC. Alert's other halves (can't be surprised, hidden attackers gain no
+  // advantage) stay description text -- they aren't numbers.
+  initiativeBonus: z.number().int().min(-10).max(10).default(0),
 });
 export type EffectBonuses = z.infer<typeof effectBonusesSchema>;
 
@@ -498,6 +503,7 @@ export function blankSubclassFeature(name: string, level: number): SubclassFeatu
     spellDCBonus: 0,
     spellAttackBonus: 0,
     saveBonus: 0,
+    initiativeBonus: 0,
     skillProficiencies: [],
     armorProficiencies: [],
     weaponProficiencies: [],
@@ -635,6 +641,7 @@ export interface ResolvedGrantedFeat {
   spellDCBonus: number;
   spellAttackBonus: number;
   saveBonus: number;
+  initiativeBonus: number;
   skillProficiencies: string[];
   grantedSpells: GrantedSpell[];
 }
@@ -658,6 +665,7 @@ export function resolveGrantedFeat(ref: string, customFeats: CustomContent[]): R
       spellDCBonus: 0,
       spellAttackBonus: 0,
       saveBonus: 0,
+      initiativeBonus: 0,
       skillProficiencies: [],
       grantedSpells: [],
     };
@@ -677,6 +685,7 @@ export function resolveGrantedFeat(ref: string, customFeats: CustomContent[]): R
     spellDCBonus: d.spellDCBonus,
     spellAttackBonus: d.spellAttackBonus,
     saveBonus: d.saveBonus,
+    initiativeBonus: d.initiativeBonus,
     skillProficiencies: d.skillProficiencies,
     grantedSpells: d.grantedSpells,
   };
