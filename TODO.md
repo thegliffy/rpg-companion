@@ -2064,3 +2064,44 @@ This closes out the full WP1-WP7 plan from the July 2026 custom-content bug repo
     way. `npx tsc --noEmit -p shared` / `npx tsc -b` clean throughout; both test suites still
     pass (shared 22/22, backend 21/21). Test character, custom spell, and throwaway users
     deleted after verification.
+
+172. ✅ **SRD data audit.** Full correctness pass over the in-repo SRD 5.1 tables. Most are
+    bulk-imported from 5e-bits/5e-database and verified clean; the hand-transcribed ones are
+    where the gaps were. **Verified correct, no changes needed:** all 9 races and 4 subraces
+    (ability bonuses, speed, size, languages, traits, Half-Orc's `extraCritDice`); all 12
+    classes' proficiencies (saves, armor, weapons, tools, skill-choice counts and lists); all
+    37 weapons and 13 armors (cost, weight, damage dice/type, properties, base AC, Dex cap,
+    stealth disadvantage) -- including the synthetic `Monk` weapon tag, which correctly marks
+    exactly the simple melee weapons without Heavy/Two-Handed, plus shortswords; every
+    spell-slot table across full casters, half casters, and warlock Pact Magic at all 20
+    levels; cantrips-known for all 6 casters; proficiency bonus 1-20; and all 32 Eldritch
+    Invocations (prereq level/pact/spell and granted-spell levels).
+
+    **Two real problems found and fixed in `srd-spell-scaling.ts`:**
+    - **Wall of Ice upcast was wrong.** It had `dicePerLevel: "1d6"`, but 1d6 is the
+      *pass-through* damage's upcast -- the spell's own `damageDice` (`10d6`) is the "when it
+      appears" damage, which upcasts by **2d6**. Every upcast Wall of Ice under-rolled: at a
+      9th-level slot it produced `10d6+3d6` instead of the correct `10d6+6d6`. Fixed to
+      `2d6`, with the pass-through figure kept as a `note` so the unmodelled half is still
+      visible rather than silently dropped.
+    - **22 spells were missing their "At Higher Levels" entirely** -- the note simply never
+      rendered, so a player upcasting them saw nothing. Added: Prayer of Healing, Magic
+      Weapon (2nd); Mass Healing Word, Animate Dead, Conjure Animals, Bestow Curse, Glyph of
+      Warding (3rd); Banishment, Dominate Beast, Divination, Conjure Woodland Beings, Conjure
+      Minor Elementals (4th); Dominate Person, Conjure Elemental, Geas, Arcane Hand (5th);
+      Heal, Conjure Fey, Create Undead (6th); Etherealness, Conjure Celestial (7th); Dominate
+      Monster (8th). Table went 47 -> 69 entries.
+
+    Also confirmed the *absence* of an entry is correct everywhere else: all 19 leveled damage
+    spells with no scaling entry (Blade Barrier, Finger of Death, Sunburst, Meteor Swarm, …)
+    genuinely have no "At Higher Levels" in SRD 5.1, and a control set of non-damage spells
+    (Web, Silence, Enlarge/Reduce, Animate Objects, Hallow, Symbol, …) likewise.
+
+**Verified (#172, done):** structural check confirms all 69 entries resolve to a real
+`SRD_SPELLS` id, no `dicePerLevel` sits on a spell with no base damage, and no entry is empty.
+Spot-checked the arithmetic (`scaledSpellDamage`): Wall of Ice at 9th = `10d6+6d6`, Fireball at
+5th = `8d6+2d6`, Disintegrate at 8th = `10d6 + 40+6d6`, Circle of Death at 7th = `8d6+2d6`. Live
+in the browser on a level-17 wizard: the three new notes render under Wall of Ice, Banishment,
+and Dominate Monster, and selecting a 9th-level slot for Wall of Ice shows "(at 9: 10d6+6d6
+cold)" -- the corrected value. `tsc` clean across all three packages; both suites pass (shared
+22/22, backend 21/21). Test character and throwaway user deleted after verification.

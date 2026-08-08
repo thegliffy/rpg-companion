@@ -48,6 +48,10 @@ export const SRD_SPELL_SCALING: Record<string, SpellScaling> = {
   aid: { note: "Targets' hit point maximum and current hit points increase by 5 more for each slot level above 2nd." },
   invisibility: { note: "Targets one additional creature for each slot level above 2nd." },
   "hold-person": { note: "Targets one additional creature for each slot level above 2nd." },
+  "prayer-of-healing": { note: "Healing increases by 1d8 for each slot level above 2nd." },
+  // The base +1 is modelled as a buff (SRD_SPELL_EFFECTS); the upcast tiers aren't, so they're
+  // surfaced as text rather than silently ignored.
+  "magic-weapon": { note: "The bonus increases to +2 with a slot of 4th level or higher, and to +3 with a slot of 6th level or higher." },
 
   // --- Level 3 ---
   "call-lightning": { dicePerLevel: "1d10" },
@@ -55,12 +59,28 @@ export const SRD_SPELL_SCALING: Record<string, SpellScaling> = {
   "lightning-bolt": { dicePerLevel: "1d6" },
   "vampiric-touch": { dicePerLevel: "1d6" },
   "dispel-magic": { note: "Automatically ends a spell of level equal to or less than the slot level used." },
+  "mass-healing-word": { note: "Healing increases by 1d4 for each slot level above 3rd." },
+  "animate-dead": { note: "Animates or reasserts control over two additional undead creatures for each slot level above 3rd." },
+  "conjure-animals": { note: "Summons twice as many beasts with a 5th-level slot, three times as many with a 7th-level slot, and four times as many with a 9th-level slot." },
+  "bestow-curse": {
+    note: "Duration becomes concentration up to 10 minutes (4th), 8 hours (5th-6th), or 24 hours (7th-8th); a 9th-level slot lasts until dispelled. A slot of 5th level or higher no longer requires concentration.",
+  },
+  // The explosive-runes damage isn't carried as damageDice (the spell has several glyph modes), so
+  // this stays a note rather than dicePerLevel.
+  "glyph-of-warding": {
+    note: "An explosive runes glyph's damage increases by 1d8 for each slot level above 3rd. A spell glyph can store any spell up to the level of the slot used.",
+  },
 
   // --- Level 4 ---
   blight: { dicePerLevel: "1d8" },
   "ice-storm": { dicePerLevel: "1d8" },
   "phantasmal-killer": { dicePerLevel: "1d10" },
   "wall-of-fire": { dicePerLevel: "1d8" },
+  banishment: { note: "Targets one additional creature for each slot level above 4th." },
+  "dominate-beast": { note: "Duration becomes concentration up to 10 minutes (5th), 1 hour (6th), or 8 hours (7th or higher)." },
+  divination: { note: "The chance of a random reading increases by 25% for each slot level above 4th." },
+  "conjure-woodland-beings": { note: "Summons twice as many creatures with a 6th-level slot, and three times as many with an 8th-level slot." },
+  "conjure-minor-elementals": { note: "Summons twice as many elementals with a 6th-level slot, and three times as many with an 8th-level slot." },
 
   // --- Level 5 ---
   cloudkill: { dicePerLevel: "1d8" },
@@ -70,21 +90,38 @@ export const SRD_SPELL_SCALING: Record<string, SpellScaling> = {
   "mass-cure-wounds": { note: "Heals an additional 1d8 for each slot level above 5th." },
   "hold-monster": { note: "Targets one additional creature for each slot level above 5th." },
   "planar-binding": { note: "Duration increases with slot level: 10 days (6th), 30 days (7th), 180 days (8th), a year and a day (9th)." },
+  "dominate-person": { note: "Duration becomes concentration up to 10 minutes (6th), 1 hour (7th), or 8 hours (8th or higher)." },
+  "conjure-elemental": { note: "The summoned elemental's challenge rating increases by 1 for each slot level above 5th." },
+  geas: { note: "Duration becomes 1 year with a 7th- or 8th-level slot; a 9th-level slot lasts until ended by a spell that removes it." },
+  "arcane-hand": { note: "Clenched fist damage increases by 2d8 and grasping hand damage by 2d6 for each slot level above 5th." },
 
   // --- Level 6 ---
   "circle-of-death": { dicePerLevel: "2d6" },
   disintegrate: { dicePerLevel: "3d6" },
   "freezing-sphere": { dicePerLevel: "1d6" },
-  "wall-of-ice": { dicePerLevel: "1d6" },
+  // 2d6, not 1d6: Wall of Ice upcasts its *appear* damage by 2d6 and its pass-through damage by
+  // 1d6, and the 10d6 this spell carries as damageDice is the appear damage -- so the pass-through
+  // figure would silently under-roll the one damage the app actually rolls.
+  "wall-of-ice": { dicePerLevel: "2d6", note: "Damage for passing through the wall (not rolled here) increases by 1d6 for each slot level above 6th." },
   "wall-of-thorns": { dicePerLevel: "1d8" },
   "chain-lightning": { note: "Targets one additional creature for each slot level above 6th." },
+  heal: { note: "Healing increases by 10 hit points for each slot level above 6th." },
+  "conjure-fey": { note: "The summoned fey's challenge rating increases by 1 for each slot level above 6th." },
+  "create-undead": {
+    note: "Animates or reasserts control over four ghouls (7th); five ghouls, two ghasts or wights, or two mummies (8th); six ghouls, three ghasts or wights, or three mummies (9th).",
+  },
 
   // --- Level 7 ---
   "delayed-blast-fireball": { dicePerLevel: "1d6" },
+  etherealness: { note: "Targets up to three willing creatures (including you) for each slot level above 7th." },
+  "conjure-celestial": { note: "With a 9th-level slot, summons a celestial of challenge rating 5 or lower." },
 
-  // Levels 8-9: no SRD spell in this dataset gains a scaling upcast (a 9th-level spell has no
-  // higher slot to use, and the 8th-level damage spells here -- Feeblemind, Incendiary Cloud,
-  // Sunburst -- have no "At Higher Levels" entry).
+  // --- Level 8 ---
+  "dominate-monster": { note: "With a 9th-level slot, the duration is concentration, up to 8 hours." },
+
+  // Level 9: nothing to scale -- a 9th-level spell has no higher slot to be cast with. The other
+  // 8th-level damage spells here (Feeblemind, Incendiary Cloud, Sunburst) have no "At Higher
+  // Levels" entry of their own.
 };
 
 /** Multiplier applied to a damage cantrip's dice *count* at character levels 5/11/17 -- the
