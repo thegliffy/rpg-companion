@@ -60,6 +60,7 @@ const EMPTY_BUFF = {
   acBonus: 0,
   speedBonus: 0,
   speedMultiplier: 1,
+  damageTypeOptions: [] as string[],
 };
 
 export function CharacterCreationWizard({
@@ -348,11 +349,17 @@ export function CharacterCreationWizard({
     });
   }
 
-  function toggleVariant(count: number, variantId: string) {
+  // Tables are independent (#180): picking in one must never touch a selection already made in
+  // another (Far Traveler's "reason" and "homeland" tables are chosen separately). Scoped by which
+  // variant ids belong to *this* table -- everything selected outside it passes through untouched.
+  function toggleVariant(table: { pickCount: number; variants: { id: string }[] }, variantId: string) {
+    const tableIds = new Set(table.variants.map((v) => v.id));
     setBgVariantSel((prev) => {
-      if (prev.includes(variantId)) return prev.filter((v) => v !== variantId);
-      if (count <= 1) return [variantId];
-      if (prev.length < count) return [...prev, variantId];
+      const outside = prev.filter((id) => !tableIds.has(id));
+      const inside = prev.filter((id) => tableIds.has(id));
+      if (inside.includes(variantId)) return [...outside, ...inside.filter((id) => id !== variantId)];
+      if (table.pickCount <= 1) return [...outside, variantId];
+      if (inside.length < table.pickCount) return [...outside, ...inside, variantId];
       return prev;
     });
   }
@@ -364,8 +371,13 @@ export function CharacterCreationWizard({
     );
     const toolOk = resolvedBackgroundData.tools.choices.every((c, i) => (bgToolChoiceSel[i]?.length ?? 0) === c.count);
     const langOk = bgLanguageSel.length === resolvedBackgroundData.languages.anyCount;
-    const variantOk =
-      resolvedBackgroundData.variants.length === 0 || bgVariantSel.length === resolvedBackgroundData.variantPickCount;
+    // Every table with an actual pick requirement must be satisfied independently -- a
+    // pickCount: 0 (reference-only) table has nothing to check.
+    const variantOk = resolvedBackgroundData.variantTables.every((t) => {
+      if (t.pickCount === 0) return true;
+      const picked = bgVariantSel.filter((id) => t.variants.some((v) => v.id === id)).length;
+      return picked === t.pickCount;
+    });
     return skillOk && toolOk && langOk && variantOk;
   }, [resolvedBackgroundData, bgSkillChoiceSel, bgToolChoiceSel, bgLanguageSel, bgVariantSel]);
 
@@ -552,8 +564,9 @@ export function CharacterCreationWizard({
         damageAbilityBonus: feature.damageAbilityBonus,
       });
     }
+    const allVariants = data.variantTables.flatMap((t) => t.variants);
     for (const variantId of bgVariantSel) {
-      const variant = data.variants.find((v) => v.id === variantId);
+      const variant = allVariants.find((v) => v.id === variantId);
       if (!variant) continue;
       features.push({
         id: `bg-variant-${variant.id}-${crypto.randomUUID()}`,
@@ -1283,34 +1296,39 @@ export function CharacterCreationWizard({
                       </div>
                     </div>
                   )}
-                  {resolvedBackgroundData && resolvedBackgroundData.variants.length > 0 && (
-                    <div style={{ marginTop: "0.5rem" }}>
-                      <small>
-                        Choose {resolvedBackgroundData.variantPickCount} ({bgVariantSel.length}/
-                        {resolvedBackgroundData.variantPickCount} selected):
-                      </small>
-                      {resolvedBackgroundData.variants.map((v) => (
-                        <label
-                          key={v.id}
-                          style={{
-                            display: "block",
-                            border: "1px solid var(--border-subtle)",
-                            borderRadius: 6,
-                            padding: "0.4rem",
-                            marginTop: "0.3rem",
-                          }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={bgVariantSel.includes(v.id)}
-                            onChange={() => toggleVariant(resolvedBackgroundData.variantPickCount, v.id)}
-                          />{" "}
-                          <strong>{v.title}</strong>
-                          {v.description && <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{v.description}</div>}
-                        </label>
-                      ))}
-                    </div>
-                  )}
+                  {resolvedBackgroundData?.variantTables.map((table) => {
+                    const pickedInTable = bgVariantSel.filter((id) => table.variants.some((v) => v.id === id)).length;
+                    return (
+                      <div key={table.id} style={{ marginTop: "0.5rem" }}>
+                        <small>
+                          {table.title || "Variants"}
+                          {table.pickCount > 0 ? ` -- choose ${table.pickCount} (${pickedInTable}/${table.pickCount} selected):` : ":"}
+                        </small>
+                        {table.variants.map((v) => (
+                          <label
+                            key={v.id}
+                            style={{
+                              display: "block",
+                              border: "1px solid var(--border-subtle)",
+                              borderRadius: 6,
+                              padding: "0.4rem",
+                              marginTop: "0.3rem",
+                            }}
+                          >
+                            {/* pickCount 0 is reference-only (oath tenets, Mercy's masks) -- shown
+                                as flavor text, nothing to pick, so no checkbox at all (#180). */}
+                            {table.pickCount > 0 && (
+                              <>
+                                <input type="checkbox" checked={bgVariantSel.includes(v.id)} onChange={() => toggleVariant(table, v.id)} />{" "}
+                              </>
+                            )}
+                            <strong>{v.title}</strong>
+                            {v.description && <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{v.description}</div>}
+                          </label>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </>
               ) : (
                 <input value={background} onChange={(e) => setBackground(e.target.value)} />

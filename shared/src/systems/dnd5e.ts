@@ -168,6 +168,14 @@ export const buffEffectSchema = z.object({
   // without knowing the base. Applied as (base + bonus) * multiplier by effectiveSpeed().
   speedBonus: z.number().int().min(-60).max(60).default(0),
   speedMultiplier: z.number().min(0.5).max(3).default(1),
+  // A choice of damage type instead of one fixed type (#180) -- e.g. Spirit Guardians' radiant
+  // (good) or necrotic (evil), decided by the caster at the point they create the effect. When
+  // non-empty the cast control asks which to apply and writes the chosen one into `damageType` on
+  // the resulting activeEffect entry -- damage-rolling code only ever reads the single
+  // `damageType` field, never this one, so nothing downstream needs to know a choice was
+  // involved. Empty (the default) means "use damageType as-is", so every existing buff behaves
+  // exactly as before.
+  damageTypeOptions: z.array(z.string().trim().max(30)).max(4).default([]),
 }).strict();
 export type BuffEffect = z.infer<typeof buffEffectSchema>;
 

@@ -91,6 +91,9 @@ export function SpellCastControl({
   // character actually has a higher slot free (see availableSlotLevels).
   const [castLevel, setCastLevel] = useState(spell.level);
   const [rollMode, setRollMode] = useState<RollMode>("normal");
+  // Alignment-split damage (Spirit-Guardians-style radiant/necrotic) -- when the resolved buff
+  // offers a choice, the caster picks one here before casting rather than the type being fixed.
+  const [chosenDamageType, setChosenDamageType] = useState<string>(buff?.damageTypeOptions?.[0] ?? "");
   const scopedRollRef = useRef<((formula: string, label?: string) => Promise<DiceRoll>) | null>(null);
 
   const upcastLevels = consumesSlot ? availableSlotLevels.filter((l) => l >= spell.level) : [];
@@ -132,7 +135,13 @@ export function SpellCastControl({
 
     if (consumesSlot) onConsumeSlot?.(effectiveCastLevel);
     if (spell.concentration) onConcentrate?.();
-    if (buff) onBuff?.(buff);
+    if (buff) {
+      const effectiveBuff =
+        buff.damageTypeOptions.length > 0
+          ? { ...buff, damageType: chosenDamageType || buff.damageTypeOptions[0] }
+          : buff;
+      onBuff?.(effectiveBuff);
+    }
 
     if (spell.requiresAttackRoll) {
       setPhase("rolling");
@@ -226,6 +235,18 @@ export function SpellCastControl({
           </select>
         </label>
       )}
+      {buff && buff.damageTypeOptions.length > 0 && (
+        <label style={{ marginLeft: "0.4rem", fontSize: "0.85rem" }}>
+          damage type{" "}
+          <select value={chosenDamageType} onChange={(e) => setChosenDamageType(e.target.value)}>
+            {buff.damageTypeOptions.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {ritualOnly && <small style={{ marginLeft: "0.4rem", color: "var(--text-muted)" }}>(no slot used, +10 min)</small>}
       {consumesSlot && !hasSlot && (
         <small style={{ marginLeft: "0.4rem", color: "var(--danger)" }}>(no slot available)</small>
@@ -241,7 +262,15 @@ export function SpellCastControl({
           {[
             buff.attackDice ? `${formatDiceTerm(buff.attackDice)} to hit` : "",
             buff.attackBonus ? `${formatModifier(buff.attackBonus)} to hit` : "",
-            buff.damageDice ? `${formatDiceTerm(buff.damageDice)}${buff.damageType ? ` ${buff.damageType}` : ""} dmg` : "",
+            buff.damageDice
+              ? `${formatDiceTerm(buff.damageDice)}${
+                  buff.damageTypeOptions.length > 0
+                    ? ` ${chosenDamageType || buff.damageTypeOptions[0]}`
+                    : buff.damageType
+                      ? ` ${buff.damageType}`
+                      : ""
+                } dmg`
+              : "",
             buff.damageBonus ? `${formatModifier(buff.damageBonus)} dmg` : "",
             buff.saveDice ? `${formatDiceTerm(buff.saveDice)} to saves` : "",
           ]

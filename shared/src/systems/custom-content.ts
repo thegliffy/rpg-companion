@@ -259,6 +259,19 @@ const backgroundVariantSchema = z.object({
   description: z.string().trim().max(500).default(""),
 }).strict();
 
+// A titled "lore box" table (#180) -- e.g. Far Traveler's two *independent* tables (reason for
+// travelling, homeland), where a single flat variants[] + one pick count couldn't express "pick
+// one from table A AND one from table B" at all. `pickCount: 0` is a pure-reference table with no
+// selection at all (oath tenets, Mercy's masks) -- shown as flavor text, nothing to pick, nothing
+// granted.
+const backgroundVariantTableSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().trim().max(60).default(""),
+  pickCount: z.number().int().min(0).max(5).default(1),
+  variants: z.array(backgroundVariantSchema).max(20).default([]),
+}).strict();
+export type BackgroundVariantTable = z.infer<typeof backgroundVariantTableSchema>;
+
 // A background feature (#100) -- some SRD-parity backgrounds grant more than one distinct
 // feature, so this is a repeatable array rather than the single {name, description} pair it
 // used to be. Carries the same effect-bonus row a feat does, so a homebrew feature can grant a
@@ -302,11 +315,11 @@ const rawCustomBackgroundDataSchema = z.object({
   // #100: repeatable so a background can grant more than one distinct feature, each with its own
   // effect bonuses -- was a single {name, description} pair (see the preprocess migration below).
   features: z.array(backgroundFeatureSchema).max(5).default([]),
-  // "Lore boxes" -- a pick-one (or pick-N) set of themed flavor variants, e.g. which faction/
-  // origin/god the background attaches to. v1 is flavor-only (title + description); a per-variant
-  // mechanical tweak is a natural future extension once a concrete need shows up.
-  variants: z.array(backgroundVariantSchema).max(20).default([]),
-  variantPickCount: z.number().int().min(0).max(5).default(1),
+  // "Lore box" tables (#180) -- independent pick-one/pick-N sets of themed flavor variants, e.g.
+  // Far Traveler's separate "reason for travelling" and "homeland" tables. Flavor-only (title +
+  // description per variant); a per-variant mechanical tweak is a natural future extension once a
+  // concrete need shows up.
+  variantTables: z.array(backgroundVariantTableSchema).max(5).default([]),
   // Feats this background grants outright at character creation (#126) -- e.g. a homebrew
   // background paired with a homebrew bonus feat. References are an SRD feat id or `custom-${id}`,
   // the same SRD-then-custom convention #109 established for spell references, resolved via
@@ -336,7 +349,7 @@ function upgradeSingularFeature(feature: { name?: string; description?: string }
   ];
 }
 
-// Upgrades two prior shapes into the current one, so old custom-content rows keep parsing
+// Upgrades three prior shapes into the current one, so old custom-content rows keep parsing
 // without a data migration (the JSON blob in custom_content.data never changes; only how we
 // read it does):
 //   1. The legacy flat shape ({skillProficiencies, feature: string, toolProficiencies,
@@ -344,11 +357,16 @@ function upgradeSingularFeature(feature: { name?: string; description?: string }
 //   2. The structured-but-pre-#100 shape (singular `feature: {name, description}` instead of
 //      `features: [...]`) -- what every background created between the structured redesign and
 //      #100 stored, including the SRD Acolyte background synthesized on the fly by the wizard.
+//   3. The pre-#180 shape (flat `variants[]` + one `variantPickCount`, instead of the current
+//      `variantTables[]`) -- wrapped into a single untitled table, the same one pick-N list it
+//      always was, just in the shape that now supports more than one independent table.
 export const customBackgroundDataSchema = z.preprocess((raw) => {
   const input = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const isLegacyFlat =
     !("skills" in input) &&
     ("skillProficiencies" in input || "feature" in input || "toolProficiencies" in input || "equipmentText" in input);
+
+  let upgraded: Record<string, unknown>;
   if (isLegacyFlat) {
     const legacy = input as {
       skillProficiencies?: string[];
@@ -356,23 +374,32 @@ export const customBackgroundDataSchema = z.preprocess((raw) => {
       toolProficiencies?: string[];
       equipmentText?: string;
     };
-    return {
+    upgraded = {
       skills: { fixed: legacy.skillProficiencies ?? [], choices: [] },
       tools: { fixed: legacy.toolProficiencies ?? [], choices: [] },
       languages: { fixed: [], anyCount: 0 },
       equipment: { items: legacy.equipmentText ? [legacy.equipmentText] : [], gold: 0 },
       features: upgradeSingularFeature(legacy.feature ? { name: legacy.feature } : undefined),
-      variants: [],
-      variantPickCount: 1,
+    };
+  } else if ("feature" in input && !("features" in input)) {
+    const { feature, ...rest } = input as { feature?: { name?: string; description?: string } };
+    upgraded = { ...rest, features: upgradeSingularFeature(feature) };
+  } else {
+    upgraded = input;
+  }
+
+  if ("variants" in upgraded && !("variantTables" in upgraded)) {
+    const { variants, variantPickCount, ...rest } = upgraded as { variants?: unknown[]; variantPickCount?: number };
+    upgraded = {
+      ...rest,
+      variantTables:
+        Array.isArray(variants) && variants.length > 0
+          ? [{ id: newEntityId("bg-variant-table-migrated"), title: "", pickCount: variantPickCount ?? 1, variants }]
+          : [],
     };
   }
 
-  if ("feature" in input && !("features" in input)) {
-    const { feature, ...rest } = input as { feature?: { name?: string; description?: string } };
-    return { ...rest, features: upgradeSingularFeature(feature) };
-  }
-
-  return input;
+  return upgraded;
 }, rawCustomBackgroundDataSchema);
 export type CustomBackgroundData = z.infer<typeof customBackgroundDataSchema>;
 export type BackgroundSkillChoice = z.infer<typeof skillChoiceSchema>;
@@ -408,8 +435,7 @@ export function formatBackgroundGrants(data: CustomBackgroundData): {
   languages: string;
   equipment: string;
   features: BackgroundFeature[];
-  variants: BackgroundVariant[];
-  variantPickCount: number;
+  variantTables: BackgroundVariantTable[];
 } {
   const skillParts = data.skills.fixed.map(skillLabel);
   for (const choice of data.skills.choices) {
@@ -444,8 +470,7 @@ export function formatBackgroundGrants(data: CustomBackgroundData): {
     languages: joinEnglish(langParts),
     equipment: joinEnglish(equipParts),
     features: data.features,
-    variants: data.variants,
-    variantPickCount: data.variantPickCount,
+    variantTables: data.variantTables,
   };
 }
 
@@ -952,6 +977,7 @@ const NO_TOGGLE: BuffEffect = {
   acBonus: 0,
   speedBonus: 0,
   speedMultiplier: 1,
+  damageTypeOptions: [],
 };
 
 export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id: string) => CustomContent | undefined): ResolvedInventoryItem[] {

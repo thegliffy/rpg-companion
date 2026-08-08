@@ -84,6 +84,30 @@ describe("hasBuffEffect", () => {
   it("is not fooled by a damage type with no dice behind it", () => {
     assert.equal(hasBuffEffect(buffEffectSchema.parse({ damageType: "fire" })), false);
   });
+
+  it("is not fooled by damage type options with no dice behind them either (#180)", () => {
+    assert.equal(hasBuffEffect(buffEffectSchema.parse({ damageTypeOptions: ["radiant", "necrotic"] })), false);
+  });
+
+  it("still recognises a damage-dice buff that also carries type options", () => {
+    assert.equal(
+      hasBuffEffect(buffEffectSchema.parse({ damageDice: "3d8", damageTypeOptions: ["radiant", "necrotic"] })),
+      true,
+    );
+  });
+});
+
+describe("buffEffectSchema damageTypeOptions (#180)", () => {
+  it("defaults to empty -- damageType behaves exactly as before when no choice is authored", () => {
+    const buff = buffEffectSchema.parse({ damageDice: "1d6", damageType: "fire" });
+    assert.deepEqual(buff.damageTypeOptions, []);
+    assert.equal(buff.damageType, "fire");
+  });
+
+  it("round-trips an authored set of alignment-split options", () => {
+    const buff = buffEffectSchema.parse({ damageDice: "3d8", damageTypeOptions: ["radiant", "necrotic"] });
+    assert.deepEqual(buff.damageTypeOptions, ["radiant", "necrotic"]);
+  });
 });
 
 describe("initiativeBonus", () => {

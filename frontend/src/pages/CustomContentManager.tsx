@@ -394,6 +394,22 @@ interface BgVariantRow {
 }
 const emptyBgVariantRow = (): BgVariantRow => ({ id: `variant-${crypto.randomUUID()}`, title: "", description: "" });
 
+// A titled table of variants (#180) -- e.g. Far Traveler's independent "reason for travelling"
+// and "homeland" tables. `pickCount: "0"` is a pure-reference table (oath tenets, Mercy's masks):
+// shown as flavor text in the wizard, nothing to pick, nothing granted.
+interface BgVariantTableRow {
+  id: string;
+  title: string;
+  pickCount: string;
+  variants: BgVariantRow[];
+}
+const emptyBgVariantTableRow = (): BgVariantTableRow => ({
+  id: `variant-table-${crypto.randomUUID()}`,
+  title: "",
+  pickCount: "1",
+  variants: [],
+});
+
 // #100: a background can grant more than one feature, each carrying the same effect-bonus row a
 // feat does. Numbers are kept as form-input strings, same convention as every other numeric field
 // in this manager (parsed with Number(...) || 0 at submit time in buildBackgroundData()).
@@ -725,8 +741,7 @@ export function CustomContentManager({
   const [bgEquipmentItems, setBgEquipmentItems] = useState(""); // comma-separated
   const [bgGold, setBgGold] = useState("0");
   const [bgFeatures, setBgFeatures] = useState<BgFeatureRow[]>([]);
-  const [bgVariants, setBgVariants] = useState<BgVariantRow[]>([]);
-  const [bgVariantPickCount, setBgVariantPickCount] = useState("1");
+  const [bgVariantTables, setBgVariantTables] = useState<BgVariantTableRow[]>([]);
   const [bgCloneFrom, setBgCloneFrom] = useState("");
   const [bgGrantedFeatsText, setBgGrantedFeatsText] = useState(""); // comma-separated feat names (#126)
 
@@ -795,6 +810,10 @@ export function CustomContentManager({
   const [spellBuffAcBonus, setSpellBuffAcBonus] = useState("0");
   const [spellBuffSpeedBonus, setSpellBuffSpeedBonus] = useState("0");
   const [spellBuffSpeedMultiplier, setSpellBuffSpeedMultiplier] = useState("1");
+  // A choice of damage type instead of one fixed type (#180) -- e.g. Spirit-Guardians-style
+  // radiant-or-necrotic, decided by the caster when the effect is created. Comma-separated;
+  // empty means "use Damage type as-is" (the existing single-type behavior).
+  const [spellBuffDamageTypeOptionsText, setSpellBuffDamageTypeOptionsText] = useState("");
   // "At Higher Levels" scaling (#117-120) -- dice appended per slot level above the spell's own
   // level, plus a freeform note for upcasts that aren't extra dice on one roll.
   const [spellScalingDicePerLevel, setSpellScalingDicePerLevel] = useState("");
@@ -834,6 +853,7 @@ export function CustomContentManager({
   const [itemToggleAcBonus, setItemToggleAcBonus] = useState("0");
   const [itemToggleSpeedBonus, setItemToggleSpeedBonus] = useState("0");
   const [itemToggleSpeedMultiplier, setItemToggleSpeedMultiplier] = useState("1");
+  const [itemToggleDamageTypeOptionsText, setItemToggleDamageTypeOptionsText] = useState("");
 
   // Monster fields
   const [monsterSize, setMonsterSize] = useState("Medium");
@@ -1177,8 +1197,7 @@ export function CustomContentManager({
     setBgEquipmentItems("");
     setBgGold("0");
     setBgFeatures([]);
-    setBgVariants([]);
-    setBgVariantPickCount("1");
+    setBgVariantTables([]);
     setBgCloneFrom("");
     setBgGrantedFeatsText("");
     setParentRace("");
@@ -1227,6 +1246,7 @@ export function CustomContentManager({
     setSpellBuffAcBonus("0");
     setSpellBuffSpeedBonus("0");
     setSpellBuffSpeedMultiplier("1");
+    setSpellBuffDamageTypeOptionsText("");
     setSpellScalingDicePerLevel("");
     setSpellScalingNote("");
     setItemDescription("");
@@ -1258,6 +1278,7 @@ export function CustomContentManager({
     setItemToggleAcBonus("0");
     setItemToggleSpeedBonus("0");
     setItemToggleSpeedMultiplier("1");
+    setItemToggleDamageTypeOptionsText("");
     setMonsterSize("Medium");
     setMonsterType("beast");
     setMonsterAlignment("unaligned");
@@ -1381,8 +1402,14 @@ export function CustomContentManager({
           initiativeBonus: String(f.initiativeBonus),
         })),
       );
-      setBgVariants(d.variants);
-      setBgVariantPickCount(String(d.variantPickCount));
+      setBgVariantTables(
+        d.variantTables.map((t) => ({
+          id: t.id,
+          title: t.title,
+          pickCount: String(t.pickCount),
+          variants: t.variants,
+        })),
+      );
       // Stored as reference ids; shown as names to edit, matching every other name-typed field
       // here. A ref that no longer resolves (SRD id typo'd, custom feat deleted) is shown as the
       // raw stored string rather than silently dropped, so re-saving the background doesn't lose
@@ -1544,6 +1571,7 @@ export function CustomContentManager({
           acBonus: number;
           speedBonus: number;
           speedMultiplier: number;
+          damageTypeOptions?: string[];
         };
         scalingDicePerLevel?: string;
         scalingNote?: string;
@@ -1572,6 +1600,7 @@ export function CustomContentManager({
       setSpellBuffAcBonus(String(d.buff?.acBonus ?? 0));
       setSpellBuffSpeedBonus(String(d.buff?.speedBonus ?? 0));
       setSpellBuffSpeedMultiplier(String(d.buff?.speedMultiplier ?? 1));
+      setSpellBuffDamageTypeOptionsText((d.buff?.damageTypeOptions ?? []).join(", "));
       setSpellScalingDicePerLevel(d.scalingDicePerLevel ?? "");
       setSpellScalingNote(d.scalingNote ?? "");
     } else if (item.type === "item") {
@@ -1607,6 +1636,7 @@ export function CustomContentManager({
           acBonus: number;
           speedBonus: number;
           speedMultiplier: number;
+          damageTypeOptions?: string[];
         };
       };
       setItemDescription(d.description ?? "");
@@ -1641,6 +1671,7 @@ export function CustomContentManager({
       setItemToggleAcBonus(String(d.toggledEffect?.acBonus ?? 0));
       setItemToggleSpeedBonus(String(d.toggledEffect?.speedBonus ?? 0));
       setItemToggleSpeedMultiplier(String(d.toggledEffect?.speedMultiplier ?? 1));
+      setItemToggleDamageTypeOptionsText((d.toggledEffect?.damageTypeOptions ?? []).join(", "));
     } else {
       const d = item.data as {
         size: string;
@@ -1755,8 +1786,14 @@ export function CustomContentManager({
           saveBonus: Number(f.saveBonus) || 0,
           initiativeBonus: Number(f.initiativeBonus) || 0,
         })),
-      variants: bgVariants.filter((v) => v.title.trim() !== ""),
-      variantPickCount: Number(bgVariantPickCount) || 1,
+      variantTables: bgVariantTables
+        .filter((t) => t.variants.some((v) => v.title.trim() !== ""))
+        .map((t) => ({
+          id: t.id,
+          title: t.title.trim(),
+          pickCount: Number(t.pickCount) || 0,
+          variants: t.variants.filter((v) => v.title.trim() !== ""),
+        })),
       grantedFeats: bgGrantedFeatsText
         .split(",")
         .map((s) => s.trim())
@@ -1948,6 +1985,7 @@ export function CustomContentManager({
             acBonus: Number(spellBuffAcBonus) || 0,
             speedBonus: Number(spellBuffSpeedBonus) || 0,
             speedMultiplier: Number(spellBuffSpeedMultiplier) || 1,
+            damageTypeOptions: splitCsv(spellBuffDamageTypeOptionsText),
           },
           scalingDicePerLevel: spellScalingDicePerLevel.trim(),
           scalingNote: spellScalingNote.trim(),
@@ -1985,6 +2023,7 @@ export function CustomContentManager({
             acBonus: Number(itemToggleAcBonus) || 0,
             speedBonus: Number(itemToggleSpeedBonus) || 0,
             speedMultiplier: Number(itemToggleSpeedMultiplier) || 1,
+            damageTypeOptions: splitCsv(itemToggleDamageTypeOptionsText),
           },
         };
       } else {
@@ -3161,50 +3200,97 @@ export function CustomContentManager({
               Add feature
             </button>
 
-            <h4 style={{ marginTop: "1rem" }}>Variants ("lore boxes")</h4>
+            <h4 style={{ marginTop: "1rem" }}>Variant tables ("lore boxes")</h4>
             <p>
               <small>
-                A pick-one (or pick-N) set of themed flavor options -- e.g. which faction, origin, or patron the
-                background attaches to.
+                Independent pick-one (or pick-N) sets of themed flavor options -- e.g. Far Traveler's separate
+                "reason for travelling" and "homeland" tables. Add more than one table for choices the player makes
+                independently of each other. A table with "Player picks" set to 0 is reference-only (oath tenets,
+                Mercy's masks) -- shown as flavor text, nothing to pick.
               </small>
             </p>
-            {bgVariants.map((v, i) => (
-              <div key={v.id} style={{ border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "0.5rem", marginBottom: "0.4rem" }}>
+            {bgVariantTables.map((table, ti) => (
+              <div key={table.id} style={{ border: "1px solid var(--border-subtle)", borderRadius: 6, padding: "0.5rem", marginBottom: "0.5rem" }}>
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                   <input
-                    placeholder="Title"
-                    value={v.title}
-                    onChange={(e) => setBgVariants((prev) => prev.map((r, j) => (j === i ? { ...r, title: e.target.value } : r)))}
+                    placeholder="Table title (e.g. Reason for Travelling)"
+                    value={table.title}
+                    onChange={(e) => setBgVariantTables((prev) => prev.map((t, j) => (j === ti ? { ...t, title: e.target.value } : t)))}
                     style={{ flex: 1 }}
                   />
-                  <button type="button" onClick={() => setBgVariants((prev) => prev.filter((_, j) => j !== i))}>
-                    Remove
+                  <label title="How many the player picks from this table. 0 = reference-only, nothing to pick.">
+                    Player picks{" "}
+                    <input
+                      type="number"
+                      min={0}
+                      max={5}
+                      value={table.pickCount}
+                      onChange={(e) => setBgVariantTables((prev) => prev.map((t, j) => (j === ti ? { ...t, pickCount: e.target.value } : t)))}
+                      style={{ width: "3rem" }}
+                    />
+                  </label>
+                  <button type="button" onClick={() => setBgVariantTables((prev) => prev.filter((_, j) => j !== ti))}>
+                    Remove table
                   </button>
                 </div>
-                <textarea
-                  placeholder="Description"
-                  value={v.description}
-                  onChange={(e) => setBgVariants((prev) => prev.map((r, j) => (j === i ? { ...r, description: e.target.value } : r)))}
-                  rows={2}
-                  style={{ width: "100%", marginTop: "0.3rem" }}
-                />
+                {table.variants.map((v, vi) => (
+                  <div
+                    key={v.id}
+                    style={{ border: "1px solid var(--border-faint)", borderRadius: 6, padding: "0.5rem", marginTop: "0.4rem" }}
+                  >
+                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                      <input
+                        placeholder="Title"
+                        value={v.title}
+                        onChange={(e) =>
+                          setBgVariantTables((prev) =>
+                            prev.map((t, j) =>
+                              j === ti ? { ...t, variants: t.variants.map((r, k) => (k === vi ? { ...r, title: e.target.value } : r)) } : t,
+                            ),
+                          )
+                        }
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setBgVariantTables((prev) =>
+                            prev.map((t, j) => (j === ti ? { ...t, variants: t.variants.filter((_, k) => k !== vi) } : t)),
+                          )
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <textarea
+                      placeholder="Description"
+                      value={v.description}
+                      onChange={(e) =>
+                        setBgVariantTables((prev) =>
+                          prev.map((t, j) =>
+                            j === ti ? { ...t, variants: t.variants.map((r, k) => (k === vi ? { ...r, description: e.target.value } : r)) } : t,
+                          ),
+                        )
+                      }
+                      rows={2}
+                      style={{ width: "100%", marginTop: "0.3rem" }}
+                    />
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() =>
+                    setBgVariantTables((prev) => prev.map((t, j) => (j === ti ? { ...t, variants: [...t.variants, emptyBgVariantRow()] } : t)))
+                  }
+                  style={{ marginTop: "0.4rem" }}
+                >
+                  Add variant
+                </button>
               </div>
             ))}
-            <button type="button" onClick={() => setBgVariants((prev) => [...prev, emptyBgVariantRow()])}>
-              Add variant
+            <button type="button" onClick={() => setBgVariantTables((prev) => [...prev, emptyBgVariantTableRow()])}>
+              Add table
             </button>
-            {bgVariants.length > 0 && (
-              <label style={{ marginLeft: "1rem" }}>
-                Player picks{" "}
-                <input
-                  type="number"
-                  min={0}
-                  value={bgVariantPickCount}
-                  onChange={(e) => setBgVariantPickCount(e.target.value)}
-                  style={{ width: "3rem" }}
-                />
-              </label>
-            )}
 
             {(() => {
               const preview = formatBackgroundGrants(buildBackgroundData());
@@ -3244,14 +3330,15 @@ export function CustomContentManager({
                       </p>
                     );
                   })}
-                  {preview.variants.length > 0 && (
-                    <p style={{ margin: "0.2rem 0" }}>
+                  {preview.variantTables.map((t) => (
+                    <p key={t.id} style={{ margin: "0.2rem 0" }}>
                       <strong>
-                        Choose {preview.variantPickCount} of {preview.variants.length}:
+                        {t.title || "Variants"}
+                        {t.pickCount > 0 ? `: choose ${t.pickCount} of ${t.variants.length}` : " (reference only)"}
                       </strong>{" "}
-                      {preview.variants.map((v) => v.title).join(", ")}
+                      {t.variants.map((v) => v.title).join(", ")}
                     </p>
-                  )}
+                  ))}
                 </div>
               );
             })()}
@@ -4233,6 +4320,16 @@ export function CustomContentManager({
                 />
               </label>
               <label>
+                Damage type options{" "}
+                <input
+                  value={spellBuffDamageTypeOptionsText}
+                  onChange={(e) => setSpellBuffDamageTypeOptionsText(e.target.value)}
+                  placeholder="e.g. radiant, necrotic"
+                  style={{ width: "10rem" }}
+                  title="Comma-separated. When set, the caster picks one of these damage types when casting instead of a single fixed Damage type."
+                />
+              </label>
+              <label>
                 Applies{" "}
                 <select value={spellBuffConsumption} onChange={(e) => setSpellBuffConsumption(e.target.value as "per-hit" | "once")}>
                   <option value="per-hit">Every hit, until it ends</option>
@@ -4512,6 +4609,16 @@ export function CustomContentManager({
                   onChange={(e) => setItemToggleSpeedMultiplier(e.target.value)}
                   style={{ width: "3.5rem" }}
                   title="Speed multiplier, e.g. 2 for Boots of Speed. Applied after the flat bonus."
+                />
+              </label>
+              <label>
+                Damage type options{" "}
+                <input
+                  value={itemToggleDamageTypeOptionsText}
+                  onChange={(e) => setItemToggleDamageTypeOptionsText(e.target.value)}
+                  placeholder="e.g. radiant, necrotic"
+                  style={{ width: "10rem" }}
+                  title="Comma-separated. When set, the wearer picks one of these damage types when activating instead of a single fixed Damage type."
                 />
               </label>
               <label>

@@ -2968,7 +2968,7 @@ export function Dnd5eSheet({
                 attuned: false,
                 value: 0,
                 grantedResistances: [],
-                toggledEffect: { attackBonus: 0, attackDice: "", damageBonus: 0, damageDice: "", damageType: "", saveDice: "", consumption: "per-hit" as const, appliesToSpellAttacks: false, acBonus: 0, speedBonus: 0, speedMultiplier: 1 },
+                toggledEffect: { attackBonus: 0, attackDice: "", damageBonus: 0, damageDice: "", damageType: "", saveDice: "", consumption: "per-hit" as const, appliesToSpellAttacks: false, acBonus: 0, speedBonus: 0, speedMultiplier: 1, damageTypeOptions: [] },
               },
             ])
           }

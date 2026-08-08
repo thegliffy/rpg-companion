@@ -24,6 +24,7 @@ const per = (buff: Partial<BuffEffect>): BuffEffect => ({
   acBonus: 0,
   speedBonus: 0,
   speedMultiplier: 1,
+  damageTypeOptions: [],
   ...buff,
 });
 

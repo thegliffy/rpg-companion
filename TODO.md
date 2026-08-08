@@ -2251,28 +2251,22 @@ Live: `POST /api/custom-content` with `initiativeBonis` returns 400 with *"Unkno
 
 ### Deferred, with what each would actually take
 
-Not built this pass. Recorded so the next one starts from an assessment rather than rediscovery:
+Not built this pass. Recorded so the next one starts from an assessment rather than rediscovery.
+**Updated after #178-180**: three items originally listed here (ki-tied/Channel-Divinity resource
+pools, multi-table backgrounds + split damage, and reach/discoverability for
+`optionalAttackModifier`/`damageAbilityBonus`/granted-spell fields) turned out to be in scope after
+all and were built in the packages that followed — see #178, #179, and #180 below. Only the
+genuinely out-of-reach items remain:
 
 - **Auras / area effects** (Spirit Guardians' 15-ft emanation and its half-speed rider; Mercy's
   aura). The app models a character sheet, not a battlefield — there are no positions, so
   "creatures within 15 feet" has nothing to resolve against. Needs a spatial or at least a
   "who is adjacent" model shared with the initiative tracker before any of it means anything.
-- **Ki-tied subclass features and shared Channel Divinity options.** `homebrewResourceSchema`
-  mints one counter per resource; Way of Mercy spends the monk's *ki*, and Channel Divinity's
-  several options share one pool. Needs `spendsFrom` (name another pool) and `options[]` (named
-  choices over one counter) plus pool-rendering changes. Schema work is small; the sheet's
-  resource panel is the real surface.
-- **Multi-table backgrounds, tenets, split damage.** Far Traveler wants two independent variant
-  tables; today there is one `variants` list and one `variantPickCount`. Restructuring to
-  `variantTables: [{title, pickCount, variants}]` also gives oath tenets and Mercy masks a home
-  (a titled table with `pickCount: 0`). Spirit Guardians' radiant-vs-necrotic needs
-  `damageTypeOptions[]` with a pick at cast time.
-- **Reach and discoverability for fields that already exist.** `optionalAttackModifier` and
-  `damageAbilityBonus` work but are only exposed in the *feat* editor, and `minLevel`/`castAtLevel`
-  are positional entries in a text box (`"Name | atWill | minLevel | castAtLevel"`) rather than
-  labeled fields. Pure authoring-UI work, no schema change.
+  Still not built as of #180 — see #180's own note on why Spirit Guardians itself stays
+  uncurated rather than being wired to the new `damageTypeOptions` capability.
 - **Immunities as data.** `damageImmunities`/`conditionImmunities` on race traits, displayed
-  beside the existing resistances line. Small; grouped here because it pairs with the advantage
+  beside the existing resistances line (the monster schema already has both; race traits still
+  only have `damageResistances`). Small; grouped here because it pairs with the advantage
   hints below.
 - **`advantageOn` hints.** Now that #176 exists, a trait could carry
   `advantageOn: ["saving throws against poison"]` and surface a one-click "roll with advantage"
@@ -2351,3 +2345,74 @@ showed "Ki Points: 3/3", "Hand of Healing/Harm: 3/3 (spends from Ki Points)", an
 **both** rows to 2/3 together, and the API confirmed `martialUsed` held exactly one key (`ki: 1`),
 not two -- proving the counters are genuinely shared, not just coincidentally matching numbers. All
 suites pass (shared 74/74, backend 28/28).
+
+180. ✅ **Content-shape gaps: multi-table backgrounds and alignment-split damage.** Two shapes the
+    schema couldn't express at all, not just fields that were hard to reach.
+
+    - **Multi-table backgrounds.** A background had one `variants[]` array and one
+      `variantPickCount` -- one pick-N list, full stop. Far Traveler needs two *independent* ones
+      (a reason for travelling, a homeland); there was nowhere to put a second table without
+      merging both pools into one pick count, which is a different mechanic. Replaced with
+      `variantTables: z.array(backgroundVariantTableSchema).max(5).default([])`
+      (`custom-content.ts`), each table its own `{id, title, pickCount, variants}`. `pickCount: 0`
+      is a pure-reference table with no checkboxes and nothing granted -- the home oath tenets and
+      Way of Mercy's masks never had: a titled flavor table the player just reads. The existing
+      `z.preprocess` on `customBackgroundDataSchema` (already upgrading two older shapes) got a
+      third step wrapping any stored flat `variants[]`/`variantPickCount` into one untitled table,
+      so no stored background needs a data migration. `CharacterCreationWizard.tsx`'s
+      `toggleVariant()` now scopes a pick to its own table's variant-id membership, so two tables
+      never contend for the same pick count, and `backgroundChoicesComplete` checks each table
+      independently (`pickCount === 0 || picked === pickCount`, per table).
+    - **Alignment-split damage.** `damageType` on a buff was one fixed string, so Spirit
+      Guardians' radiant-vs-necrotic (the caster picks one when the spell is cast, not per
+      author-time choice) had nothing to bind to. Added
+      `damageTypeOptions: z.array(z.string().trim().max(30)).max(4).default([])` to
+      `buffEffectSchema` (`dnd5e.ts`) -- empty means "use `damageType` as authored", unchanged
+      behavior for every existing buff. When non-empty, `SpellCastControl.tsx` renders a "damage
+      type" `<select>` next to Cast, defaulted to the first option, and `cast()` overrides
+      `damageType` on the buff object passed to `onBuff()` with whatever was selected *before*
+      building the `activeEffects` entry -- the choice is baked in at cast time, not re-resolved
+      later. `hasBuffEffect()` deliberately does *not* treat `damageTypeOptions` alone as
+      "meaningful" (same reasoning as the existing damageType-with-no-dice check): a type choice
+      with no damage dice behind it is still a no-op buff.
+
+    Deliberately did **not** give the real SRD Spirit Guardians entry a curated
+    `SRD_SPELL_EFFECTS` row using this new field. Its actual mechanic is a 15-ft aura that damages
+    creatures at the *start of the caster's turn* and roughly halves their speed while inside it --
+    a fundamentally different shape than "buff the caster's own next attack," which is all
+    `SRD_SPELL_EFFECTS`/`activeEffects` model. Auto-applying it as an attack buff would be actively
+    wrong, not just incomplete. `damageTypeOptions` itself is general and verified independently
+    (below); wiring an aura spell to it stays out of scope with the rest of #180's aura/area-effect
+    gap, not because the split-damage mechanic doesn't work.
+
+**Verified (#180, done):** 9 new unit tests -- 5 for the background migration
+(`custom-content.test.ts`, new file: wraps a legacy flat shape into one table, an empty legacy
+list migrates to `[]` rather than a phantom table, two tables authored directly stay independent,
+`pickCount: 0` round-trips as a flavor table, and strict mode still rejects an unknown top-level
+key post-migration) and 4 for `damageTypeOptions` (`effects.test.ts`: defaults to `[]` and leaves
+`damageType` behaving exactly as before, round-trips an authored option list, and confirms
+`hasBuffEffect` is fooled by neither `damageType` nor `damageTypeOptions` alone but does recognize
+a buff that has both real damage dice and type options). `tsc -b` and both suites clean throughout
+(shared 83/83, backend 28/28).
+
+Live, both parts on the real API and UI: created a background with two independent variant tables
+(2-option "Reason for Travelling", 1-option "Homeland") through `POST /api/custom-content` --
+accepted cleanly under #177's strict schema. Drove the actual character-creation wizard: both
+tables rendered under their own titles with independent "0/1 selected" counters that moved
+independently of each other, and the step only unblocked once both (and the unrelated
+skill/language picks) were satisfied. Created a custom cantrip with
+`buff.damageTypeOptions: ["radiant", "necrotic"]`, added it to a live level-1 Cleric, and confirmed
+`SpellCastControl` rendered a "damage type" selector defaulted to radiant, with the "(buffs your
+attacks: +3d8 radiant dmg)" summary line tracking the live selection; switching to necrotic updated
+the summary to match, and casting produced an active effect reading "+3d8 necrotic dmg (per hit)"
+-- the chosen type, not the authored default. Test character, background, and spell deleted after
+verification.
+
+Along the way, a genuine false alarm worth recording for the next session: reloading the character
+sheet immediately after this pass's schema rebuild produced a real-looking wall of React
+"Maximum update depth exceeded" console errors and a hung page. Bisected by reverting to the
+pre-#180 commit and reproducing cleanly (no loop) -- the cause wasn't code, it was `frontend/
+node_modules/.vite`'s dependency pre-bundle cache going stale after repeated `shared/dist`
+rebuilds, the same class of issue prior passes hit with `SRD_MONSTERS`. `rm -rf frontend/
+node_modules/.vite` plus a clean dev-server restart made it disappear for good; no code change was
+needed or made in response.
