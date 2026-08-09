@@ -2915,3 +2915,35 @@ exact same check clean on a brand-new tab, confirming it was leftover Vite HMR d
 earlier `npm run build -w shared` runs mid-session, not a real regression -- same root cause
 already isolated during #190's verification.) Test character, custom race, and user deleted after
 verification.
+
+193. ✅ **WP-B: charge pools -- "never recharges."** `chargeRecharge` was a fixed `"short"|"long"`
+    enum, so Necklace of Fireballs-style beads (consumed permanently, no rest refills them) could
+    only be approximated by picking whichever rest length happened to be least wrong.
+
+    Widened `chargeRecharge` to `z.enum(["short", "long", "none"])` in both
+    `customItemDataSchema` (custom-content.ts) and `inventoryItemSchema` (dnd5e.ts), plus
+    `MartialResourcePool.resetOn` (class-progression.ts) and the manual
+    `ResolvedInventoryItem`-style interface. Confirmed via investigation that the only consumer of
+    `resetOn`, `martialResetKeys()`, filters by `restType === "long" || p.resetOn === "short"` --
+    `"none"` falls through that untouched, no switch/exhaustiveness case anywhere needed updating.
+    The real fix was in `longRest()` (`Dnd5eSheet.tsx`), confirmed to unconditionally blanket-wipe
+    `martialUsed: {}` -- which is what actually "recharges" item charges today, since item-charge
+    pools were already confirmed (during #188) to never flow through `shortRest()`'s per-pool
+    reset at all. Changed it to preserve only the item-charge keys whose item has
+    `chargeRecharge === "none"`, wiping every other key exactly as before.
+
+    UI: added a "Never (consumed permanently)" option to the item editor's "Recharges on" select
+    in `CustomContentManager.tsx`.
+
+**Verified (#193, done):** `tsc -b` and both suites clean throughout (shared 131/131, backend
+28/28) -- no new shared-side pure function to unit test (the fix is entirely in `longRest()`'s
+UI-local logic), so this leaned on live verification instead, same as #188.
+
+Live: PATCHed a live character with two charge-tracked items, both pre-spent by one charge --
+"Necklace of Fireballs (Test)" (`maxCharges: 3, chargeRecharge: "none"`, showing "2 / 3 charges")
+and "Wand of Magic Missiles (Test)" (`maxCharges: 7, chargeRecharge: "long"`, showing "6 / 7
+charges") as a regression control. Clicked the sheet's real "Long rest" button: the Wand
+correctly recharged to "7 / 7" while the Necklace stayed at "2 / 3" -- confirmed server-side too
+(`martialUsed` retained only `item-charges-item-necklace: 1` after the rest, the wand's key
+cleared entirely). Confirmed the item editor's "Recharges on" dropdown now offers "Never
+(consumed permanently)" as a third option. Test character and user deleted after verification.

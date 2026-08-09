@@ -1042,7 +1042,9 @@ export const customItemDataSchema = z.object({
   // resources already share (key `item-charges-${item.id}`), not a parallel mechanism.
   maxCharges: z.number().int().min(0).max(50).default(0),
   chargeCost: z.number().int().min(1).max(10).default(1),
-  chargeRecharge: z.enum(["short", "long"]).default("long"),
+  // "none" (#182) -- Necklace of Fireballs-style beads consumed permanently, never refilled by a
+  // rest. Mirrors inventoryItemSchema (dnd5e.ts) exactly.
+  chargeRecharge: z.enum(["short", "long", "none"]).default("long"),
 }).strict();
 export type CustomItemData = z.infer<typeof customItemDataSchema>;
 
@@ -1108,7 +1110,7 @@ export interface ResolvedInventoryItem {
   // custom item can carry this" reasoning as the fields above.
   maxCharges: number;
   chargeCost: number;
-  chargeRecharge: "short" | "long";
+  chargeRecharge: "short" | "long" | "none";
   armor?: ReturnType<typeof srdArmorToInventoryArmor>;
   // Present only for a resolved weapon -- lets the caller auto-generate an Attacks row (#161)
   // without re-deriving these from the item's name. `range` is undefined for a custom weapon

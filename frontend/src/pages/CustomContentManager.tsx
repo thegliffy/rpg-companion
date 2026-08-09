@@ -952,7 +952,7 @@ export function CustomContentManager({
   // costs M, recharges on a rest". 0 max charges = no tracking (the default, every existing item).
   const [itemMaxCharges, setItemMaxCharges] = useState("0");
   const [itemChargeCost, setItemChargeCost] = useState("1");
-  const [itemChargeRecharge, setItemChargeRecharge] = useState<"short" | "long">("long");
+  const [itemChargeRecharge, setItemChargeRecharge] = useState<"short" | "long" | "none">("long");
   const [itemMagicBonus, setItemMagicBonus] = useState("0");
   const [itemRequiresAttunement, setItemRequiresAttunement] = useState(false);
   const [itemGrantedResistancesText, setItemGrantedResistancesText] = useState(""); // comma-separated
@@ -1822,7 +1822,7 @@ export function CustomContentManager({
         abilityScoreSetTo?: Partial<Record<Dnd5eAbility, number>>;
         maxCharges?: number;
         chargeCost?: number;
-        chargeRecharge?: "short" | "long";
+        chargeRecharge?: "short" | "long" | "none";
         acBonus: number;
         saveBonus?: number;
         magicBonus?: number;
@@ -5225,9 +5225,10 @@ export function CustomContentManager({
               </label>
               <label>
                 Recharges on{" "}
-                <select value={itemChargeRecharge} onChange={(e) => setItemChargeRecharge(e.target.value as "short" | "long")}>
+                <select value={itemChargeRecharge} onChange={(e) => setItemChargeRecharge(e.target.value as "short" | "long" | "none")}>
                   <option value="short">Short rest</option>
                   <option value="long">Long rest</option>
+                  <option value="none">Never (consumed permanently)</option>
                 </select>
               </label>
             </div>

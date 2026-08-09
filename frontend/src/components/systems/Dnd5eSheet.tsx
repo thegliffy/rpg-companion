@@ -993,8 +993,15 @@ export function Dnd5eSheet({
         hitDiceAvailable: Math.min(prev.hitDiceTotal, prev.hitDiceAvailable + bonusDice),
         wildShape: { ...prev.wildShape, usesAvailable: 2 },
         mysticArcanum: prev.mysticArcanum.map((a) => ({ ...a, used: false })),
-        // Every martial resource (Rage, Action Surge, Indomitable, Ki) recovers on a long rest.
-        martialUsed: {},
+        // Every martial resource (Rage, Action Surge, Indomitable, Ki) recovers on a long rest --
+        // except an item's charges when its chargeRecharge is "none" (#182, Necklace of
+        // Fireballs-style beads consumed permanently). Those keys are the only ones preserved;
+        // everything else in martialUsed is wiped the same as before this existed.
+        martialUsed: Object.fromEntries(
+          Object.entries(prev.martialUsed).filter(([key]) =>
+            prev.items.some((it) => it.maxCharges > 0 && it.chargeRecharge === "none" && key === `item-charges-${it.id}`),
+          ),
+        ),
         // Nothing survives a long rest -- you can't sustain a spell (or its buff) while resting.
         concentratingOn: null,
         activeEffects: [],

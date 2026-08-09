@@ -266,7 +266,10 @@ const inventoryItemSchema = z.object({
   // pools already have.
   maxCharges: z.number().int().min(0).max(50).default(0),
   chargeCost: z.number().int().min(1).max(10).default(1),
-  chargeRecharge: z.enum(["short", "long"]).default("long"),
+  // "none" (#182) -- Necklace of Fireballs-style beads that are consumed permanently, never
+  // refilled by a rest. longRest() (Dnd5eSheet.tsx) is the only place this is actually enforced --
+  // it preserves a "none" item's spent-charge count instead of wiping it like every other pool.
+  chargeRecharge: z.enum(["short", "long", "none"]).default("long"),
 });
 
 // Exported (#182 soft-gap round) so a background's startingCurrency (custom-content.ts) can

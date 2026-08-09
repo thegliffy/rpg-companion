@@ -620,8 +620,11 @@ export interface MartialResourcePool {
   // -1 = unlimited (level-20 Barbarian's Rage) -- no counter shown, just "Unlimited".
   max: number;
   // "short" resources also clear on a long rest (a long rest is a superset of a short rest's
-  // recovery); "long" resources need a full long rest.
-  resetOn: "short" | "long";
+  // recovery); "long" resources need a full long rest. "none" (#182) is item-charge-only --
+  // Necklace of Fireballs-style beads that no rest refills; martialResetKeys() below only ever
+  // matches "short"/"long" so "none" naturally never resets there, but longRest() (Dnd5eSheet.tsx)
+  // still has to check for it explicitly since it resets martialUsed wholesale, not per-pool.
+  resetOn: "short" | "long" | "none";
   note?: string;
   // The pool this one draws from instead of tracking its own uses (#179), by the target's label --
   // e.g. Way of Mercy's Hand of Healing/Harm "spends from" Ki Points. Set from the authored
