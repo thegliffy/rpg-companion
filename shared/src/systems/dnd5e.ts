@@ -259,6 +259,14 @@ const inventoryItemSchema = z.object({
   // matching entry (id `item-toggle-${item.id}`) onto sheet.activeEffects, reusing that array's
   // existing attack/damage-bonus aggregation wholesale rather than a parallel mechanism.
   toggledEffect: buffEffectSchema.default({}),
+  // Charge/usage tracking (#182) -- mirrors customItemDataSchema exactly, seeded when the item is
+  // picked. maxCharges: 0 means "no charge tracking" (every item before this field existed).
+  // Spent charges live in sheet.martialUsed under key `item-charges-${item.id}`, not a separate
+  // counter on the item itself, so Use/Reset reuse the exact machinery class/subclass resource
+  // pools already have.
+  maxCharges: z.number().int().min(0).max(50).default(0),
+  chargeCost: z.number().int().min(1).max(10).default(1),
+  chargeRecharge: z.enum(["short", "long"]).default("long"),
 });
 
 const currencySchema = z.object({

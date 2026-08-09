@@ -174,6 +174,10 @@ export function Dnd5eSheet({
   const [autosaveError, setAutosaveError] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [rollResults, setRollResults] = useState<Record<string, string>>({});
+  // Per-item charge-spend quantity (#182) -- defaults to the item's own chargeCost per use, but
+  // the player can spend more in one activation (Wand of Magic Missiles-style). Keyed by item id
+  // since more than one charge-tracked item can be equipped at once.
+  const [chargeSpendAmounts, setChargeSpendAmounts] = useState<Record<string, string>>({});
   const [levelUpPending, setLevelUpPending] = useState(false);
   const [levelUpReminders, setLevelUpReminders] = useState<string[]>([]);
   const [levelUpMessage, setLevelUpMessage] = useState<string | null>(null);
@@ -391,10 +395,14 @@ export function Dnd5eSheet({
 
   // Spends one use of a limited martial resource (Rage, Action Surge, Indomitable, Ki Points) --
   // no-op past the derived max (unlimited pools never reach here, see the render guard).
-  function useMartialResource(pool: MartialResourcePool) {
+  // amount (#182) -- defaults to 1 (every existing call site's exact prior behavior) so a
+  // charge-tracked item (#182) can spend more than one at a time. Clamped to what's actually
+  // left rather than overdrawing the pool.
+  function useMartialResource(pool: MartialResourcePool, amount = 1) {
     const used = sheet.martialUsed[pool.key] ?? 0;
     if (pool.max !== -1 && used >= pool.max) return;
-    setSheet((prev) => ({ ...prev, martialUsed: { ...prev.martialUsed, [pool.key]: (prev.martialUsed[pool.key] ?? 0) + 1 } }));
+    const spend = pool.max === -1 ? amount : Math.min(amount, pool.max - used);
+    setSheet((prev) => ({ ...prev, martialUsed: { ...prev.martialUsed, [pool.key]: (prev.martialUsed[pool.key] ?? 0) + spend } }));
   }
 
   // Manually restores a single martial resource to full, independent of resting.
@@ -2793,6 +2801,9 @@ export function Dnd5eSheet({
                 notes: customItemNotesText(customItem),
                 abilityBonuses: d.abilityBonuses,
                 abilityScoreSetTo: d.abilityScoreSetTo,
+                maxCharges: d.maxCharges,
+                chargeCost: d.chargeCost,
+                chargeRecharge: d.chargeRecharge,
                 acBonus: d.acBonus,
                 saveBonus: d.saveBonus,
                 requiresAttunement: d.requiresAttunement,
@@ -2932,6 +2943,43 @@ export function Dnd5eSheet({
                       </button>
                     );
                   })()}
+                {/* Charge/usage tracking (#182) -- Wand of Magic Missiles-style "N total
+                    charges, each use costs M". Reuses the exact martialUsed counter/
+                    Use-Reset machinery class/subclass resources already have, keyed under
+                    `item-charges-${item.id}` rather than a parallel mechanism. */}
+                {item.maxCharges > 0 &&
+                  (() => {
+                    const pool: MartialResourcePool = {
+                      key: `item-charges-${item.id}`,
+                      label: item.name || "Charges",
+                      max: item.maxCharges,
+                      resetOn: item.chargeRecharge,
+                    };
+                    const available = martialResourceAvailable(sheet, pool);
+                    const spendAmount = Number(chargeSpendAmounts[item.id] ?? item.chargeCost) || item.chargeCost;
+                    return (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+                        <strong>
+                          {available} / {item.maxCharges} charges
+                        </strong>
+                        <input
+                          type="number"
+                          min={1}
+                          max={item.maxCharges}
+                          value={chargeSpendAmounts[item.id] ?? String(item.chargeCost)}
+                          onChange={(e) => setChargeSpendAmounts((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                          style={{ width: "2.6rem" }}
+                          title={`Charges to spend (defaults to this item's cost per use, ${item.chargeCost})`}
+                        />
+                        <button type="button" onClick={() => useMartialResource(pool, spendAmount)} disabled={available <= 0}>
+                          Use
+                        </button>
+                        <button type="button" onClick={() => resetMartialResource(pool.key)} disabled={available >= item.maxCharges}>
+                          Reset
+                        </button>
+                      </span>
+                    );
+                  })()}
                 <button type="button" onClick={() => set("items", sheet.items.filter((_, j) => j !== i))}>
                   Remove
                 </button>
@@ -3015,6 +3063,9 @@ export function Dnd5eSheet({
                 equipped: false,
                 abilityBonuses: {},
                 abilityScoreSetTo: {},
+                maxCharges: 0,
+                chargeCost: 1,
+                chargeRecharge: "long" as const,
                 acBonus: 0,
                 saveBonus: 0,
                 requiresAttunement: false,

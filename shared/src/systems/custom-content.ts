@@ -993,6 +993,15 @@ export const customItemDataSchema = z.object({
   // Mirrors inventoryItemSchema.toggledEffect exactly, including the "always a full object,
   // hasBuffEffect() decides if it's meaningful" convention customSpellDataSchema.buff also uses.
   toggledEffect: buffEffectSchema.default({}),
+  // Charge/usage tracking (#182) -- Wand of Magic Missiles-style "N total charges, each use costs
+  // M, recharges on a rest." Scoped to a flat cost per use, not a variable spend or "cast a
+  // specific leveled spell from the item" (that needs a slot-cost simulation this pass doesn't
+  // build -- see TODO.md). maxCharges: 0 means "no charge tracking", so every existing item keeps
+  // working unchanged. Tracked on the sheet via the same martialUsed counter class/subclass
+  // resources already share (key `item-charges-${item.id}`), not a parallel mechanism.
+  maxCharges: z.number().int().min(0).max(50).default(0),
+  chargeCost: z.number().int().min(1).max(10).default(1),
+  chargeRecharge: z.enum(["short", "long"]).default("long"),
 }).strict();
 export type CustomItemData = z.infer<typeof customItemDataSchema>;
 
@@ -1054,6 +1063,11 @@ export interface ResolvedInventoryItem {
   // empty for every SRD item, same "only a custom item can carry this" reasoning as
   // requiresAttunement/grantedResistances above.
   abilityScoreSetTo: Partial<Record<Dnd5eAbility, number>>;
+  // Charge/usage tracking (#182) -- 0/1/"long" (no tracking) for every SRD item, same "only a
+  // custom item can carry this" reasoning as the fields above.
+  maxCharges: number;
+  chargeCost: number;
+  chargeRecharge: "short" | "long";
   armor?: ReturnType<typeof srdArmorToInventoryArmor>;
   // Present only for a resolved weapon -- lets the caller auto-generate an Attacks row (#161)
   // without re-deriving these from the item's name. `range` is undefined for a custom weapon
@@ -1097,7 +1111,7 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
   if (itemId.startsWith("custom-")) {
     const custom = findCustomItem(itemId.slice("custom-".length));
     if (!custom) {
-      return [{ name: itemId, quantity, weight: 0, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE, abilityScoreSetTo: {} }];
+      return [{ name: itemId, quantity, weight: 0, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE, abilityScoreSetTo: {}, maxCharges: 0, chargeCost: 1, chargeRecharge: "long" as const }];
     }
     const d = custom.data as CustomItemData;
     return [
@@ -1112,6 +1126,9 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
         grantedResistances: d.grantedResistances,
         toggledEffect: d.toggledEffect,
         abilityScoreSetTo: d.abilityScoreSetTo,
+        maxCharges: d.maxCharges,
+        chargeCost: d.chargeCost,
+        chargeRecharge: d.chargeRecharge,
         armor: d.kind === "armor" ? customItemArmorPayload(d) : undefined,
         weapon:
           d.kind === "weapon" ? { damageDice: d.damageDice, damageType: d.damageType, properties: d.properties, magicBonus: d.magicBonus } : undefined,
@@ -1133,6 +1150,9 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
         grantedResistances: [],
         toggledEffect: NO_TOGGLE,
         abilityScoreSetTo: {},
+        maxCharges: 0,
+        chargeCost: 1,
+        chargeRecharge: "long" as const,
         weapon: { damageDice: weapon.damageDice, damageType: weapon.damageType, properties: weapon.properties, range: weapon.range, magicBonus: 0 },
       },
     ];
@@ -1152,6 +1172,9 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
         grantedResistances: [],
         toggledEffect: NO_TOGGLE,
         abilityScoreSetTo: {},
+        maxCharges: 0,
+        chargeCost: 1,
+        chargeRecharge: "long" as const,
         armor: srdArmorToInventoryArmor(armor),
       },
     ];
@@ -1162,10 +1185,10 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
     if (gear.contents && gear.contents.length > 0) {
       return gear.contents.flatMap((c) => resolveEquipmentEntry({ itemId: c.itemId, quantity: c.quantity * quantity }, findCustomItem));
     }
-    return [{ name: gear.name, quantity, weight: gear.weight, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE, abilityScoreSetTo: {} }];
+    return [{ name: gear.name, quantity, weight: gear.weight, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE, abilityScoreSetTo: {}, maxCharges: 0, chargeCost: 1, chargeRecharge: "long" as const }];
   }
 
-  return [{ name: itemId, quantity, weight: 0, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE, abilityScoreSetTo: {} }];
+  return [{ name: itemId, quantity, weight: 0, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE, abilityScoreSetTo: {}, maxCharges: 0, chargeCost: 1, chargeRecharge: "long" as const }];
 }
 
 const monsterActionSchema = z.object({

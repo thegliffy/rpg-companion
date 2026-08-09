@@ -922,6 +922,11 @@ export function CustomContentManager({
   // Sets an ability score to a fixed value while equipped, rather than adding to it (#182) --
   // Amulet of Health-style. Blank = doesn't set that ability.
   const [itemAbilityScoreSetTo, setItemAbilityScoreSetTo] = useState<Partial<Record<Dnd5eAbility, string>>>({});
+  // Charge/usage tracking (#182) -- Wand of Magic Missiles-style "N total charges, each use
+  // costs M, recharges on a rest". 0 max charges = no tracking (the default, every existing item).
+  const [itemMaxCharges, setItemMaxCharges] = useState("0");
+  const [itemChargeCost, setItemChargeCost] = useState("1");
+  const [itemChargeRecharge, setItemChargeRecharge] = useState<"short" | "long">("long");
   const [itemMagicBonus, setItemMagicBonus] = useState("0");
   const [itemRequiresAttunement, setItemRequiresAttunement] = useState(false);
   const [itemGrantedResistancesText, setItemGrantedResistancesText] = useState(""); // comma-separated
@@ -1379,6 +1384,9 @@ export function CustomContentManager({
     setItemAcBonus("0");
     setItemSaveBonus("0");
     setItemAbilityScoreSetTo({});
+    setItemMaxCharges("0");
+    setItemChargeCost("1");
+    setItemChargeRecharge("long");
     setItemMagicBonus("0");
     setItemRequiresAttunement(false);
     setItemGrantedResistancesText("");
@@ -1771,6 +1779,9 @@ export function CustomContentManager({
         rarity: string;
         abilityBonuses: Partial<Record<Dnd5eAbility, number>>;
         abilityScoreSetTo?: Partial<Record<Dnd5eAbility, number>>;
+        maxCharges?: number;
+        chargeCost?: number;
+        chargeRecharge?: "short" | "long";
         acBonus: number;
         saveBonus?: number;
         magicBonus?: number;
@@ -1811,6 +1822,9 @@ export function CustomContentManager({
       const setToBonuses: Partial<Record<Dnd5eAbility, string>> = {};
       for (const [k, v] of Object.entries(d.abilityScoreSetTo ?? {})) setToBonuses[k as Dnd5eAbility] = String(v);
       setItemAbilityScoreSetTo(setToBonuses);
+      setItemMaxCharges(String(d.maxCharges ?? 0));
+      setItemChargeCost(String(d.chargeCost ?? 1));
+      setItemChargeRecharge(d.chargeRecharge ?? "long");
       setItemAcBonus(String(d.acBonus));
       setItemSaveBonus(String(d.saveBonus ?? 0));
       setItemMagicBonus(String(d.magicBonus ?? 0));
@@ -2202,6 +2216,9 @@ export function CustomContentManager({
           magicBonus: Number(itemMagicBonus) || 0,
           requiresAttunement: itemRequiresAttunement,
           grantedResistances: splitCsv(itemGrantedResistancesText),
+          maxCharges: Number(itemMaxCharges) || 0,
+          chargeCost: Number(itemChargeCost) || 1,
+          chargeRecharge: itemChargeRecharge,
           toggledEffect: {
             attackBonus: Number(itemToggleAttackBonus) || 0,
             attackDice: itemToggleAttackDice.trim(),
@@ -5029,6 +5046,43 @@ export function CustomContentManager({
               Grants resistances while equipped (comma-separated, e.g. fire)
               <input value={itemGrantedResistancesText} onChange={(e) => setItemGrantedResistancesText(e.target.value)} style={{ width: "100%" }} />
             </label>
+
+            <h4 style={{ marginTop: "1rem" }}>Charges (optional)</h4>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              Wand of Magic Missiles-style "N total charges, each use costs M, recharges on a
+              rest." Max charges 0 = no charge tracking (the default -- most items).
+            </p>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+              <label>
+                Max charges{" "}
+                <input
+                  type="number"
+                  min={0}
+                  max={50}
+                  value={itemMaxCharges}
+                  onChange={(e) => setItemMaxCharges(e.target.value)}
+                  style={{ width: "3.5rem" }}
+                />
+              </label>
+              <label>
+                Cost per use{" "}
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={itemChargeCost}
+                  onChange={(e) => setItemChargeCost(e.target.value)}
+                  style={{ width: "3.5rem" }}
+                />
+              </label>
+              <label>
+                Recharges on{" "}
+                <select value={itemChargeRecharge} onChange={(e) => setItemChargeRecharge(e.target.value as "short" | "long")}>
+                  <option value="short">Short rest</option>
+                  <option value="long">Long rest</option>
+                </select>
+              </label>
+            </div>
 
             <h4 style={{ marginTop: "1rem" }}>Toggleable effect (optional)</h4>
             <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>

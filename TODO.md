@@ -2676,3 +2676,40 @@ CON correctly jumped to +4 (score 19), cascading into Saving Throws too since `s
 already reads through `effectiveAbilityScore()`. Activating the broom showed "Speed -> Fly 50"
 and "Active effects: ...fly speed 50 (per hit)". Test character and both items deleted after
 verification.
+
+188. ✅ **Item charge/usage pools (flat cost per use).** No charge/usage concept existed for
+    items at all (confirmed by grep -- zero hits for "charges" anywhere in the codebase before
+    this). `MartialResourcePool`/`sheet.martialUsed` was the closest analog, but `useMartialResource`
+    always spent exactly 1 with no way to spend more. Scoped to what's buildable without a full
+    "cast a specific spell from an item at a variable slot cost" simulation (Wand of Magic
+    Missiles' full fidelity, Ring of Spell Storing) -- those stay deferred (see #189). What
+    shipped: an item can have N total charges, each activation costs a configurable flat amount
+    the player can also spend *more* of in one go, recharging on a rest.
+
+    Added `maxCharges`/`chargeCost`/`chargeRecharge` to `customItemDataSchema` and
+    `inventoryItemSchema` (mirrored exactly, `maxCharges: 0` = no tracking, every existing item
+    keeps working unchanged) and to `ResolvedInventoryItem` (the wizard's equipment-resolution
+    return type). Reuses `sheet.martialUsed` rather than a parallel mechanism -- an item's spent
+    charges live under key `` `item-charges-${item.id}` ``, the same map subclass/class resources
+    already share. `useMartialResource()` (`Dnd5eSheet.tsx`) gained an optional `amount`
+    parameter (default 1, every existing call site unaffected), clamped to what's actually left
+    rather than overdrawing. The sheet's item row gets a live "`X / max` charges" counter with a
+    spend-quantity input (defaults to the item's own `chargeCost`, editable per-use) plus
+    Use/Reset buttons, reusing the exact visual style the martial/homebrew resource-pool rows
+    already established.
+
+    Same class of gap as #187 caught proactively this time rather than found live: both
+    `handleNameChange` (`Dnd5eSheet.tsx`) and `resolveEquipmentEntry()` (`custom-content.ts`)
+    needed the three new fields added explicitly, or a charge-tracked item's authored values
+    would silently never reach the sheet through either the "type a name" or "wizard starting
+    equipment" path -- fixed both before live-testing this time instead of after.
+
+**Verified (#188, done):** `tsc -b` and both suites clean throughout (shared 115/115, backend
+28/28) -- no new shared-side pure function to unit test (the `amount` parameter is UI-only logic
+with no shared equivalent), so this one leaned on live verification instead. Authored a Wand of
+Magic Missiles-alike (`maxCharges: 7, chargeCost: 1, chargeRecharge: "long"`, requires
+attunement) through the real API, added it to a live character by typing its name into the
+sheet's own item picker, equipped and attuned it. Confirmed "7 / 7 charges" displayed with
+Use/Reset buttons; clicking Use dropped it to "6 / 7"; setting the spend-quantity input to 3 and
+clicking Use again dropped it to "3 / 7" (confirming variable-cost spending, not just the default
+1); Reset correctly restored it to "7 / 7". Test character and item deleted after verification.
