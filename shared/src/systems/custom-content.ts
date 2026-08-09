@@ -1190,6 +1190,39 @@ export const CUSTOM_CONTENT_TYPES_BY_SYSTEM: Record<CustomContentSystem, CustomC
   generic: [],
 };
 
+// The single per-type schema lookup every write path (create, PATCH, import) already needs --
+// moved here from customContent.routes.ts so the frontend can reuse it too (#181). A stored
+// row's `data` is never re-validated on GET (customContent.service.ts does a plain JSON.parse),
+// so a row written before a field existed -- e.g. a feat from before #101 added prereqAbility --
+// is missing it at runtime even though every schema *default*s it. Every frontend consumer casts
+// `item.data as SomeData` with no runtime check, so a component that does `Object.entries
+// (d.prereqAbility)` throws on that `undefined` with nothing to catch it, blanking the whole app
+// (no error boundary above it). Re-parsing through this at the one real choke point
+// (useCustomContent.ts) backfills every missing field's default exactly once, for every content
+// type, rather than teaching each consumer to tolerate partial data individually.
+export function customContentDataSchemaFor(type: CustomContentType) {
+  switch (type) {
+    case "race":
+      return customRaceDataSchema;
+    case "class":
+      return customClassDataSchema;
+    case "background":
+      return customBackgroundDataSchema;
+    case "subrace":
+      return customSubraceDataSchema;
+    case "subclass":
+      return customSubclassDataSchema;
+    case "feat":
+      return customFeatDataSchema;
+    case "spell":
+      return customSpellDataSchema;
+    case "item":
+      return customItemDataSchema;
+    case "monster":
+      return customMonsterDataSchema;
+  }
+}
+
 export const updateCustomContentSchema = z.object({
   name: z.string().trim().min(1).max(60).optional(),
   data: z.unknown().optional(),

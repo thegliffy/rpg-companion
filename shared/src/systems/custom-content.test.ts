@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { customBackgroundDataSchema } from "./custom-content.js";
+import { customBackgroundDataSchema, customContentDataSchemaFor } from "./custom-content.js";
 
 describe("customBackgroundDataSchema variantTables migration (#180)", () => {
   it("wraps a pre-#180 flat variants[] + variantPickCount into a single untitled table", () => {
@@ -70,5 +70,46 @@ describe("customBackgroundDataSchema variantTables migration (#180)", () => {
       totallyFakeField: "zzz",
     });
     assert.equal(result.success, false);
+  });
+});
+
+describe("customContentDataSchemaFor (#181)", () => {
+  it("returns the matching schema for every content type", () => {
+    assert.equal(customContentDataSchemaFor("feat").safeParse({}).success, true);
+    assert.equal(customContentDataSchemaFor("race").safeParse({}).success, true);
+    assert.equal(customContentDataSchemaFor("background").safeParse({}).success, true);
+    assert.equal(customContentDataSchemaFor("subrace").safeParse({}).success, true);
+    assert.equal(customContentDataSchemaFor("subclass").safeParse({}).success, true);
+    // class/spell/item/monster each require a field with no default (hitDie, level, etc.) --
+    // confirm the right schema is picked by checking `{}` fails on a *missing required* field
+    // (and a minimal valid object succeeds), not on an *unrecognized* one, which would mean the
+    // wrong schema matched.
+    assert.equal(customContentDataSchemaFor("class").safeParse({}).success, false);
+    assert.equal(customContentDataSchemaFor("class").safeParse({ hitDie: 8 }).success, true);
+    assert.equal(customContentDataSchemaFor("spell").safeParse({}).success, false);
+    assert.equal(customContentDataSchemaFor("spell").safeParse({ level: 1 }).success, true);
+  });
+
+  it("backfills a field added after the row was first written, the exact crash this closes (#181)", () => {
+    // Shaped like a feat stored before #101 added prereqAbility/prereqLevel/prereqText, and
+    // before #175/#178 added initiativeBonus/optionalAttackModifier/damageAbilityBonus -- every
+    // field a consumer might read unconditionally (Object.entries(d.prereqAbility), etc.) is
+    // absent, the same way a genuinely old database row would be.
+    const preHistoric = {
+      description: "An ancient feat",
+      abilityBonuses: {},
+      acBonus: 0,
+      attackBonus: 0,
+      damageBonus: 0,
+      spellDCBonus: 0,
+      spellAttackBonus: 0,
+      saveBonus: 0,
+      skillProficiencies: [],
+    };
+    const parsed = customContentDataSchemaFor("feat").safeParse(preHistoric);
+    assert.equal(parsed.success, true);
+    if (!parsed.success) return;
+    assert.deepEqual((parsed.data as { prereqAbility: unknown }).prereqAbility, {});
+    assert.equal((parsed.data as { initiativeBonus: unknown }).initiativeBonus, 0);
   });
 });

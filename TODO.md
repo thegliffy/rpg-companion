@@ -2408,6 +2408,50 @@ the summary to match, and casting produced an active effect reading "+3d8 necrot
 -- the chosen type, not the authored default. Test character, background, and spell deleted after
 verification.
 
+181. ✅ **Fix: "Add feat" blanked the whole page for a character with an older custom feat.**
+    User-reported bug, not from the original 13-issue list. Reproduced by seeding a feat row
+    directly in the DB shaped like one written before #101 added `prereqAbility`/`prereqLevel`/
+    `prereqText` -- i.e. missing those keys entirely, not just zero-valued. Opening the feat picker
+    threw inside `FeatPickerModal`'s `prereqLine()`: `Object.entries(d.prereqAbility)` on
+    `undefined` is a `TypeError`, and with no error boundary above it in the tree, React unmounts
+    the whole page rather than just the modal -- exactly "blank screen, have to reload."
+
+    Root cause, not specific to this one field: `custom_content.data` is stored as opaque JSON and
+    the backend never re-validates it on GET (`customContent.service.ts` does a plain
+    `JSON.parse`), so a row written before a schema field existed stays missing that field forever
+    -- it only gets backfilled by re-saving through POST/PATCH, which most stored rows never do.
+    Every frontend consumer reads it via an unchecked `item.data as SomeContentData` cast, so
+    *any* schema field added after a row was written is a latent crash for that row, not just
+    `prereqAbility` -- this session alone added five such fields across feats/traits/features
+    (`initiativeBonus`, `optionalAttackModifier`, `damageAbilityBonus`, plus backgrounds'
+    `variantTables`), and #101 predates this whole session.
+
+    Fixed at the one real choke point rather than teaching each consumer to tolerate partial data:
+    new `customContentDataSchemaFor(type)` (`custom-content.ts`) -- the per-type schema switch
+    `customContent.routes.ts` already had for its write paths, moved to `shared` so the frontend
+    can use it too (the route file now imports it instead of keeping its own duplicate).
+    `useCustomContent.ts` -- the hook every gameplay surface (`Dnd5eSheet`, character creation,
+    Bestiary, Arena, familiar/wild-shape panels) goes through -- now re-parses each fetched item's
+    `data` through its schema and keeps the defaulted result, falling back to the raw item only if
+    parsing genuinely fails. `CustomContentManager.tsx` fetches independently rather than through
+    that hook, so it got the same treatment at both of its own fetch points (the list refresh and
+    the "open straight into editor" deep link).
+
+**Verified (#181, done):** 2 new unit tests (`custom-content.test.ts`) -- confirm
+`customContentDataSchemaFor` resolves to the correct schema per type (including that `class`/
+`spell` correctly *reject* an empty object on a genuinely missing required field, proving the
+right schema matched rather than a permissive wrong one), and that a feat object shaped like a
+pre-#101 row (every optional/defaulted field entirely absent) parses successfully with every
+default filled in -- `prereqAbility: {}`, `initiativeBonus: 0`, etc. `tsc -b` and both suites clean
+throughout (shared 85/85, backend 28/28).
+
+Live: inserted a feat row directly via sqlite with the exact pre-#101 shape (no `prereqAbility`
+key at all), reproduced the crash first -- browser console showed "An error occurred in the
+`<FeatPickerModal>` component" and the page went fully blank, matching the report exactly. Applied
+the fix, reloaded, and the same feat now lists correctly under "Custom" in the picker with no
+console error; clicked it and it added to the sheet normally. Test character, feat, and user
+deleted after verification.
+
 Along the way, a genuine false alarm worth recording for the next session: reloading the character
 sheet immediately after this pass's schema rebuild produced a real-looking wall of React
 "Maximum update depth exceeded" console errors and a hung page. Bisected by reverting to the

@@ -3,15 +3,7 @@ import {
   createCustomContentSchema,
   updateCustomContentSchema,
   importCustomContentSchema,
-  customRaceDataSchema,
-  customClassDataSchema,
-  customBackgroundDataSchema,
-  customSubraceDataSchema,
-  customSubclassDataSchema,
-  customFeatDataSchema,
-  customSpellDataSchema,
-  customItemDataSchema,
-  customMonsterDataSchema,
+  customContentDataSchemaFor as dataSchemaFor,
   CUSTOM_CONTENT_TYPES_BY_SYSTEM,
 } from "shared";
 import type { CustomContentType, ImportCustomContentResult } from "shared";
@@ -33,29 +25,6 @@ import {
 export const customContentRouter = Router();
 
 customContentRouter.use(requireAuth);
-
-function dataSchemaFor(type: CustomContentType) {
-  switch (type) {
-    case "race":
-      return customRaceDataSchema;
-    case "class":
-      return customClassDataSchema;
-    case "background":
-      return customBackgroundDataSchema;
-    case "subrace":
-      return customSubraceDataSchema;
-    case "subclass":
-      return customSubclassDataSchema;
-    case "feat":
-      return customFeatDataSchema;
-    case "spell":
-      return customSpellDataSchema;
-    case "item":
-      return customItemDataSchema;
-    case "monster":
-      return customMonsterDataSchema;
-  }
-}
 
 // Static routes first, before the /:id param routes.
 customContentRouter.get("/pending", requireAdmin, (_req, res) => {

@@ -31,6 +31,7 @@ import {
   customBackgroundDataSchema,
   customRaceDataSchema,
   customSubraceDataSchema,
+  customContentDataSchemaFor,
   formatBackgroundGrants,
   formatModifier,
 } from "shared";
@@ -58,6 +59,16 @@ export const SYSTEM_LABELS: Record<CustomContentSystem, string> = {
   pf2e: "Pathfinder 2e",
   generic: "Generic",
 };
+
+/** Same "a stored row can predate a field its schema now defaults" backfill useCustomContent.ts
+ * applies (#181) -- this page fetches independently rather than through that hook, so it needs
+ * its own pass over the same choke point before any editor reads `item.data`. */
+function backfillDefaults(items: CustomContent[]): CustomContent[] {
+  return items.map((item) => {
+    const parsed = customContentDataSchemaFor(item.type).safeParse(item.data);
+    return parsed.success ? { ...item, data: parsed.data } : item;
+  });
+}
 
 interface LevelRow {
   level: string;
@@ -892,6 +903,7 @@ export function CustomContentManager({
   function refresh() {
     customContentApi
       .listCustomContent()
+      .then(backfillDefaults)
       .then((all) => {
         setItems(all.filter((i) => i.createdByUserId === user?.id));
         // Every custom spell *visible* to this user, not just their own -- these feed both the
@@ -920,6 +932,7 @@ export function CustomContentManager({
     if (editContentId === undefined) return;
     customContentApi
       .getCustomContent(editContentId)
+      .then((item) => backfillDefaults([item])[0])
       .then(startEdit)
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load item"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
