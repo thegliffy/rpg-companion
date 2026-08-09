@@ -2460,3 +2460,34 @@ node_modules/.vite`'s dependency pre-bundle cache going stale after repeated `sh
 rebuilds, the same class of issue prior passes hit with `SRD_MONSTERS`. `rm -rf frontend/
 node_modules/.vite` plus a clean dev-server restart made it disappear for good; no code change was
 needed or made in response.
+
+182. ✅ **"Soft gap" audit, round 3 -- WP1: cross-cutting fixes.** A fresh gap audit reported
+    `parseOrThrow()` swallowing field-level validation detail ("UI 'Invalid data' often has no
+    field path") and a stale race-trait UI. Investigation first, before any code, corrected two
+    parts of that audit:
+    - **Production is not stale.** `/api/health` on the live container reported the exact
+      commit just pushed at the time -- it auto-deploys from `ghcr.io/thegliffy/rpg-companion:
+      latest` on every push to `main`. So the reported "acBonus/speedBonus/speedMultiplier/
+      damageTypeOptions vanish on production" is not currently reproducible as a deployment-lag
+      issue; most likely stale client-side testing from before #174-181, or a cached frontend
+      bundle.
+    - **The race-trait editor UI was already complete**, not stale as reported -- every
+      `raceTraitSchema`/`effectBonusesSchema` field (including `initiativeBonus`,
+      `optionalAttackModifier`, `damageAbilityBonus` from #178) already has a matching input in
+      `CustomContentManager.tsx`. Only the "no mechanical effect" warning's condition hadn't
+      caught up to those three newer fields.
+
+    What was real and got fixed: `frontend/src/api/customContent.ts`'s `parseOrThrow()` threw
+    only `body.error` (the generic `"Invalid data"` string) and discarded `body.messages` --
+    the actionable, field-naming array `describeSchemaIssues()` (#177) already computes on
+    every one of the three write paths (create/update/import), since they all route through
+    this one helper. Now appends it: `` `${body.error}: ${body.messages.join("; ")}` ``. Also
+    extended the race-trait "no mechanical effect" warning (`CustomContentManager.tsx`) to
+    check `initiativeBonus`, `optAttackPenalty`/`optDamageBonus`, and `damageAbilityBonus`
+    alongside the six fields it already checked.
+
+**Verified (#182, done):** `tsc -b` clean. Live: POSTed a feat with a typo'd
+`initiativeBonis` field directly against the real API and ran the exact `parseOrThrow` logic
+against the real response -- confirmed the thrown message is now `Invalid data: Unknown field:
+"initiativeBonis" (did you mean "initiativeBonus"?)...` instead of the old bare `"Invalid
+data"`.

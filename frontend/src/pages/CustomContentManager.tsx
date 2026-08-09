@@ -2365,9 +2365,18 @@ export function CustomContentManager({
               row.grantedSpells.every((s) => s.name.trim() === "") &&
               Number(row.extraCritDice) === 0 &&
               Object.values(row.abilityBonuses).every((v) => !v || Number(v) === 0) &&
-              [row.acBonus, row.attackBonus, row.damageBonus, row.spellDCBonus, row.spellAttackBonus, row.saveBonus].every(
-                (v) => Number(v) === 0,
-              ) && (
+              [
+                row.acBonus,
+                row.attackBonus,
+                row.damageBonus,
+                row.spellDCBonus,
+                row.spellAttackBonus,
+                row.saveBonus,
+                row.initiativeBonus,
+              ].every((v) => Number(v) === 0) &&
+              Number(row.optAttackPenalty) === 0 &&
+              Number(row.optDamageBonus) === 0 &&
+              row.damageAbilityBonus === "" && (
                 <p style={{ margin: "0.3rem 0 0", fontSize: "0.85rem", color: "var(--danger)" }}>
                   This trait has no mechanical effect set -- it will grant "{row.name.trim()}" as a name only.
                 </p>

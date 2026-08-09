@@ -3,7 +3,12 @@ import type { CustomContent, CustomContentType, CustomContentSystem, ImportCusto
 async function parseOrThrow(res: Response) {
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(body.error ?? "Request failed");
+    // describeSchemaIssues() (backend/src/lib/schemaErrors.ts, #177) already computes a
+    // field-naming message ("Unknown field: X -- did you mean Y?") into body.messages; without
+    // this, every validation failure surfaced as the generic body.error string with no way to
+    // tell which field was wrong.
+    const detail = Array.isArray(body.messages) && body.messages.length > 0 ? `: ${body.messages.join("; ")}` : "";
+    throw new Error(`${body.error ?? "Request failed"}${detail}`);
   }
   if (res.status === 204) return null;
   return res.json();
