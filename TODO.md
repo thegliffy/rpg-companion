@@ -2552,3 +2552,46 @@ conditionImposed/areaOfEffect set, confirmed the POST round-tripped unchanged, t
 in the editor and confirmed every checkbox/select/text field loaded back correctly (Verbal/
 Somatic/Material/Consumed all checked, "a pinch of ash", "half", "blinded", "10-ft radius").
 Test character and spell deleted after verification.
+
+185. ✅ **Feat/trait depth: Tough, Mobile, Resilient.** Three feats whose real RAW mechanic had
+    no field to land on: Tough's HP-per-level, Mobile's always-on speed bonus (buffs already had
+    the equivalent field for a *temporary* effect; feats/traits never got the always-on
+    version), and Resilient's saving-throw *proficiency* grant (only a flat numeric `saveBonus`
+    existed, which can't express "add the proficiency bonus to one specific save").
+
+    Added `hpBonusPerLevel`, `speedBonus`, and `savingThrowProficiencies` to `effectBonusesSchema`
+    (`custom-content.ts`) -- landing there rather than on any one content type means all three are
+    immediately available to feats, background features, subclass features, *and* race traits at
+    once, the established pattern this whole arc has used. New `effectiveHpBonus(sheet)` (=
+    `featBonusTotal(sheet, "hpBonusPerLevel") * sheet.level`) is folded directly into
+    `computeHpMax()` -- Tough's bonus surfaces through the sheet's existing "Recalculate max HP
+    (+N)" hint rather than a separate indicator, since that hint already exists specifically to
+    reconcile the stored HP against what the rules say it should be. `effectiveSpeed()` sums
+    `featBonusTotal(sheet, "speedBonus")` alongside the existing buff-sourced bonus, applied
+    before any multiplier (Mobile stacking with a later Boots-of-Speed toggle reads
+    `(30+10)*2`, not `30*2+10`). New `effectSaveProficiencies()`/`isSaveProficient()` mirror
+    `effectSkillProficiencies()`/`isSkillProficient()` exactly; the Saving Throws panel
+    (`Dnd5eSheet.tsx`) now shows a granted-but-not-manually-checked save as checked+disabled with
+    a "(granted)" label, the identical pattern the Skills panel already used for
+    feat/feature-granted skills.
+
+    Along the way, found and fixed a real UI gap from an earlier session while touching this
+    exact code: the background-feature editor never got #178's `optionalAttackModifier`/
+    `damageAbilityBonus` fields, and its `initiativeBonus` schema field (present since #175) had
+    no matching input at all -- only feats/subclass-features/race-traits had full parity. All
+    four editor sections now expose the complete `effectBonusesSchema` field set uniformly.
+
+**Verified (#185, done):** 12 new unit tests (`effects.test.ts`) covering `effectiveHpBonus`
+(zero with no source, multiplies by level, sums multiple sources), `effectiveSpeed` with a
+feat-sourced bonus (alone, and composing with an active-effect multiplier as `(base+flat)*mult`),
+and `isSaveProficient`/`effectSaveProficiencies` (sheet-only, feat-granted-only, additive,
+un-grants on removal, and that `saveBonus()` actually adds the proficiency bonus once granted).
+`tsc -b` and both suites clean throughout (shared 103/103, backend 28/28).
+
+Live: authored a feat with `hpBonusPerLevel: 2, speedBonus: 10, savingThrowProficiencies: ["con"]`
+through the real API, added it to a level-3 Fighter (13 Con, hit dice history `[10,6,6]`) via the
+real picker. Confirmed on the live sheet: Saving Throws showed "Constitution (granted) +3"
+(checkbox checked+disabled); Speed showed "→ 40" (30 base + Mobile's +10); setting a stale HP max
+of 20 surfaced "Recalculate max HP (+11)" -- matching `22 (dice) + 3 (level 3 × CON +1) + 6 (Tough
+2/level × 3) = 31`, confirming the ×level multiplication landed correctly, not just a flat
+addition. Test character and feat deleted after verification.

@@ -10,7 +10,7 @@ import {
   proficiencyBonus,
 } from "./dnd5e.js";
 import type { ClassLevelEntry, CasterType, MartialResourcePool } from "./class-progression.js";
-import type { BuffEffect, Dnd5eSheetData } from "./dnd5e.js";
+import type { BuffEffect, Dnd5eSheetData, Dnd5eAbility } from "./dnd5e.js";
 import type { SrdSpell } from "./srd-spells.js";
 import { SRD_SPELL_EFFECTS } from "./srd-spell-effects.js";
 import { SRD_SPELL_HEALING } from "./srd-spell-healing.js";
@@ -53,6 +53,22 @@ export const effectBonusesSchema = z.object({
   // Adds this ability's modifier to damage on every hit (#167, #178) -- the generic version of
   // what Agonizing Blast already does specifically for Eldritch Blast.
   damageAbilityBonus: z.enum(DND5E_ABILITIES).optional(),
+  // Extra max HP per character level (#182) -- Tough's +2/level. Multiplied by sheet.level at
+  // read time (effectiveHpBonus, dnd5e.ts) rather than stored as a flat total, so it stays
+  // correct through every future level-up without re-editing the granted entry.
+  hpBonusPerLevel: z.number().int().min(-4).max(4).default(0),
+  // Flat bonus to walking speed, always active (#182) -- Mobile's +10 ft. buffEffectSchema
+  // already has the equivalent field for a *temporary* spell/item buff; feats/traits never got
+  // the always-on version. Mobile's other half (no opportunity attacks against a creature you've
+  // hit this turn) stays description text -- a per-attack situational trigger, same reasoning
+  // advantageOn/optionalAttackModifier already use for anything the app can't evaluate itself.
+  speedBonus: z.number().int().min(-30).max(30).default(0),
+  // Saving-throw *proficiency* grants, not just a flat bonus (#182) -- Resilient's actual RAW
+  // ("gain proficiency in <ability> saving throws"), which saveBonus above can't express since
+  // proficiency adds the proficiency bonus, not a fixed amount. Aggregated the same way
+  // skillProficiencies already is (effectSkillProficiencies, dnd5e.ts) rather than merged into
+  // sheet.saveProficiencies, so removing the grant automatically un-grants it.
+  savingThrowProficiencies: z.array(z.enum(DND5E_ABILITIES)).max(6).default([]),
 }).strict();
 export type EffectBonuses = z.infer<typeof effectBonusesSchema>;
 
@@ -556,6 +572,9 @@ export function blankSubclassFeature(name: string, level: number): SubclassFeatu
     spellAttackBonus: 0,
     saveBonus: 0,
     initiativeBonus: 0,
+    hpBonusPerLevel: 0,
+    speedBonus: 0,
+    savingThrowProficiencies: [],
     skillProficiencies: [],
     armorProficiencies: [],
     weaponProficiencies: [],
@@ -694,6 +713,9 @@ export interface ResolvedGrantedFeat {
   saveBonus: number;
   initiativeBonus: number;
   skillProficiencies: string[];
+  hpBonusPerLevel: number;
+  speedBonus: number;
+  savingThrowProficiencies: Dnd5eAbility[];
   grantedSpells: GrantedSpell[];
 }
 
@@ -718,6 +740,9 @@ export function resolveGrantedFeat(ref: string, customFeats: CustomContent[]): R
       saveBonus: 0,
       initiativeBonus: 0,
       skillProficiencies: [],
+      hpBonusPerLevel: 0,
+      speedBonus: 0,
+      savingThrowProficiencies: [],
       grantedSpells: [],
     };
   }
@@ -738,6 +763,9 @@ export function resolveGrantedFeat(ref: string, customFeats: CustomContent[]): R
     saveBonus: d.saveBonus,
     initiativeBonus: d.initiativeBonus,
     skillProficiencies: d.skillProficiencies,
+    hpBonusPerLevel: d.hpBonusPerLevel,
+    speedBonus: d.speedBonus,
+    savingThrowProficiencies: d.savingThrowProficiencies,
     grantedSpells: d.grantedSpells,
   };
 }

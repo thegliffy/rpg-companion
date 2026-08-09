@@ -1,6 +1,19 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { dnd5eSheetSchema, activeEffectAcBonus, effectiveSpeed, hasBuffEffect, buffEffectSchema, initiativeBonus, effectiveAbilityScore, d20Formula } from "./dnd5e.js";
+import {
+  dnd5eSheetSchema,
+  activeEffectAcBonus,
+  effectiveSpeed,
+  hasBuffEffect,
+  buffEffectSchema,
+  initiativeBonus,
+  effectiveAbilityScore,
+  d20Formula,
+  effectiveHpBonus,
+  isSaveProficient,
+  effectSaveProficiencies,
+  saveBonus,
+} from "./dnd5e.js";
 import type { Dnd5eSheetData } from "./dnd5e.js";
 import { naturalD20, isCriticalHit, isCriticalMiss } from "./crit.js";
 import type { RollDetail } from "../types.js";
@@ -141,6 +154,94 @@ describe("initiativeBonus", () => {
     assert.equal(initiativeBonus(viaAbility), 4);
     assert.equal(effectiveAbilityScore(viaInitiative, "dex"), 14);
     assert.equal(effectiveAbilityScore(viaAbility, "dex"), 18);
+  });
+});
+
+describe("effectiveHpBonus (#182, Tough)", () => {
+  function sheetAtLevel(level: number, feats: Record<string, unknown>[] = []) {
+    return dnd5eSheetSchema.parse({
+      level,
+      abilities: {},
+      feats: feats.map((f, i) => ({ id: `f${i}`, name: `Feat ${i}`, ...f })),
+    });
+  }
+
+  it("is 0 with no hpBonusPerLevel source", () => {
+    assert.equal(effectiveHpBonus(sheetAtLevel(5)), 0);
+  });
+
+  it("multiplies by the character's current level -- Tough's +2/level", () => {
+    assert.equal(effectiveHpBonus(sheetAtLevel(5, [{ hpBonusPerLevel: 2 }])), 10);
+    assert.equal(effectiveHpBonus(sheetAtLevel(1, [{ hpBonusPerLevel: 2 }])), 2);
+  });
+
+  it("sums more than one source", () => {
+    assert.equal(effectiveHpBonus(sheetAtLevel(4, [{ hpBonusPerLevel: 2 }, { hpBonusPerLevel: 1 }])), 12);
+  });
+});
+
+describe("effectiveSpeed with a feat-sourced speedBonus (#182, Mobile)", () => {
+  function sheetWithSpeedFeat(speed: number, feats: Record<string, unknown>[] = []) {
+    return dnd5eSheetSchema.parse({
+      speed,
+      abilities: {},
+      feats: feats.map((f, i) => ({ id: `f${i}`, name: `Feat ${i}`, ...f })),
+    });
+  }
+
+  it("adds an always-on feat speed bonus -- Mobile's +10 ft", () => {
+    assert.equal(effectiveSpeed(sheetWithSpeedFeat(30, [{ speedBonus: 10 }])), 40);
+  });
+
+  it("composes with an active-effect multiplier as (base + flat) * multiplier", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      speed: 30,
+      abilities: {},
+      feats: [{ id: "f0", name: "Mobile", speedBonus: 10 }],
+      activeEffects: [{ id: "e0", name: "Boots of Speed", speedMultiplier: 2 }],
+    });
+    // (30 + 10 feat) * 2 = 80, not 30*2 + 10 = 70 -- the flat bonus applies before the multiplier
+    // the same way a buff's own speedBonus already does.
+    assert.equal(effectiveSpeed(sheet), 80);
+  });
+});
+
+describe("isSaveProficient / effectSaveProficiencies (#182, Resilient)", () => {
+  function sheetWith(saveProficiencies: string[], feats: Record<string, unknown>[] = []) {
+    return dnd5eSheetSchema.parse({
+      abilities: {},
+      saveProficiencies,
+      feats: feats.map((f, i) => ({ id: `f${i}`, name: `Feat ${i}`, ...f })),
+    });
+  }
+
+  it("is proficient via the sheet's own fixed list, same as before this existed", () => {
+    assert.equal(isSaveProficient(sheetWith(["wis"]), "wis"), true);
+    assert.equal(isSaveProficient(sheetWith(["wis"]), "str"), false);
+  });
+
+  it("is also proficient via a granting feat -- Resilient (Constitution)", () => {
+    const sheet = sheetWith([], [{ savingThrowProficiencies: ["con"] }]);
+    assert.equal(isSaveProficient(sheet, "con"), true);
+    assert.equal(isSaveProficient(sheet, "str"), false);
+  });
+
+  it("the two sources are additive, not exclusive", () => {
+    const sheet = sheetWith(["wis"], [{ savingThrowProficiencies: ["con"] }]);
+    assert.equal(isSaveProficient(sheet, "wis"), true);
+    assert.equal(isSaveProficient(sheet, "con"), true);
+  });
+
+  it("removing the granting feat un-grants the proficiency, mirroring effectSkillProficiencies", () => {
+    assert.deepEqual(effectSaveProficiencies(sheetWith([], [{ savingThrowProficiencies: ["con", "wis"] }])), ["con", "wis"]);
+    assert.deepEqual(effectSaveProficiencies(sheetWith([])), []);
+  });
+
+  it("saveBonus() adds the proficiency bonus once proficient via either source", () => {
+    const proficient = sheetWith([], [{ savingThrowProficiencies: ["con"] }]);
+    const notProficient = sheetWith([]);
+    // Both start from the same ability score (10, +0 mod); the only difference is proficiency.
+    assert.equal(saveBonus(proficient, "con") > saveBonus(notProficient, "con"), true);
   });
 });
 

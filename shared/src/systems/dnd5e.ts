@@ -292,6 +292,14 @@ export const effectEntrySchema = z.object({
   // Agonizing Blast already does specifically for Eldritch Blast (ebDamagePerBeamAbility,
   // srd-invocations.ts), available to a homebrew feat/weapon outside that one hardcoded path.
   damageAbilityBonus: z.enum(DND5E_ABILITIES).optional(),
+  // Extra max HP per level (#182) -- Tough's +2/level. Mirrors effectBonusesSchema exactly;
+  // multiplied by sheet.level at read time (effectiveHpBonus below).
+  hpBonusPerLevel: z.number().int().min(-4).max(4).default(0),
+  // Flat bonus to walking speed, always active (#182) -- Mobile's +10 ft.
+  speedBonus: z.number().int().min(-30).max(30).default(0),
+  // Saving-throw proficiency grants (#182) -- Resilient. Mirrors skillProficiencies' aggregation
+  // convention above.
+  savingThrowProficiencies: z.array(z.enum(DND5E_ABILITIES)).max(6).default([]),
 });
 
 export type EffectEntry = z.infer<typeof effectEntrySchema>;
@@ -526,9 +534,26 @@ export function featAbilityBonus(sheet: Dnd5eSheetData, ability: Dnd5eAbility): 
 /** Sum of a numeric bonus field across every feat/feature, e.g. acBonus/attackBonus/spellDCBonus. */
 export function featBonusTotal(
   sheet: Dnd5eSheetData,
-  key: "acBonus" | "attackBonus" | "damageBonus" | "spellDCBonus" | "spellAttackBonus" | "saveBonus" | "initiativeBonus",
+  key:
+    | "acBonus"
+    | "attackBonus"
+    | "damageBonus"
+    | "spellDCBonus"
+    | "spellAttackBonus"
+    | "saveBonus"
+    | "initiativeBonus"
+    | "hpBonusPerLevel"
+    | "speedBonus",
 ): number {
   return allEffectEntries(sheet).reduce((sum, entry) => sum + entry[key], 0);
+}
+
+/** Extra max HP from every feat/feature's hpBonusPerLevel (#182) -- Tough's +2/level, multiplied
+ * by the character's current level so it stays correct through every future level-up without
+ * re-editing the granted entry. Display-only, like effectiveSpeed/activeEffectAcBonus -- hpMax
+ * itself stays player-edited, since it's already manually tracked through level-up HP rolls. */
+export function effectiveHpBonus(sheet: Dnd5eSheetData): number {
+  return featBonusTotal(sheet, "hpBonusPerLevel") * sheet.level;
 }
 
 /** Sum of every feat/feature's damageAbilityBonus modifier (#167) -- e.g. a homebrew
@@ -562,6 +587,12 @@ export function effectSkillProficiencies(sheet: Dnd5eSheetData): string[] {
  * feat/feature/invocation (effectSkillProficiencies) -- the two sources are additive. */
 export function isSkillProficient(sheet: Dnd5eSheetData, skillId: string): boolean {
   return sheet.skillProficiencies.includes(skillId) || effectSkillProficiencies(sheet).includes(skillId);
+}
+
+/** Saving-throw proficiencies granted by any feat/feature (#182) -- Resilient. Mirrors
+ * effectSkillProficiencies() exactly, including the "removing the grant un-grants it" property. */
+export function effectSaveProficiencies(sheet: Dnd5eSheetData): Dnd5eAbility[] {
+  return [...new Set(allEffectEntries(sheet).flatMap((entry) => entry.savingThrowProficiencies))];
 }
 
 /** Base ability score plus bonuses from every equipped item and every feat. */
@@ -635,7 +666,10 @@ export function activeEffectAcBonus(sheet: Dnd5eSheetData): number {
  * the rules read (you double your *current* speed). Floored at 0 and rounded down -- 5e speeds
  * are whole feet. */
 export function effectiveSpeed(sheet: Dnd5eSheetData): number {
-  let speed = sheet.speed;
+  // Always-on feat/feature speed (#182, Mobile's +10) is added alongside the base speed, same
+  // "flat bonus before any multiplier" treatment a temporary buff's speedBonus already gets --
+  // Mobile stacking with a later Boots of Speed toggle should read (30+10)*2, not 30*2+10.
+  let speed = sheet.speed + featBonusTotal(sheet, "speedBonus");
   for (const e of sheet.activeEffects) speed += e.speedBonus;
   for (const e of sheet.activeEffects) speed *= e.speedMultiplier;
   return Math.max(0, Math.floor(speed));
@@ -675,9 +709,16 @@ export function armorOverlapWarning(sheet: Dnd5eSheetData): string | null {
   return parts.length > 0 ? `${parts.join(" and ")} equipped -- only one of each counts toward AC.` : null;
 }
 
+/** True when a saving throw is proficient either directly (sheet.saveProficiencies, set at
+ * character creation) or via a granting feat/feature/trait (effectSaveProficiencies, #182's
+ * Resilient) -- the two sources are additive, mirroring isSkillProficient() exactly. */
+export function isSaveProficient(sheet: Dnd5eSheetData, ability: Dnd5eAbility): boolean {
+  return sheet.saveProficiencies.includes(ability) || effectSaveProficiencies(sheet).includes(ability);
+}
+
 export function saveBonus(sheet: Dnd5eSheetData, ability: Dnd5eAbility): number {
   const mod = abilityModifier(effectiveAbilityScore(sheet, ability));
-  const base = sheet.saveProficiencies.includes(ability) ? mod + proficiencyBonus(sheet.level) : mod;
+  const base = isSaveProficient(sheet, ability) ? mod + proficiencyBonus(sheet.level) : mod;
   return base + featBonusTotal(sheet, "saveBonus") + equippedItemBonus(sheet, "saveBonus");
 }
 
@@ -804,13 +845,14 @@ export function concentrationSaveDC(damage: number): number {
 
 /**
  * Max HP per RAW: sum of hit die rolls/averages (CON excluded) plus level × current CON
- * modifier -- recalculated fresh from the current CON mod, so it's always correct even
- * after CON changes retroactively (ASI, equipped item, feature), unlike a running total
- * that bakes in whatever CON mod happened to apply at each individual level-up.
+ * modifier, plus any feat/feature hpBonusPerLevel (#182, Tough's +2/level) -- recalculated fresh
+ * from the current CON mod and level, so it's always correct even after CON changes
+ * retroactively (ASI, equipped item, feature), unlike a running total that bakes in whatever CON
+ * mod happened to apply at each individual level-up.
  */
 export function computeHpMax(sheet: Dnd5eSheetData): number {
   const diceSum = sheet.hpDiceHistory.reduce((sum, v) => sum + v, 0);
-  return diceSum + sheet.level * abilityModifier(effectiveAbilityScore(sheet, "con"));
+  return diceSum + sheet.level * abilityModifier(effectiveAbilityScore(sheet, "con")) + effectiveHpBonus(sheet);
 }
 
 /** What applying damage or healing works out to (#173). Pure -- the caller decides what to write

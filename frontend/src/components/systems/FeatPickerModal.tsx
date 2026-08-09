@@ -17,6 +17,9 @@ const BLANK_BONUSES = {
   saveBonus: 0,
   initiativeBonus: 0,
   skillProficiencies: [] as string[],
+  hpBonusPerLevel: 0,
+  speedBonus: 0,
+  savingThrowProficiencies: [] as Dnd5eAbility[],
 };
 
 // Pending resolution of a custom feat's spellChoices rows -- one WizardSpellbookPicker per row,
@@ -92,6 +95,9 @@ export function FeatPickerModal({
       skillProficiencies: d.skillProficiencies,
       optionalAttackModifier: d.optionalAttackModifier,
       damageAbilityBonus: d.damageAbilityBonus,
+      hpBonusPerLevel: d.hpBonusPerLevel,
+      speedBonus: d.speedBonus,
+      savingThrowProficiencies: d.savingThrowProficiencies,
     };
     if (d.spellChoices.length === 0) {
       onPick(feat, d.grantedSpells);

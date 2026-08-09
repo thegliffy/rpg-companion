@@ -249,6 +249,9 @@ interface TraitRow {
   optAttackPenalty: string;
   optDamageBonus: string;
   damageAbilityBonus: Dnd5eAbility | "";
+  hpBonusPerLevel: string;
+  speedBonus: string;
+  savingThrowProficiencies: Dnd5eAbility[];
 }
 const emptyTraitRow = (): TraitRow => ({
   id: `trait-${crypto.randomUUID()}`,
@@ -269,6 +272,9 @@ const emptyTraitRow = (): TraitRow => ({
   optAttackPenalty: "0",
   optDamageBonus: "0",
   damageAbilityBonus: "",
+  hpBonusPerLevel: "0",
+  speedBonus: "0",
+  savingThrowProficiencies: [],
 });
 
 // A trait's granted spell as labeled row state (#178) -- was a positional
@@ -319,6 +325,9 @@ function dataToTraitRows(traits: RaceTrait[]): TraitRow[] {
       optAttackPenalty: String(t.optionalAttackModifier?.attackPenalty ?? 0),
       optDamageBonus: String(t.optionalAttackModifier?.damageBonus ?? 0),
       damageAbilityBonus: t.damageAbilityBonus ?? "",
+      hpBonusPerLevel: String(t.hpBonusPerLevel),
+      speedBonus: String(t.speedBonus),
+      savingThrowProficiencies: t.savingThrowProficiencies,
     };
   });
 }
@@ -436,6 +445,12 @@ interface BgFeatureRow {
   spellAttackBonus: string;
   saveBonus: string;
   initiativeBonus: string;
+  optAttackPenalty: string;
+  optDamageBonus: string;
+  damageAbilityBonus: Dnd5eAbility | "";
+  hpBonusPerLevel: string;
+  speedBonus: string;
+  savingThrowProficiencies: Dnd5eAbility[];
 }
 const emptyBgFeatureRow = (): BgFeatureRow => ({
   id: `bg-feature-${crypto.randomUUID()}`,
@@ -449,6 +464,12 @@ const emptyBgFeatureRow = (): BgFeatureRow => ({
   spellAttackBonus: "0",
   saveBonus: "0",
   initiativeBonus: "0",
+  optAttackPenalty: "0",
+  optDamageBonus: "0",
+  damageAbilityBonus: "",
+  hpBonusPerLevel: "0",
+  speedBonus: "0",
+  savingThrowProficiencies: [],
 });
 
 interface FeatGrantedSpellRow {
@@ -514,6 +535,9 @@ interface SubclassFeatureRow {
   optAttackPenalty: string;
   optDamageBonus: string;
   damageAbilityBonus: Dnd5eAbility | "";
+  hpBonusPerLevel: string;
+  speedBonus: string;
+  savingThrowProficiencies: Dnd5eAbility[];
 }
 const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
   id: `subclass-feature-${crypto.randomUUID()}`,
@@ -535,6 +559,9 @@ const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
   optAttackPenalty: "0",
   optDamageBonus: "0",
   damageAbilityBonus: "",
+  hpBonusPerLevel: "0",
+  speedBonus: "0",
+  savingThrowProficiencies: [],
 });
 
 interface SubclassSpellRow {
@@ -784,6 +811,11 @@ export function CustomContentManager({
   const [featOptDamageBonus, setFeatOptDamageBonus] = useState("0");
   // "" = no ability-to-damage bonus (#167) -- the generic Agonizing-Blast-alike.
   const [featDamageAbilityBonus, setFeatDamageAbilityBonus] = useState<Dnd5eAbility | "">("");
+  // Tough/Mobile/Resilient (#182) -- extra HP per level, always-on speed bonus, and saving-throw
+  // proficiency grants.
+  const [featHpBonusPerLevel, setFeatHpBonusPerLevel] = useState("0");
+  const [featSpeedBonus, setFeatSpeedBonus] = useState("0");
+  const [featSavingThrowProficiencies, setFeatSavingThrowProficiencies] = useState<Dnd5eAbility[]>([]);
 
   // Spell fields
   const [spellDescription, setSpellDescription] = useState("");
@@ -1199,6 +1231,9 @@ export function CustomContentManager({
             ? { attackPenalty: Number(r.optAttackPenalty) || 0, damageBonus: Number(r.optDamageBonus) || 0 }
             : undefined,
         damageAbilityBonus: r.damageAbilityBonus || undefined,
+        hpBonusPerLevel: Number(r.hpBonusPerLevel) || 0,
+        speedBonus: Number(r.speedBonus) || 0,
+        savingThrowProficiencies: r.savingThrowProficiencies,
       }));
   }
 
@@ -1245,6 +1280,9 @@ export function CustomContentManager({
     setFeatOptAttackPenalty("0");
     setFeatOptDamageBonus("0");
     setFeatDamageAbilityBonus("");
+    setFeatHpBonusPerLevel("0");
+    setFeatSpeedBonus("0");
+    setFeatSavingThrowProficiencies([]);
     setFeatSkillProficiencies([]);
     setFeatGrantedSpells([]);
     setFeatSpellChoices([]);
@@ -1439,6 +1477,12 @@ export function CustomContentManager({
           spellAttackBonus: String(f.spellAttackBonus),
           saveBonus: String(f.saveBonus),
           initiativeBonus: String(f.initiativeBonus),
+          optAttackPenalty: String(f.optionalAttackModifier?.attackPenalty ?? 0),
+          optDamageBonus: String(f.optionalAttackModifier?.damageBonus ?? 0),
+          damageAbilityBonus: f.damageAbilityBonus ?? "",
+          hpBonusPerLevel: String(f.hpBonusPerLevel),
+          speedBonus: String(f.speedBonus),
+          savingThrowProficiencies: f.savingThrowProficiencies,
         })),
       );
       setBgVariantTables(
@@ -1504,6 +1548,9 @@ export function CustomContentManager({
           optAttackPenalty: String(f.optionalAttackModifier?.attackPenalty ?? 0),
           optDamageBonus: String(f.optionalAttackModifier?.damageBonus ?? 0),
           damageAbilityBonus: f.damageAbilityBonus ?? "",
+          hpBonusPerLevel: String(f.hpBonusPerLevel),
+          speedBonus: String(f.speedBonus),
+          savingThrowProficiencies: f.savingThrowProficiencies,
         })),
       );
       setSubclassSpellRows(
@@ -1548,6 +1595,9 @@ export function CustomContentManager({
         prereqText?: string;
         optionalAttackModifier?: { attackPenalty: number; damageBonus: number };
         damageAbilityBonus?: Dnd5eAbility;
+        hpBonusPerLevel?: number;
+        speedBonus?: number;
+        savingThrowProficiencies?: Dnd5eAbility[];
       };
       setFeatDescription(d.description);
       const bonuses: Partial<Record<Dnd5eAbility, string>> = {};
@@ -1563,6 +1613,9 @@ export function CustomContentManager({
       setFeatOptAttackPenalty(String(d.optionalAttackModifier?.attackPenalty ?? 0));
       setFeatOptDamageBonus(String(d.optionalAttackModifier?.damageBonus ?? 0));
       setFeatDamageAbilityBonus(d.damageAbilityBonus ?? "");
+      setFeatHpBonusPerLevel(String(d.hpBonusPerLevel ?? 0));
+      setFeatSpeedBonus(String(d.speedBonus ?? 0));
+      setFeatSavingThrowProficiencies(d.savingThrowProficiencies ?? []);
       setFeatSkillProficiencies(d.skillProficiencies ?? []);
       setFeatGrantedSpells(
         (d.grantedSpells ?? []).map((gs) => ({ name: gs.name, level: String(gs.level), atWill: gs.atWill })),
@@ -1840,6 +1893,14 @@ export function CustomContentManager({
           spellAttackBonus: Number(f.spellAttackBonus) || 0,
           saveBonus: Number(f.saveBonus) || 0,
           initiativeBonus: Number(f.initiativeBonus) || 0,
+          optionalAttackModifier:
+            Number(f.optAttackPenalty) > 0 || Number(f.optDamageBonus) > 0
+              ? { attackPenalty: Number(f.optAttackPenalty) || 0, damageBonus: Number(f.optDamageBonus) || 0 }
+              : undefined,
+          damageAbilityBonus: f.damageAbilityBonus || undefined,
+          hpBonusPerLevel: Number(f.hpBonusPerLevel) || 0,
+          speedBonus: Number(f.speedBonus) || 0,
+          savingThrowProficiencies: f.savingThrowProficiencies,
         })),
       variantTables: bgVariantTables
         .filter((t) => t.variants.some((v) => v.title.trim() !== ""))
@@ -1943,6 +2004,9 @@ export function CustomContentManager({
                   ? { attackPenalty: Number(f.optAttackPenalty) || 0, damageBonus: Number(f.optDamageBonus) || 0 }
                   : undefined,
               damageAbilityBonus: f.damageAbilityBonus || undefined,
+              hpBonusPerLevel: Number(f.hpBonusPerLevel) || 0,
+              speedBonus: Number(f.speedBonus) || 0,
+              savingThrowProficiencies: f.savingThrowProficiencies,
             })),
           spells: subclassSpellRows
             .filter((s) => s.name.trim() !== "")
@@ -1977,6 +2041,9 @@ export function CustomContentManager({
               ? { attackPenalty: Number(featOptAttackPenalty) || 0, damageBonus: Number(featOptDamageBonus) || 0 }
               : undefined,
           damageAbilityBonus: featDamageAbilityBonus || undefined,
+          hpBonusPerLevel: Number(featHpBonusPerLevel) || 0,
+          speedBonus: Number(featSpeedBonus) || 0,
+          savingThrowProficiencies: featSavingThrowProficiencies,
           grantedSpells: featGrantedSpells
             .filter((r) => r.name.trim() !== "")
             .map((r) => {
@@ -2353,6 +2420,8 @@ export function CustomContentManager({
                   ["Spell atk", "spellAttackBonus"],
                   ["Save", "saveBonus"],
                   ["Init", "initiativeBonus"],
+                  ["HP/lvl", "hpBonusPerLevel"],
+                  ["Speed", "speedBonus"],
                 ] as const
               ).map(([label, key]) => (
                 <label key={key}>
@@ -2410,6 +2479,32 @@ export function CustomContentManager({
                 </select>
               </label>
             </div>
+            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.3rem", fontSize: "0.85rem", alignItems: "center" }}>
+              <span>Save proficiencies:</span>
+              {DND5E_ABILITIES.map((a) => (
+                <label key={a}>
+                  <input
+                    type="checkbox"
+                    checked={row.savingThrowProficiencies.includes(a)}
+                    onChange={(e) =>
+                      setTraitRows((prev) =>
+                        prev.map((r, j) =>
+                          j === i
+                            ? {
+                                ...r,
+                                savingThrowProficiencies: e.target.checked
+                                  ? [...r.savingThrowProficiencies, a]
+                                  : r.savingThrowProficiencies.filter((x) => x !== a),
+                              }
+                            : r,
+                        ),
+                      )
+                    }
+                  />{" "}
+                  {a.toUpperCase()}
+                </label>
+              ))}
+            </div>
             {/* A trait authored (or imported) as a bare name with every mechanical field still at
                 its default looks identical, on save, to one that genuinely has no mechanics --
                 the exact "string trait silently became an empty shell" trap this warns about. */}
@@ -2427,10 +2522,13 @@ export function CustomContentManager({
                 row.spellAttackBonus,
                 row.saveBonus,
                 row.initiativeBonus,
+                row.hpBonusPerLevel,
+                row.speedBonus,
               ].every((v) => Number(v) === 0) &&
               Number(row.optAttackPenalty) === 0 &&
               Number(row.optDamageBonus) === 0 &&
-              row.damageAbilityBonus === "" && (
+              row.damageAbilityBonus === "" &&
+              row.savingThrowProficiencies.length === 0 && (
                 <p style={{ margin: "0.3rem 0 0", fontSize: "0.85rem", color: "var(--danger)" }}>
                   This trait has no mechanical effect set -- it will grant "{row.name.trim()}" as a name only.
                 </p>
@@ -3207,68 +3305,93 @@ export function CustomContentManager({
                       />
                     </label>
                   ))}
+                  {(
+                    [
+                      ["AC", "acBonus"],
+                      ["Attack", "attackBonus"],
+                      ["Damage", "damageBonus"],
+                      ["Spell DC", "spellDCBonus"],
+                      ["Spell atk", "spellAttackBonus"],
+                      ["Save", "saveBonus"],
+                      ["Init", "initiativeBonus"],
+                      ["HP/lvl", "hpBonusPerLevel"],
+                      ["Speed", "speedBonus"],
+                    ] as const
+                  ).map(([label, key]) => (
+                    <label key={key}>
+                      {label}{" "}
+                      <input
+                        type="number"
+                        style={{ width: "2.6rem" }}
+                        value={f[key]}
+                        onChange={(e) => setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, [key]: e.target.value } : r)))}
+                      />
+                    </label>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.3rem", fontSize: "0.85rem", alignItems: "center" }}>
                   <label>
-                    AC{" "}
+                    Opt. attack penalty{" "}
                     <input
                       type="number"
                       style={{ width: "2.6rem" }}
-                      value={f.acBonus}
-                      onChange={(e) => setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, acBonus: e.target.value } : r)))}
+                      value={f.optAttackPenalty}
+                      onChange={(e) => setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, optAttackPenalty: e.target.value } : r)))}
                     />
                   </label>
                   <label>
-                    Attack{" "}
+                    Opt. damage bonus{" "}
                     <input
                       type="number"
                       style={{ width: "2.6rem" }}
-                      value={f.attackBonus}
+                      value={f.optDamageBonus}
+                      onChange={(e) => setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, optDamageBonus: e.target.value } : r)))}
+                    />
+                  </label>
+                  <label>
+                    Damage ability{" "}
+                    <select
+                      value={f.damageAbilityBonus}
                       onChange={(e) =>
-                        setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, attackBonus: e.target.value } : r)))
+                        setBgFeatures((prev) =>
+                          prev.map((r, j) => (j === i ? { ...r, damageAbilityBonus: e.target.value as Dnd5eAbility | "" } : r)),
+                        )
                       }
-                    />
+                    >
+                      <option value="">(none)</option>
+                      {DND5E_ABILITIES.map((a) => (
+                        <option key={a} value={a}>
+                          {DND5E_ABILITY_NAMES[a]}
+                        </option>
+                      ))}
+                    </select>
                   </label>
-                  <label>
-                    Damage{" "}
-                    <input
-                      type="number"
-                      style={{ width: "2.6rem" }}
-                      value={f.damageBonus}
-                      onChange={(e) =>
-                        setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, damageBonus: e.target.value } : r)))
-                      }
-                    />
-                  </label>
-                  <label>
-                    Spell DC{" "}
-                    <input
-                      type="number"
-                      style={{ width: "2.6rem" }}
-                      value={f.spellDCBonus}
-                      onChange={(e) =>
-                        setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, spellDCBonus: e.target.value } : r)))
-                      }
-                    />
-                  </label>
-                  <label>
-                    Spell attack{" "}
-                    <input
-                      type="number"
-                      style={{ width: "2.6rem" }}
-                      value={f.spellAttackBonus}
-                      onChange={(e) =>
-                        setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, spellAttackBonus: e.target.value } : r)))
-                      }
-                    />
-                  </label>
-                  <label>
-                    Save{" "}
-                    <input
-                      type="number"
-                      style={{ width: "2.6rem" }}
-                      value={f.saveBonus}
-                      onChange={(e) => setBgFeatures((prev) => prev.map((r, j) => (j === i ? { ...r, saveBonus: e.target.value } : r)))}
-                    />
-                  </label>
+                </div>
+                <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.3rem", fontSize: "0.85rem", alignItems: "center" }}>
+                  <span>Save proficiencies:</span>
+                  {DND5E_ABILITIES.map((a) => (
+                    <label key={a}>
+                      <input
+                        type="checkbox"
+                        checked={f.savingThrowProficiencies.includes(a)}
+                        onChange={(e) =>
+                          setBgFeatures((prev) =>
+                            prev.map((r, j) =>
+                              j === i
+                                ? {
+                                    ...r,
+                                    savingThrowProficiencies: e.target.checked
+                                      ? [...r.savingThrowProficiencies, a]
+                                      : r.savingThrowProficiencies.filter((x) => x !== a),
+                                  }
+                                : r,
+                            ),
+                          )
+                        }
+                      />{" "}
+                      {a.toUpperCase()}
+                    </label>
+                  ))}
                 </div>
               </div>
             ))}
@@ -3635,6 +3758,8 @@ export function CustomContentManager({
                       ["Spell atk", "spellAttackBonus"],
                       ["Save", "saveBonus"],
                       ["Init", "initiativeBonus"],
+                      ["HP/lvl", "hpBonusPerLevel"],
+                      ["Speed", "speedBonus"],
                     ] as const
                   ).map(([label, key]) => (
                     <label key={key}>
@@ -3723,6 +3848,32 @@ export function CustomContentManager({
                       ))}
                     </select>
                   </label>
+                </div>
+                <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.85rem", alignItems: "center" }}>
+                  <span>Save proficiencies:</span>
+                  {DND5E_ABILITIES.map((a) => (
+                    <label key={a}>
+                      <input
+                        type="checkbox"
+                        checked={row.savingThrowProficiencies.includes(a)}
+                        onChange={(e) =>
+                          setSubclassFeatureRows((prev) =>
+                            prev.map((r, j) =>
+                              j === i
+                                ? {
+                                    ...r,
+                                    savingThrowProficiencies: e.target.checked
+                                      ? [...r.savingThrowProficiencies, a]
+                                      : r.savingThrowProficiencies.filter((x) => x !== a),
+                                  }
+                                : r,
+                            ),
+                          )
+                        }
+                      />{" "}
+                      {a.toUpperCase()}
+                    </label>
+                  ))}
                 </div>
                 <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.85rem" }}>
                   {DND5E_SKILLS.map((s) => (
@@ -3987,6 +4138,28 @@ export function CustomContentManager({
               <label title="Flat bonus to initiative only -- e.g. Alert's +5. Use an ability bonus instead if it should move every Dexterity check.">
                 Init <input type="number" style={{ width: "3rem" }} value={featInitiativeBonus} onChange={(e) => setFeatInitiativeBonus(e.target.value)} />
               </label>
+              <label title="Extra max HP per character level -- e.g. Tough's +2/level. Multiplied by level automatically.">
+                HP/lvl{" "}
+                <input type="number" style={{ width: "3rem" }} value={featHpBonusPerLevel} onChange={(e) => setFeatHpBonusPerLevel(e.target.value)} />
+              </label>
+              <label title="Always-on flat speed bonus -- e.g. Mobile's +10 ft.">
+                Speed <input type="number" style={{ width: "3rem" }} value={featSpeedBonus} onChange={(e) => setFeatSpeedBonus(e.target.value)} />
+              </label>
+            </div>
+            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.85rem", alignItems: "center" }}>
+              <span>Save proficiencies:</span>
+              {DND5E_ABILITIES.map((a) => (
+                <label key={a}>
+                  <input
+                    type="checkbox"
+                    checked={featSavingThrowProficiencies.includes(a)}
+                    onChange={(e) =>
+                      setFeatSavingThrowProficiencies((prev) => (e.target.checked ? [...prev, a] : prev.filter((x) => x !== a)))
+                    }
+                  />{" "}
+                  {a.toUpperCase()}
+                </label>
+              ))}
             </div>
 
             <h4>Optional attack tradeoff (Sharpshooter/GWM-style, optional)</h4>

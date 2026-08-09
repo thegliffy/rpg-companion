@@ -562,6 +562,9 @@ export function CharacterCreationWizard({
         skillProficiencies: [],
         optionalAttackModifier: feature.optionalAttackModifier,
         damageAbilityBonus: feature.damageAbilityBonus,
+        hpBonusPerLevel: feature.hpBonusPerLevel,
+        speedBonus: feature.speedBonus,
+        savingThrowProficiencies: feature.savingThrowProficiencies,
       });
     }
     const allVariants = data.variantTables.flatMap((t) => t.variants);
@@ -581,6 +584,9 @@ export function CharacterCreationWizard({
         spellAttackBonus: 0,
         saveBonus: 0,
         initiativeBonus: 0,
+        hpBonusPerLevel: 0,
+        speedBonus: 0,
+        savingThrowProficiencies: [],
       });
     }
 
@@ -652,6 +658,9 @@ export function CharacterCreationWizard({
         saveBonus: resolved.saveBonus,
         initiativeBonus: resolved.initiativeBonus,
         skillProficiencies: resolved.skillProficiencies,
+        hpBonusPerLevel: resolved.hpBonusPerLevel,
+        speedBonus: resolved.speedBonus,
+        savingThrowProficiencies: resolved.savingThrowProficiencies,
       });
       // Same feat-spell-${feat.id}-${i} tagging addFeat() uses on the sheet, so removing this
       // feat later still cleans up the spells it granted.
@@ -750,6 +759,9 @@ export function CharacterCreationWizard({
         skillProficiencies: [],
         optionalAttackModifier: trait.optionalAttackModifier,
         damageAbilityBonus: trait.damageAbilityBonus,
+        hpBonusPerLevel: trait.hpBonusPerLevel,
+        speedBonus: trait.speedBonus,
+        savingThrowProficiencies: trait.savingThrowProficiencies,
       });
       darkvisionFeet = Math.max(darkvisionFeet, trait.darkvisionFeet);
       for (const r of trait.damageResistances) damageResistances.add(r);

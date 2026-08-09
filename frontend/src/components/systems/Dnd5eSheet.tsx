@@ -97,6 +97,7 @@ import {
   attackBonus,
   featBonusTotal,
   effectSkillProficiencies,
+  effectSaveProficiencies,
   normalizeClassId,
   maxPreparableSpellLevel,
   maxPreparedSpells,
@@ -512,6 +513,9 @@ export function Dnd5eSheet({
         skillProficiencies: f.skillProficiencies,
         optionalAttackModifier: f.optionalAttackModifier,
         damageAbilityBonus: f.damageAbilityBonus,
+        hpBonusPerLevel: f.hpBonusPerLevel,
+        speedBonus: f.speedBonus,
+        savingThrowProficiencies: f.savingThrowProficiencies,
       }));
 
     const existingSpellIds = new Set(prev.spells.map((s) => s.id));
@@ -746,6 +750,9 @@ export function Dnd5eSheet({
       saveBonus: grants?.saveBonus ?? 0,
       initiativeBonus: 0,
       skillProficiencies: grants?.skillProficiencies ?? [],
+      hpBonusPerLevel: 0,
+      speedBonus: 0,
+      savingThrowProficiencies: [],
     };
     const grantedSpells: Dnd5eSheetData["spells"] = (grants?.grantedSpells ?? []).map((gs, i) => ({
       id: `invocation-spell-${featureId}-${i}`,
@@ -1584,30 +1591,45 @@ export function Dnd5eSheet({
         {/* Saves */}
         <div style={{ ...box, flex: "0 0 auto" }}>
           <h3>Saving throws</h3>
-          {DND5E_ABILITIES.map((a) => (
-            <div key={a}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <input
-                  type="checkbox"
-                  checked={sheet.saveProficiencies.includes(a)}
-                  onChange={() => toggleSaveProf(a)}
-                />
-                <span
-                  style={{ width: "6.5rem", cursor: "pointer", textDecoration: "underline dotted" }}
-                  title="Click to roll"
-                  onClick={() => rollCheck(`save-${a}`, saveBonus(sheet, a), `${DND5E_ABILITY_NAMES[a]} save`, activeEffectSaveDice(sheet))}
-                >
-                  {DND5E_ABILITY_NAMES[a]}
-                </span>
-                <strong>{formatModifier(saveBonus(sheet, a))}</strong>
-              </div>
-              {rollResults[`save-${a}`] && (
-                <div style={{ marginLeft: "1.9rem" }}>
-                  <small style={{ color: "var(--text-muted)" }}>{rollResults[`save-${a}`]}</small>
+          {(() => {
+            const grantedSaveAbilities = effectSaveProficiencies(sheet);
+            return DND5E_ABILITIES.map((a) => {
+              const manuallyChecked = sheet.saveProficiencies.includes(a);
+              const effectGranted = grantedSaveAbilities.includes(a);
+              return (
+                <div key={a}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <input
+                      type="checkbox"
+                      checked={manuallyChecked || effectGranted}
+                      disabled={effectGranted && !manuallyChecked}
+                      onChange={() => toggleSaveProf(a)}
+                      title={effectGranted && !manuallyChecked ? "Granted by a feat/feature (e.g. Resilient)" : undefined}
+                    />
+                    <span
+                      style={{ width: "6.5rem", cursor: "pointer", textDecoration: "underline dotted" }}
+                      title="Click to roll"
+                      onClick={() => rollCheck(`save-${a}`, saveBonus(sheet, a), `${DND5E_ABILITY_NAMES[a]} save`, activeEffectSaveDice(sheet))}
+                    >
+                      {DND5E_ABILITY_NAMES[a]}
+                      {effectGranted && !manuallyChecked && (
+                        <small style={{ color: "var(--text-muted)" }} title="Granted by a feat/feature (e.g. Resilient)">
+                          {" "}
+                          (granted)
+                        </small>
+                      )}
+                    </span>
+                    <strong>{formatModifier(saveBonus(sheet, a))}</strong>
+                  </div>
+                  {rollResults[`save-${a}`] && (
+                    <div style={{ marginLeft: "1.9rem" }}>
+                      <small style={{ color: "var(--text-muted)" }}>{rollResults[`save-${a}`]}</small>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+              );
+            });
+          })()}
         </div>
 
         {/* Skills, grouped by parent ability */}
@@ -3415,6 +3437,9 @@ export function Dnd5eSheet({
                 saveBonus: 0,
                 initiativeBonus: 0,
                 skillProficiencies: [],
+                hpBonusPerLevel: 0,
+                speedBonus: 0,
+                savingThrowProficiencies: [],
               },
             ])
           }
