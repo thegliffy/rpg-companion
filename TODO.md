@@ -2806,3 +2806,56 @@ browser tab -- it did not reproduce there, nor did it reproduce on a second, com
 control character in the same stale tab, confirming it was leftover Vite HMR desync in that one
 tab from an earlier unrelated module-resolution error, not a real code regression.) Test
 characters, custom background, dice rolls, and user deleted after verification.
+
+191. ✅ **"Soft gap" audit, round 3 -- WP10: what's already resolved and what stays deferred.**
+    Closing note for the round #182-190 opened. Not code -- a record of the investigation's two
+    findings so the next pass starts from an assessment instead of rediscovering the same ground.
+
+    **Already resolved, contrary to the original report -- verified by reading the code, not
+    assumed:**
+    - Race-trait editor UI completeness. Every `raceTraitSchema`/`effectBonusesSchema` field
+      (including `initiativeBonus`, `optionalAttackModifier`, `damageAbilityBonus` from #178) had
+      a matching input in `CustomContentManager.tsx` before this round started. Only the "no
+      mechanical effect" warning's condition was stale (didn't check those three newer fields) --
+      fixed as part of #182.
+    - Background tool-proficiency choice ("pick N tools from a list"). `toolChoiceSchema`
+      already existed and was wired (`custom-content.ts`).
+    - Magic Initiate/Ritual Caster-style "pick a class, then pick spells from it" choices.
+      Already resolves through `spellChoices`/`WizardSpellbookPicker` (#101, #168).
+    - Channel-Divinity-style "several named options share one resource." Already exists via
+      `homebrewResourceSchema.options` (#179).
+    - The cross-cutting "silent strip" complaint (`acBonus`/`speedBonus`/`speedMultiplier`/
+      `damageTypeOptions` vanishing on production). Not reproducible: production's `/api/health`
+      matched the exact commit just pushed, ruling out deployment lag. Most likely stale
+      client-side testing from before #174-181, or a stale browser cache.
+
+    **Genuinely out of reach this round, with what each would actually take:**
+    - **True AoE / teleport / banish simulation** (a spell's "15-ft cone," Banishment's "returns
+      after 1 minute unless a check succeeds," Web's area-restrain). Needs a spatial or at least
+      an adjacency model shared with the initiative tracker -- the same blocker #180 already
+      recorded for auras, restated here because #184's `areaOfEffect` field is deliberately just a
+      structured note, not a simulated shape.
+    - **Conditional ("only while raging," "only underground") resistances.** The monster and
+      race-trait resistance lists are unconditional strings; a real conditional grant needs either
+      a small expression language or a fixed enum of recognized conditions, neither of which exists
+      yet. Low value for the effort until a second real use case shows up.
+    - **Bag of Holding-style extradimensional weight rules.** Items already have `weight`; an
+      extradimensional container needs "contents don't count toward carry weight, up to a cap,"
+      which means either a container-aware weight recalculation or a second weight field per item
+      that opts out of the total -- neither modeled today.
+    - **A fully generic per-class scaling-die authoring system** (Blood Hunter's hemocraft die,
+      or any homebrew class's own scaling resource). Confirmed via direct code check:
+      `martialLevelEntrySchema` is a fixed enum of named mechanics (rage damage, sneak attack
+      dice, ki points, etc.), not an open "name + formula" pair a homebrew class could define.
+      Making it open would mean rewriting every consumer that currently pattern-matches on the
+      known mechanic names.
+    - **Variable-cost spell-storing items** (Ring of Spell Storing, full Wand of Magic Missiles
+      fidelity -- casting a specific stored spell at a chosen slot level). #188's charge pools
+      only cover a flat cost per use; a spell-storing item needs to know which spell (and at what
+      level) each charge-spend represents, which is a different data shape (a small list of
+      `{spellId, levelStored}` entries with independent charge costs) than a single `chargeCost`
+      number.
+
+**Verified (#191, done):** documentation only -- no schema, logic, or UI changes, so no new tests
+and no live verification. `tsc -b` and both suites already clean from #190 (shared 124/124,
+backend 28/28).
