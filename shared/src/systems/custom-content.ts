@@ -80,6 +80,13 @@ export const effectBonusesSchema = z.object({
   // just base + Dex). Real examples never use more than Dex + one other, so a single optional
   // field covers every known case rather than an open list.
   naturalArmorAbility: z.enum(DND5E_ABILITIES).optional(),
+  // Grants a linked companion creature (#182) -- a Ranger's Beast Master companion, an Echo
+  // Knight's Echo. Landing here (not just on subclass features) means a homebrew race could in
+  // principle grant one too, same "one shared mechanism, not a subclass-only special case"
+  // reasoning naturalArmorBase above already uses. Presence of the flag on ANY granted feat/
+  // feature/trait unlocks the sheet's CompanionPanel -- it doesn't carry which creature (the
+  // player picks that on the sheet, mirroring Wild Shape/Familiar).
+  grantsCompanion: z.boolean().default(false),
 }).strict();
 export type EffectBonuses = z.infer<typeof effectBonusesSchema>;
 
@@ -594,6 +601,7 @@ export function blankSubclassFeature(name: string, level: number): SubclassFeatu
     hpBonusPerLevel: 0,
     speedBonus: 0,
     savingThrowProficiencies: [],
+    grantsCompanion: false,
     skillProficiencies: [],
     armorProficiencies: [],
     weaponProficiencies: [],
@@ -735,6 +743,7 @@ export interface ResolvedGrantedFeat {
   hpBonusPerLevel: number;
   speedBonus: number;
   savingThrowProficiencies: Dnd5eAbility[];
+  grantsCompanion: boolean;
   grantedSpells: GrantedSpell[];
 }
 
@@ -762,6 +771,7 @@ export function resolveGrantedFeat(ref: string, customFeats: CustomContent[]): R
       hpBonusPerLevel: 0,
       speedBonus: 0,
       savingThrowProficiencies: [],
+      grantsCompanion: false,
       grantedSpells: [],
     };
   }
@@ -785,6 +795,7 @@ export function resolveGrantedFeat(ref: string, customFeats: CustomContent[]): R
     hpBonusPerLevel: d.hpBonusPerLevel,
     speedBonus: d.speedBonus,
     savingThrowProficiencies: d.savingThrowProficiencies,
+    grantsCompanion: d.grantsCompanion,
     grantedSpells: d.grantedSpells,
   };
 }

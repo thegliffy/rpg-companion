@@ -98,6 +98,7 @@ import {
   featBonusTotal,
   effectSkillProficiencies,
   effectSaveProficiencies,
+  hasCompanionGrant,
   normalizeClassId,
   maxPreparableSpellLevel,
   maxPreparedSpells,
@@ -135,6 +136,7 @@ import { FeatPickerModal } from "./FeatPickerModal";
 import { RollModeSelect } from "./RollModeSelect";
 import { WildShapePanel } from "./WildShapePanel";
 import { FamiliarPanel } from "./FamiliarPanel";
+import { CompanionPanel } from "./CompanionPanel";
 import { InvocationPickerModal, INVOCATION_PREFIX } from "./InvocationPickerModal";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { panel as box } from "../../styles";
@@ -335,6 +337,10 @@ export function Dnd5eSheet({
   const isChainPact = sheet.pactBoon === "chain";
   const knowsFindFamiliar = sheet.spells.some((s) => s.srdId === "find-familiar");
   const showFamiliar = knowsFindFamiliar || isChainPact;
+  // The Companion panel appears once any granted feat/feature/trait carries grantsCompanion
+  // (#182) -- a Beast Master's companion, an Echo Knight's Echo, etc. -- same "flag anywhere in
+  // the granted set" gating showFamiliar uses above.
+  const showCompanion = hasCompanionGrant(sheet);
   const knownExpected = matchedCustomClass
     ? effectiveLevelEntry(sheet.class, sheet.level)?.spellsKnown ?? null
     : expectedSpellsKnown(sheet.class, sheet.level);
@@ -524,6 +530,7 @@ export function Dnd5eSheet({
         hpBonusPerLevel: f.hpBonusPerLevel,
         speedBonus: f.speedBonus,
         savingThrowProficiencies: f.savingThrowProficiencies,
+        grantsCompanion: f.grantsCompanion,
       }));
 
     const existingSpellIds = new Set(prev.spells.map((s) => s.id));
@@ -761,6 +768,7 @@ export function Dnd5eSheet({
       hpBonusPerLevel: 0,
       speedBonus: 0,
       savingThrowProficiencies: [],
+      grantsCompanion: false,
     };
     const grantedSpells: Dnd5eSheetData["spells"] = (grants?.grantedSpells ?? []).map((gs, i) => ({
       id: `invocation-spell-${featureId}-${i}`,
@@ -3117,6 +3125,9 @@ export function Dnd5eSheet({
         />
       )}
 
+      {/* Companion creature (any subclass/class feature with grantsCompanion set) */}
+      {showCompanion && <CompanionPanel sheet={sheet} setSheet={setSheet} campaignId={character.campaignId} />}
+
       {/* Pact Magic (Warlock): invocations, Mystic Arcanum, Pact Boon */}
       {isWarlock && (
         <div style={box}>
@@ -3510,6 +3521,7 @@ export function Dnd5eSheet({
                 hpBonusPerLevel: 0,
                 speedBonus: 0,
                 savingThrowProficiencies: [],
+                grantsCompanion: false,
               },
             ])
           }

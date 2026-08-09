@@ -558,6 +558,10 @@ interface SubclassFeatureRow {
   savingThrowProficiencies: Dnd5eAbility[];
   naturalArmorBase: string;
   naturalArmorAbility: Dnd5eAbility | "";
+  // Unlocks the sheet's CompanionPanel (#182 soft-gap round) -- a Ranger's Beast Master
+  // companion, an Echo Knight's Echo, etc. Subclass/class-feature-only in the UI (not exposed on
+  // feat/background-feature/race-trait editors) since every real example is a class feature.
+  grantsCompanion: boolean;
 }
 const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
   id: `subclass-feature-${crypto.randomUUID()}`,
@@ -584,6 +588,7 @@ const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
   savingThrowProficiencies: [],
   naturalArmorBase: "",
   naturalArmorAbility: "",
+  grantsCompanion: false,
 });
 
 interface SubclassSpellRow {
@@ -1274,6 +1279,7 @@ export function CustomContentManager({
         swimSpeed: r.swimSpeed.trim() ? Number(r.swimSpeed) || 0 : undefined,
         flySpeed: r.flySpeed.trim() ? Number(r.flySpeed) || 0 : undefined,
         burrowSpeed: r.burrowSpeed.trim() ? Number(r.burrowSpeed) || 0 : undefined,
+        grantsCompanion: false,
       }));
   }
 
@@ -1599,6 +1605,7 @@ export function CustomContentManager({
           savingThrowProficiencies: f.savingThrowProficiencies,
           naturalArmorBase: f.naturalArmorBase !== undefined ? String(f.naturalArmorBase) : "",
           naturalArmorAbility: f.naturalArmorAbility ?? "",
+          grantsCompanion: f.grantsCompanion,
         })),
       );
       setSubclassSpellRows(
@@ -1963,6 +1970,7 @@ export function CustomContentManager({
           hpBonusPerLevel: Number(f.hpBonusPerLevel) || 0,
           speedBonus: Number(f.speedBonus) || 0,
           savingThrowProficiencies: f.savingThrowProficiencies,
+          grantsCompanion: false,
         })),
       variantTables: bgVariantTables
         .filter((t) => t.variants.some((v) => v.title.trim() !== ""))
@@ -2071,6 +2079,7 @@ export function CustomContentManager({
               savingThrowProficiencies: f.savingThrowProficiencies,
               naturalArmorBase: f.naturalArmorBase.trim() ? Number(f.naturalArmorBase) || 0 : undefined,
               naturalArmorAbility: f.naturalArmorAbility || undefined,
+              grantsCompanion: f.grantsCompanion,
             })),
           spells: subclassSpellRows
             .filter((s) => s.name.trim() !== "")
@@ -4039,6 +4048,18 @@ export function CustomContentManager({
                         </option>
                       ))}
                     </select>
+                  </label>
+                </div>
+                <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.85rem", alignItems: "center" }}>
+                  <label title="Unlocks the sheet's companion panel (e.g. a Beast Master's companion, an Echo Knight's Echo) -- the player picks the specific creature on the sheet.">
+                    <input
+                      type="checkbox"
+                      checked={row.grantsCompanion}
+                      onChange={(e) =>
+                        setSubclassFeatureRows((prev) => prev.map((r, j) => (j === i ? { ...r, grantsCompanion: e.target.checked } : r)))
+                      }
+                    />{" "}
+                    Grants a companion creature
                   </label>
                 </div>
                 <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.85rem" }}>

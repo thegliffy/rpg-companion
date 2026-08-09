@@ -327,6 +327,10 @@ export const effectEntrySchema = z.object({
   // effectBonusesSchema exactly; consumed by effectiveAC() below.
   naturalArmorBase: z.number().int().min(0).max(30).optional(),
   naturalArmorAbility: z.enum(DND5E_ABILITIES).optional(),
+  // Grants a linked companion creature (#182) -- Beast Master, Echo Knight. Mirrors
+  // effectBonusesSchema exactly; presence on any granted feat/feature/trait unlocks the sheet's
+  // CompanionPanel.
+  grantsCompanion: z.boolean().default(false),
 });
 
 export type EffectEntry = z.infer<typeof effectEntrySchema>;
@@ -459,6 +463,22 @@ export const dnd5eSheetSchema = z.object({
   familiar: z
     .object({
       monsterId: z.string().max(80).default(""),
+      hpCurrent: z.number().int().min(0).max(999).default(0),
+      hpMax: z.number().int().min(0).max(999).default(0),
+      dismissed: z.boolean().default(false),
+    })
+    .default({}),
+  // Any "this subclass/class feature grants a linked creature" mechanic (#182) -- a Ranger's
+  // Beast Master companion, an Echo Knight's Echo, etc. Deliberately named generically (not
+  // beastCompanion) and shaped exactly like wildShape/familiar above -- reference a monster by
+  // id, track a separate HP pool -- since that pattern already covers "player picks a creature,
+  // it has its own HP, its attacks roll through the shared AttackRollControl" regardless of which
+  // specific feature granted it. `name` is an optional player-given nickname (Beast Master
+  // companions are usually named); blank falls back to the monster's own name in the UI.
+  companion: z
+    .object({
+      monsterId: z.string().max(80).default(""),
+      name: z.string().max(60).default(""),
       hpCurrent: z.number().int().min(0).max(999).default(0),
       hpMax: z.number().int().min(0).max(999).default(0),
       dismissed: z.boolean().default(false),
@@ -627,6 +647,13 @@ export function isSkillProficient(sheet: Dnd5eSheetData, skillId: string): boole
  * effectSkillProficiencies() exactly, including the "removing the grant un-grants it" property. */
 export function effectSaveProficiencies(sheet: Dnd5eSheetData): Dnd5eAbility[] {
   return [...new Set(allEffectEntries(sheet).flatMap((entry) => entry.savingThrowProficiencies))];
+}
+
+/** True when any feat/feature carries grantsCompanion (#182) -- unlocks the sheet's Companion
+ * panel, the same "presence of the flag anywhere in the granted set turns the feature on" pattern
+ * showFamiliar (Dnd5eSheet.tsx) already uses for find familiar. */
+export function hasCompanionGrant(sheet: Dnd5eSheetData): boolean {
+  return allEffectEntries(sheet).some((entry) => entry.grantsCompanion);
 }
 
 /** Base ability score plus bonuses from every equipped item and every feat. */

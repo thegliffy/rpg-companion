@@ -566,6 +566,7 @@ export function CharacterCreationWizard({
         hpBonusPerLevel: feature.hpBonusPerLevel,
         speedBonus: feature.speedBonus,
         savingThrowProficiencies: feature.savingThrowProficiencies,
+        grantsCompanion: feature.grantsCompanion,
       });
     }
     const allVariants = data.variantTables.flatMap((t) => t.variants);
@@ -588,6 +589,7 @@ export function CharacterCreationWizard({
         hpBonusPerLevel: 0,
         speedBonus: 0,
         savingThrowProficiencies: [],
+        grantsCompanion: false,
       });
     }
 
@@ -670,6 +672,7 @@ export function CharacterCreationWizard({
         hpBonusPerLevel: resolved.hpBonusPerLevel,
         speedBonus: resolved.speedBonus,
         savingThrowProficiencies: resolved.savingThrowProficiencies,
+        grantsCompanion: resolved.grantsCompanion,
       });
       // Same feat-spell-${feat.id}-${i} tagging addFeat() uses on the sheet, so removing this
       // feat later still cleans up the spells it granted.
@@ -781,6 +784,7 @@ export function CharacterCreationWizard({
         savingThrowProficiencies: trait.savingThrowProficiencies,
         naturalArmorBase: trait.naturalArmorBase,
         naturalArmorAbility: trait.naturalArmorAbility,
+        grantsCompanion: trait.grantsCompanion,
       });
       darkvisionFeet = Math.max(darkvisionFeet, trait.darkvisionFeet);
       if (trait.climbSpeed) climbSpeed = Math.max(climbSpeed ?? 0, trait.climbSpeed);

@@ -12,6 +12,7 @@ import {
   effectiveHpBonus,
   isSaveProficient,
   effectSaveProficiencies,
+  hasCompanionGrant,
   saveBonus,
   effectiveAC,
 } from "./dnd5e.js";
@@ -329,6 +330,37 @@ describe("hasBuffEffect with flySpeed (#182, Broom of Flying)", () => {
 
   it("stays a no-op at flySpeed 0, same as every other zero-valued field", () => {
     assert.equal(hasBuffEffect(buffEffectSchema.parse({})), false);
+  });
+});
+
+describe("hasCompanionGrant (#182, Beast Master / Echo Knight-style companions)", () => {
+  it("is false with no granted feat/feature", () => {
+    const sheet = dnd5eSheetSchema.parse({ abilities: {} });
+    assert.equal(hasCompanionGrant(sheet), false);
+  });
+
+  it("is true once a feature carries grantsCompanion", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: {},
+      features: [{ id: "feat0", name: "Ranger's Companion", grantsCompanion: true }],
+    });
+    assert.equal(hasCompanionGrant(sheet), true);
+  });
+
+  it("is true via a granted feat too, not just features", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: {},
+      feats: [{ id: "f0", name: "Homebrew Beastmaster", grantsCompanion: true }],
+    });
+    assert.equal(hasCompanionGrant(sheet), true);
+  });
+
+  it("stays false when every entry leaves grantsCompanion at its default", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: {},
+      features: [{ id: "feat0", name: "Something Else" }],
+    });
+    assert.equal(hasCompanionGrant(sheet), false);
   });
 });
 

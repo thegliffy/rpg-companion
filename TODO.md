@@ -2713,3 +2713,50 @@ sheet's own item picker, equipped and attuned it. Confirmed "7 / 7 charges" disp
 Use/Reset buttons; clicking Use dropped it to "6 / 7"; setting the spend-quantity input to 3 and
 clicking Use again dropped it to "3 / 7" (confirming variable-cost spending, not just the default
 1); Reset correctly restored it to "7 / 7". Test character and item deleted after verification.
+
+189. ✅ **Companion/summon creatures (generalized, not Beast-Master-specific).** A subclass
+    granting a linked creature -- a Ranger's Beast Master companion, an Echo Knight's Echo -- had
+    nowhere to live. `WildShapePanel.tsx`/`FamiliarPanel.tsx` already do exactly this shape
+    ("reference a creature by id, track a separate live HP pool, render attacks through
+    `AttackRollControl`"), so this extends that pattern rather than inventing new architecture.
+
+    Added `sheet.companion: { monsterId, name, hpCurrent, hpMax, dismissed }.default({})` to
+    `dnd5eSheetSchema`, mirroring `familiar` exactly plus a `name` field for a player-given
+    nickname (Beast Master companions are usually named; blank falls back to the monster's own
+    name in the UI). Added `grantsCompanion: z.boolean().default(false)` to `effectBonusesSchema`
+    (custom-content.ts, shared by feat/background-feature/subclass-feature/race-trait) and its
+    sheet-side twin `effectEntrySchema` (dnd5e.ts) -- landing on the shared base rather than a
+    subclass-only field means a homebrew race or feat could in principle grant a companion too,
+    the same "one shared mechanism, not N special cases" choice `naturalArmorBase` (#186) already
+    made. New `hasCompanionGrant(sheet)` (dnd5e.ts) checks for the flag anywhere across every
+    granted feat/feature (which already includes race traits and background features, merged in
+    at creation) -- mirrors the `showFamiliar` gating `Dnd5eSheet.tsx` already used for the
+    Familiar panel.
+
+    New `CompanionPanel.tsx`, modeled directly on `FamiliarPanel.tsx`'s "pick any SRD/custom
+    monster, summon/dismiss" flow rather than Wild Shape's CR-table gating (no single RAW table
+    covers every companion-granting subclass), with an editable nickname field FamiliarPanel
+    doesn't have. Appears on the sheet once `hasCompanionGrant(sheet)` is true. Also added a
+    "Grants a companion creature" checkbox to the subclass-feature editor in
+    `CustomContentManager.tsx` (the plan's specifically-called-out authoring surface; feat/
+    background-feature/race-trait editors default it to `false` rather than exposing a checkbox,
+    since every real companion-granting example is a class feature).
+
+**Verified (#189, done):** 4 new unit tests (`effects.test.ts`) for `hasCompanionGrant` --  false
+with nothing granted, true via a feature, true via a feat too (not just features), stays false
+when every entry leaves the flag at its default. `tsc -b` and both suites clean throughout
+(shared 119/119, backend 28/28).
+
+Live: authored a subclass ("Companion Tester Subclass", parent class Ranger) through the real
+Custom Content Manager UI with one level-1 feature ("Ranger Companion Bond") and its new "Grants
+a companion creature" checkbox checked; confirmed `grantsCompanion: true` persisted in the stored
+row. Created a live character, gave it that granted feature directly (simulating what picking
+the subclass would produce via `mergeGrants`), reloaded the sheet -- the Companion panel appeared
+with the full SRD/homebrew monster picker. Summoned a Wolf: AC 13, HP 11 (2d8), Speed walk 40 ft,
+full ability scores, and a rollable Bite (2d4+2 piercing) attack all displayed correctly. Set a
+nickname ("Fang") and dropped HP to 0 -- the "at 0 HP" warning appeared and both fields persisted
+via PATCH (`{name: "Fang", hpCurrent: 0, hpMax: 11, monsterId: "wolf"}`). Dismissed and
+Resummoned successfully. Rolled the Bite attack through `AttackRollControl` -- a d20 result
+rendered and `POST /api/rolls` returned 201, confirming the roll persisted through the same dice
+pipeline Wild Shape/Familiar attacks already use. No console errors throughout. Test character,
+custom subclass, dice rolls, and user deleted after verification.
