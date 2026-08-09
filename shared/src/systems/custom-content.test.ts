@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { customBackgroundDataSchema, customContentDataSchemaFor, resolveSpellHealing, customSpellToSrdShape, formatBackgroundGrants } from "./custom-content.js";
+import {
+  customBackgroundDataSchema,
+  customContentDataSchemaFor,
+  resolveSpellHealing,
+  customSpellToSrdShape,
+  formatBackgroundGrants,
+  raceTraitSchema,
+} from "./custom-content.js";
 import type { CustomContent } from "../types.js";
 
 function spellItem(id: number, data: Record<string, unknown>): CustomContent {
@@ -131,6 +138,30 @@ describe("formatBackgroundGrants equipment currency line (#182)", () => {
     });
     const { equipment } = formatBackgroundGrants(data);
     assert.equal(equipment, "a bedroll");
+  });
+});
+
+describe("skillProficiencies on the shared effectBonusesSchema base (#182)", () => {
+  it("a race trait can now grant skill proficiency (Tortle's Survival Instinct)", () => {
+    const parsed = raceTraitSchema.parse({
+      id: "t1",
+      name: "Survival Instinct",
+      skillProficiencies: ["survival"],
+    });
+    assert.deepEqual(parsed.skillProficiencies, ["survival"]);
+  });
+
+  it("a background feature can now grant skill proficiency too", () => {
+    const data = customBackgroundDataSchema.parse({
+      skills: { fixed: [], choices: [] },
+      features: [{ id: "f1", name: "A Feature", skillProficiencies: ["insight"] }],
+    });
+    assert.deepEqual(data.features[0].skillProficiencies, ["insight"]);
+  });
+
+  it("defaults to an empty list when not authored, same as every other grant type", () => {
+    const parsed = raceTraitSchema.parse({ id: "t2", name: "Plain Trait" });
+    assert.deepEqual(parsed.skillProficiencies, []);
   });
 });
 

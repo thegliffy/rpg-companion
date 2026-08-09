@@ -333,6 +333,12 @@ export const effectEntrySchema = z.object({
   // effectBonusesSchema exactly; presence on any granted feat/feature/trait unlocks the sheet's
   // CompanionPanel.
   grantsCompanion: z.boolean().default(false),
+  // Darkvision range in feet (#182) -- previously race-trait-only via a flat, one-time-seeded
+  // sheet.darkvisionFeet. Mirrors effectBonusesSchema exactly; aggregated by effectiveDarkvision
+  // below (max across every source, same "best wins" convention naturalArmorBase already uses),
+  // not folded into sheet.darkvisionFeet directly, so a subclass picked after creation still
+  // takes effect without re-editing the sheet's own value.
+  darkvisionFeet: z.number().int().min(0).max(300).optional(),
 });
 
 export type EffectEntry = z.infer<typeof effectEntrySchema>;
@@ -610,6 +616,16 @@ export function featBonusTotal(
  * itself stays player-edited, since it's already manually tracked through level-up HP rolls. */
 export function effectiveHpBonus(sheet: Dnd5eSheetData): number {
   return featBonusTotal(sheet, "hpBonusPerLevel") * sheet.level;
+}
+
+/** Best darkvision range across the sheet's own value and every granted feat/feature (#182) --
+ * a subclass feature like Twilight Domain's Eyes of Night now has somewhere to grant it, and
+ * (unlike sheet.darkvisionFeet, which is only ever seeded once at character creation from race
+ * traits) this recomputes live, so a subclass picked after creation still takes effect without
+ * re-editing the sheet's own field. Max, not summed, same "best wins" convention naturalArmorBase
+ * and the movement-speed fields already use. */
+export function effectiveDarkvision(sheet: Dnd5eSheetData): number {
+  return Math.max(sheet.darkvisionFeet, ...allEffectEntries(sheet).map((e) => e.darkvisionFeet ?? 0));
 }
 
 /** Sum of every feat/feature's damageAbilityBonus modifier (#167) -- e.g. a homebrew

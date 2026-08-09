@@ -10,6 +10,7 @@ import {
   effectiveAbilityScore,
   d20Formula,
   effectiveHpBonus,
+  effectiveDarkvision,
   isSaveProficient,
   effectSaveProficiencies,
   hasCompanionGrant,
@@ -361,6 +362,40 @@ describe("hasCompanionGrant (#182, Beast Master / Echo Knight-style companions)"
       features: [{ id: "feat0", name: "Something Else" }],
     });
     assert.equal(hasCompanionGrant(sheet), false);
+  });
+});
+
+describe("effectiveDarkvision (#182, Twilight Domain's Eyes of Night)", () => {
+  it("is just the sheet's own value with no granting feat/feature", () => {
+    const sheet = dnd5eSheetSchema.parse({ abilities: {}, darkvisionFeet: 60 });
+    assert.equal(effectiveDarkvision(sheet), 60);
+  });
+
+  it("takes the higher of the sheet's value and a granted feature's, not the sum", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: {},
+      darkvisionFeet: 60,
+      features: [{ id: "f0", name: "Eyes of Night", darkvisionFeet: 300 }],
+    });
+    assert.equal(effectiveDarkvision(sheet), 300);
+  });
+
+  it("a lower granted value never overrides a higher sheet value", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: {},
+      darkvisionFeet: 120,
+      feats: [{ id: "f0", name: "Minor Darkvision Feat", darkvisionFeet: 30 }],
+    });
+    assert.equal(effectiveDarkvision(sheet), 120);
+  });
+
+  it("stays at the sheet's value when a granted entry leaves darkvisionFeet unset", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: {},
+      darkvisionFeet: 60,
+      features: [{ id: "f0", name: "Something Else" }],
+    });
+    assert.equal(effectiveDarkvision(sheet), 60);
   });
 });
 

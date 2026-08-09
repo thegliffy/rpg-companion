@@ -2859,3 +2859,59 @@ characters, custom background, dice rolls, and user deleted after verification.
 **Verified (#191, done):** documentation only -- no schema, logic, or UI changes, so no new tests
 and no live verification. `tsc -b` and both suites already clean from #190 (shared 124/124,
 backend 28/28).
+
+192. ✅ **"Soft gap" audit, round 4 -- WP-A: shared skillProficiencies + darkvisionFeet.** A
+    follow-up report found `raceTraitSchema` was the only one of the four grant types (feat/
+    background-feature/subclass-feature/race-trait) without `skillProficiencies` -- Tortle's
+    Survival Instinct had nowhere to grant a skill. Investigating turned up a second, unreported
+    instance of the same bug: `backgroundFeatureSchema` also lacked it, and
+    `CharacterCreationWizard.tsx`'s `backgroundGrants()` hardcoded `skillProficiencies: []` at its
+    feature-push site -- not a dropped value, there was genuinely no field to read. The same
+    report also confirmed darkvision was race-trait-only, so a subclass feature (Twilight
+    Domain's Eyes of Night) had nowhere to grant it either.
+
+    Moved `skillProficiencies` off `subclassFeatureSchema`/`customFeatDataSchema` (each had their
+    own separate copy) up onto the shared `effectBonusesSchema` base, so `raceTraitSchema` and
+    `backgroundFeatureSchema` -- both of which only extend that base -- inherit it automatically,
+    matching the exact "one shared field, not N special cases" pattern `hpBonusPerLevel`/
+    `speedBonus`/`savingThrowProficiencies` already established. Fixed the two hardcoded-`[]`
+    bugs in `CharacterCreationWizard.tsx` (background-feature push and, found while there, the
+    equivalent race-trait push) to read `feature.skillProficiencies`/`trait.skillProficiencies`.
+
+    Added `darkvisionFeet: z.number().int().min(0).max(300).optional()` to `effectBonusesSchema`
+    too (optional -- almost nothing besides a race trait has one; `raceTraitSchema` keeps its own
+    `.default(0)` override). Unlike the always-recomputed fields, `sheet.darkvisionFeet` is a
+    flat, player-editable number seeded once at character creation from race traits only -- a
+    subclass chosen *after* creation (the normal flow) would never update it. New
+    `effectiveDarkvision(sheet)` (`dnd5e.ts`) takes the max across the sheet's own value and every
+    granted feat/feature, mirroring `effectiveHpBonus`'s "always recomputed" shape and
+    `naturalArmorBase`'s "best wins, not summed" convention. Displayed with the exact "editable
+    base + computed arrow" pattern the Speed row already uses (`effectiveSpeed(sheet) !==
+    sheet.speed && <strong>→ N</strong>`) -- the Darkvision input stays plain and editable, with
+    `→ N ft` appended only when a granted feature pushes it higher.
+
+    UI: added a skill-proficiency checkbox grid to the race-trait and background-feature editors
+    in `CustomContentManager.tsx` (copied from the subclass-feature editor's existing block), and
+    a `darkvisionFeet` input to the feat, background-feature, and subclass-feature editors (race
+    trait already had one). Extended the race-trait "no mechanical effect" warning to also check
+    `skillProficiencies.length === 0`.
+
+**Verified (#192, done):** 7 new unit tests (`effectiveDarkvision` in `effects.test.ts`: sheet-
+only value, a granted feature raising it, a lower granted value never overriding a higher sheet
+value, stays put when a granted entry leaves it unset; `skillProficiencies` in
+`custom-content.test.ts`: a race trait can now carry it, a background feature can now carry it,
+defaults to `[]`). `tsc -b` and both suites clean throughout (shared 131/131, backend 28/28).
+
+Live: authored a race ("WPA Tester Race") with a trait ("Survival Instinct", Survival skill
+checked) through the real Custom Content Manager UI; confirmed `skillProficiencies: ["survival"]`
+persisted in the stored row. Drove a brand-new character through the full character-creation
+wizard (Fighter, this race, Acolyte background) end to end -- the finished character's
+`sheet.features` correctly carried `skillProficiencies: ["survival"]` on the race-trait entry
+(previously would have been `[]`), and the sheet's Skills panel showed "Survival (granted) +2".
+Separately PATCHed in a feature with `darkvisionFeet: 300` and confirmed the sheet's Darkvision
+row showed "[base] ft → 300 ft". (A "Maximum update depth exceeded" console error appeared in
+the long-lived tab this session's dev server had been running in the whole time; reproduced the
+exact same check clean on a brand-new tab, confirming it was leftover Vite HMR desync from
+earlier `npm run build -w shared` runs mid-session, not a real regression -- same root cause
+already isolated during #190's verification.) Test character, custom race, and user deleted after
+verification.

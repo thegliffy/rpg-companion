@@ -88,6 +88,20 @@ export const effectBonusesSchema = z.object({
   // feature/trait unlocks the sheet's CompanionPanel -- it doesn't carry which creature (the
   // player picks that on the sheet, mirroring Wild Shape/Familiar).
   grantsCompanion: z.boolean().default(false),
+  // Skill ids a feat/feature/trait grants proficiency in (e.g. a feat like Skilled, a Tortle's
+  // Survival Instinct). Previously declared separately on subclassFeatureSchema and
+  // customFeatDataSchema (each with its own copy), which meant raceTraitSchema and
+  // backgroundFeatureSchema -- both of which only extend this shared base -- had nowhere to put
+  // one at all. Aggregated via effectSkillProficiencies (dnd5e.ts) rather than merged into the
+  // sheet's own skillProficiencies, so removing the grant automatically un-grants it.
+  skillProficiencies: z.array(z.string().trim().max(40)).max(18).default([]),
+  // Darkvision range in feet (#182) -- previously raceTraitSchema-only, so a subclass feature
+  // (Twilight Domain's Eyes of Night) or a feat had nowhere to grant it. Optional (not `.default`)
+  // since almost nothing besides a race trait has one; raceTraitSchema below overrides this with
+  // its own `.default(0)` since a race trait always has a concrete value. Aggregated via
+  // effectiveDarkvision (dnd5e.ts), which takes the max across every source the same way
+  // naturalArmorBase/climbSpeed etc. already do "best wins," not summed.
+  darkvisionFeet: z.number().int().min(0).max(300).optional(),
 }).strict();
 export type EffectBonuses = z.infer<typeof effectBonusesSchema>;
 
@@ -565,8 +579,6 @@ const subclassFeatureSchema = effectBonusesSchema.extend({
   level: z.number().int().min(1).max(20),
   name: z.string().trim().max(60),
   description: z.string().trim().max(1000).default(""),
-  // Aggregated through effectSkillProficiencies (dnd5e.ts), same as a feat's.
-  skillProficiencies: z.array(z.string().trim().max(40)).max(18).default([]),
   // Armor/weapon/tool proficiency is cosmetic in this app -- nothing computes off
   // proficienciesText -- so these are appended to that free-text field on level-up.
   armorProficiencies: z.array(z.string().trim().max(40)).max(10).default([]),
@@ -729,10 +741,6 @@ export const customFeatDataSchema = effectBonusesSchema.extend({
   // (dnd5e.ts) since FeatPickerModal.pickCustom copies this straight onto a sheet entry --
   // raised together in the same change, see #122.
   description: z.string().trim().max(2000).default(""),
-  // Skill ids this feat grants proficiency in (e.g. Skilled) -- aggregated via
-  // effectSkillProficiencies (dnd5e.ts) rather than merged into skillProficiencies, so removing
-  // the feat automatically un-grants it.
-  skillProficiencies: z.array(z.string().trim().max(40)).default([]),
   // Spells this feat grants (e.g. Magic Initiate) -- pushed onto sheet.spells on pick, tagged
   // with the feat entry's id so removing the feat also removes the granted spells.
   grantedSpells: z.array(grantedSpellSchema).max(10).default([]),

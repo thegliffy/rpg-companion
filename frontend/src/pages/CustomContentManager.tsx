@@ -258,6 +258,7 @@ interface TraitRow {
   swimSpeed: string;
   flySpeed: string;
   burrowSpeed: string;
+  skillProficiencies: string[];
 }
 const emptyTraitRow = (): TraitRow => ({
   id: `trait-${crypto.randomUUID()}`,
@@ -287,6 +288,7 @@ const emptyTraitRow = (): TraitRow => ({
   swimSpeed: "",
   flySpeed: "",
   burrowSpeed: "",
+  skillProficiencies: [],
 });
 
 // A trait's granted spell as labeled row state (#178) -- was a positional
@@ -346,6 +348,7 @@ function dataToTraitRows(traits: RaceTrait[]): TraitRow[] {
       swimSpeed: t.swimSpeed !== undefined ? String(t.swimSpeed) : "",
       flySpeed: t.flySpeed !== undefined ? String(t.flySpeed) : "",
       burrowSpeed: t.burrowSpeed !== undefined ? String(t.burrowSpeed) : "",
+      skillProficiencies: t.skillProficiencies,
     };
   });
 }
@@ -469,6 +472,8 @@ interface BgFeatureRow {
   hpBonusPerLevel: string;
   speedBonus: string;
   savingThrowProficiencies: Dnd5eAbility[];
+  skillProficiencies: string[];
+  darkvisionFeet: string;
 }
 const emptyBgFeatureRow = (): BgFeatureRow => ({
   id: `bg-feature-${crypto.randomUUID()}`,
@@ -488,6 +493,8 @@ const emptyBgFeatureRow = (): BgFeatureRow => ({
   hpBonusPerLevel: "0",
   speedBonus: "0",
   savingThrowProficiencies: [],
+  skillProficiencies: [],
+  darkvisionFeet: "0",
 });
 
 interface FeatGrantedSpellRow {
@@ -562,6 +569,8 @@ interface SubclassFeatureRow {
   // companion, an Echo Knight's Echo, etc. Subclass/class-feature-only in the UI (not exposed on
   // feat/background-feature/race-trait editors) since every real example is a class feature.
   grantsCompanion: boolean;
+  // Darkvision range in feet (#182) -- e.g. Twilight Domain's Eyes of Night.
+  darkvisionFeet: string;
 }
 const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
   id: `subclass-feature-${crypto.randomUUID()}`,
@@ -589,6 +598,7 @@ const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
   naturalArmorBase: "",
   naturalArmorAbility: "",
   grantsCompanion: false,
+  darkvisionFeet: "0",
 });
 
 interface SubclassSpellRow {
@@ -852,6 +862,8 @@ export function CustomContentManager({
   const [featHpBonusPerLevel, setFeatHpBonusPerLevel] = useState("0");
   const [featSpeedBonus, setFeatSpeedBonus] = useState("0");
   const [featSavingThrowProficiencies, setFeatSavingThrowProficiencies] = useState<Dnd5eAbility[]>([]);
+  // Darkvision range in feet (#182) -- previously race-trait-only; a feat can now grant it too.
+  const [featDarkvisionFeet, setFeatDarkvisionFeet] = useState("0");
 
   // Spell fields
   const [spellDescription, setSpellDescription] = useState("");
@@ -1289,6 +1301,7 @@ export function CustomContentManager({
         flySpeed: r.flySpeed.trim() ? Number(r.flySpeed) || 0 : undefined,
         burrowSpeed: r.burrowSpeed.trim() ? Number(r.burrowSpeed) || 0 : undefined,
         grantsCompanion: false,
+        skillProficiencies: r.skillProficiencies,
       }));
   }
 
@@ -1339,6 +1352,7 @@ export function CustomContentManager({
     setFeatSpeedBonus("0");
     setFeatSavingThrowProficiencies([]);
     setFeatSkillProficiencies([]);
+    setFeatDarkvisionFeet("0");
     setFeatGrantedSpells([]);
     setFeatSpellChoices([]);
     setFeatPrereqAbility({});
@@ -1550,6 +1564,8 @@ export function CustomContentManager({
           hpBonusPerLevel: String(f.hpBonusPerLevel),
           speedBonus: String(f.speedBonus),
           savingThrowProficiencies: f.savingThrowProficiencies,
+          skillProficiencies: f.skillProficiencies,
+          darkvisionFeet: f.darkvisionFeet !== undefined ? String(f.darkvisionFeet) : "0",
         })),
       );
       setBgVariantTables(
@@ -1621,6 +1637,7 @@ export function CustomContentManager({
           naturalArmorBase: f.naturalArmorBase !== undefined ? String(f.naturalArmorBase) : "",
           naturalArmorAbility: f.naturalArmorAbility ?? "",
           grantsCompanion: f.grantsCompanion,
+          darkvisionFeet: f.darkvisionFeet !== undefined ? String(f.darkvisionFeet) : "0",
         })),
       );
       setSubclassSpellRows(
@@ -1668,6 +1685,7 @@ export function CustomContentManager({
         hpBonusPerLevel?: number;
         speedBonus?: number;
         savingThrowProficiencies?: Dnd5eAbility[];
+        darkvisionFeet?: number;
       };
       setFeatDescription(d.description);
       const bonuses: Partial<Record<Dnd5eAbility, string>> = {};
@@ -1687,6 +1705,7 @@ export function CustomContentManager({
       setFeatSpeedBonus(String(d.speedBonus ?? 0));
       setFeatSavingThrowProficiencies(d.savingThrowProficiencies ?? []);
       setFeatSkillProficiencies(d.skillProficiencies ?? []);
+      setFeatDarkvisionFeet(String(d.darkvisionFeet ?? 0));
       setFeatGrantedSpells(
         (d.grantedSpells ?? []).map((gs) => ({ name: gs.name, level: String(gs.level), atWill: gs.atWill })),
       );
@@ -1993,6 +2012,8 @@ export function CustomContentManager({
           speedBonus: Number(f.speedBonus) || 0,
           savingThrowProficiencies: f.savingThrowProficiencies,
           grantsCompanion: false,
+          skillProficiencies: f.skillProficiencies,
+          darkvisionFeet: f.darkvisionFeet.trim() ? Number(f.darkvisionFeet) || 0 : undefined,
         })),
       variantTables: bgVariantTables
         .filter((t) => t.variants.some((v) => v.title.trim() !== ""))
@@ -2102,6 +2123,7 @@ export function CustomContentManager({
               naturalArmorBase: f.naturalArmorBase.trim() ? Number(f.naturalArmorBase) || 0 : undefined,
               naturalArmorAbility: f.naturalArmorAbility || undefined,
               grantsCompanion: f.grantsCompanion,
+              darkvisionFeet: f.darkvisionFeet.trim() ? Number(f.darkvisionFeet) || 0 : undefined,
             })),
           spells: subclassSpellRows
             .filter((s) => s.name.trim() !== "")
@@ -2139,6 +2161,7 @@ export function CustomContentManager({
           hpBonusPerLevel: Number(featHpBonusPerLevel) || 0,
           speedBonus: Number(featSpeedBonus) || 0,
           savingThrowProficiencies: featSavingThrowProficiencies,
+          darkvisionFeet: featDarkvisionFeet.trim() ? Number(featDarkvisionFeet) || 0 : undefined,
           grantedSpells: featGrantedSpells
             .filter((r) => r.name.trim() !== "")
             .map((r) => {
@@ -2663,6 +2686,32 @@ export function CustomContentManager({
                 </label>
               ))}
             </div>
+            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.3rem", fontSize: "0.85rem", alignItems: "center" }}>
+              <span>Skill proficiencies:</span>
+              {DND5E_SKILLS.map((s) => (
+                <label key={s.id}>
+                  <input
+                    type="checkbox"
+                    checked={row.skillProficiencies.includes(s.id)}
+                    onChange={(e) =>
+                      setTraitRows((prev) =>
+                        prev.map((r, j) =>
+                          j === i
+                            ? {
+                                ...r,
+                                skillProficiencies: e.target.checked
+                                  ? [...r.skillProficiencies, s.id]
+                                  : r.skillProficiencies.filter((id) => id !== s.id),
+                              }
+                            : r,
+                        ),
+                      )
+                    }
+                  />{" "}
+                  {s.name}
+                </label>
+              ))}
+            </div>
             {/* A trait authored (or imported) as a bare name with every mechanical field still at
                 its default looks identical, on save, to one that genuinely has no mechanics --
                 the exact "string trait silently became an empty shell" trap this warns about. */}
@@ -2691,7 +2740,8 @@ export function CustomContentManager({
               row.climbSpeed.trim() === "" &&
               row.swimSpeed.trim() === "" &&
               row.flySpeed.trim() === "" &&
-              row.burrowSpeed.trim() === "" && (
+              row.burrowSpeed.trim() === "" &&
+              row.skillProficiencies.length === 0 && (
                 <p style={{ margin: "0.3rem 0 0", fontSize: "0.85rem", color: "var(--danger)" }}>
                   This trait has no mechanical effect set -- it will grant "{row.name.trim()}" as a name only.
                 </p>
@@ -3490,6 +3540,7 @@ export function CustomContentManager({
                       ["Init", "initiativeBonus"],
                       ["HP/lvl", "hpBonusPerLevel"],
                       ["Speed", "speedBonus"],
+                      ["Darkvision (ft)", "darkvisionFeet"],
                     ] as const
                   ).map(([label, key]) => (
                     <label key={key}>
@@ -3564,6 +3615,32 @@ export function CustomContentManager({
                         }
                       />{" "}
                       {a.toUpperCase()}
+                    </label>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.3rem", fontSize: "0.85rem", alignItems: "center" }}>
+                  <span>Skill proficiencies:</span>
+                  {DND5E_SKILLS.map((s) => (
+                    <label key={s.id}>
+                      <input
+                        type="checkbox"
+                        checked={f.skillProficiencies.includes(s.id)}
+                        onChange={(e) =>
+                          setBgFeatures((prev) =>
+                            prev.map((r, j) =>
+                              j === i
+                                ? {
+                                    ...r,
+                                    skillProficiencies: e.target.checked
+                                      ? [...r.skillProficiencies, s.id]
+                                      : r.skillProficiencies.filter((id) => id !== s.id),
+                                  }
+                                : r,
+                            ),
+                          )
+                        }
+                      />{" "}
+                      {s.name}
                     </label>
                   ))}
                 </div>
@@ -4082,6 +4159,19 @@ export function CustomContentManager({
                       ))}
                     </select>
                   </label>
+                  <label title="Darkvision range in feet, if this feature grants it (e.g. Twilight Domain's Eyes of Night).">
+                    Darkvision (ft){" "}
+                    <input
+                      type="number"
+                      min={0}
+                      max={300}
+                      style={{ width: "3.5rem" }}
+                      value={row.darkvisionFeet}
+                      onChange={(e) =>
+                        setSubclassFeatureRows((prev) => prev.map((r, j) => (j === i ? { ...r, darkvisionFeet: e.target.value } : r)))
+                      }
+                    />
+                  </label>
                 </div>
                 <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.85rem", alignItems: "center" }}>
                   <label title="Unlocks the sheet's companion panel (e.g. a Beast Master's companion, an Echo Knight's Echo) -- the player picks the specific creature on the sheet.">
@@ -4364,6 +4454,10 @@ export function CustomContentManager({
               </label>
               <label title="Always-on flat speed bonus -- e.g. Mobile's +10 ft.">
                 Speed <input type="number" style={{ width: "3rem" }} value={featSpeedBonus} onChange={(e) => setFeatSpeedBonus(e.target.value)} />
+              </label>
+              <label title="Darkvision range in feet, if this feat grants it.">
+                Darkvision (ft){" "}
+                <input type="number" style={{ width: "3.5rem" }} value={featDarkvisionFeet} onChange={(e) => setFeatDarkvisionFeet(e.target.value)} />
               </label>
             </div>
             <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.85rem", alignItems: "center" }}>

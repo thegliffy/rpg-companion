@@ -560,13 +560,14 @@ export function CharacterCreationWizard({
         spellAttackBonus: feature.spellAttackBonus,
         saveBonus: feature.saveBonus,
         initiativeBonus: feature.initiativeBonus,
-        skillProficiencies: [],
+        skillProficiencies: feature.skillProficiencies,
         optionalAttackModifier: feature.optionalAttackModifier,
         damageAbilityBonus: feature.damageAbilityBonus,
         hpBonusPerLevel: feature.hpBonusPerLevel,
         speedBonus: feature.speedBonus,
         savingThrowProficiencies: feature.savingThrowProficiencies,
         grantsCompanion: feature.grantsCompanion,
+        darkvisionFeet: feature.darkvisionFeet,
       });
     }
     const allVariants = data.variantTables.flatMap((t) => t.variants);
@@ -776,7 +777,7 @@ export function CharacterCreationWizard({
         spellAttackBonus: trait.spellAttackBonus,
         saveBonus: trait.saveBonus,
         initiativeBonus: trait.initiativeBonus,
-        skillProficiencies: [],
+        skillProficiencies: trait.skillProficiencies,
         optionalAttackModifier: trait.optionalAttackModifier,
         damageAbilityBonus: trait.damageAbilityBonus,
         hpBonusPerLevel: trait.hpBonusPerLevel,

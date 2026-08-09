@@ -99,6 +99,7 @@ import {
   effectSkillProficiencies,
   effectSaveProficiencies,
   hasCompanionGrant,
+  effectiveDarkvision,
   normalizeClassId,
   maxPreparableSpellLevel,
   maxPreparedSpells,
@@ -1848,6 +1849,15 @@ export function Dnd5eSheet({
                 style={numInput}
               />{" "}
               ft
+              {/* Only shown when a granted feat/feature (e.g. Twilight Domain's Eyes of Night)
+                  actually pushes it higher, same "editable base + computed arrow" pattern the
+                  Speed row above already uses (#182). */}
+              {effectiveDarkvision(sheet) !== sheet.darkvisionFeet && (
+                <strong title="After granted feats/features" style={{ color: "var(--success)" }}>
+                  {" "}
+                  → {effectiveDarkvision(sheet)} ft
+                </strong>
+              )}
             </span>
             <span>Resistances</span>
             <input
