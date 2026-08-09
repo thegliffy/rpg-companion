@@ -574,6 +574,12 @@ interface SubclassFeatureRow {
   // companion, an Echo Knight's Echo, etc. Subclass/class-feature-only in the UI (not exposed on
   // feat/background-feature/race-trait editors) since every real example is a class feature.
   grantsCompanion: boolean;
+  // Only meaningful when grantsCompanion is checked (#182). "echo" hides the max-CR input --
+  // Echo Knight's Echo isn't a monster, there's no picker to cap.
+  companionKind: "monster" | "echo";
+  // Caps the companion picker's monster choices to this CR or lower (#182, Beast Master's real
+  // CR <= 1/4 restriction) -- blank means unrestricted, same as every #189 companion grant.
+  companionMaxCR: string;
   // Darkvision range in feet (#182) -- e.g. Twilight Domain's Eyes of Night.
   darkvisionFeet: string;
 }
@@ -604,6 +610,8 @@ const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
   naturalArmorAbility: "",
   naturalArmorAllowsLightArmor: false,
   grantsCompanion: false,
+  companionKind: "monster",
+  companionMaxCR: "",
   darkvisionFeet: "0",
 });
 
@@ -1303,6 +1311,7 @@ export function CustomContentManager({
         naturalArmorBase: r.naturalArmorBase.trim() ? Number(r.naturalArmorBase) || 0 : undefined,
         naturalArmorAbility: r.naturalArmorAbility || undefined,
         naturalArmorAllowsLightArmor: r.naturalArmorAllowsLightArmor,
+        companionKind: "monster",
         climbSpeed: r.climbSpeed.trim() ? Number(r.climbSpeed) || 0 : undefined,
         swimSpeed: r.swimSpeed.trim() ? Number(r.swimSpeed) || 0 : undefined,
         flySpeed: r.flySpeed.trim() ? Number(r.flySpeed) || 0 : undefined,
@@ -1645,6 +1654,8 @@ export function CustomContentManager({
           naturalArmorAbility: f.naturalArmorAbility ?? "",
           naturalArmorAllowsLightArmor: f.naturalArmorAllowsLightArmor,
           grantsCompanion: f.grantsCompanion,
+          companionKind: f.companionKind,
+          companionMaxCR: f.companionMaxCR !== undefined ? String(f.companionMaxCR) : "",
           darkvisionFeet: f.darkvisionFeet !== undefined ? String(f.darkvisionFeet) : "0",
         })),
       );
@@ -2021,6 +2032,7 @@ export function CustomContentManager({
           savingThrowProficiencies: f.savingThrowProficiencies,
           grantsCompanion: false,
           naturalArmorAllowsLightArmor: false,
+          companionKind: "monster",
           skillProficiencies: f.skillProficiencies,
           darkvisionFeet: f.darkvisionFeet.trim() ? Number(f.darkvisionFeet) || 0 : undefined,
         })),
@@ -2133,6 +2145,8 @@ export function CustomContentManager({
               naturalArmorAbility: f.naturalArmorAbility || undefined,
               naturalArmorAllowsLightArmor: f.naturalArmorAllowsLightArmor,
               grantsCompanion: f.grantsCompanion,
+              companionKind: f.companionKind,
+              companionMaxCR: f.companionMaxCR.trim() ? Number(f.companionMaxCR) || 0 : undefined,
               darkvisionFeet: f.darkvisionFeet.trim() ? Number(f.darkvisionFeet) || 0 : undefined,
             })),
           spells: subclassSpellRows
@@ -4216,6 +4230,41 @@ export function CustomContentManager({
                     />{" "}
                     Grants a companion creature
                   </label>
+                  {row.grantsCompanion && (
+                    <>
+                      <label title="'Monster' picks any SRD/homebrew creature (Beast Master). 'Echo' is Echo Knight's Echo, which isn't a monster at all -- fixed 1 HP, AC 13 + proficiency bonus, attacks that mirror your own weapon attacks.">
+                        Kind{" "}
+                        <select
+                          value={row.companionKind}
+                          onChange={(e) =>
+                            setSubclassFeatureRows((prev) =>
+                              prev.map((r, j) => (j === i ? { ...r, companionKind: e.target.value as "monster" | "echo" } : r)),
+                            )
+                          }
+                        >
+                          <option value="monster">Monster (e.g. Beast Master)</option>
+                          <option value="echo">Echo (Echo Knight)</option>
+                        </select>
+                      </label>
+                      {row.companionKind === "monster" && (
+                        <label title="Caps the companion picker to this CR or lower (Beast Master's real restriction is CR 1/4). Blank = unrestricted.">
+                          Max CR{" "}
+                          <input
+                            type="number"
+                            min={0}
+                            max={30}
+                            step={0.125}
+                            placeholder="none"
+                            style={{ width: "4rem" }}
+                            value={row.companionMaxCR}
+                            onChange={(e) =>
+                              setSubclassFeatureRows((prev) => prev.map((r, j) => (j === i ? { ...r, companionMaxCR: e.target.value } : r)))
+                            }
+                          />
+                        </label>
+                      )}
+                    </>
+                  )}
                 </div>
                 <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.85rem" }}>
                   {DND5E_SKILLS.map((s) => (

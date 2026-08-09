@@ -14,6 +14,8 @@ import {
   isSaveProficient,
   effectSaveProficiencies,
   hasCompanionGrant,
+  companionGrantConfig,
+  attackDamageBonus,
   saveBonus,
   effectiveAC,
   acBreakdownText,
@@ -438,6 +440,49 @@ describe("hasCompanionGrant (#182, Beast Master / Echo Knight-style companions)"
       features: [{ id: "feat0", name: "Something Else" }],
     });
     assert.equal(hasCompanionGrant(sheet), false);
+  });
+});
+
+describe("companionGrantConfig (#182, Beast Master CR filter / Echo Knight kind)", () => {
+  it("is undefined with no granting entry", () => {
+    const sheet = dnd5eSheetSchema.parse({ abilities: {} });
+    assert.equal(companionGrantConfig(sheet), undefined);
+  });
+
+  it("defaults to monster kind with no CR cap when unauthored", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: {},
+      features: [{ id: "f0", name: "Ranger's Companion", grantsCompanion: true }],
+    });
+    assert.deepEqual(companionGrantConfig(sheet), { kind: "monster", maxCR: undefined });
+  });
+
+  it("carries a Beast-Master-style maxCR through", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: {},
+      features: [{ id: "f0", name: "Ranger's Companion", grantsCompanion: true, companionMaxCR: 0.25 }],
+    });
+    assert.deepEqual(companionGrantConfig(sheet), { kind: "monster", maxCR: 0.25 });
+  });
+
+  it("carries the echo kind through", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: {},
+      features: [{ id: "f0", name: "Manifest Echo", grantsCompanion: true, companionKind: "echo" }],
+    });
+    assert.deepEqual(companionGrantConfig(sheet), { kind: "echo", maxCR: undefined });
+  });
+});
+
+describe("attackDamageBonus (#182, shared by the Attacks section and Echo's Unleash Incarnation)", () => {
+  it("sums ability modifier, the attack's own magic bonus, and feat/effect damage bonuses", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: { str: 16 }, // +3 mod
+      feats: [{ id: "f0", name: "Damage Feat", damageBonus: 1 }],
+      activeEffects: [{ id: "e0", name: "Bless-alike", damageBonus: 2 }],
+    });
+    const atk = { ability: "str" as const, magicBonus: 1 };
+    assert.equal(attackDamageBonus(sheet, atk), 3 + 1 + 1 + 2);
   });
 });
 

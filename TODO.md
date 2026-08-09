@@ -3013,3 +3013,61 @@ stored value whenever the *owner* (not a DM) submits a change -- a deliberate "c
 are identity-defining, can't be changed after creation" guard, not a bug. Worth knowing for any
 future live-verification pass that tries to set `class` via PATCH on an owned character: set it
 in the initial `POST /api/characters` body's `sheetData` instead.
+
+195. ✅ **WP-D+E: Companion fidelity -- Beast Master CR filter and Echo Knight's Echo.** #189's
+    Companion panel offered every SRD/custom monster unconditionally, no matter which subclass
+    granted it. Two real gaps: Beast Master's actual restriction (CR <= 1/4, flat -- not
+    level-scaled like Wild Shape) had no filter at all, and Echo Knight's Echo isn't a monster in
+    the first place (1 HP, AC = 13 + proficiency bonus, its "Unleash Incarnation" attack mirrors
+    the Echo Knight's *own* weapon attack) -- letting a player pick an arbitrary monster stat
+    block for it was simply wrong, not just unrestricted.
+
+    Added `companionKind: z.enum(["monster", "echo"]).default("monster")` and
+    `companionMaxCR: z.number().min(0).max(30).optional()` to `effectBonusesSchema`, alongside
+    `grantsCompanion` -- `kind` discriminates which of the two very different flows
+    `CompanionPanel` renders; `maxCR` only matters for the "monster" kind. New
+    `companionGrantConfig(sheet)` (`dnd5e.ts`) reads both off the granting entry (first match
+    wins -- more than one companion-granting source at once has no real RAW answer for which
+    governs the picker). `sheet.companion` gained its own `kind` field, set at summon/manifest
+    time so the panel keeps rendering correctly even if the granting content later changes.
+
+    `CompanionPanel.tsx`: `kind: "monster"` (the #189 default) now filters the picker to
+    `cr <= maxCR` when set, with the same "Show all monsters" override checkbox
+    `WildShapePanel`/`FamiliarPanel` already use for their own CR/form restrictions -- identical
+    UX, not a new pattern. `kind: "echo"` skips the picker entirely: a single "Manifest Echo"
+    button, AC shown as `13 + proficiencyBonus(sheet.level)` (computed, not editable -- no
+    physical armor to vary it), a static "1 -- destroyed by any damage" line instead of an HP
+    input (nothing to track), and an Attacks section that maps over the character's own
+    `sheet.attacks` -- each rendered through the same `AttackRollControl` the sheet's main Attacks
+    section uses, so "Unleash Incarnation" is one click from the Companion panel instead of
+    requiring a scroll up. Extracted `attackDamageBonus(sheet, atk)` as a new exported function
+    (`dnd5e.ts`), pulling the inline damage-bonus computation out of `Dnd5eSheet.tsx`'s Attacks
+    section so both places share one implementation instead of duplicating it (`attackBonus()`
+    was already exported and reused as-is).
+
+    UI: added a "Kind" select (Monster / Echo) and a conditional "Max CR" input to the
+    subclass-feature editor in `CustomContentManager.tsx`, next to the existing `grantsCompanion`
+    checkbox -- both hidden until a feature actually grants a companion, and Max CR hidden
+    entirely for the Echo kind (nothing to cap).
+
+**Verified (#195, done):** 9 new unit tests (`effects.test.ts`) -- `companionGrantConfig`
+(undefined with no grant, defaults to monster/no-cap, carries a Beast-Master-style maxCR through,
+carries the echo kind through) and `attackDamageBonus` (sums ability mod + magic bonus + feat/
+effect damage bonuses, matching the same math the Attacks section already used inline). `tsc -b`
+and both suites clean throughout (shared 143/143, backend 28/28).
+
+Live: authored two subclasses through the real Custom Content Manager UI -- "WPDE Beast Master
+Test" (Ranger, `grantsCompanion: true, companionKind: "monster", companionMaxCR: 0.25`) and
+"WPDE Echo Knight Test" (Fighter, `companionKind: "echo"`) -- confirmed both persisted correctly.
+Picked the Beast Master subclass on a live level-3 Ranger through the sheet's real Subclass
+dropdown: the Companion picker showed only 81 of 335 monsters (everything CR <= 1/4) with a
+"Limited to CR 1/4 or lower" note; checking "Show all monsters" restored all 335. Summoned a Wolf
+(CR 1/4, still within the cap) -- `sheet.companion.kind` correctly stored as `"monster"`. Picked
+the Echo Knight subclass on a separate level-3 Fighter (with a Longsword attack already on the
+sheet): the Companion panel showed a bare "Manifest Echo" button, no picker. Clicking it showed
+AC 15 (13 + proficiency bonus 2, matching level 3) and "1 -- destroyed by any damage" instead of
+an HP tracker, plus the character's own Longsword listed under "Attacks (Unleash Incarnation:
+your own weapon attacks, through the Echo)". Rolling it produced `1d20+5` (STR +3 mod +
+proficiency bonus +2, exactly matching `attackBonus()`'s formula) labeled "Echo - Longsword
+attack roll", persisted via `POST /api/rolls` (201). No console errors throughout. Test
+characters, both custom subclasses, dice rolls, and user deleted after verification.

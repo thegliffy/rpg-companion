@@ -339,6 +339,9 @@ export const effectEntrySchema = z.object({
   // effectBonusesSchema exactly; presence on any granted feat/feature/trait unlocks the sheet's
   // CompanionPanel.
   grantsCompanion: z.boolean().default(false),
+  // Mirrors effectBonusesSchema exactly; consumed by companionGrantConfig() below.
+  companionKind: z.enum(["monster", "echo"]).default("monster"),
+  companionMaxCR: z.number().min(0).max(30).optional(),
   // Darkvision range in feet (#182) -- previously race-trait-only via a flat, one-time-seeded
   // sheet.darkvisionFeet. Mirrors effectBonusesSchema exactly; aggregated by effectiveDarkvision
   // below (max across every source, same "best wins" convention naturalArmorBase already uses),
@@ -496,6 +499,11 @@ export const dnd5eSheetSchema = z.object({
       hpCurrent: z.number().int().min(0).max(999).default(0),
       hpMax: z.number().int().min(0).max(999).default(0),
       dismissed: z.boolean().default(false),
+      // Set at summon/manifest time from the granting content's own companionKind (#182) --
+      // "echo" means CompanionPanel renders the monster-free Echo Knight flow instead of the
+      // monster picker/stat-block display; monsterId/hpCurrent/hpMax are unused for that kind
+      // (an Echo has a fixed 1 HP and no separate stat block to pick).
+      kind: z.enum(["monster", "echo"]).default("monster"),
     })
     .default({}),
   // Warlock: one spell per unlocked tier (6th/7th/8th/9th at levels 11/13/15/17), castable once
@@ -678,6 +686,16 @@ export function effectSaveProficiencies(sheet: Dnd5eSheetData): Dnd5eAbility[] {
  * showFamiliar (Dnd5eSheet.tsx) already uses for find familiar. */
 export function hasCompanionGrant(sheet: Dnd5eSheetData): boolean {
   return allEffectEntries(sheet).some((entry) => entry.grantsCompanion);
+}
+
+/** The granting entry's own companionKind/companionMaxCR (#182), for CompanionPanel to read once
+ * hasCompanionGrant() is true. First match wins rather than "best of several" (unlike
+ * naturalArmorBase) -- a character with more than one companion-granting source is a genuine edge
+ * case with no real RAW answer for which one governs the picker, so whichever was granted first
+ * (array order) determines it. Undefined when nothing grants a companion at all. */
+export function companionGrantConfig(sheet: Dnd5eSheetData): { kind: "monster" | "echo"; maxCR?: number } | undefined {
+  const entry = allEffectEntries(sheet).find((e) => e.grantsCompanion);
+  return entry ? { kind: entry.companionKind, maxCR: entry.companionMaxCR } : undefined;
 }
 
 /** Base ability score plus bonuses from every equipped item and every feat. */
@@ -942,6 +960,22 @@ export function attackBonus(sheet: Dnd5eSheetData, attack: { ability: Dnd5eAbili
     attack.magicBonus +
     featBonusTotal(sheet, "attackBonus") +
     activeEffectAttackBonus(sheet)
+  );
+}
+
+/** Everything added to a weapon attack's damage roll besides the dice themselves (#182) --
+ * ability modifier + the attack's own magic bonus + feat flat damage bonus + active-effect flat
+ * damage bonus + any damageAbilityBonus feat (Agonizing-Blast-style). Extracted out of the
+ * Attacks section's inline computation (Dnd5eSheet.tsx) so the Companion panel's Echo attacks
+ * (which mirror the character's own weapon attacks exactly, per Unleash Incarnation's RAW) can
+ * reuse the identical math instead of duplicating it. */
+export function attackDamageBonus(sheet: Dnd5eSheetData, attack: { ability: Dnd5eAbility; magicBonus: number }): number {
+  return (
+    abilityModifier(effectiveAbilityScore(sheet, attack.ability)) +
+    attack.magicBonus +
+    featBonusTotal(sheet, "damageBonus") +
+    activeEffectDamageBonus(sheet) +
+    featDamageAbilityBonus(sheet)
   );
 }
 

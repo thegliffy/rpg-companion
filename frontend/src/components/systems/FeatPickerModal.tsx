@@ -22,6 +22,7 @@ const BLANK_BONUSES = {
   savingThrowProficiencies: [] as Dnd5eAbility[],
   grantsCompanion: false,
   naturalArmorAllowsLightArmor: false,
+  companionKind: "monster" as const,
 };
 
 // Pending resolution of a custom feat's spellChoices rows -- one WizardSpellbookPicker per row,
@@ -107,6 +108,8 @@ export function FeatPickerModal({
       naturalArmorBase: d.naturalArmorBase,
       naturalArmorAbility: d.naturalArmorAbility,
       naturalArmorAllowsLightArmor: d.naturalArmorAllowsLightArmor,
+      companionKind: d.companionKind,
+      companionMaxCR: d.companionMaxCR,
     };
     if (d.spellChoices.length === 0) {
       onPick(feat, d.grantedSpells);

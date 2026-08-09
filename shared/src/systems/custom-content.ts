@@ -94,6 +94,17 @@ export const effectBonusesSchema = z.object({
   // feature/trait unlocks the sheet's CompanionPanel -- it doesn't carry which creature (the
   // player picks that on the sheet, mirroring Wild Shape/Familiar).
   grantsCompanion: z.boolean().default(false),
+  // Only meaningful when grantsCompanion is set (#182). "monster" (the default) is the existing
+  // #189 flow -- pick any SRD/custom monster. "echo" is Echo Knight's Echo, which isn't a
+  // monster at all (1 HP, AC = 13 + proficiency bonus, its attack mirrors the knight's own
+  // weapon attack) -- CompanionPanel branches on this to show a completely different, monster-
+  // free flow instead of the picker. See companionGrantConfig() (dnd5e.ts).
+  companionKind: z.enum(["monster", "echo"]).default("monster"),
+  // Caps the monster picker to this CR or lower when companionKind is "monster" (#182) -- Beast
+  // Master's real restriction (CR <= 1/4, flat, not level-scaled like Wild Shape). Optional and
+  // unset by default so every existing #189 companion grant (unrestricted picker) is unaffected;
+  // a content author recreating Beast Master sets it to 0.25.
+  companionMaxCR: z.number().min(0).max(30).optional(),
   // Skill ids a feat/feature/trait grants proficiency in (e.g. a feat like Skilled, a Tortle's
   // Survival Instinct). Previously declared separately on subclassFeatureSchema and
   // customFeatDataSchema (each with its own copy), which meant raceTraitSchema and
@@ -642,6 +653,7 @@ export function blankSubclassFeature(name: string, level: number): SubclassFeatu
     speedBonus: 0,
     savingThrowProficiencies: [],
     grantsCompanion: false,
+    companionKind: "monster",
     skillProficiencies: [],
     naturalArmorAllowsLightArmor: false,
     armorProficiencies: [],
@@ -782,6 +794,8 @@ export interface ResolvedGrantedFeat {
   savingThrowProficiencies: Dnd5eAbility[];
   grantsCompanion: boolean;
   naturalArmorAllowsLightArmor: boolean;
+  companionKind: "monster" | "echo";
+  companionMaxCR: number | undefined;
   grantedSpells: GrantedSpell[];
 }
 
@@ -811,6 +825,8 @@ export function resolveGrantedFeat(ref: string, customFeats: CustomContent[]): R
       savingThrowProficiencies: [],
       grantsCompanion: false,
       naturalArmorAllowsLightArmor: false,
+      companionKind: "monster",
+      companionMaxCR: undefined,
       grantedSpells: [],
     };
   }
@@ -836,6 +852,8 @@ export function resolveGrantedFeat(ref: string, customFeats: CustomContent[]): R
     savingThrowProficiencies: d.savingThrowProficiencies,
     grantsCompanion: d.grantsCompanion,
     naturalArmorAllowsLightArmor: d.naturalArmorAllowsLightArmor,
+    companionKind: d.companionKind,
+    companionMaxCR: d.companionMaxCR,
     grantedSpells: d.grantedSpells,
   };
 }

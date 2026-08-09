@@ -61,7 +61,6 @@ import {
   resolveSpellScaling,
   scaledCantripDamage,
   activeEffectAttackDice,
-  activeEffectDamageBonus,
   activeEffectDamageDice,
   subclassFeaturesAt,
   subclassResourcePools,
@@ -81,7 +80,6 @@ import {
   hasBuffEffect,
   activeEffectSaveDice,
   itemBonusesActive,
-  featDamageAbilityBonus,
   featOptionalAttackModifiers,
   weaponDefaultAbility,
   proficiencyBonus,
@@ -95,7 +93,7 @@ import {
   totalInventoryWeight,
   formatModifier,
   attackBonus,
-  featBonusTotal,
+  attackDamageBonus,
   effectSkillProficiencies,
   effectSaveProficiencies,
   hasCompanionGrant,
@@ -540,6 +538,8 @@ export function Dnd5eSheet({
         naturalArmorBase: f.naturalArmorBase,
         naturalArmorAbility: f.naturalArmorAbility,
         naturalArmorAllowsLightArmor: f.naturalArmorAllowsLightArmor,
+        companionKind: f.companionKind,
+        companionMaxCR: f.companionMaxCR,
         darkvisionFeet: f.darkvisionFeet,
       }));
 
@@ -780,6 +780,7 @@ export function Dnd5eSheet({
       savingThrowProficiencies: [],
       grantsCompanion: false,
       naturalArmorAllowsLightArmor: false,
+      companionKind: "monster",
     };
     const grantedSpells: Dnd5eSheetData["spells"] = (grants?.grantedSpells ?? []).map((gs, i) => ({
       id: `invocation-spell-${featureId}-${i}`,
@@ -2270,12 +2271,7 @@ export function Dnd5eSheet({
           // roll besides the dice", so it carries ability + the item's magic bonus + feat bonuses
           // + active buff effects' flat damage bonus (attackBonus() already folds their flat
           // attack bonus into `bonus` above).
-          const damageBonus =
-            abilityModifier(effectiveAbilityScore(sheet, atk.ability)) +
-            atk.magicBonus +
-            featBonusTotal(sheet, "damageBonus") +
-            activeEffectDamageBonus(sheet) +
-            featDamageAbilityBonus(sheet);
+          const damageBonus = attackDamageBonus(sheet, atk);
           return (
             <div key={atk.id} style={{ marginBottom: "0.5rem" }}>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -3550,6 +3546,7 @@ export function Dnd5eSheet({
                 savingThrowProficiencies: [],
                 grantsCompanion: false,
                 naturalArmorAllowsLightArmor: false,
+                companionKind: "monster",
               },
             ])
           }
