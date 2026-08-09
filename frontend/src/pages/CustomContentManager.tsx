@@ -804,7 +804,16 @@ export function CustomContentManager({
   const [bgLanguagesFixed, setBgLanguagesFixed] = useState<string[]>([]);
   const [bgLanguagesAnyCount, setBgLanguagesAnyCount] = useState("0");
   const [bgEquipmentItems, setBgEquipmentItems] = useState(""); // comma-separated
-  const [bgGold, setBgGold] = useState("0");
+  // Starting currency (#182 soft-gap round) -- five denominations, not gold-only, mirroring the
+  // sheet's own Currency section exactly so a background can grant "5 sp" without an awkward
+  // fractional gold value.
+  const [bgStartingCurrency, setBgStartingCurrency] = useState<Record<"cp" | "sp" | "ep" | "gp" | "pp", string>>({
+    cp: "0",
+    sp: "0",
+    ep: "0",
+    gp: "0",
+    pp: "0",
+  });
   const [bgFeatures, setBgFeatures] = useState<BgFeatureRow[]>([]);
   const [bgVariantTables, setBgVariantTables] = useState<BgVariantTableRow[]>([]);
   const [bgCloneFrom, setBgCloneFrom] = useState("");
@@ -1305,7 +1314,7 @@ export function CustomContentManager({
     setBgLanguagesFixed([]);
     setBgLanguagesAnyCount("0");
     setBgEquipmentItems("");
-    setBgGold("0");
+    setBgStartingCurrency({ cp: "0", sp: "0", ep: "0", gp: "0", pp: "0" });
     setBgFeatures([]);
     setBgVariantTables([]);
     setBgCloneFrom("");
@@ -1513,7 +1522,13 @@ export function CustomContentManager({
       setBgLanguagesFixed(d.languages.fixed);
       setBgLanguagesAnyCount(String(d.languages.anyCount));
       setBgEquipmentItems(d.equipment.items.join(", "));
-      setBgGold(String(d.equipment.gold));
+      setBgStartingCurrency({
+        cp: String(d.equipment.startingCurrency.cp),
+        sp: String(d.equipment.startingCurrency.sp),
+        ep: String(d.equipment.startingCurrency.ep),
+        gp: String(d.equipment.startingCurrency.gp),
+        pp: String(d.equipment.startingCurrency.pp),
+      });
       setBgFeatures(
         d.features.map((f) => ({
           id: f.id,
@@ -1942,7 +1957,14 @@ export function CustomContentManager({
       languages: { fixed: bgLanguagesFixed, anyCount: Number(bgLanguagesAnyCount) || 0 },
       equipment: {
         items: bgEquipmentItems.split(",").map((s) => s.trim()).filter(Boolean),
-        gold: Number(bgGold) || 0,
+        gold: 0,
+        startingCurrency: {
+          cp: Number(bgStartingCurrency.cp) || 0,
+          sp: Number(bgStartingCurrency.sp) || 0,
+          ep: Number(bgStartingCurrency.ep) || 0,
+          gp: Number(bgStartingCurrency.gp) || 0,
+          pp: Number(bgStartingCurrency.pp) || 0,
+        },
       },
       features: bgFeatures
         .filter((f) => f.name.trim() !== "")
@@ -3365,9 +3387,20 @@ export function CustomContentManager({
               Items (comma-separated)
               <input value={bgEquipmentItems} onChange={(e) => setBgEquipmentItems(e.target.value)} style={{ width: "100%" }} />
             </label>
-            <label style={{ marginTop: "0.4rem", display: "inline-block" }}>
-              Starting gold <input type="number" min={0} value={bgGold} onChange={(e) => setBgGold(e.target.value)} style={{ width: "5rem" }} />
-            </label>
+            <div style={{ marginTop: "0.4rem", display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+              {(["cp", "sp", "ep", "gp", "pp"] as const).map((denom) => (
+                <label key={denom}>
+                  {denom.toUpperCase()}{" "}
+                  <input
+                    type="number"
+                    min={0}
+                    value={bgStartingCurrency[denom]}
+                    onChange={(e) => setBgStartingCurrency((prev) => ({ ...prev, [denom]: e.target.value }))}
+                    style={{ width: "4rem" }}
+                  />
+                </label>
+              ))}
+            </div>
 
             <h4 style={{ marginTop: "1rem" }}>Granted feats (optional)</h4>
             <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>

@@ -11,6 +11,7 @@ import {
 } from "./dnd5e.js";
 import type { ClassLevelEntry, CasterType, MartialResourcePool } from "./class-progression.js";
 import type { BuffEffect, Dnd5eSheetData, Dnd5eAbility } from "./dnd5e.js";
+import { currencySchema } from "./dnd5e.js";
 import type { SrdSpell } from "./srd-spells.js";
 import { SRD_SPELL_EFFECTS } from "./srd-spell-effects.js";
 import { SRD_SPELL_HEALING } from "./srd-spell-healing.js";
@@ -353,7 +354,15 @@ const rawCustomBackgroundDataSchema = z.object({
       // 100 was too tight for a real multi-clause equipment line (e.g. a full pack description
       // spelled out inline rather than referencing #156's pack ids).
       items: z.array(z.string().trim().max(200)).max(20).default([]),
+      // Deprecated (#182 soft-gap round) in favor of startingCurrency below, kept for backward
+      // compatibility -- old rows still have it, and the preprocess migration folds it into
+      // startingCurrency.gp. Author-facing forms should write startingCurrency instead.
       gold: z.number().min(0).max(9999).default(0),
+      // Real starting-gold tables aren't always gold-only (a background's "5 sp" doesn't fit a
+      // gold-only field without an awkward fractional value) -- reuses dnd5e.ts's sheet-side
+      // currency shape exactly rather than redefining it, so formatBackgroundGrants()/the wizard
+      // can set the sheet's full currency object instead of just `.gp`.
+      startingCurrency: currencySchema.default({}),
     })
     .default({}),
   // #100: repeatable so a background can grant more than one distinct feature, each with its own
@@ -443,6 +452,13 @@ export const customBackgroundDataSchema = z.preprocess((raw) => {
     };
   }
 
+  // 4. Pre-#182 equipment shape had only a flat `gold: number` -- folded into startingCurrency.gp
+  // so every old row keeps working through the new field without a data migration.
+  const equipment = (upgraded as { equipment?: { gold?: number; startingCurrency?: unknown } }).equipment;
+  if (equipment && typeof equipment.gold === "number" && !("startingCurrency" in equipment)) {
+    upgraded = { ...upgraded, equipment: { ...equipment, startingCurrency: { gp: equipment.gold } } };
+  }
+
   return upgraded;
 }, rawCustomBackgroundDataSchema);
 export type CustomBackgroundData = z.infer<typeof customBackgroundDataSchema>;
@@ -506,7 +522,13 @@ export function formatBackgroundGrants(data: CustomBackgroundData): {
   }
 
   const equipParts = [...data.equipment.items];
-  if (data.equipment.gold > 0) equipParts.push(`a pouch containing ${data.equipment.gold} gp`);
+  const currencyText = (
+    Object.entries(data.equipment.startingCurrency) as [keyof typeof data.equipment.startingCurrency, number][]
+  )
+    .filter(([, amount]) => amount > 0)
+    .map(([denom, amount]) => `${amount} ${denom}`)
+    .join(", ");
+  if (currencyText) equipParts.push(`a pouch containing ${currencyText}`);
 
   return {
     skills: joinEnglish(skillParts),

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { customBackgroundDataSchema, customContentDataSchemaFor, resolveSpellHealing, customSpellToSrdShape } from "./custom-content.js";
+import { customBackgroundDataSchema, customContentDataSchemaFor, resolveSpellHealing, customSpellToSrdShape, formatBackgroundGrants } from "./custom-content.js";
 import type { CustomContent } from "../types.js";
 
 function spellItem(id: number, data: Record<string, unknown>): CustomContent {
@@ -87,6 +87,50 @@ describe("customBackgroundDataSchema variantTables migration (#180)", () => {
       totallyFakeField: "zzz",
     });
     assert.equal(result.success, false);
+  });
+});
+
+describe("customBackgroundDataSchema startingCurrency migration (#182)", () => {
+  it("folds a pre-#182 flat gold: number into startingCurrency.gp", () => {
+    const legacy = { skills: { fixed: [], choices: [] }, equipment: { items: [], gold: 15 } };
+    const parsed = customBackgroundDataSchema.parse(legacy);
+    assert.equal(parsed.equipment.startingCurrency.gp, 15);
+    assert.equal(parsed.equipment.startingCurrency.sp, 0);
+  });
+
+  it("leaves an author-supplied startingCurrency untouched rather than overwriting it from gold", () => {
+    const data = {
+      skills: { fixed: [], choices: [] },
+      equipment: { items: [], gold: 0, startingCurrency: { cp: 0, sp: 5, ep: 0, gp: 0, pp: 0 } },
+    };
+    const parsed = customBackgroundDataSchema.parse(data);
+    assert.equal(parsed.equipment.startingCurrency.sp, 5);
+    assert.equal(parsed.equipment.startingCurrency.gp, 0);
+  });
+
+  it("defaults to all-zero currency when equipment is never authored", () => {
+    const parsed = customBackgroundDataSchema.parse({ skills: { fixed: [], choices: [] } });
+    assert.deepEqual(parsed.equipment.startingCurrency, { cp: 0, sp: 0, ep: 0, gp: 0, pp: 0 });
+  });
+});
+
+describe("formatBackgroundGrants equipment currency line (#182)", () => {
+  it("lists every nonzero denomination, not just gold", () => {
+    const data = customBackgroundDataSchema.parse({
+      skills: { fixed: [], choices: [] },
+      equipment: { items: [], gold: 0, startingCurrency: { cp: 0, sp: 5, ep: 0, gp: 10, pp: 0 } },
+    });
+    const { equipment } = formatBackgroundGrants(data);
+    assert.match(equipment, /a pouch containing 5 sp, 10 gp/);
+  });
+
+  it("omits the pouch line entirely when starting currency is all zero", () => {
+    const data = customBackgroundDataSchema.parse({
+      skills: { fixed: [], choices: [] },
+      equipment: { items: ["a bedroll"], gold: 0 },
+    });
+    const { equipment } = formatBackgroundGrants(data);
+    assert.equal(equipment, "a bedroll");
   });
 });
 

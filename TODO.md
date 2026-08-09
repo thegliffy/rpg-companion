@@ -2760,3 +2760,49 @@ Resummoned successfully. Rolled the Bite attack through `AttackRollControl` -- a
 rendered and `POST /api/rolls` returned 201, confirming the roll persisted through the same dice
 pipeline Wild Shape/Familiar attacks already use. No console errors throughout. Test character,
 custom subclass, dice rolls, and user deleted after verification.
+
+190. ✅ **Backgrounds: structured starting currency.** A background's `equipment` only ever had
+    a flat `gold: number` -- so a background whose real starting funds are "5 sp" (not a clean
+    gold amount) had no honest way to express it, and the sheet itself already has a full
+    `cp/sp/ep/gp/pp` `currencySchema` that the wizard never populated beyond `.gp`.
+
+    Exported `currencySchema`/`Currency` from `dnd5e.ts` (previously module-private) so
+    `customBackgroundDataSchema` (custom-content.ts) could reuse the exact same shape for a new
+    `startingCurrency` field instead of redefining it. `gold: number` stays on the schema
+    (deprecated, not removed) for backward compatibility; a 4th migration step in the existing
+    `z.preprocess` chain folds any stored `gold` into `startingCurrency.gp` so every pre-#182 row
+    keeps parsing unchanged. `formatBackgroundGrants()`'s equipment line now lists every nonzero
+    denomination ("a pouch containing 5 sp, 10 gp") instead of a gold-only phrase, and the wizard's
+    `backgroundGrants()`/character-creation submit now set the sheet's full `currency` object
+    instead of `{ ...emptyDnd5eSheet().currency, gp: grants.gold }`. Added a 5-input CP/SP/EP/GP/PP
+    row (mirroring the sheet's own Currency section) to the background editor in
+    `CustomContentManager.tsx`, replacing the old single "Starting gold" field.
+
+    Found and fixed one unrelated pre-existing bug while re-running the full verification loop:
+    `backend/src/services/shops.service.ts`'s shop-purchase item/buff literals were missing
+    `abilityScoreSetTo`/`maxCharges`/`chargeCost`/`chargeRecharge` (#188) and `flySpeed` (#187) --
+    `tsc -b`'s incremental cache had been masking this since those two packages landed (a stale
+    `.tsbuildinfo` skipped re-checking the file); deleting the buildinfo and rebuilding surfaced
+    it immediately. Fixed both literals the same way every other shop/wizard/name-resolution site
+    in this arc has been fixed.
+
+**Verified (#190, done):** 5 new unit tests (`custom-content.test.ts`) -- the gold-to-
+startingCurrency migration, that an author-supplied `startingCurrency` is never overwritten by a
+stale `gold` value, the all-zero default when equipment is never authored, and
+`formatBackgroundGrants` listing every nonzero denomination vs. omitting the pouch line entirely
+when currency is all zero. `tsc -b` and both suites clean throughout (shared 124/124, backend
+28/28) -- the shops.service.ts fix above was required to get `tsc -b` clean at all.
+
+Live: authored a background ("Currency Tester Background", 5 sp + 10 gp) through the real Custom
+Content Manager UI's new 5-denomination inputs; the live preview correctly showed "a pouch
+containing 5 sp, 10 gp" before saving, and the stored row's `equipment.startingCurrency` matched
+exactly. Drove a brand-new character through the full character-creation wizard (Fighter, Human,
+this background, standard-array abilities, real equipment choices) end to end -- the equipment
+step correctly read "Fighter's equipment, in addition to what Currency Tester Background grants."
+The finished character's `sheetData.currency` was `{cp: 0, sp: 5, ep: 0, gp: 10, pp: 0}`, matching
+the background exactly rather than collapsing to gold-only. (A "Maximum update depth exceeded"
+console error initially appeared on this character's sheet; isolated by reproducing it in a fresh
+browser tab -- it did not reproduce there, nor did it reproduce on a second, completely blank
+control character in the same stale tab, confirming it was leftover Vite HMR desync in that one
+tab from an earlier unrelated module-resolution error, not a real code regression.) Test
+characters, custom background, dice rolls, and user deleted after verification.

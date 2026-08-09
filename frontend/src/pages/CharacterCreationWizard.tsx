@@ -526,7 +526,7 @@ export function CharacterCreationWizard({
   }
 
   // Everything from the background that isn't a skill proficiency (tools/languages as text,
-  // the feature + any chosen variants as structured feature entries, equipment as items/gold).
+  // the feature + any chosen variants as structured feature entries, equipment as items/currency).
   function backgroundGrants() {
     const data = resolvedBackgroundData;
     if (!data) {
@@ -534,7 +534,7 @@ export function CharacterCreationWizard({
         proficienciesText: "",
         features: [] as ReturnType<typeof emptyDnd5eSheet>["features"],
         items: [] as ReturnType<typeof emptyDnd5eSheet>["items"],
-        gold: 0,
+        startingCurrency: emptyDnd5eSheet().currency,
         feats: [] as ReturnType<typeof emptyDnd5eSheet>["feats"],
         grantedSpells: [] as ReturnType<typeof emptyDnd5eSheet>["spells"],
       };
@@ -688,7 +688,7 @@ export function CharacterCreationWizard({
       });
     }
 
-    return { proficienciesText: profLines.join("\n"), features, items, gold: data.equipment.gold, feats, grantedSpells };
+    return { proficienciesText: profLines.join("\n"), features, items, startingCurrency: data.equipment.startingCurrency, feats, grantedSpells };
   }
 
   // Class-granted starting equipment (#156-161): the fixed items plus whichever option was picked
@@ -946,7 +946,7 @@ export function CharacterCreationWizard({
           items: [...grants.items, ...classEquipment.items],
           attacks: classEquipment.attacks,
           feats: grants.feats,
-          currency: { ...emptyDnd5eSheet().currency, gp: grants.gold },
+          currency: grants.startingCurrency,
           hitDice: hitDieForClass(charClass) !== undefined ? `${level}d${hitDieForClass(charClass)}` : "",
           hitDiceTotal: level,
           hitDiceAvailable: level,

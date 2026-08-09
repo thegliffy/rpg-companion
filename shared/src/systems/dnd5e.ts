@@ -269,7 +269,9 @@ const inventoryItemSchema = z.object({
   chargeRecharge: z.enum(["short", "long"]).default("long"),
 });
 
-const currencySchema = z.object({
+// Exported (#182 soft-gap round) so a background's startingCurrency (custom-content.ts) can
+// reuse this exact shape instead of redefining it.
+export const currencySchema = z.object({
   cp: z.number().int().min(0).max(999999).default(0),
   sp: z.number().int().min(0).max(999999).default(0),
   ep: z.number().int().min(0).max(999999).default(0),
@@ -1036,7 +1038,7 @@ export function totalInventoryWeight(sheet: Dnd5eSheetData): number {
   return sheet.items.reduce((sum, item) => sum + item.quantity * item.weight, 0);
 }
 
-type Currency = z.infer<typeof currencySchema>;
+export type Currency = z.infer<typeof currencySchema>;
 
 /** Total wealth in copper pieces (1cp=1, 1sp=10, 1ep=50, 1gp=100, 1pp=1000). */
 export function currencyToCopper(currency: Currency): number {
