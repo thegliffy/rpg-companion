@@ -2632,3 +2632,47 @@ auto-equipped from starting equipment, AC correctly showed the normal armor brea
 armor doesn't apply while wearing body armor, matching RAW); unequipping it flipped the display
 to "AC 10 → 15" -- exactly `13 (natural armor base) + 2 (Dex mod)`, confirming the formula fires
 only when armor comes off. Test character and race deleted after verification.
+
+187. ✅ **Item ability-score override + granted flying.** Two item mechanics with no field:
+    "sets this ability score to N while worn" (Amulet of Health's "your Constitution score is 19
+    while you wear this amulet; it has no effect if already 19+") -- items only ever supported
+    flat additive `abilityBonuses`, never an override -- and "grants a flying speed" (Broom of
+    Flying) -- `buffEffectSchema` had `speedBonus`/`speedMultiplier` for a temporary
+    modification, but nothing for an absolute grant, which is how every real fly-speed item/spell
+    is actually worded ("you gain a flying speed of X ft").
+
+    Added `abilityScoreSetTo` to both `inventoryItemSchema` (dnd5e.ts) and `customItemDataSchema`
+    (custom-content.ts, seeding the sheet field when picked). New `equippedAbilityScoreSetTo()`
+    takes the highest set-to value across every active (equipped + attuned-if-required) item;
+    `effectiveAbilityScore()` applies it as `max(additive base+bonuses, setTo)` -- evaluated
+    after the existing additive terms, never lowers a score that's already higher, matching the
+    real item text exactly. Added `flySpeed` to `buffEffectSchema` (shared by both spell buffs
+    and item toggles already) as an absolute grant, not a bonus/multiplier; `hasBuffEffect()`
+    learned to check it (the same "or a pure-fly-speed toggle never renders its Activate button"
+    trap #174/#180 already fixed for AC/speed/damage-type-options). The sheet's Speed row now
+    shows "Fly N" taking the best of the race-trait value (#186) and any active-effect grant.
+
+    Two real bugs found and fixed while wiring this up, both live only because this was actually
+    driven through the real UI rather than just unit-tested: `Dnd5eSheet.tsx`'s `handleNameChange`
+    (the sheet's own "type an item name and it resolves against SRD/custom data" path) copied
+    `abilityBonuses`/`acBonus`/`saveBonus`/etc. from a matched custom item but never
+    `abilityScoreSetTo` -- an author-side field that silently never reached the sheet. Same gap,
+    same fix, in `resolveEquipmentEntry()` (`custom-content.ts`, the wizard's starting-equipment
+    resolver) and its `ResolvedInventoryItem` return type -- both the "type a name on the sheet"
+    and "pick starting equipment in the wizard" paths needed the fix, not just one.
+
+**Verified (#187, done):** 7 new unit tests (`effects.test.ts`) covering `effectiveAbilityScore`
+with `abilityScoreSetTo` (raises a lower score, never lowers a higher one, applies after additive
+bonuses not instead of them, only while the item is active/equipped, doesn't touch an ability the
+item doesn't set) and `hasBuffEffect` with `flySpeed` (recognizes a pure grant, stays a no-op at
+0). `tsc -b` and both suites clean throughout (shared 115/115, backend 28/28).
+
+Live: authored an Amulet-of-Health-alike (`abilityScoreSetTo: {con: 19}`, requires attunement)
+and a Broom-of-Flying-alike (`toggledEffect.flySpeed: 50`) through the real API, added both to a
+live character by typing their names into the sheet's own item picker (not the wizard) --
+initially reproduced the exact bug described above (CON stayed at its base +1 modifier despite
+the amulet being equipped and attuned), then confirmed the fix by re-triggering name resolution:
+CON correctly jumped to +4 (score 19), cascading into Saving Throws too since `saveBonus()`
+already reads through `effectiveAbilityScore()`. Activating the broom showed "Speed -> Fly 50"
+and "Active effects: ...fly speed 50 (per hit)". Test character and both items deleted after
+verification.

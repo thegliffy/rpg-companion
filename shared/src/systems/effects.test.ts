@@ -284,6 +284,54 @@ describe("effectiveAC with naturalArmorBase (#182, Natural Armor / Bladesong)", 
   });
 });
 
+describe("effectiveAbilityScore with abilityScoreSetTo (#182, Amulet of Health)", () => {
+  function sheetWithItem(con: number, item: Record<string, unknown>) {
+    return dnd5eSheetSchema.parse({
+      abilities: { con },
+      items: [{ id: "i0", name: "Amulet of Health", equipped: true, ...item }],
+    });
+  }
+
+  it("raises a lower score to the set value", () => {
+    const sheet = sheetWithItem(10, { abilityScoreSetTo: { con: 19 } });
+    assert.equal(effectiveAbilityScore(sheet, "con"), 19);
+  });
+
+  it("never lowers a score that's already higher -- 'no effect if already 19+'", () => {
+    const sheet = sheetWithItem(20, { abilityScoreSetTo: { con: 19 } });
+    assert.equal(effectiveAbilityScore(sheet, "con"), 20);
+  });
+
+  it("is evaluated after additive ability bonuses, not instead of them", () => {
+    const sheet = sheetWithItem(10, { abilityScoreSetTo: { con: 19 }, abilityBonuses: { con: 2 } });
+    // 10 + 2 = 12, still below 19 -- setTo wins.
+    assert.equal(effectiveAbilityScore(sheet, "con"), 19);
+  });
+
+  it("only applies while the item is active (equipped)", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: { con: 10 },
+      items: [{ id: "i0", name: "Amulet of Health", equipped: false, abilityScoreSetTo: { con: 19 } }],
+    });
+    assert.equal(effectiveAbilityScore(sheet, "con"), 10);
+  });
+
+  it("does not affect an ability the item doesn't set", () => {
+    const sheet = sheetWithItem(10, { abilityScoreSetTo: { con: 19 } });
+    assert.equal(effectiveAbilityScore(sheet, "str"), 10);
+  });
+});
+
+describe("hasBuffEffect with flySpeed (#182, Broom of Flying)", () => {
+  it("recognises a pure fly-speed grant -- otherwise a Broom of Flying toggle reads as a no-op", () => {
+    assert.equal(hasBuffEffect(buffEffectSchema.parse({ flySpeed: 30 })), true);
+  });
+
+  it("stays a no-op at flySpeed 0, same as every other zero-valued field", () => {
+    assert.equal(hasBuffEffect(buffEffectSchema.parse({})), false);
+  });
+});
+
 describe("d20Formula", () => {
   it("uses a single d20 at normal", () => {
     assert.equal(d20Formula("normal", 0), "1d20");

@@ -61,6 +61,7 @@ const EMPTY_BUFF = {
   speedBonus: 0,
   speedMultiplier: 1,
   damageTypeOptions: [] as string[],
+  flySpeed: 0,
 };
 
 export function CharacterCreationWizard({
@@ -605,6 +606,7 @@ export function CharacterCreationWizard({
             notes: "",
             equipped: false,
             abilityBonuses: {},
+            abilityScoreSetTo: {},
             acBonus: 0,
             saveBonus: 0,
         initiativeBonus: 0,
@@ -625,6 +627,7 @@ export function CharacterCreationWizard({
         notes: r.notes,
         equipped: false,
         abilityBonuses: {},
+        abilityScoreSetTo: r.abilityScoreSetTo,
         acBonus: 0,
         saveBonus: r.saveBonus,
         armor: r.armor,
@@ -699,6 +702,7 @@ export function CharacterCreationWizard({
           notes: r.notes,
           equipped: !!r.armor,
           abilityBonuses: {},
+          abilityScoreSetTo: r.abilityScoreSetTo,
           acBonus: 0,
           saveBonus: r.saveBonus,
           armor: r.armor,

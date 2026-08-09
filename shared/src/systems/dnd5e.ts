@@ -176,6 +176,12 @@ export const buffEffectSchema = z.object({
   // involved. Empty (the default) means "use damageType as-is", so every existing buff behaves
   // exactly as before.
   damageTypeOptions: z.array(z.string().trim().max(30)).max(4).default([]),
+  // Grants a flying speed while active (#182) -- Broom of Flying, a Fly spell. An absolute grant
+  // rather than a bonus/multiplier (real examples always say "you gain a flying speed of X ft",
+  // never "your fly speed increases by"), same shape climbSpeed/swimSpeed/burrowSpeed already use
+  // on the sheet/race-trait side. 0 means "grants nothing" -- hasBuffEffect() below treats it the
+  // same as every other zero-valued field.
+  flySpeed: z.number().int().min(0).max(200).default(0),
 }).strict();
 export type BuffEffect = z.infer<typeof buffEffectSchema>;
 
@@ -194,7 +200,10 @@ export function hasBuffEffect(buff: BuffEffect): boolean {
     // read as a no-op, and an item carrying one would never render its Activate button.
     buff.acBonus !== 0 ||
     buff.speedBonus !== 0 ||
-    buff.speedMultiplier !== 1
+    buff.speedMultiplier !== 1 ||
+    // #182: same trap -- a pure-fly-speed toggle (Broom of Flying) with no other field set would
+    // otherwise read as a no-op.
+    buff.flySpeed !== 0
   );
 }
 
@@ -220,6 +229,12 @@ const inventoryItemSchema = z.object({
   // structured numeric effects, so there's nothing to auto-apply from the picked name.
   equipped: z.boolean().default(false),
   abilityBonuses: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(-10).max(10)).default({}),
+  // Sets an ability score to a fixed value while equipped, rather than adding to it (#182) --
+  // Amulet of Health's "your Constitution score is 19 while you wear this amulet; it has no
+  // effect on you if your score is already 19 or higher." Applied as max(base+bonuses, setTo),
+  // never lowers a score that's already higher, and evaluated after the additive abilityBonuses
+  // above, not instead of them (effectiveAbilityScore, below).
+  abilityScoreSetTo: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(1).max(30)).default({}),
   acBonus: z.number().int().min(-10).max(10).default(0),
   // Flat bonus to every saving throw while equipped (and attuned-if-required) -- e.g. a Cloak of
   // Protection's +1. Mirrors acBonus's shape; summed by equippedItemBonus() into saveBonus().
@@ -607,8 +622,22 @@ export function effectSaveProficiencies(sheet: Dnd5eSheetData): Dnd5eAbility[] {
 }
 
 /** Base ability score plus bonuses from every equipped item and every feat. */
+/** The highest abilityScoreSetTo across every active (equipped + attuned-if-required) item for
+ * the given ability, or null when nothing sets it (#182). Highest wins rather than "first item"
+ * or summing -- setting a score is not additive by RAW, so two set-to sources on the same
+ * ability should behave like one, not stack. */
+function equippedAbilityScoreSetTo(sheet: Dnd5eSheetData, ability: Dnd5eAbility): number | null {
+  const values = sheet.items
+    .filter((item) => itemBonusesActive(item))
+    .map((item) => item.abilityScoreSetTo[ability])
+    .filter((v): v is number => v !== undefined);
+  return values.length > 0 ? Math.max(...values) : null;
+}
+
 export function effectiveAbilityScore(sheet: Dnd5eSheetData, ability: Dnd5eAbility): number {
-  return sheet.abilities[ability] + equippedAbilityBonus(sheet, ability) + featAbilityBonus(sheet, ability);
+  const additive = sheet.abilities[ability] + equippedAbilityBonus(sheet, ability) + featAbilityBonus(sheet, ability);
+  const setTo = equippedAbilityScoreSetTo(sheet, ability);
+  return setTo !== null ? Math.max(additive, setTo) : additive;
 }
 
 /** The equipped (and attuned-if-required) body armor and shield, if any -- only one of each

@@ -25,6 +25,7 @@ const per = (buff: Partial<BuffEffect>): BuffEffect => ({
   speedBonus: 0,
   speedMultiplier: 1,
   damageTypeOptions: [],
+  flySpeed: 0,
   ...buff,
 });
 

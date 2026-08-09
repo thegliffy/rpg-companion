@@ -895,6 +895,8 @@ export function CustomContentManager({
   // radiant-or-necrotic, decided by the caster when the effect is created. Comma-separated;
   // empty means "use Damage type as-is" (the existing single-type behavior).
   const [spellBuffDamageTypeOptionsText, setSpellBuffDamageTypeOptionsText] = useState("");
+  // Grants a flying speed while active (#182) -- the Fly spell. 0 = grants nothing.
+  const [spellBuffFlySpeed, setSpellBuffFlySpeed] = useState("0");
   // "At Higher Levels" scaling (#117-120) -- dice appended per slot level above the spell's own
   // level, plus a freeform note for upcasts that aren't extra dice on one roll.
   const [spellScalingDicePerLevel, setSpellScalingDicePerLevel] = useState("");
@@ -917,6 +919,9 @@ export function CustomContentManager({
   const [itemRarity, setItemRarity] = useState("");
   const [itemAcBonus, setItemAcBonus] = useState("0");
   const [itemSaveBonus, setItemSaveBonus] = useState("0");
+  // Sets an ability score to a fixed value while equipped, rather than adding to it (#182) --
+  // Amulet of Health-style. Blank = doesn't set that ability.
+  const [itemAbilityScoreSetTo, setItemAbilityScoreSetTo] = useState<Partial<Record<Dnd5eAbility, string>>>({});
   const [itemMagicBonus, setItemMagicBonus] = useState("0");
   const [itemRequiresAttunement, setItemRequiresAttunement] = useState(false);
   const [itemGrantedResistancesText, setItemGrantedResistancesText] = useState(""); // comma-separated
@@ -935,6 +940,8 @@ export function CustomContentManager({
   const [itemToggleSpeedBonus, setItemToggleSpeedBonus] = useState("0");
   const [itemToggleSpeedMultiplier, setItemToggleSpeedMultiplier] = useState("1");
   const [itemToggleDamageTypeOptionsText, setItemToggleDamageTypeOptionsText] = useState("");
+  // Grants a flying speed while active (#182) -- Broom of Flying. 0 = grants nothing.
+  const [itemToggleFlySpeed, setItemToggleFlySpeed] = useState("0");
 
   // Monster fields
   const [monsterSize, setMonsterSize] = useState("Medium");
@@ -1352,6 +1359,7 @@ export function CustomContentManager({
     setSpellBuffSpeedBonus("0");
     setSpellBuffSpeedMultiplier("1");
     setSpellBuffDamageTypeOptionsText("");
+    setSpellBuffFlySpeed("0");
     setSpellScalingDicePerLevel("");
     setSpellScalingNote("");
     setItemDescription("");
@@ -1370,6 +1378,7 @@ export function CustomContentManager({
     setItemRarity("");
     setItemAcBonus("0");
     setItemSaveBonus("0");
+    setItemAbilityScoreSetTo({});
     setItemMagicBonus("0");
     setItemRequiresAttunement(false);
     setItemGrantedResistancesText("");
@@ -1384,6 +1393,7 @@ export function CustomContentManager({
     setItemToggleSpeedBonus("0");
     setItemToggleSpeedMultiplier("1");
     setItemToggleDamageTypeOptionsText("");
+    setItemToggleFlySpeed("0");
     setMonsterSize("Medium");
     setMonsterType("beast");
     setMonsterAlignment("unaligned");
@@ -1700,6 +1710,7 @@ export function CustomContentManager({
           speedBonus: number;
           speedMultiplier: number;
           damageTypeOptions?: string[];
+          flySpeed?: number;
         };
         scalingDicePerLevel?: string;
         scalingNote?: string;
@@ -1739,6 +1750,7 @@ export function CustomContentManager({
       setSpellBuffSpeedBonus(String(d.buff?.speedBonus ?? 0));
       setSpellBuffSpeedMultiplier(String(d.buff?.speedMultiplier ?? 1));
       setSpellBuffDamageTypeOptionsText((d.buff?.damageTypeOptions ?? []).join(", "));
+      setSpellBuffFlySpeed(String(d.buff?.flySpeed ?? 0));
       setSpellScalingDicePerLevel(d.scalingDicePerLevel ?? "");
       setSpellScalingNote(d.scalingNote ?? "");
     } else if (item.type === "item") {
@@ -1758,6 +1770,7 @@ export function CustomContentManager({
         category: string;
         rarity: string;
         abilityBonuses: Partial<Record<Dnd5eAbility, number>>;
+        abilityScoreSetTo?: Partial<Record<Dnd5eAbility, number>>;
         acBonus: number;
         saveBonus?: number;
         magicBonus?: number;
@@ -1775,6 +1788,7 @@ export function CustomContentManager({
           speedBonus: number;
           speedMultiplier: number;
           damageTypeOptions?: string[];
+          flySpeed?: number;
         };
       };
       setItemDescription(d.description ?? "");
@@ -1794,6 +1808,9 @@ export function CustomContentManager({
       const bonuses: Partial<Record<Dnd5eAbility, string>> = {};
       for (const [k, v] of Object.entries(d.abilityBonuses)) bonuses[k as Dnd5eAbility] = String(v);
       setAbilityBonuses(bonuses);
+      const setToBonuses: Partial<Record<Dnd5eAbility, string>> = {};
+      for (const [k, v] of Object.entries(d.abilityScoreSetTo ?? {})) setToBonuses[k as Dnd5eAbility] = String(v);
+      setItemAbilityScoreSetTo(setToBonuses);
       setItemAcBonus(String(d.acBonus));
       setItemSaveBonus(String(d.saveBonus ?? 0));
       setItemMagicBonus(String(d.magicBonus ?? 0));
@@ -1810,6 +1827,7 @@ export function CustomContentManager({
       setItemToggleSpeedBonus(String(d.toggledEffect?.speedBonus ?? 0));
       setItemToggleSpeedMultiplier(String(d.toggledEffect?.speedMultiplier ?? 1));
       setItemToggleDamageTypeOptionsText((d.toggledEffect?.damageTypeOptions ?? []).join(", "));
+      setItemToggleFlySpeed(String(d.toggledEffect?.flySpeed ?? 0));
     } else {
       const d = item.data as {
         size: string;
@@ -2152,6 +2170,7 @@ export function CustomContentManager({
             speedBonus: Number(spellBuffSpeedBonus) || 0,
             speedMultiplier: Number(spellBuffSpeedMultiplier) || 1,
             damageTypeOptions: splitCsv(spellBuffDamageTypeOptionsText),
+            flySpeed: Number(spellBuffFlySpeed) || 0,
           },
           scalingDicePerLevel: spellScalingDicePerLevel.trim(),
           scalingNote: spellScalingNote.trim(),
@@ -2173,6 +2192,11 @@ export function CustomContentManager({
           category: itemCategory.trim(),
           rarity: itemRarity.trim(),
           abilityBonuses: abilityBonusesObj,
+          abilityScoreSetTo: Object.fromEntries(
+            Object.entries(itemAbilityScoreSetTo)
+              .map(([k, v]) => [k, Number(v) || 0])
+              .filter(([, v]) => v !== 0),
+          ),
           acBonus: Number(itemAcBonus) || 0,
           saveBonus: Number(itemSaveBonus) || 0,
           magicBonus: Number(itemMagicBonus) || 0,
@@ -2190,6 +2214,7 @@ export function CustomContentManager({
             speedBonus: Number(itemToggleSpeedBonus) || 0,
             speedMultiplier: Number(itemToggleSpeedMultiplier) || 1,
             damageTypeOptions: splitCsv(itemToggleDamageTypeOptionsText),
+            flySpeed: Number(itemToggleFlySpeed) || 0,
           },
         };
       } else {
@@ -4781,6 +4806,18 @@ export function CustomContentManager({
                 />
               </label>
               <label>
+                Fly speed{" "}
+                <input
+                  type="number"
+                  min={0}
+                  max={200}
+                  value={spellBuffFlySpeed}
+                  onChange={(e) => setSpellBuffFlySpeed(e.target.value)}
+                  style={{ width: "3.5rem" }}
+                  title="Grants a flying speed of this many feet while active, e.g. the Fly spell. 0 = grants nothing."
+                />
+              </label>
+              <label>
                 Applies{" "}
                 <select value={spellBuffConsumption} onChange={(e) => setSpellBuffConsumption(e.target.value as "per-hit" | "once")}>
                   <option value="per-hit">Every hit, until it ends</option>
@@ -4957,6 +4994,28 @@ export function CustomContentManager({
               <label>
                 Save <input type="number" style={{ width: "3rem" }} value={itemSaveBonus} onChange={(e) => setItemSaveBonus(e.target.value)} />
               </label>
+            </div>
+            <h4 style={{ marginTop: "0.75rem" }}>Set ability score to (while equipped)</h4>
+            <p style={{ margin: "0 0 0.4rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              Sets the score outright instead of adding to it -- Amulet of Health's "your
+              Constitution is 19 while worn; no effect if already 19+." Blank = doesn't set that
+              ability. Applied on top of the flat bonuses above, never lowers a higher score.
+            </p>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+              {DND5E_ABILITIES.map((a) => (
+                <label key={a}>
+                  {DND5E_ABILITY_NAMES[a]}{" "}
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    placeholder="none"
+                    style={{ width: "3.5rem" }}
+                    value={itemAbilityScoreSetTo[a] ?? ""}
+                    onChange={(e) => setItemAbilityScoreSetTo((prev) => ({ ...prev, [a]: e.target.value }))}
+                  />
+                </label>
+              ))}
               <label>
                 <input
                   type="checkbox"
@@ -5070,6 +5129,18 @@ export function CustomContentManager({
                   placeholder="e.g. radiant, necrotic"
                   style={{ width: "10rem" }}
                   title="Comma-separated. When set, the wearer picks one of these damage types when activating instead of a single fixed Damage type."
+                />
+              </label>
+              <label>
+                Fly speed{" "}
+                <input
+                  type="number"
+                  min={0}
+                  max={200}
+                  value={itemToggleFlySpeed}
+                  onChange={(e) => setItemToggleFlySpeed(e.target.value)}
+                  style={{ width: "3.5rem" }}
+                  title="Grants a flying speed of this many feet while active, e.g. Broom of Flying. 0 = grants nothing."
                 />
               </label>
               <label>

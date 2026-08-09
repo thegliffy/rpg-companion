@@ -1805,11 +1805,13 @@ export function Dnd5eSheet({
                 </strong>
               )}
               {/* Movement beyond walking (#182) -- undefined means "no such speed", so only set
-                  ones show at all, matching darkvisionFeet's "0 means none" convention below. */}
+                  ones show at all, matching darkvisionFeet's "0 means none" convention below.
+                  Fly also takes the best of any active-effect grant (Broom of Flying), since a
+                  toggled item's flySpeed isn't otherwise reflected here. */}
               {[
                 ["Climb", sheet.climbSpeed],
                 ["Swim", sheet.swimSpeed],
-                ["Fly", sheet.flySpeed],
+                ["Fly", Math.max(sheet.flySpeed ?? 0, ...sheet.activeEffects.map((e) => e.flySpeed)) || undefined],
                 ["Burrow", sheet.burrowSpeed],
               ]
                 .filter(([, v]) => typeof v === "number" && v > 0)
@@ -2133,6 +2135,7 @@ export function Dnd5eSheet({
                   e.acBonus ? `${formatModifier(e.acBonus)} AC` : "",
                   e.speedBonus ? `${formatModifier(e.speedBonus)} ft speed` : "",
                   e.speedMultiplier !== 1 ? `speed x${e.speedMultiplier}` : "",
+                  e.flySpeed ? `fly speed ${e.flySpeed}` : "",
                 ]
                   .filter(Boolean)
                   .join(", ")}
@@ -2789,6 +2792,7 @@ export function Dnd5eSheet({
                 value: d.value,
                 notes: customItemNotesText(customItem),
                 abilityBonuses: d.abilityBonuses,
+                abilityScoreSetTo: d.abilityScoreSetTo,
                 acBonus: d.acBonus,
                 saveBonus: d.saveBonus,
                 requiresAttunement: d.requiresAttunement,
@@ -3010,13 +3014,14 @@ export function Dnd5eSheet({
                 notes: "",
                 equipped: false,
                 abilityBonuses: {},
+                abilityScoreSetTo: {},
                 acBonus: 0,
                 saveBonus: 0,
                 requiresAttunement: false,
                 attuned: false,
                 value: 0,
                 grantedResistances: [],
-                toggledEffect: { attackBonus: 0, attackDice: "", damageBonus: 0, damageDice: "", damageType: "", saveDice: "", consumption: "per-hit" as const, appliesToSpellAttacks: false, acBonus: 0, speedBonus: 0, speedMultiplier: 1, damageTypeOptions: [] },
+                toggledEffect: { attackBonus: 0, attackDice: "", damageBonus: 0, damageDice: "", damageType: "", saveDice: "", consumption: "per-hit" as const, appliesToSpellAttacks: false, acBonus: 0, speedBonus: 0, speedMultiplier: 1, damageTypeOptions: [], flySpeed: 0 },
               },
             ])
           }

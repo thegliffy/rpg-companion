@@ -966,6 +966,10 @@ export const customItemDataSchema = z.object({
   rarity: z.string().trim().max(30).default(""),
   // Effect bonuses applied to the inventory entry when picked (mirrors equipped-item bonuses).
   abilityBonuses: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(-10).max(10)).default({}),
+  // Sets an ability score to a fixed value while equipped (#182) -- Amulet of Health-style.
+  // Mirrors inventoryItemSchema.abilityScoreSetTo exactly, which this seeds when the item is
+  // picked.
+  abilityScoreSetTo: z.record(z.enum(DND5E_ABILITIES), z.number().int().min(1).max(30)).default({}),
   acBonus: z.number().int().min(-10).max(10).default(0),
   // Flat bonus to every saving throw while equipped -- e.g. a Cloak of Protection's +1. Mirrors
   // inventoryItemSchema.saveBonus (dnd5e.ts), which this seeds when the item is picked.
@@ -1046,6 +1050,10 @@ export interface ResolvedInventoryItem {
   // items and custom items that didn't author one); the caller checks hasBuffEffect() before
   // treating it as real, same convention buff-bearing spells already use.
   toggledEffect: BuffEffect;
+  // Sets an ability score to a fixed value while equipped (#182, Amulet of Health-style) --
+  // empty for every SRD item, same "only a custom item can carry this" reasoning as
+  // requiresAttunement/grantedResistances above.
+  abilityScoreSetTo: Partial<Record<Dnd5eAbility, number>>;
   armor?: ReturnType<typeof srdArmorToInventoryArmor>;
   // Present only for a resolved weapon -- lets the caller auto-generate an Attacks row (#161)
   // without re-deriving these from the item's name. `range` is undefined for a custom weapon
@@ -1080,6 +1088,7 @@ const NO_TOGGLE: BuffEffect = {
   speedBonus: 0,
   speedMultiplier: 1,
   damageTypeOptions: [],
+  flySpeed: 0,
 };
 
 export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id: string) => CustomContent | undefined): ResolvedInventoryItem[] {
@@ -1088,7 +1097,7 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
   if (itemId.startsWith("custom-")) {
     const custom = findCustomItem(itemId.slice("custom-".length));
     if (!custom) {
-      return [{ name: itemId, quantity, weight: 0, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE }];
+      return [{ name: itemId, quantity, weight: 0, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE, abilityScoreSetTo: {} }];
     }
     const d = custom.data as CustomItemData;
     return [
@@ -1102,6 +1111,7 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
         requiresAttunement: d.requiresAttunement,
         grantedResistances: d.grantedResistances,
         toggledEffect: d.toggledEffect,
+        abilityScoreSetTo: d.abilityScoreSetTo,
         armor: d.kind === "armor" ? customItemArmorPayload(d) : undefined,
         weapon:
           d.kind === "weapon" ? { damageDice: d.damageDice, damageType: d.damageType, properties: d.properties, magicBonus: d.magicBonus } : undefined,
@@ -1122,6 +1132,7 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
         requiresAttunement: false,
         grantedResistances: [],
         toggledEffect: NO_TOGGLE,
+        abilityScoreSetTo: {},
         weapon: { damageDice: weapon.damageDice, damageType: weapon.damageType, properties: weapon.properties, range: weapon.range, magicBonus: 0 },
       },
     ];
@@ -1140,6 +1151,7 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
         requiresAttunement: false,
         grantedResistances: [],
         toggledEffect: NO_TOGGLE,
+        abilityScoreSetTo: {},
         armor: srdArmorToInventoryArmor(armor),
       },
     ];
@@ -1150,10 +1162,10 @@ export function resolveEquipmentEntry(entry: EquipmentEntry, findCustomItem: (id
     if (gear.contents && gear.contents.length > 0) {
       return gear.contents.flatMap((c) => resolveEquipmentEntry({ itemId: c.itemId, quantity: c.quantity * quantity }, findCustomItem));
     }
-    return [{ name: gear.name, quantity, weight: gear.weight, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE }];
+    return [{ name: gear.name, quantity, weight: gear.weight, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE, abilityScoreSetTo: {} }];
   }
 
-  return [{ name: itemId, quantity, weight: 0, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE }];
+  return [{ name: itemId, quantity, weight: 0, value: 0, notes: "", saveBonus: 0, requiresAttunement: false, grantedResistances: [], toggledEffect: NO_TOGGLE, abilityScoreSetTo: {} }];
 }
 
 const monsterActionSchema = z.object({
