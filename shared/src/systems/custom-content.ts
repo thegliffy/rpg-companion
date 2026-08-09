@@ -69,6 +69,17 @@ export const effectBonusesSchema = z.object({
   // skillProficiencies already is (effectSkillProficiencies, dnd5e.ts) rather than merged into
   // sheet.saveProficiencies, so removing the grant automatically un-grants it.
   savingThrowProficiencies: z.array(z.enum(DND5E_ABILITIES)).max(6).default([]),
+  // Formula-based AC (#182) -- Natural Armor (Lizardfolk/Tortle's "13 + Dex") or a subclass's
+  // ability-to-AC feature (Bladesong's "10 + Dex + Int"). Landing here rather than on
+  // raceTraitSchema alone means the *same* field covers both cases -- a subclass feature can
+  // grant it too, no separate mechanism needed. Only meaningful with no body armor equipped
+  // (effectiveAC, dnd5e.ts) -- wearing armor always overrides natural armor by RAW, same as it
+  // already overrides the plain unarmored sheet.ac fallback. Optional: almost nothing has one.
+  naturalArmorBase: z.number().int().min(0).max(30).optional(),
+  // The second ability added on top of Dex, if any (Bladesong's Int; Natural Armor has none --
+  // just base + Dex). Real examples never use more than Dex + one other, so a single optional
+  // field covers every known case rather than an open list.
+  naturalArmorAbility: z.enum(DND5E_ABILITIES).optional(),
 }).strict();
 export type EffectBonuses = z.infer<typeof effectBonusesSchema>;
 
@@ -108,6 +119,14 @@ export const raceTraitSchema = effectBonusesSchema.extend({
   // Damage type names (e.g. "fire", "poison"), same free-text shape customMonsterDataSchema
   // already uses for its damageResistances -- no fixed damage-type enum exists to validate against.
   damageResistances: z.array(z.string().trim().max(30)).max(10).default([]),
+  // Movement types beyond walking (#182) -- Aarakocra's fly speed, a Triton's swim speed. Mirrors
+  // dnd5eSheetSchema's fields exactly; seeded into the sheet the same way darkvisionFeet is
+  // (raceGrants(), taking the max across every trait rather than summing, matching how
+  // darkvisionFeet already resolves multiple traits).
+  climbSpeed: z.number().int().min(0).max(200).optional(),
+  swimSpeed: z.number().int().min(0).max(200).optional(),
+  flySpeed: z.number().int().min(0).max(200).optional(),
+  burrowSpeed: z.number().int().min(0).max(200).optional(),
   grantedSpells: z.array(grantedSpellSchema).max(5).default([]),
   // Extra weapon damage dice added (not doubled) on a crit (#144) -- e.g. a homebrew race's own
   // Savage-Attacks-alike. Sized off the weapon's own die at the point of use, same as SRD

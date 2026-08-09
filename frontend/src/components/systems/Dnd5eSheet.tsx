@@ -1804,6 +1804,20 @@ export function Dnd5eSheet({
                   → {effectiveSpeed(sheet)}
                 </strong>
               )}
+              {/* Movement beyond walking (#182) -- undefined means "no such speed", so only set
+                  ones show at all, matching darkvisionFeet's "0 means none" convention below. */}
+              {[
+                ["Climb", sheet.climbSpeed],
+                ["Swim", sheet.swimSpeed],
+                ["Fly", sheet.flySpeed],
+                ["Burrow", sheet.burrowSpeed],
+              ]
+                .filter(([, v]) => typeof v === "number" && v > 0)
+                .map(([label, v]) => (
+                  <small key={label as string} style={{ marginLeft: "0.5rem", color: "var(--text-muted)" }}>
+                    {label} {v}
+                  </small>
+                ))}
             </span>
             <span>Darkvision</span>
             <span>

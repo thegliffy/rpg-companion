@@ -252,6 +252,12 @@ interface TraitRow {
   hpBonusPerLevel: string;
   speedBonus: string;
   savingThrowProficiencies: Dnd5eAbility[];
+  naturalArmorBase: string;
+  naturalArmorAbility: Dnd5eAbility | "";
+  climbSpeed: string;
+  swimSpeed: string;
+  flySpeed: string;
+  burrowSpeed: string;
 }
 const emptyTraitRow = (): TraitRow => ({
   id: `trait-${crypto.randomUUID()}`,
@@ -275,6 +281,12 @@ const emptyTraitRow = (): TraitRow => ({
   hpBonusPerLevel: "0",
   speedBonus: "0",
   savingThrowProficiencies: [],
+  naturalArmorBase: "",
+  naturalArmorAbility: "",
+  climbSpeed: "",
+  swimSpeed: "",
+  flySpeed: "",
+  burrowSpeed: "",
 });
 
 // A trait's granted spell as labeled row state (#178) -- was a positional
@@ -328,6 +340,12 @@ function dataToTraitRows(traits: RaceTrait[]): TraitRow[] {
       hpBonusPerLevel: String(t.hpBonusPerLevel),
       speedBonus: String(t.speedBonus),
       savingThrowProficiencies: t.savingThrowProficiencies,
+      naturalArmorBase: t.naturalArmorBase !== undefined ? String(t.naturalArmorBase) : "",
+      naturalArmorAbility: t.naturalArmorAbility ?? "",
+      climbSpeed: t.climbSpeed !== undefined ? String(t.climbSpeed) : "",
+      swimSpeed: t.swimSpeed !== undefined ? String(t.swimSpeed) : "",
+      flySpeed: t.flySpeed !== undefined ? String(t.flySpeed) : "",
+      burrowSpeed: t.burrowSpeed !== undefined ? String(t.burrowSpeed) : "",
     };
   });
 }
@@ -538,6 +556,8 @@ interface SubclassFeatureRow {
   hpBonusPerLevel: string;
   speedBonus: string;
   savingThrowProficiencies: Dnd5eAbility[];
+  naturalArmorBase: string;
+  naturalArmorAbility: Dnd5eAbility | "";
 }
 const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
   id: `subclass-feature-${crypto.randomUUID()}`,
@@ -562,6 +582,8 @@ const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
   hpBonusPerLevel: "0",
   speedBonus: "0",
   savingThrowProficiencies: [],
+  naturalArmorBase: "",
+  naturalArmorAbility: "",
 });
 
 interface SubclassSpellRow {
@@ -1234,6 +1256,12 @@ export function CustomContentManager({
         hpBonusPerLevel: Number(r.hpBonusPerLevel) || 0,
         speedBonus: Number(r.speedBonus) || 0,
         savingThrowProficiencies: r.savingThrowProficiencies,
+        naturalArmorBase: r.naturalArmorBase.trim() ? Number(r.naturalArmorBase) || 0 : undefined,
+        naturalArmorAbility: r.naturalArmorAbility || undefined,
+        climbSpeed: r.climbSpeed.trim() ? Number(r.climbSpeed) || 0 : undefined,
+        swimSpeed: r.swimSpeed.trim() ? Number(r.swimSpeed) || 0 : undefined,
+        flySpeed: r.flySpeed.trim() ? Number(r.flySpeed) || 0 : undefined,
+        burrowSpeed: r.burrowSpeed.trim() ? Number(r.burrowSpeed) || 0 : undefined,
       }));
   }
 
@@ -1551,6 +1579,8 @@ export function CustomContentManager({
           hpBonusPerLevel: String(f.hpBonusPerLevel),
           speedBonus: String(f.speedBonus),
           savingThrowProficiencies: f.savingThrowProficiencies,
+          naturalArmorBase: f.naturalArmorBase !== undefined ? String(f.naturalArmorBase) : "",
+          naturalArmorAbility: f.naturalArmorAbility ?? "",
         })),
       );
       setSubclassSpellRows(
@@ -2007,6 +2037,8 @@ export function CustomContentManager({
               hpBonusPerLevel: Number(f.hpBonusPerLevel) || 0,
               speedBonus: Number(f.speedBonus) || 0,
               savingThrowProficiencies: f.savingThrowProficiencies,
+              naturalArmorBase: f.naturalArmorBase.trim() ? Number(f.naturalArmorBase) || 0 : undefined,
+              naturalArmorAbility: f.naturalArmorAbility || undefined,
             })),
           spells: subclassSpellRows
             .filter((s) => s.name.trim() !== "")
@@ -2283,6 +2315,59 @@ export function CustomContentManager({
               rows={2}
               style={{ width: "100%", marginTop: "0.3rem" }}
             />
+            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.3rem", fontSize: "0.85rem", alignItems: "center" }}>
+              <label title="Formula-based AC instead of the normal armor/unarmored calculation -- e.g. Lizardfolk/Tortle's Natural Armor (13 + Dex). Only applies with no body armor equipped. Blank = none.">
+                Natural armor base{" "}
+                <input
+                  type="number"
+                  min={0}
+                  max={30}
+                  placeholder="none"
+                  value={row.naturalArmorBase}
+                  onChange={(e) => setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, naturalArmorBase: e.target.value } : r)))}
+                  style={{ width: "4rem" }}
+                />
+              </label>
+              <label title="A second ability added on top of Dex, if any (e.g. a Bladesong-style INT-to-AC). Leave blank for base + Dex only.">
+                + ability{" "}
+                <select
+                  value={row.naturalArmorAbility}
+                  onChange={(e) =>
+                    setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, naturalArmorAbility: e.target.value as Dnd5eAbility | "" } : r)))
+                  }
+                >
+                  <option value="">(none)</option>
+                  {DND5E_ABILITIES.map((a) => (
+                    <option key={a} value={a}>
+                      {DND5E_ABILITY_NAMES[a]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.3rem", fontSize: "0.85rem" }}>
+              {(
+                [
+                  ["Climb", "climbSpeed"],
+                  ["Swim", "swimSpeed"],
+                  ["Fly", "flySpeed"],
+                  ["Burrow", "burrowSpeed"],
+                ] as const
+              ).map(([label, key]) => (
+                <label key={key}>
+                  {label} speed{" "}
+                  <input
+                    type="number"
+                    min={0}
+                    max={200}
+                    placeholder="none"
+                    value={row[key]}
+                    onChange={(e) => setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, [key]: e.target.value } : r)))}
+                    style={{ width: "4rem" }}
+                  />
+                </label>
+              ))}
+            </div>
             <input
               placeholder="Damage resistances (comma-separated, e.g. fire, poison)"
               value={row.damageResistancesText}
@@ -2528,7 +2613,12 @@ export function CustomContentManager({
               Number(row.optAttackPenalty) === 0 &&
               Number(row.optDamageBonus) === 0 &&
               row.damageAbilityBonus === "" &&
-              row.savingThrowProficiencies.length === 0 && (
+              row.savingThrowProficiencies.length === 0 &&
+              row.naturalArmorBase.trim() === "" &&
+              row.climbSpeed.trim() === "" &&
+              row.swimSpeed.trim() === "" &&
+              row.flySpeed.trim() === "" &&
+              row.burrowSpeed.trim() === "" && (
                 <p style={{ margin: "0.3rem 0 0", fontSize: "0.85rem", color: "var(--danger)" }}>
                   This trait has no mechanical effect set -- it will grant "{row.name.trim()}" as a name only.
                 </p>
@@ -3874,6 +3964,40 @@ export function CustomContentManager({
                       {a.toUpperCase()}
                     </label>
                   ))}
+                </div>
+                <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.85rem", alignItems: "center" }}>
+                  <label title="Formula-based AC (e.g. a Bladesong-style INT-to-AC feature). Only applies with no body armor equipped. Blank = none.">
+                    Natural armor base{" "}
+                    <input
+                      type="number"
+                      min={0}
+                      max={30}
+                      placeholder="none"
+                      value={row.naturalArmorBase}
+                      onChange={(e) =>
+                        setSubclassFeatureRows((prev) => prev.map((r, j) => (j === i ? { ...r, naturalArmorBase: e.target.value } : r)))
+                      }
+                      style={{ width: "4rem" }}
+                    />
+                  </label>
+                  <label title="A second ability added on top of Dex, if any. Leave blank for base + Dex only.">
+                    + ability{" "}
+                    <select
+                      value={row.naturalArmorAbility}
+                      onChange={(e) =>
+                        setSubclassFeatureRows((prev) =>
+                          prev.map((r, j) => (j === i ? { ...r, naturalArmorAbility: e.target.value as Dnd5eAbility | "" } : r)),
+                        )
+                      }
+                    >
+                      <option value="">(none)</option>
+                      {DND5E_ABILITIES.map((a) => (
+                        <option key={a} value={a}>
+                          {DND5E_ABILITY_NAMES[a]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
                 <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.4rem", fontSize: "0.85rem" }}>
                   {DND5E_SKILLS.map((s) => (

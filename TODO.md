@@ -2595,3 +2595,40 @@ real picker. Confirmed on the live sheet: Saving Throws showed "Constitution (gr
 of 20 surfaced "Recalculate max HP (+11)" -- matching `22 (dice) + 3 (level 3 × CON +1) + 6 (Tough
 2/level × 3) = 31`, confirming the ×level multiplication landed correctly, not just a flat
 addition. Test character and feat deleted after verification.
+
+186. ✅ **Formula-based AC + extra movement speeds.** Two race/subclass gaps: AC was always a
+    flat sum of bonuses on top of armor or a manually-typed `sheet.ac` fallback -- nothing
+    computed "13 + Dex" (Lizardfolk/Tortle's Natural Armor) or "10 + Dex + Int" (Bladesong-style)
+    live. And the sheet only ever tracked walking speed; nothing modeled a race's climb/swim/fly/
+    burrow speed.
+
+    Added `naturalArmorBase`/`naturalArmorAbility` to `effectBonusesSchema` -- landing there
+    (not just `raceTraitSchema`) means Bladesong's INT-to-AC is the *same* field granted via a
+    subclass feature, no separate mechanism needed. New `naturalArmorSource(sheet)` in `dnd5e.ts`
+    picks the highest `naturalArmorBase` across every feat/feature/trait (mirroring how multiple
+    equipped body-armor pieces already resolve to "only the best one counts"). `effectiveAC()`
+    gained a branch: with no body armor equipped, `naturalArmorBase + Dex mod + (second ability
+    mod, if set)` replaces the plain `sheet.ac` fallback -- armor still always wins over natural
+    armor by RAW, and shield/magic/feat/active-effect bonuses still add on top unchanged.
+
+    Added `climbSpeed`/`swimSpeed`/`flySpeed`/`burrowSpeed` to both `dnd5eSheetSchema` and
+    `raceTraitSchema` (all optional -- undefined means "no such speed," not a "Fly 0 ft" row for
+    every character). Seeded into the sheet at creation the same way `darkvisionFeet` already
+    is (max across every trait, not summed), displayed as extra rows next to Speed whenever set.
+    Movement speeds stayed race-only per scope; the natural-armor fields also reached the
+    subclass-feature editor (Bladesong) alongside the race-trait editor.
+
+**Verified (#186, done):** 5 new unit tests (`effects.test.ts`) covering `effectiveAC` with
+natural armor -- base+Dex alone, a second ability added on top (Bladesong-style), the plain
+`sheet.ac` fallback when nothing grants it, feat/active-effect bonuses still stacking on top, and
+picking the higher of two natural-armor sources rather than stacking or taking the first. `tsc -b`
+and both suites clean throughout (shared 108/108, backend 28/28).
+
+Live: authored a race with two traits (`naturalArmorBase: 13` and `swimSpeed: 30`) through the
+real API, then drove the actual character-creation wizard end to end (class/race/background/
+equipment/ability-scores/review) to create a real character with it -- confirmed "Speed 30 ·
+Medium · Natural Armor, Swimmer" in the header and "Swim 30" on the sheet. With Leather Armor
+auto-equipped from starting equipment, AC correctly showed the normal armor breakdown (natural
+armor doesn't apply while wearing body armor, matching RAW); unequipping it flipped the display
+to "AC 10 → 15" -- exactly `13 (natural armor base) + 2 (Dex mod)`, confirming the formula fires
+only when armor comes off. Test character and race deleted after verification.

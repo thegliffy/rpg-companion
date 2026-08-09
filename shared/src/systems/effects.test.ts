@@ -13,6 +13,7 @@ import {
   isSaveProficient,
   effectSaveProficiencies,
   saveBonus,
+  effectiveAC,
 } from "./dnd5e.js";
 import type { Dnd5eSheetData } from "./dnd5e.js";
 import { naturalD20, isCriticalHit, isCriticalMiss } from "./crit.js";
@@ -242,6 +243,44 @@ describe("isSaveProficient / effectSaveProficiencies (#182, Resilient)", () => {
     const notProficient = sheetWith([]);
     // Both start from the same ability score (10, +0 mod); the only difference is proficiency.
     assert.equal(saveBonus(proficient, "con") > saveBonus(notProficient, "con"), true);
+  });
+});
+
+describe("effectiveAC with naturalArmorBase (#182, Natural Armor / Bladesong)", () => {
+  function sheetWithNaturalArmor(abilities: Record<string, number>, feats: Record<string, unknown>[] = []) {
+    return dnd5eSheetSchema.parse({
+      abilities,
+      feats: feats.map((f, i) => ({ id: `f${i}`, name: `Feat ${i}`, ...f })),
+    });
+  }
+
+  it("uses base + Dex instead of the plain unarmored AC when granted -- Lizardfolk/Tortle-style", () => {
+    const sheet = sheetWithNaturalArmor({ dex: 14 }, [{ naturalArmorBase: 13 }]);
+    assert.equal(effectiveAC(sheet), 13 + 2); // +2 Dex mod
+  });
+
+  it("adds a second ability on top of base + Dex when set -- Bladesong-style INT-to-AC", () => {
+    const sheet = sheetWithNaturalArmor({ dex: 14, int: 16 }, [{ naturalArmorBase: 10, naturalArmorAbility: "int" }]);
+    assert.equal(effectiveAC(sheet), 10 + 2 + 3); // 10 + Dex +2 + Int +3
+  });
+
+  it("falls back to the plain sheet.ac fallback when nothing grants it", () => {
+    const sheet = dnd5eSheetSchema.parse({ abilities: { dex: 14 }, ac: 12 });
+    assert.equal(effectiveAC(sheet), 12);
+  });
+
+  it("still adds feat acBonus and active-effect bonuses on top of natural armor", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: { dex: 14 },
+      feats: [{ id: "f0", name: "Natural Armor", naturalArmorBase: 13 }, { id: "f1", name: "Defense-alike", acBonus: 1 }],
+      activeEffects: [{ id: "e0", name: "Shield", acBonus: 5 }],
+    });
+    assert.equal(effectiveAC(sheet), 13 + 2 + 1 + 5);
+  });
+
+  it("picks the higher of two natural-armor sources rather than stacking or picking the first", () => {
+    const sheet = sheetWithNaturalArmor({ dex: 10 }, [{ naturalArmorBase: 12 }, { naturalArmorBase: 15 }]);
+    assert.equal(effectiveAC(sheet), 15); // not 12, not 27
   });
 });
 

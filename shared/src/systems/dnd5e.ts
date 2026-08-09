@@ -300,6 +300,10 @@ export const effectEntrySchema = z.object({
   // Saving-throw proficiency grants (#182) -- Resilient. Mirrors skillProficiencies' aggregation
   // convention above.
   savingThrowProficiencies: z.array(z.enum(DND5E_ABILITIES)).max(6).default([]),
+  // Formula-based AC (#182) -- Natural Armor / Bladesong-style ability-to-AC. Mirrors
+  // effectBonusesSchema exactly; consumed by effectiveAC() below.
+  naturalArmorBase: z.number().int().min(0).max(30).optional(),
+  naturalArmorAbility: z.enum(DND5E_ABILITIES).optional(),
 });
 
 export type EffectEntry = z.infer<typeof effectEntrySchema>;
@@ -338,6 +342,13 @@ export const dnd5eSheetSchema = z.object({
   skillProficiencies: z.array(z.string().max(40)).max(30).default([]),
   ac: z.number().int().min(0).max(40).default(10),
   speed: z.number().int().min(0).max(200).default(30),
+  // Movement types beyond walking (#182) -- undefined means "no such speed", not zero, so a
+  // character with no fly speed doesn't show a "Fly 0 ft" row. Seeded once from race traits at
+  // creation (raceGrants(), same as darkvisionFeet), then plain player-editable fields.
+  climbSpeed: z.number().int().min(0).max(200).optional(),
+  swimSpeed: z.number().int().min(0).max(200).optional(),
+  flySpeed: z.number().int().min(0).max(200).optional(),
+  burrowSpeed: z.number().int().min(0).max(200).optional(),
   // Racial senses/resistances (#124) -- plain editable fields, same precedent as `speed`: seeded
   // once from the chosen race/subrace's trait objects at character creation (max darkvision across
   // traits, deduped resistances), then a normal player-editable value afterward, not re-derived
@@ -619,15 +630,29 @@ function armorPieces(sheet: Dnd5eSheetData) {
  * natural armor, etc. have no physical item to equip) plus the same item/feat bonuses -- so
  * existing characters and characters without a modeled armor item behave exactly as before.
  */
+/** The best formula-based-AC source across every feat/feature/trait (#182, Natural Armor /
+ * Bladesong-style ability-to-AC) -- highest naturalArmorBase wins if more than one is somehow
+ * granted, the same "only the best one counts" rule multiple body armor pieces already get
+ * warned about (armorWarningText). Null when nothing grants one. */
+function naturalArmorSource(sheet: Dnd5eSheetData): { base: number; ability?: Dnd5eAbility } | null {
+  const sources = allEffectEntries(sheet).filter((e) => e.naturalArmorBase !== undefined);
+  if (sources.length === 0) return null;
+  const best = sources.reduce((a, b) => (b.naturalArmorBase! > a.naturalArmorBase! ? b : a));
+  return { base: best.naturalArmorBase!, ability: best.naturalArmorAbility };
+}
+
 export function effectiveAC(sheet: Dnd5eSheetData): number {
   const { body, shield } = armorPieces(sheet);
   const dexMod = abilityModifier(effectiveAbilityScore(sheet, "dex"));
   const itemAcBonus = equippedItemBonus(sheet, "acBonus");
+  const naturalArmor = naturalArmorSource(sheet);
   const base = body
     ? body.armor!.baseAC + (body.armor!.addDex ? Math.min(dexMod, body.armor!.maxDex ?? Infinity) : 0)
-    : shield
-      ? 10 + dexMod
-      : sheet.ac;
+    : naturalArmor
+      ? naturalArmor.base + dexMod + (naturalArmor.ability ? abilityModifier(effectiveAbilityScore(sheet, naturalArmor.ability)) : 0)
+      : shield
+        ? 10 + dexMod
+        : sheet.ac;
   const shieldBonus = shield ? shield.armor!.baseAC : 0;
   return base + shieldBonus + itemAcBonus + featBonusTotal(sheet, "acBonus") + activeEffectAcBonus(sheet);
 }

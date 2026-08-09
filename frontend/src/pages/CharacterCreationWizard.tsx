@@ -742,6 +742,10 @@ export function CharacterCreationWizard({
     const features: ReturnType<typeof emptyDnd5eSheet>["features"] = [];
     const grantedSpells: ReturnType<typeof emptyDnd5eSheet>["spells"] = [];
     let darkvisionFeet = 0;
+    let climbSpeed: number | undefined;
+    let swimSpeed: number | undefined;
+    let flySpeed: number | undefined;
+    let burrowSpeed: number | undefined;
     const damageResistances = new Set<string>();
     for (const trait of allTraits) {
       features.push({
@@ -762,8 +766,14 @@ export function CharacterCreationWizard({
         hpBonusPerLevel: trait.hpBonusPerLevel,
         speedBonus: trait.speedBonus,
         savingThrowProficiencies: trait.savingThrowProficiencies,
+        naturalArmorBase: trait.naturalArmorBase,
+        naturalArmorAbility: trait.naturalArmorAbility,
       });
       darkvisionFeet = Math.max(darkvisionFeet, trait.darkvisionFeet);
+      if (trait.climbSpeed) climbSpeed = Math.max(climbSpeed ?? 0, trait.climbSpeed);
+      if (trait.swimSpeed) swimSpeed = Math.max(swimSpeed ?? 0, trait.swimSpeed);
+      if (trait.flySpeed) flySpeed = Math.max(flySpeed ?? 0, trait.flySpeed);
+      if (trait.burrowSpeed) burrowSpeed = Math.max(burrowSpeed ?? 0, trait.burrowSpeed);
       for (const r of trait.damageResistances) damageResistances.add(r);
       // Same feat-spell-${feat.id}-${i} tagging addFeat()/backgroundGrants() use, so removing
       // this trait's source race later would clean up the same way (traits aren't individually
@@ -785,7 +795,17 @@ export function CharacterCreationWizard({
     }
     // A subrace's own speed override (nonzero) wins over the parent race's; 0/unset means inherit.
     const speed = resolvedSubraceData?.speed || resolvedRaceData.speed;
-    return { speed, darkvisionFeet, damageResistances: Array.from(damageResistances), features, grantedSpells };
+    return {
+      speed,
+      darkvisionFeet,
+      climbSpeed,
+      swimSpeed,
+      flySpeed,
+      burrowSpeed,
+      damageResistances: Array.from(damageResistances),
+      features,
+      grantedSpells,
+    };
   }
 
   // The racial (race + subrace) ability bonuses are applied on top of the base scores from
@@ -895,6 +915,10 @@ export function CharacterCreationWizard({
           abilities: finalAbilities,
           speed: race.speed,
           darkvisionFeet: race.darkvisionFeet,
+          climbSpeed: race.climbSpeed,
+          swimSpeed: race.swimSpeed,
+          flySpeed: race.flySpeed,
+          burrowSpeed: race.burrowSpeed,
           damageResistances: race.damageResistances,
           saveProficiencies: classProfs?.savingThrows ?? [],
           skillProficiencies: mergedSkillIds,
