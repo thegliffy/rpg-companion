@@ -254,6 +254,7 @@ interface TraitRow {
   savingThrowProficiencies: Dnd5eAbility[];
   naturalArmorBase: string;
   naturalArmorAbility: Dnd5eAbility | "";
+  naturalArmorAllowsLightArmor: boolean;
   climbSpeed: string;
   swimSpeed: string;
   flySpeed: string;
@@ -284,6 +285,7 @@ const emptyTraitRow = (): TraitRow => ({
   savingThrowProficiencies: [],
   naturalArmorBase: "",
   naturalArmorAbility: "",
+  naturalArmorAllowsLightArmor: false,
   climbSpeed: "",
   swimSpeed: "",
   flySpeed: "",
@@ -344,6 +346,7 @@ function dataToTraitRows(traits: RaceTrait[]): TraitRow[] {
       savingThrowProficiencies: t.savingThrowProficiencies,
       naturalArmorBase: t.naturalArmorBase !== undefined ? String(t.naturalArmorBase) : "",
       naturalArmorAbility: t.naturalArmorAbility ?? "",
+      naturalArmorAllowsLightArmor: t.naturalArmorAllowsLightArmor,
       climbSpeed: t.climbSpeed !== undefined ? String(t.climbSpeed) : "",
       swimSpeed: t.swimSpeed !== undefined ? String(t.swimSpeed) : "",
       flySpeed: t.flySpeed !== undefined ? String(t.flySpeed) : "",
@@ -565,6 +568,8 @@ interface SubclassFeatureRow {
   savingThrowProficiencies: Dnd5eAbility[];
   naturalArmorBase: string;
   naturalArmorAbility: Dnd5eAbility | "";
+  // Bladesong-style "still works in light armor, blocked by a shield" (#182).
+  naturalArmorAllowsLightArmor: boolean;
   // Unlocks the sheet's CompanionPanel (#182 soft-gap round) -- a Ranger's Beast Master
   // companion, an Echo Knight's Echo, etc. Subclass/class-feature-only in the UI (not exposed on
   // feat/background-feature/race-trait editors) since every real example is a class feature.
@@ -597,6 +602,7 @@ const emptySubclassFeatureRow = (level: number): SubclassFeatureRow => ({
   savingThrowProficiencies: [],
   naturalArmorBase: "",
   naturalArmorAbility: "",
+  naturalArmorAllowsLightArmor: false,
   grantsCompanion: false,
   darkvisionFeet: "0",
 });
@@ -1296,6 +1302,7 @@ export function CustomContentManager({
         savingThrowProficiencies: r.savingThrowProficiencies,
         naturalArmorBase: r.naturalArmorBase.trim() ? Number(r.naturalArmorBase) || 0 : undefined,
         naturalArmorAbility: r.naturalArmorAbility || undefined,
+        naturalArmorAllowsLightArmor: r.naturalArmorAllowsLightArmor,
         climbSpeed: r.climbSpeed.trim() ? Number(r.climbSpeed) || 0 : undefined,
         swimSpeed: r.swimSpeed.trim() ? Number(r.swimSpeed) || 0 : undefined,
         flySpeed: r.flySpeed.trim() ? Number(r.flySpeed) || 0 : undefined,
@@ -1636,6 +1643,7 @@ export function CustomContentManager({
           savingThrowProficiencies: f.savingThrowProficiencies,
           naturalArmorBase: f.naturalArmorBase !== undefined ? String(f.naturalArmorBase) : "",
           naturalArmorAbility: f.naturalArmorAbility ?? "",
+          naturalArmorAllowsLightArmor: f.naturalArmorAllowsLightArmor,
           grantsCompanion: f.grantsCompanion,
           darkvisionFeet: f.darkvisionFeet !== undefined ? String(f.darkvisionFeet) : "0",
         })),
@@ -2012,6 +2020,7 @@ export function CustomContentManager({
           speedBonus: Number(f.speedBonus) || 0,
           savingThrowProficiencies: f.savingThrowProficiencies,
           grantsCompanion: false,
+          naturalArmorAllowsLightArmor: false,
           skillProficiencies: f.skillProficiencies,
           darkvisionFeet: f.darkvisionFeet.trim() ? Number(f.darkvisionFeet) || 0 : undefined,
         })),
@@ -2122,6 +2131,7 @@ export function CustomContentManager({
               savingThrowProficiencies: f.savingThrowProficiencies,
               naturalArmorBase: f.naturalArmorBase.trim() ? Number(f.naturalArmorBase) || 0 : undefined,
               naturalArmorAbility: f.naturalArmorAbility || undefined,
+              naturalArmorAllowsLightArmor: f.naturalArmorAllowsLightArmor,
               grantsCompanion: f.grantsCompanion,
               darkvisionFeet: f.darkvisionFeet.trim() ? Number(f.darkvisionFeet) || 0 : undefined,
             })),
@@ -2439,6 +2449,16 @@ export function CustomContentManager({
                     </option>
                   ))}
                 </select>
+              </label>
+              <label title="Bladesong-style: still applies in light armor, but blocked by a shield. Off (the default) is real Natural Armor's rule instead -- blocked by any armor, doesn't care about a shield.">
+                <input
+                  type="checkbox"
+                  checked={row.naturalArmorAllowsLightArmor}
+                  onChange={(e) =>
+                    setTraitRows((prev) => prev.map((r, j) => (j === i ? { ...r, naturalArmorAllowsLightArmor: e.target.checked } : r)))
+                  }
+                />{" "}
+                Also works in light armor (blocked by a shield)
               </label>
             </div>
             <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.3rem", fontSize: "0.85rem" }}>
@@ -4158,6 +4178,18 @@ export function CustomContentManager({
                         </option>
                       ))}
                     </select>
+                  </label>
+                  <label title="Bladesong-style: still applies in light armor, but blocked by a shield. Off (the default) is real Natural Armor's rule instead -- blocked by any armor, doesn't care about a shield.">
+                    <input
+                      type="checkbox"
+                      checked={row.naturalArmorAllowsLightArmor}
+                      onChange={(e) =>
+                        setSubclassFeatureRows((prev) =>
+                          prev.map((r, j) => (j === i ? { ...r, naturalArmorAllowsLightArmor: e.target.checked } : r)),
+                        )
+                      }
+                    />{" "}
+                    Also works in light armor
                   </label>
                   <label title="Darkvision range in feet, if this feature grants it (e.g. Twilight Domain's Eyes of Night).">
                     Darkvision (ft){" "}

@@ -21,6 +21,7 @@ const BLANK_BONUSES = {
   speedBonus: 0,
   savingThrowProficiencies: [] as Dnd5eAbility[],
   grantsCompanion: false,
+  naturalArmorAllowsLightArmor: false,
 };
 
 // Pending resolution of a custom feat's spellChoices rows -- one WizardSpellbookPicker per row,
@@ -100,6 +101,12 @@ export function FeatPickerModal({
       speedBonus: d.speedBonus,
       savingThrowProficiencies: d.savingThrowProficiencies,
       grantsCompanion: d.grantsCompanion,
+      // Not authored anywhere in the feat editor UI (natural armor stays subclass-feature/race-
+      // trait-only there, per #186's original scoping), but the field is on the shared base, so a
+      // feat imported via JSON with one set shouldn't have it silently dropped here.
+      naturalArmorBase: d.naturalArmorBase,
+      naturalArmorAbility: d.naturalArmorAbility,
+      naturalArmorAllowsLightArmor: d.naturalArmorAllowsLightArmor,
     };
     if (d.spellChoices.length === 0) {
       onPick(feat, d.grantedSpells);

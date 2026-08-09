@@ -2947,3 +2947,69 @@ correctly recharged to "7 / 7" while the Necklace stayed at "2 / 3" -- confirmed
 (`martialUsed` retained only `item-charges-item-necklace: 1` after the rest, the wand's key
 cleared entirely). Confirmed the item editor's "Recharges on" dropdown now offers "Never
 (consumed permanently)" as a third option. Test character and user deleted after verification.
+
+194. ✅ **WP-C: Bladesong vs. Natural Armor -- light-armor-and-no-shield gating.** `effectiveAC()`'s
+    natural-armor branch was blocked by *any* equipped body armor. Real Natural Armor
+    (Lizardfolk/Tortle) is meant to work that way -- blocked by any armor, doesn't care about a
+    shield -- but real Bladesong is different: it still applies in light armor, and is blocked by
+    a shield specifically (its own RAW: "while wearing light armor or no armor, and not wielding
+    a shield"). Both were sharing one gating rule.
+
+    Added `naturalArmorAllowsLightArmor: z.boolean().default(false)` to `effectBonusesSchema` --
+    `false` (Lizardfolk's rule) is the default so every #186 natural-armor grant authored before
+    this field existed keeps behaving exactly as before. New private `naturalArmorUsable()`
+    (`dnd5e.ts`) discriminates the two real rules: blocked by any body armor unless
+    `allowsLightArmor` and it's specifically light; blocked by a shield only when
+    `allowsLightArmor` (plain Natural Armor doesn't care about a shield, its bonus still stacks
+    on top exactly as before). `effectiveAC()`'s base-AC branch now checks this instead of a bare
+    `!body`.
+
+    **Two real bugs found and fixed while wiring this up, neither reported, both would have made
+    Bladesong non-functional even with the schema/logic fix above:**
+    - `mergeGrants()` (`Dnd5eSheet.tsx`) -- the function `chooseSubclass()` actually calls when a
+      player picks a subclass on a live sheet (the *normal* way a subclass is chosen; the
+      creation wizard's `raceGrants()`/`backgroundGrants()` never touch subclass features at
+      all) -- never copied `naturalArmorBase`, `naturalArmorAbility`, or `darkvisionFeet` onto the
+      granted feature entry, at all, for any subclass feature, since before those fields existed.
+      A Bladesong-alike or Twilight-Domain-alike picked through the real UI would have silently
+      never reached the sheet. Fixed by adding all three (plus the new
+      `naturalArmorAllowsLightArmor`) to that literal.
+    - `acBreakdownText()` (`dnd5e.ts`, the "Chain Shirt 13 + Dex +2" label next to the AC number)
+      independently re-derives its own description from equipped armor and never learned about
+      the new override -- so a Bladesong character in light armor showed the *correct* number
+      (from `effectiveAC()`) next to a *wrong* label (still describing the light armor's own
+      math, which no longer matches). Fixed by returning `null` (the same "no breakdown, use the
+      editable-base-plus-arrow display instead" behavior already used for the fully-unarmored
+      natural-armor case) whenever `naturalArmorUsable()` says the formula won over the equipped
+      armor.
+
+    UI: added an "Also works in light armor" checkbox next to the existing Natural Armor base/
+    ability inputs, in both editors that have them (subclass-feature, race-trait).
+
+**Verified (#194, done):** 7 new unit tests (`effects.test.ts`) -- light armor lets Bladesong-
+style apply but still blocks plain Natural Armor, medium armor blocks Bladesong-style too, a
+shield blocks Bladesong-style specifically (not plain Natural Armor, which still stacks with a
+shield's bonus on top), plus 2 for the `acBreakdownText` fix (null when Bladesong overrides the
+armor, still describes the armor when Bladesong is blocked). `tsc -b` and both suites clean
+throughout (shared 138/138, backend 28/28).
+
+Live: authored a Wizard subclass ("WPC Bladesong Test") with a level-1 feature ("Bladesong",
+`naturalArmorBase: 10, naturalArmorAbility: "int", naturalArmorAllowsLightArmor: true`) through
+the real Custom Content Manager UI. Created a level-2 Wizard character and picked this subclass
+through the sheet's own real Subclass dropdown (exercising `chooseSubclass()` -> `mergeGrants()`,
+not a direct API write) -- confirmed the granted feature carried all three new fields onto the
+sheet, proving the `mergeGrants()` bug fix. Unarmored: AC showed "→ 15" (10 + Dex +2 + Int +3).
+Equipped light armor: AC stayed "→ 15" with no breakdown text (Bladesong won, `acBreakdownText`
+fix confirmed). Switched to medium armor: AC became "14 (Scale Mail (Test) 14 + Dex +2)" --
+Bladesong correctly blocked, breakdown text correctly described the armor again. Equipped a
+shield instead: AC became "14 (12 + Shield (Test) +2)" -- Bladesong blocked by the shield
+specifically, matching its own RAW clause. All three numbers matched the corresponding unit
+tests exactly. No console errors. Test character, custom subclass, and user deleted after
+verification.
+
+**Also found in passing, unrelated to this package**: the backend's owner-PATCH endpoint
+(`characters.routes.ts:130-133`) silently reverts `sheetData.class`/`background` back to their
+stored value whenever the *owner* (not a DM) submits a change -- a deliberate "class/background
+are identity-defining, can't be changed after creation" guard, not a bug. Worth knowing for any
+future live-verification pass that tries to set `class` via PATCH on an owned character: set it
+in the initial `POST /api/characters` body's `sheetData` instead.

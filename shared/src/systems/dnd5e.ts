@@ -332,6 +332,9 @@ export const effectEntrySchema = z.object({
   // effectBonusesSchema exactly; consumed by effectiveAC() below.
   naturalArmorBase: z.number().int().min(0).max(30).optional(),
   naturalArmorAbility: z.enum(DND5E_ABILITIES).optional(),
+  // Bladesong-style "still works in light armor, blocked only by a shield" (#182). Mirrors
+  // effectBonusesSchema exactly; consumed by naturalArmorUsable() below.
+  naturalArmorAllowsLightArmor: z.boolean().default(false),
   // Grants a linked companion creature (#182) -- Beast Master, Echo Knight. Mirrors
   // effectBonusesSchema exactly; presence on any granted feat/feature/trait unlocks the sheet's
   // CompanionPanel.
@@ -719,11 +722,30 @@ function armorPieces(sheet: Dnd5eSheetData) {
  * Bladesong-style ability-to-AC) -- highest naturalArmorBase wins if more than one is somehow
  * granted, the same "only the best one counts" rule multiple body armor pieces already get
  * warned about (armorWarningText). Null when nothing grants one. */
-function naturalArmorSource(sheet: Dnd5eSheetData): { base: number; ability?: Dnd5eAbility } | null {
+function naturalArmorSource(
+  sheet: Dnd5eSheetData,
+): { base: number; ability?: Dnd5eAbility; allowsLightArmor: boolean } | null {
   const sources = allEffectEntries(sheet).filter((e) => e.naturalArmorBase !== undefined);
   if (sources.length === 0) return null;
   const best = sources.reduce((a, b) => (b.naturalArmorBase! > a.naturalArmorBase! ? b : a));
-  return { base: best.naturalArmorBase!, ability: best.naturalArmorAbility };
+  return { base: best.naturalArmorBase!, ability: best.naturalArmorAbility, allowsLightArmor: best.naturalArmorAllowsLightArmor };
+}
+
+/** Whether a natural-armor source actually applies given what's currently equipped (#182).
+ * Plain Natural Armor (Lizardfolk/Tortle, allowsLightArmor: false) is blocked by ANY body armor
+ * but doesn't care about a shield -- the shield's bonus still adds on top in effectiveAC() either
+ * way. Bladesong-style (allowsLightArmor: true) is blocked only by medium/heavy armor, and -- per
+ * its own RAW ("aren't wielding a shield") -- also blocked by a shield, unlike plain Natural
+ * Armor. Two different real gating rules sharing one field, discriminated by the flag. */
+function naturalArmorUsable(
+  natural: { allowsLightArmor: boolean } | null,
+  body: ReturnType<typeof armorPieces>["body"],
+  shield: ReturnType<typeof armorPieces>["shield"],
+): boolean {
+  if (!natural) return false;
+  if (body && !(natural.allowsLightArmor && body.armor!.category === "light")) return false;
+  if (shield && natural.allowsLightArmor) return false;
+  return true;
 }
 
 export function effectiveAC(sheet: Dnd5eSheetData): number {
@@ -731,10 +753,10 @@ export function effectiveAC(sheet: Dnd5eSheetData): number {
   const dexMod = abilityModifier(effectiveAbilityScore(sheet, "dex"));
   const itemAcBonus = equippedItemBonus(sheet, "acBonus");
   const naturalArmor = naturalArmorSource(sheet);
-  const base = body
-    ? body.armor!.baseAC + (body.armor!.addDex ? Math.min(dexMod, body.armor!.maxDex ?? Infinity) : 0)
-    : naturalArmor
-      ? naturalArmor.base + dexMod + (naturalArmor.ability ? abilityModifier(effectiveAbilityScore(sheet, naturalArmor.ability)) : 0)
+  const base = naturalArmorUsable(naturalArmor, body, shield)
+    ? naturalArmor!.base + dexMod + (naturalArmor!.ability ? abilityModifier(effectiveAbilityScore(sheet, naturalArmor!.ability)) : 0)
+    : body
+      ? body.armor!.baseAC + (body.armor!.addDex ? Math.min(dexMod, body.armor!.maxDex ?? Infinity) : 0)
       : shield
         ? 10 + dexMod
         : sheet.ac;
@@ -786,10 +808,15 @@ export function effectiveSpeed(sheet: Dnd5eSheetData): number {
 }
 
 /** A human-readable AC breakdown ("Chain Shirt 13 + Dex +2 + Shield +2"), or null when no
- * structured armor is equipped (AC is just the plain manual/override number in that case). */
+ * structured armor is equipped (AC is just the plain manual/override number in that case).
+ * Also null when a Bladesong-style natural-armor grant overrides equipped light armor (#182) --
+ * effectiveAC() already picks the formula over the armor in that case, so describing the armor
+ * here would show a breakdown that doesn't match the bold number next to it; falls through to
+ * the same editable-base-plus-arrow display the fully-unarmored natural-armor case already uses. */
 export function acBreakdownText(sheet: Dnd5eSheetData): string | null {
   const { body, shield } = armorPieces(sheet);
   if (!body && !shield) return null;
+  if (naturalArmorUsable(naturalArmorSource(sheet), body, shield)) return null;
   const dexMod = abilityModifier(effectiveAbilityScore(sheet, "dex"));
   const parts: string[] = [];
   if (body) {

@@ -81,6 +81,12 @@ export const effectBonusesSchema = z.object({
   // just base + Dex). Real examples never use more than Dex + one other, so a single optional
   // field covers every known case rather than an open list.
   naturalArmorAbility: z.enum(DND5E_ABILITIES).optional(),
+  // Whether this natural-armor grant still works in light armor, blocked only by a shield (#182,
+  // Bladesong: "while you are wearing light armor or no armor, and aren't wielding a shield").
+  // `false` (the default) is real Natural Armor's rule instead (Lizardfolk/Tortle: blocked by
+  // ANY armor, doesn't care about a shield) -- every #186 natural-armor grant authored before
+  // this field existed keeps behaving exactly as before. See naturalArmorUsable() (dnd5e.ts).
+  naturalArmorAllowsLightArmor: z.boolean().default(false),
   // Grants a linked companion creature (#182) -- a Ranger's Beast Master companion, an Echo
   // Knight's Echo. Landing here (not just on subclass features) means a homebrew race could in
   // principle grant one too, same "one shared mechanism, not a subclass-only special case"
@@ -637,6 +643,7 @@ export function blankSubclassFeature(name: string, level: number): SubclassFeatu
     savingThrowProficiencies: [],
     grantsCompanion: false,
     skillProficiencies: [],
+    naturalArmorAllowsLightArmor: false,
     armorProficiencies: [],
     weaponProficiencies: [],
     toolProficiencies: [],
@@ -774,6 +781,7 @@ export interface ResolvedGrantedFeat {
   speedBonus: number;
   savingThrowProficiencies: Dnd5eAbility[];
   grantsCompanion: boolean;
+  naturalArmorAllowsLightArmor: boolean;
   grantedSpells: GrantedSpell[];
 }
 
@@ -802,6 +810,7 @@ export function resolveGrantedFeat(ref: string, customFeats: CustomContent[]): R
       speedBonus: 0,
       savingThrowProficiencies: [],
       grantsCompanion: false,
+      naturalArmorAllowsLightArmor: false,
       grantedSpells: [],
     };
   }
@@ -826,6 +835,7 @@ export function resolveGrantedFeat(ref: string, customFeats: CustomContent[]): R
     speedBonus: d.speedBonus,
     savingThrowProficiencies: d.savingThrowProficiencies,
     grantsCompanion: d.grantsCompanion,
+    naturalArmorAllowsLightArmor: d.naturalArmorAllowsLightArmor,
     grantedSpells: d.grantedSpells,
   };
 }

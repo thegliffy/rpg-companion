@@ -568,6 +568,7 @@ export function CharacterCreationWizard({
         savingThrowProficiencies: feature.savingThrowProficiencies,
         grantsCompanion: feature.grantsCompanion,
         darkvisionFeet: feature.darkvisionFeet,
+        naturalArmorAllowsLightArmor: feature.naturalArmorAllowsLightArmor,
       });
     }
     const allVariants = data.variantTables.flatMap((t) => t.variants);
@@ -591,6 +592,7 @@ export function CharacterCreationWizard({
         speedBonus: 0,
         savingThrowProficiencies: [],
         grantsCompanion: false,
+        naturalArmorAllowsLightArmor: false,
       });
     }
 
@@ -674,6 +676,7 @@ export function CharacterCreationWizard({
         speedBonus: resolved.speedBonus,
         savingThrowProficiencies: resolved.savingThrowProficiencies,
         grantsCompanion: resolved.grantsCompanion,
+        naturalArmorAllowsLightArmor: resolved.naturalArmorAllowsLightArmor,
       });
       // Same feat-spell-${feat.id}-${i} tagging addFeat() uses on the sheet, so removing this
       // feat later still cleans up the spells it granted.
@@ -785,6 +788,7 @@ export function CharacterCreationWizard({
         savingThrowProficiencies: trait.savingThrowProficiencies,
         naturalArmorBase: trait.naturalArmorBase,
         naturalArmorAbility: trait.naturalArmorAbility,
+        naturalArmorAllowsLightArmor: trait.naturalArmorAllowsLightArmor,
         grantsCompanion: trait.grantsCompanion,
       });
       darkvisionFeet = Math.max(darkvisionFeet, trait.darkvisionFeet);

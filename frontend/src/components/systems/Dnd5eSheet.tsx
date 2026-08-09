@@ -532,6 +532,15 @@ export function Dnd5eSheet({
         speedBonus: f.speedBonus,
         savingThrowProficiencies: f.savingThrowProficiencies,
         grantsCompanion: f.grantsCompanion,
+        // Previously missing from this literal entirely (not just this field) -- chooseSubclass()
+        // is how a subclass is actually picked in the normal flow (post-creation, via level-up),
+        // so a Bladesong-alike's naturalArmorBase or a Twilight-Domain-alike's darkvisionFeet
+        // would silently never reach the sheet through this path. Fixed alongside #182's
+        // naturalArmorAllowsLightArmor addition rather than left for the next report to rediscover.
+        naturalArmorBase: f.naturalArmorBase,
+        naturalArmorAbility: f.naturalArmorAbility,
+        naturalArmorAllowsLightArmor: f.naturalArmorAllowsLightArmor,
+        darkvisionFeet: f.darkvisionFeet,
       }));
 
     const existingSpellIds = new Set(prev.spells.map((s) => s.id));
@@ -770,6 +779,7 @@ export function Dnd5eSheet({
       speedBonus: 0,
       savingThrowProficiencies: [],
       grantsCompanion: false,
+      naturalArmorAllowsLightArmor: false,
     };
     const grantedSpells: Dnd5eSheetData["spells"] = (grants?.grantedSpells ?? []).map((gs, i) => ({
       id: `invocation-spell-${featureId}-${i}`,
@@ -3539,6 +3549,7 @@ export function Dnd5eSheet({
                 speedBonus: 0,
                 savingThrowProficiencies: [],
                 grantsCompanion: false,
+                naturalArmorAllowsLightArmor: false,
               },
             ])
           }

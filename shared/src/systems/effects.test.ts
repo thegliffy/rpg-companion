@@ -16,6 +16,7 @@ import {
   hasCompanionGrant,
   saveBonus,
   effectiveAC,
+  acBreakdownText,
 } from "./dnd5e.js";
 import type { Dnd5eSheetData } from "./dnd5e.js";
 import { naturalD20, isCriticalHit, isCriticalMiss } from "./crit.js";
@@ -283,6 +284,81 @@ describe("effectiveAC with naturalArmorBase (#182, Natural Armor / Bladesong)", 
   it("picks the higher of two natural-armor sources rather than stacking or picking the first", () => {
     const sheet = sheetWithNaturalArmor({ dex: 10 }, [{ naturalArmorBase: 12 }, { naturalArmorBase: 15 }]);
     assert.equal(effectiveAC(sheet), 15); // not 12, not 27
+  });
+});
+
+describe("effectiveAC naturalArmorAllowsLightArmor gating (#182, Bladesong vs. Natural Armor)", () => {
+  function armorItem(category: "light" | "medium" | "heavy" | "shield", baseAC: number) {
+    return {
+      id: "armor0",
+      name: "Test Armor",
+      equipped: true,
+      armor: { baseAC, addDex: category !== "heavy", category, stealthDisadvantage: false },
+    };
+  }
+
+  it("plain Natural Armor (allowsLightArmor: false) is blocked by light armor too", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: { dex: 14 },
+      feats: [{ id: "f0", name: "Natural Armor", naturalArmorBase: 13 }],
+      items: [armorItem("light", 11)],
+    });
+    // Falls through to the equipped light armor's own AC, not the natural-armor formula.
+    assert.equal(effectiveAC(sheet), 11 + 2);
+  });
+
+  it("Bladesong-style (allowsLightArmor: true) still applies in light armor", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: { dex: 14, int: 16 },
+      feats: [{ id: "f0", name: "Bladesong", naturalArmorBase: 10, naturalArmorAbility: "int", naturalArmorAllowsLightArmor: true }],
+      items: [armorItem("light", 11)],
+    });
+    assert.equal(effectiveAC(sheet), 10 + 2 + 3); // formula wins over the light armor's own AC
+  });
+
+  it("Bladesong-style is still blocked by medium armor", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: { dex: 14, int: 16 },
+      feats: [{ id: "f0", name: "Bladesong", naturalArmorBase: 10, naturalArmorAbility: "int", naturalArmorAllowsLightArmor: true }],
+      items: [armorItem("medium", 14)],
+    });
+    assert.equal(effectiveAC(sheet), 14 + 2); // the medium armor's own AC, not the formula
+  });
+
+  it("Bladesong-style is blocked by a shield, per its own \"not wielding a shield\" clause", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: { dex: 14, int: 16 },
+      feats: [{ id: "f0", name: "Bladesong", naturalArmorBase: 10, naturalArmorAbility: "int", naturalArmorAllowsLightArmor: true }],
+      items: [armorItem("shield", 2)],
+    });
+    assert.equal(effectiveAC(sheet), 10 + 2 + 2); // 10 + Dex unarmored fallback + the shield's own +2, not the formula
+  });
+
+  it("plain Natural Armor is unaffected by a shield, unlike Bladesong-style", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: { dex: 10 },
+      feats: [{ id: "f0", name: "Natural Armor", naturalArmorBase: 13 }],
+      items: [armorItem("shield", 2)],
+    });
+    assert.equal(effectiveAC(sheet), 13 + 0 + 2); // formula + shield bonus, both apply together
+  });
+
+  it("acBreakdownText is null (not a stale armor description) when Bladesong overrides light armor", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: { dex: 14, int: 16 },
+      feats: [{ id: "f0", name: "Bladesong", naturalArmorBase: 10, naturalArmorAbility: "int", naturalArmorAllowsLightArmor: true }],
+      items: [armorItem("light", 11)],
+    });
+    assert.equal(acBreakdownText(sheet), null);
+  });
+
+  it("acBreakdownText still describes the armor when it's medium (Bladesong blocked)", () => {
+    const sheet = dnd5eSheetSchema.parse({
+      abilities: { dex: 14, int: 16 },
+      feats: [{ id: "f0", name: "Bladesong", naturalArmorBase: 10, naturalArmorAbility: "int", naturalArmorAllowsLightArmor: true }],
+      items: [armorItem("medium", 14)],
+    });
+    assert.match(acBreakdownText(sheet)!, /Test Armor 14/);
   });
 });
 
