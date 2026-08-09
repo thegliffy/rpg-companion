@@ -6,10 +6,9 @@
 import type { SrdSpell } from "./srd-spells.js";
 
 export interface SpellScaling {
-  /** Dice added to the spell's damage roll for each slot level above its base level -- the
-   * rollable part. Only meaningful when the spell has base `damageDice` for these to attach to:
-   * healing spells (Cure Wounds) upcast by dice too, but nothing rolls healing yet, so they use
-   * `note` instead of silently adding dice to a roll that never happens. */
+  /** Dice added to the spell's damage OR healing roll for each slot level above its base level
+   * (#182 -- healing spells scale by dice too, applied the same way scaledSpellDamage() already
+   * handles a damage spell's upcast, since it's generic over any base dice string). */
   dicePerLevel?: string;
   /** The upcast expressed as text, for everything that isn't "add N dice to one roll" -- extra
    * targets, longer durations, higher dispel thresholds, or per-two-levels scaling. Rendered with
@@ -27,8 +26,8 @@ export const SRD_SPELL_SCALING: Record<string, SpellScaling> = {
   // Extra *darts*, not extra dice on one roll -- forcing this into dicePerLevel would roll
   // 3d4+3 plus a stray 1d4 rather than four darts of 1d4+1 each.
   "magic-missile": { note: "Creates one additional dart for each slot level above 1st." },
-  "cure-wounds": { note: "Heals an additional 1d8 for each slot level above 1st." },
-  "healing-word": { note: "Heals an additional 1d4 for each slot level above 1st." },
+  "cure-wounds": { dicePerLevel: "1d8" },
+  "healing-word": { dicePerLevel: "1d4" },
   command: { note: "Affects one additional creature for each slot level above 1st." },
   "charm-person": { note: "Targets one additional creature for each slot level above 1st." },
   bane: { note: "Targets one additional creature for each slot level above 1st." },
@@ -48,7 +47,7 @@ export const SRD_SPELL_SCALING: Record<string, SpellScaling> = {
   aid: { note: "Targets' hit point maximum and current hit points increase by 5 more for each slot level above 2nd." },
   invisibility: { note: "Targets one additional creature for each slot level above 2nd." },
   "hold-person": { note: "Targets one additional creature for each slot level above 2nd." },
-  "prayer-of-healing": { note: "Healing increases by 1d8 for each slot level above 2nd." },
+  "prayer-of-healing": { dicePerLevel: "1d8" },
   // The base +1 is modelled as a buff (SRD_SPELL_EFFECTS); the upcast tiers aren't, so they're
   // surfaced as text rather than silently ignored.
   "magic-weapon": { note: "The bonus increases to +2 with a slot of 4th level or higher, and to +3 with a slot of 6th level or higher." },
@@ -59,7 +58,7 @@ export const SRD_SPELL_SCALING: Record<string, SpellScaling> = {
   "lightning-bolt": { dicePerLevel: "1d6" },
   "vampiric-touch": { dicePerLevel: "1d6" },
   "dispel-magic": { note: "Automatically ends a spell of level equal to or less than the slot level used." },
-  "mass-healing-word": { note: "Healing increases by 1d4 for each slot level above 3rd." },
+  "mass-healing-word": { dicePerLevel: "1d4" },
   "animate-dead": { note: "Animates or reasserts control over two additional undead creatures for each slot level above 3rd." },
   "conjure-animals": { note: "Summons twice as many beasts with a 5th-level slot, three times as many with a 7th-level slot, and four times as many with a 9th-level slot." },
   "bestow-curse": {
@@ -87,7 +86,7 @@ export const SRD_SPELL_SCALING: Record<string, SpellScaling> = {
   "cone-of-cold": { dicePerLevel: "1d8" },
   "flame-strike": { dicePerLevel: "1d6" },
   "insect-plague": { dicePerLevel: "1d10" },
-  "mass-cure-wounds": { note: "Heals an additional 1d8 for each slot level above 5th." },
+  "mass-cure-wounds": { dicePerLevel: "1d8" },
   "hold-monster": { note: "Targets one additional creature for each slot level above 5th." },
   "planar-binding": { note: "Duration increases with slot level: 10 days (6th), 30 days (7th), 180 days (8th), a year and a day (9th)." },
   "dominate-person": { note: "Duration becomes concentration up to 10 minutes (6th), 1 hour (7th), or 8 hours (8th or higher)." },

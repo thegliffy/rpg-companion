@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import type { BuffEffect, SpellScaling, SrdSpell, DiceRoll, RollMode } from "shared";
+import type { BuffEffect, SpellScaling, SrdSpell, DiceRoll, RollMode, SpellHealing } from "shared";
 import { scaledSpellDamage, naturalD20, critFormula, formatModifier, formatDiceTerm, d20Formula } from "shared";
 import { RollModeSelect } from "./RollModeSelect";
 import { useDiceRoll } from "../../dice/DiceRollContext";
@@ -39,6 +39,9 @@ export function SpellCastControl({
   extraAttackDice = [],
   extraDamage = [],
   onHit,
+  healing = null,
+  healingAbilityMod = 0,
+  onHeal,
 }: {
   spell: SrdSpell;
   spellAttackBonus: number | null;
@@ -83,6 +86,17 @@ export function SpellCastControl({
    * -- lets the sheet consume any consumption: "once" effects. Never called on a Miss or on a
    * non-attack-roll spell (a save spell was never "an attack" to trigger them). */
   onHit?: () => void;
+  /** The spell's resolved healing (curated SRD_SPELL_HEALING or a custom spell's own
+   * healingDice/healingBonus), if any -- #182, passed in the same "resolved by the caller" way
+   * `buff` and `scaling` already are. */
+  healing?: SpellHealing | null;
+  /** The caster's raw spellcasting-ability modifier (no proficiency) -- Cure Wounds-style
+   * healing adds this, not the full spell attack bonus. */
+  healingAbilityMod?: number;
+  /** Called with the rolled total when the caster applies a healing spell to themself. Healing
+   * another character is out of scope -- the DM applies numbers to other targets off-sheet the
+   * same way attack/damage rolls already work. */
+  onHeal?: (amount: number) => void;
 }) {
   const { session, setSessionActions } = useDiceRoll();
   const [phase, setPhase] = useState<Phase>("idle");
@@ -110,6 +124,19 @@ export function SpellCastControl({
     ? scaledSpellDamage(spell.damageDice, spell.level, effectiveCastLevel, scaling ?? undefined)
     : undefined;
   const levelsAbove = Math.max(0, effectiveCastLevel - spell.level);
+  // Healing formula (#182): scales by upcast the same way damage does (scaledSpellDamage is
+  // generic over any base dice string), then adds the caster's ability modifier ONLY when there
+  // is a dice component -- "1d8 + spellcasting ability modifier" (Cure Wounds) adds it, but
+  // Revivify/Heal/Mass Heal's fixed values ("returns with 1 hit point", "regains 70 hit points")
+  // are flat by RAW and never scale with the caster's stats at all. Never adds proficiency, the
+  // way an attack roll's bonus does.
+  const scaledHealingDice = healing?.dice
+    ? scaledSpellDamage(healing.dice, spell.level, effectiveCastLevel, scaling ?? undefined)
+    : "";
+  const healingFlat = healing ? healing.bonus + (scaledHealingDice ? healingAbilityMod : 0) : 0;
+  const healingFormula = healing
+    ? [scaledHealingDice, healingFlat !== 0 ? String(healingFlat) : ""].filter(Boolean).join("+") || "0"
+    : null;
 
   async function rollDamagePhase(isCrit: boolean) {
     const scopedRoll = scopedRollRef.current!;
@@ -206,6 +233,35 @@ export function SpellCastControl({
         setError(err instanceof Error ? err.message : "Roll failed");
         setPhase("idle");
       }
+    } else if (healingFormula) {
+      // Healing (#182) rolls into the dice log the same way damage does, then offers an
+      // "Apply to self" button with the actual rolled total -- healing another character is out
+      // of scope (a single-character-sheet app; the DM applies numbers to other targets off-
+      // sheet the same way attack/damage rolls already do).
+      setPhase("rolling");
+      try {
+        await session(campaignId, spell.name, async (scopedRoll) => {
+          const roll = await scopedRoll(healingFormula, `${spell.name} healing${levelsAbove > 0 ? ` (lvl ${effectiveCastLevel})` : ""}`);
+          const total = roll.total;
+          setSessionActions(
+            onHeal ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onHeal(total);
+                  setSessionActions(null);
+                }}
+              >
+                Apply {total} to self
+              </button>
+            ) : null,
+          );
+        });
+        setPhase("done");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Roll failed");
+        setPhase("idle");
+      }
     } else {
       setPhase("done");
     }
@@ -254,6 +310,36 @@ export function SpellCastControl({
       {spell.concentration && (
         <small style={{ marginLeft: "0.4rem", color: replacesConcentration ? "var(--danger)" : "var(--text-muted)" }}>
           {replacesConcentration ? `(concentration — drops ${replacesConcentration})` : "(concentration)"}
+        </small>
+      )}
+      {spell.components && (spell.components.verbal || spell.components.somatic || spell.components.material) && (
+        <small style={{ marginLeft: "0.4rem", color: "var(--text-muted)" }}>
+          (
+          {[spell.components.verbal && "V", spell.components.somatic && "S", spell.components.material && "M"]
+            .filter(Boolean)
+            .join(", ")}
+          {spell.components.material && spell.components.materialCost
+            ? ` — ${spell.components.materialCost}${spell.components.materialConsumed ? ", consumed" : ""}`
+            : ""}
+          )
+        </small>
+      )}
+      {healing && (
+        <small style={{ marginLeft: "0.4rem", color: "var(--text-muted)" }}>
+          (heals {healingFormula})
+        </small>
+      )}
+      {(spell.saveEffect === "half" || spell.saveEffect === "negates" || spell.conditionImposed || spell.areaOfEffect) && (
+        <small style={{ marginLeft: "0.4rem", color: "var(--text-muted)" }}>
+          (
+          {[
+            spell.areaOfEffect,
+            spell.saveEffect === "half" ? "half on save" : spell.saveEffect === "negates" ? "negates on save" : "",
+            spell.conditionImposed,
+          ]
+            .filter(Boolean)
+            .join(", ")}
+          )
         </small>
       )}
       {buff && (

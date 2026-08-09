@@ -796,6 +796,22 @@ export function CustomContentManager({
   const [spellSaveAbility, setSpellSaveAbility] = useState<Dnd5eAbility | "">("");
   const [spellDamageDice, setSpellDamageDice] = useState("");
   const [spellDamageType, setSpellDamageType] = useState("");
+  // Verbal/Somatic/Material components (#182) -- previously only expressible in free-text
+  // description.
+  const [spellVerbal, setSpellVerbal] = useState(false);
+  const [spellSomatic, setSpellSomatic] = useState(false);
+  const [spellMaterial, setSpellMaterial] = useState(false);
+  const [spellMaterialConsumed, setSpellMaterialConsumed] = useState(false);
+  const [spellMaterialCost, setSpellMaterialCost] = useState("");
+  // First-class healing (#182) -- mirrors spellDamageDice's shape; kept separate so a spell
+  // can't be "damage" and "healing" at once by accident.
+  const [spellHealingDice, setSpellHealingDice] = useState("");
+  const [spellHealingBonus, setSpellHealingBonus] = useState("0");
+  // Lightweight structured save-effect riders (#182) -- a hint, not a simulation, same register
+  // as the optional attack tradeoff below.
+  const [spellSaveEffect, setSpellSaveEffect] = useState<"none" | "half" | "negates">("none");
+  const [spellConditionImposed, setSpellConditionImposed] = useState("");
+  const [spellAreaOfEffect, setSpellAreaOfEffect] = useState("");
   const [spellRitual, setSpellRitual] = useState(false);
   const [spellConcentration, setSpellConcentration] = useState(false);
   const [spellClasses, setSpellClasses] = useState("");
@@ -1245,6 +1261,16 @@ export function CustomContentManager({
     setSpellSaveAbility("");
     setSpellDamageDice("");
     setSpellDamageType("");
+    setSpellVerbal(false);
+    setSpellSomatic(false);
+    setSpellMaterial(false);
+    setSpellMaterialConsumed(false);
+    setSpellMaterialCost("");
+    setSpellHealingDice("");
+    setSpellHealingBonus("0");
+    setSpellSaveEffect("none");
+    setSpellConditionImposed("");
+    setSpellAreaOfEffect("");
     setSpellRitual(false);
     setSpellConcentration(false);
     setSpellClasses("");
@@ -1569,6 +1595,12 @@ export function CustomContentManager({
         saveAbility?: Dnd5eAbility;
         damageDice?: string;
         damageType?: string;
+        components?: { verbal: boolean; somatic: boolean; material: boolean; materialConsumed: boolean; materialCost: string };
+        healingDice?: string;
+        healingBonus?: number;
+        saveEffect?: "none" | "half" | "negates";
+        conditionImposed?: string;
+        areaOfEffect?: string;
         ritual: boolean;
         concentration?: boolean;
         classes: string[];
@@ -1599,6 +1631,16 @@ export function CustomContentManager({
       setSpellSaveAbility(d.saveAbility ?? "");
       setSpellDamageDice(d.damageDice ?? "");
       setSpellDamageType(d.damageType ?? "");
+      setSpellVerbal(d.components?.verbal ?? false);
+      setSpellSomatic(d.components?.somatic ?? false);
+      setSpellMaterial(d.components?.material ?? false);
+      setSpellMaterialConsumed(d.components?.materialConsumed ?? false);
+      setSpellMaterialCost(d.components?.materialCost ?? "");
+      setSpellHealingDice(d.healingDice ?? "");
+      setSpellHealingBonus(String(d.healingBonus ?? 0));
+      setSpellSaveEffect(d.saveEffect ?? "none");
+      setSpellConditionImposed(d.conditionImposed ?? "");
+      setSpellAreaOfEffect(d.areaOfEffect ?? "");
       setSpellRitual(d.ritual);
       setSpellConcentration(d.concentration ?? false);
       setSpellClasses(d.classes.join(", "));
@@ -1983,6 +2025,18 @@ export function CustomContentManager({
           saveAbility: spellSaveAbility || undefined,
           damageDice: spellDamageDice.trim() || undefined,
           damageType: spellDamageType.trim() || undefined,
+          components: {
+            verbal: spellVerbal,
+            somatic: spellSomatic,
+            material: spellMaterial,
+            materialConsumed: spellMaterialConsumed,
+            materialCost: spellMaterialCost.trim(),
+          },
+          healingDice: spellHealingDice.trim() || undefined,
+          healingBonus: Number(spellHealingBonus) || undefined,
+          saveEffect: spellSaveEffect,
+          conditionImposed: spellConditionImposed.trim(),
+          areaOfEffect: spellAreaOfEffect.trim(),
           ritual: spellRitual,
           concentration: spellConcentration,
           classes: spellClasses.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean),
@@ -4239,6 +4293,84 @@ export function CustomContentManager({
               </label>
               <label>
                 Damage type <input value={spellDamageType} onChange={(e) => setSpellDamageType(e.target.value)} placeholder="e.g. Fire" style={{ width: "6rem" }} />
+              </label>
+            </div>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "0.5rem", alignItems: "center" }}>
+              <label>
+                <input type="checkbox" checked={spellVerbal} onChange={(e) => setSpellVerbal(e.target.checked)} /> Verbal
+              </label>
+              <label>
+                <input type="checkbox" checked={spellSomatic} onChange={(e) => setSpellSomatic(e.target.checked)} /> Somatic
+              </label>
+              <label>
+                <input type="checkbox" checked={spellMaterial} onChange={(e) => setSpellMaterial(e.target.checked)} /> Material
+              </label>
+              {spellMaterial && (
+                <>
+                  <label>
+                    <input type="checkbox" checked={spellMaterialConsumed} onChange={(e) => setSpellMaterialConsumed(e.target.checked)} /> Consumed
+                  </label>
+                  <label>
+                    Material cost{" "}
+                    <input
+                      value={spellMaterialCost}
+                      onChange={(e) => setSpellMaterialCost(e.target.value)}
+                      placeholder="e.g. a diamond worth 300+ gp"
+                      style={{ width: "14rem" }}
+                    />
+                  </label>
+                </>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "0.5rem", alignItems: "center" }}>
+              <label>
+                Healing dice{" "}
+                <input
+                  value={spellHealingDice}
+                  onChange={(e) => setSpellHealingDice(e.target.value)}
+                  placeholder="e.g. 1d8"
+                  style={{ width: "5rem" }}
+                  title="Rolled healing, e.g. Cure Wounds' 1d8. Scales by upcast the same way Damage dice does."
+                />
+              </label>
+              <label>
+                Healing bonus{" "}
+                <input
+                  type="number"
+                  value={spellHealingBonus}
+                  onChange={(e) => setSpellHealingBonus(e.target.value)}
+                  style={{ width: "3.5rem" }}
+                  title="Flat healing added on top of the dice, or the whole amount for a fixed-value effect (Revivify's 1 HP) with no dice at all."
+                />
+              </label>
+            </div>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "0.5rem", alignItems: "center" }}>
+              <label>
+                On a save{" "}
+                <select value={spellSaveEffect} onChange={(e) => setSpellSaveEffect(e.target.value as "none" | "half" | "negates")}>
+                  <option value="none">(no effect noted)</option>
+                  <option value="half">Half damage</option>
+                  <option value="negates">Negates entirely</option>
+                </select>
+              </label>
+              <label>
+                Condition imposed{" "}
+                <input
+                  value={spellConditionImposed}
+                  onChange={(e) => setSpellConditionImposed(e.target.value)}
+                  placeholder="e.g. restrained"
+                  style={{ width: "10rem" }}
+                />
+              </label>
+              <label>
+                Area of effect{" "}
+                <input
+                  value={spellAreaOfEffect}
+                  onChange={(e) => setSpellAreaOfEffect(e.target.value)}
+                  placeholder="e.g. 15-ft cone"
+                  style={{ width: "10rem" }}
+                  title="A short note, shown alongside the spell -- not simulated."
+                />
               </label>
             </div>
             <div style={{ marginTop: "0.5rem" }}>

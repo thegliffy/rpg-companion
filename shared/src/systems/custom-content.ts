@@ -13,6 +13,8 @@ import type { ClassLevelEntry, CasterType, MartialResourcePool } from "./class-p
 import type { BuffEffect, Dnd5eSheetData } from "./dnd5e.js";
 import type { SrdSpell } from "./srd-spells.js";
 import { SRD_SPELL_EFFECTS } from "./srd-spell-effects.js";
+import { SRD_SPELL_HEALING } from "./srd-spell-healing.js";
+import type { SpellHealing } from "./srd-spell-healing.js";
 import { SRD_SPELL_SCALING } from "./srd-spell-scaling.js";
 import type { SpellScaling } from "./srd-spell-scaling.js";
 import type { SrdMonster } from "./srd-monsters.js";
@@ -758,6 +760,37 @@ export const customSpellDataSchema = z.object({
   saveAbility: z.enum(DND5E_ABILITIES).optional(),
   damageDice: z.string().trim().max(30).optional(),
   damageType: z.string().trim().max(30).optional(),
+  // Verbal/Somatic/Material components (#182 soft-gap round) -- previously only expressible in
+  // free-text description. materialCost/materialConsumed only matter when material is true (a
+  // costly-and-consumed spell like Revivify's 300gp diamond vs. a free material component no
+  // one tracks) -- left populatable regardless of `material` rather than cross-validated, same
+  // "author can leave stray data, nothing downstream trusts it without checking the flag first"
+  // convention `optionalAttackModifier` etc. already follow.
+  components: z
+    .object({
+      verbal: z.boolean().default(false),
+      somatic: z.boolean().default(false),
+      material: z.boolean().default(false),
+      materialConsumed: z.boolean().default(false),
+      materialCost: z.string().trim().max(120).default(""),
+    })
+    .default({}),
+  // First-class healing (#182) -- mirrors damageDice/damageType's shape exactly, kept as a
+  // separate pair rather than repurposing damageDice so a spell can't be "damage" and "healing"
+  // at once by accident. Revivify's "target returns with 1 hit point" is a fixed value, not a
+  // roll -- expressed as healingBonus: 1, healingDice left blank, the same fixed-value pattern
+  // buffEffectSchema's damageBonus (no dice) already covers.
+  healingDice: z.string().trim().max(30).optional(),
+  healingBonus: z.number().int().min(0).max(100).optional(),
+  // Lightweight structured save-effect riders (#182) -- enough to answer "does a successful
+  // save avoid this entirely or just halve it" and name an imposed condition/area without
+  // simulating who's affected or when it's removed (the same "hint, not enforcement" register
+  // advantageOn/optionalAttackModifier already use for anything the app can't evaluate on its
+  // own). Independent of damageDice: a save-negates utility spell (Hold Person) has no damage
+  // at all but still wants saveEffect: "negates" and conditionImposed: "paralyzed".
+  saveEffect: z.enum(["none", "half", "negates"]).default("none"),
+  conditionImposed: z.string().trim().max(60).default(""),
+  areaOfEffect: z.string().trim().max(60).default(""),
   ritual: z.boolean().default(false),
   concentration: z.boolean().default(false),
   // SRD class ids (lowercase) that can cast this spell -- same convention as SrdSpell.classes.
@@ -797,6 +830,10 @@ export function customSpellToSrdShape(item: CustomContent): SrdSpell {
     concentration: d.concentration,
     classes: d.classes,
     description: d.description || undefined,
+    components: d.components,
+    saveEffect: d.saveEffect === "none" ? undefined : d.saveEffect,
+    conditionImposed: d.conditionImposed || undefined,
+    areaOfEffect: d.areaOfEffect || undefined,
   };
 }
 
@@ -814,6 +851,24 @@ export function resolveSpellBuff(spellId: string, customSpells: CustomContent[])
   if (!item) return null;
   const buff = (item.data as CustomSpellData).buff;
   return hasBuffEffect(buff) ? buff : null;
+}
+
+/** Resolves a spell id (SRD or `custom-${id}`) to the healing it deals on cast, checking the
+ * curated SRD_SPELL_HEALING table first and then a visible custom spell's own authored
+ * healingDice/healingBonus -- mirrors resolveSpellBuff() exactly. Null when the spell heals
+ * nothing (an all-zero/blank custom spell reads the same as "no healing", same convention
+ * hasBuffEffect() uses for buffs). */
+export function resolveSpellHealing(spellId: string, customSpells: CustomContent[]): SpellHealing | null {
+  const curated = SRD_SPELL_HEALING[spellId];
+  if (curated) return curated;
+  if (!spellId.startsWith("custom-")) return null;
+  const customId = Number(spellId.slice("custom-".length));
+  const item = customSpells.find((c) => c.id === customId);
+  if (!item) return null;
+  const d = item.data as CustomSpellData;
+  const dice = d.healingDice?.trim() ?? "";
+  const bonus = d.healingBonus ?? 0;
+  return dice !== "" || bonus !== 0 ? { dice, bonus } : null;
 }
 
 /** Resolves a spell id (SRD or `custom-${id}`) to its upcast scaling -- the curated

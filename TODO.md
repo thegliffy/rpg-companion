@@ -2491,3 +2491,64 @@ needed or made in response.
 against the real response -- confirmed the thrown message is now `Invalid data: Unknown field:
 "initiativeBonis" (did you mean "initiativeBonus"?)...` instead of the old bare `"Invalid
 data"`.
+
+183. ✅ **Spell components + first-class healing.** Two spell-shape gaps: no field for
+    Verbal/Somatic/Material components (or a costly consumed material like Revivify's diamond)
+    beyond free-text description, and no structured healing at all -- `SpellCastControl.tsx`
+    never called `applyHealing` anywhere and every SRD healing spell (Cure Wounds, Healing Word,
+    etc.) carried zero mechanical payload, landing in the cast control's final "do nothing"
+    branch.
+
+    Added `components: {verbal, somatic, material, materialConsumed, materialCost}` and
+    `healingDice`/`healingBonus` to `customSpellDataSchema` (mirrors `damageDice`/`damageType`'s
+    shape -- kept as a separate pair rather than repurposing damage fields so a spell can't be
+    "damage" and "healing" at once by accident). New `SRD_SPELL_HEALING`
+    (`srd-spell-healing.ts`, same hand-curated-not-licensed pattern as `SRD_SPELL_EFFECTS`)
+    covers Cure Wounds/Healing Word/Mass Healing Word/Mass Cure Wounds/Prayer of Healing (dice +
+    ability modifier) and Heal/Mass Heal/Revivify (fixed values -- 70/700/1 HP respectively,
+    correctly *not* adding an ability modifier, since none of the three scale with the caster's
+    stats by RAW). New `resolveSpellHealing()` mirrors `resolveSpellBuff()` exactly. Also
+    upgraded 5 `SRD_SPELL_SCALING` entries (cure-wounds, healing-word, mass-healing-word,
+    mass-cure-wounds, prayer-of-healing) from a display-only `note` to a real `dicePerLevel`,
+    since `scaledSpellDamage()` is generic over any base dice string and now has something to
+    scale -- the doc comment explaining why healing spells couldn't use `dicePerLevel` was
+    itself the exact gap this closes.
+
+    `SpellCastControl.tsx` gained a healing cast branch parallel to the existing damage-only
+    one: rolls into the dice log the same way damage does (upcast-scaled via the same
+    `scaledSpellDamage()` call), then offers an "Apply N to self" button with the actual rolled
+    total, wired through a new `onHeal` prop into `Dnd5eSheet.tsx`'s existing
+    `applyHealing()`/HP-panel path (extracted a shared `applyHealAmount()` out of the manual
+    heal button's handler so both call sites do the same capped-at-max, revives-on-0 logic).
+    Healing another character is out of scope -- a single-character-sheet app; the DM already
+    applies attack/damage numbers to other targets off-sheet the same way.
+
+184. ✅ **Structured save-effect riders (lightweight, not simulated).** Spell riders beyond a
+    flat attack/damage buff -- an area note, "half damage on a successful save" vs. "negates
+    entirely", an imposed condition -- had no field of any kind; the app's save-based casting
+    itself never even branched on `saveAbility` before #183 (it existed as inert display data).
+    Added `saveEffect: "none" | "half" | "negates"`, `conditionImposed`, and `areaOfEffect`
+    (all short strings/enums) to `customSpellDataSchema` -- deliberately a hint surfaced next to
+    the Cast button, not a simulation: nothing tracks who's affected, removes a condition later,
+    or resolves an actual area against positions, the same "shown, not enforced" register
+    `advantageOn` (#176's still-deferred item) and `optionalAttackModifier` already use for
+    anything this app can't evaluate on its own.
+
+**Verified (#183/#184, done):** 8 new unit tests (`custom-content.test.ts`) covering
+`resolveSpellHealing` (curated dice-based, curated fixed-value, no-healing null case, a custom
+spell's own fields, an all-zero custom spell correctly reading as "no healing" the same
+convention `hasBuffEffect` uses, an unknown custom id) and `customSpellToSrdShape` carrying the
+new fields onto the `SrdSpell` shape (including `saveEffect: "none"` normalizing to `undefined`,
+matching the existing empty-description convention). `tsc -b` and both suites clean throughout
+(shared 93/93, backend 28/28).
+
+Live: added the real SRD Cure Wounds to a level-1 Cleric (16 Wis, +3 mod) with `hpCurrent: 5`/
+`hpMax: 10` -- the cast summary read "(heals 1d8+3)" before casting. Cast it: the dice-roll
+modal showed "Cure Wounds healing: 1d8 (2) + Bonus (3) = Total 5" with an "Apply 5 to self"
+button; clicking it moved HP from 5 to 10 (capped at max), confirming the roll, the ability-
+modifier math, and the apply-to-self wiring all landed correctly end to end. Separately authored
+a custom spell through the real `CustomContentManager` form with all of components/saveEffect/
+conditionImposed/areaOfEffect set, confirmed the POST round-tripped unchanged, then reopened it
+in the editor and confirmed every checkbox/select/text field loaded back correctly (Verbal/
+Somatic/Material/Consumed all checked, "a pinch of ash", "half", "blinded", "10-ft radius").
+Test character and spell deleted after verification.

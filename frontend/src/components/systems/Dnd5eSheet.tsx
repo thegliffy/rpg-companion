@@ -57,6 +57,7 @@ import {
   martialResourcePools,
   concentrationSaveDC,
   resolveSpellBuff,
+  resolveSpellHealing,
   resolveSpellScaling,
   scaledCantripDamage,
   activeEffectAttackDice,
@@ -936,10 +937,10 @@ export function Dnd5eSheet({
   }
 
   /** Applies healing through applyHealing() (capped at max, never restores temp HP), clearing
-   * death saves when it brings someone back from 0. */
-  function heal() {
-    const amount = Number(hpAmount) || 0;
-    if (amount <= 0) return;
+   * death saves when it brings someone back from 0. Shared by the manual HP-panel heal button
+   * and a spell's "Apply to self" button (#182) -- both just need a number in, a status message
+   * out; only where the amount comes from differs. */
+  function applyHealAmount(amount: number): string {
     const { current, max } = hpNumbers();
     const r = applyHealing({ hpCurrent: current, hpMax: max, tempHp: sheet.tempHp, healing: amount });
 
@@ -948,9 +949,13 @@ export function Dnd5eSheet({
       setSheet((prev) => ({ ...prev, deathSaveSuccesses: 0, deathSaveFailures: 0 }));
       setDeathSaveMessage(null);
     }
-    setHpMessage(
-      `Healed ${r.hpDelta}${r.hpDelta < amount ? ` (${amount} rolled, capped at max)` : ""}.${r.revived ? " Back up from 0 — death saves reset." : ""}`,
-    );
+    return `Healed ${r.hpDelta}${r.hpDelta < amount ? ` (${amount} rolled, capped at max)` : ""}.${r.revived ? " Back up from 0 — death saves reset." : ""}`;
+  }
+
+  function heal() {
+    const amount = Number(hpAmount) || 0;
+    if (amount <= 0) return;
+    setHpMessage(applyHealAmount(amount));
     setHpAmount("");
   }
 
@@ -2423,6 +2428,10 @@ export function Dnd5eSheet({
           const effectiveAbility = sp.abilityOverride ?? sheet.spellcastingAbility;
           const effectiveAtkBonus = spellAttackBonusForAbility(sheet, effectiveAbility);
           const effectiveSaveDC = spellSaveDCForAbility(sheet, effectiveAbility);
+          // Healing spells (#182) add the caster's own ability modifier, not the full spell
+          // attack bonus (which also includes proficiency -- Cure Wounds' "1d8 + spellcasting
+          // ability modifier" never adds proficiency the way an attack roll does).
+          const effectiveAbilityMod = effectiveAbility ? abilityModifier(effectiveAbilityScore(sheet, effectiveAbility)) : 0;
           // Cantrips and at-will granted spells (e.g. an invocation's mage armor) have no prepared
           // flag -- always treated as prepared/castable.
           const preparedOrCantrip = sp.prepared || sp.level === 0 || sp.atWill;
@@ -2615,6 +2624,9 @@ export function Dnd5eSheet({
                         activeEffects: prev.activeEffects.filter((e) => e.consumption !== "once"),
                       }))
                     }
+                    healing={resolveSpellHealing(srdSpell.id, customSpells)}
+                    healingAbilityMod={effectiveAbilityMod}
+                    onHeal={(amount) => setHpMessage(applyHealAmount(amount))}
                   />
                 )
               )}

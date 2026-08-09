@@ -26,6 +26,16 @@ export interface SrdSpell {
   description?: string;
   /** SRD class ids (lowercase) that can cast this spell, e.g. ["wizard", "sorcerer"]. */
   classes: string[];
+  /** Verbal/Somatic/Material components (#182) -- same "always undefined for SRD spells,
+   * populated only via customSpellToSrdShape" convention as `description` above; retrofitting
+   * every SRD_SPELLS entry with components wasn't worth the diff for a handful of consumers. */
+  components?: { verbal: boolean; somatic: boolean; material: boolean; materialConsumed: boolean; materialCost: string };
+  /** Lightweight structured save-effect riders (#182) -- "none" | "half" | "negates", a short
+   * imposed-condition note, and a short area-of-effect note. Same SRD-undefined convention as
+   * `description`/`components` above. */
+  saveEffect?: "none" | "half" | "negates";
+  conditionImposed?: string;
+  areaOfEffect?: string;
 }
 
 export const SRD_SPELLS: SrdSpell[] = [

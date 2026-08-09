@@ -1,6 +1,23 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { customBackgroundDataSchema, customContentDataSchemaFor } from "./custom-content.js";
+import { customBackgroundDataSchema, customContentDataSchemaFor, resolveSpellHealing, customSpellToSrdShape } from "./custom-content.js";
+import type { CustomContent } from "../types.js";
+
+function spellItem(id: number, data: Record<string, unknown>): CustomContent {
+  return {
+    id,
+    type: "spell",
+    system: "dnd5e",
+    createdByUserId: 1,
+    createdByUsername: "tester",
+    name: "Test Spell",
+    data,
+    status: "approved",
+    approvedByUserId: null,
+    approvedAt: null,
+    createdAt: "2026-01-01",
+  };
+}
 
 describe("customBackgroundDataSchema variantTables migration (#180)", () => {
   it("wraps a pre-#180 flat variants[] + variantPickCount into a single untitled table", () => {
@@ -111,5 +128,74 @@ describe("customContentDataSchemaFor (#181)", () => {
     if (!parsed.success) return;
     assert.deepEqual((parsed.data as { prereqAbility: unknown }).prereqAbility, {});
     assert.equal((parsed.data as { initiativeBonus: unknown }).initiativeBonus, 0);
+  });
+});
+
+describe("resolveSpellHealing (#182)", () => {
+  it("resolves a curated SRD healing spell", () => {
+    const h = resolveSpellHealing("cure-wounds", []);
+    assert.deepEqual(h, { dice: "1d8", bonus: 0 });
+  });
+
+  it("resolves a fixed-value curated spell with no dice", () => {
+    const h = resolveSpellHealing("revivify", []);
+    assert.deepEqual(h, { dice: "", bonus: 1 });
+  });
+
+  it("returns null for a spell with no curated or custom healing", () => {
+    assert.equal(resolveSpellHealing("fireball", []), null);
+  });
+
+  it("resolves a custom spell's own healingDice/healingBonus", () => {
+    const items = [spellItem(1, { level: 1, healingDice: "2d6", healingBonus: 3 })];
+    assert.deepEqual(resolveSpellHealing("custom-1", items), { dice: "2d6", bonus: 3 });
+  });
+
+  it("treats an all-zero custom spell as no healing, same convention hasBuffEffect uses", () => {
+    const items = [spellItem(1, { level: 1, healingDice: "", healingBonus: 0 })];
+    assert.equal(resolveSpellHealing("custom-1", items), null);
+  });
+
+  it("returns null for an unknown custom id", () => {
+    assert.equal(resolveSpellHealing("custom-999", []), null);
+  });
+});
+
+describe("customSpellToSrdShape carries the new #182 fields", () => {
+  it("carries components, saveEffect, conditionImposed, areaOfEffect onto the SrdSpell shape", () => {
+    const item = spellItem(1, {
+      level: 3,
+      school: "Evocation",
+      castingTime: "1 action",
+      range: "60 feet",
+      duration: "Instantaneous",
+      requiresAttackRoll: false,
+      ritual: false,
+      classes: ["wizard"],
+      components: { verbal: true, somatic: true, material: true, materialConsumed: true, materialCost: "bat guano" },
+      saveEffect: "half",
+      conditionImposed: "restrained",
+      areaOfEffect: "20-ft radius",
+    });
+    const srd = customSpellToSrdShape(item);
+    assert.deepEqual(srd.components, { verbal: true, somatic: true, material: true, materialConsumed: true, materialCost: "bat guano" });
+    assert.equal(srd.saveEffect, "half");
+    assert.equal(srd.conditionImposed, "restrained");
+    assert.equal(srd.areaOfEffect, "20-ft radius");
+  });
+
+  it("normalizes saveEffect 'none' to undefined, matching the empty-string-to-undefined convention for description", () => {
+    const item = spellItem(1, {
+      level: 0,
+      school: "",
+      castingTime: "1 action",
+      range: "Self",
+      duration: "Instantaneous",
+      requiresAttackRoll: false,
+      ritual: false,
+      classes: [],
+      saveEffect: "none",
+    });
+    assert.equal(customSpellToSrdShape(item).saveEffect, undefined);
   });
 });
