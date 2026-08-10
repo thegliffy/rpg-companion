@@ -137,6 +137,17 @@ export interface AdminContentSummary {
   createdAt: string;
 }
 
+// A candidate near-duplicate pair (dedup admin tool) -- flagged by name similarity and/or
+// mechanically-identical data (contentDedupe.service.ts), both within the same type+system.
+// Reuses AdminContentSummary per side rather than a new item shape.
+export interface DuplicateContentPair {
+  a: AdminContentSummary;
+  b: AdminContentSummary;
+  reason: string;
+  nameSimilarity: number;
+  mechanicallyIdentical: boolean;
+}
+
 export interface AdminCharacterSummary {
   id: number;
   name: string;

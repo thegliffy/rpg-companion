@@ -3071,3 +3071,65 @@ your own weapon attacks, through the Echo)". Rolling it produced `1d20+5` (STR +
 proficiency bonus +2, exactly matching `attackBonus()`'s formula) labeled "Echo - Longsword
 attack roll", persisted via `POST /api/rolls` (201). No console errors throughout. Test
 characters, both custom subclasses, dice rolls, and user deleted after verification.
+
+196. ✅ **Flag near-duplicate custom content in the admin tools.** Nothing checked whether a new
+    submission duplicated or closely resembled existing content -- two users could independently
+    submit near-identical spells, or the same mechanical item under two different names, and an
+    admin reviewing the queue had no way to notice short of remembering every prior approval by
+    name. The only existing dedup logic in the repo was the `/import` route's exact
+    case-insensitive `(type, name)` match, scoped to a single user's own bulk-upload batch --
+    nothing compared against the wider content pool, and nothing looked at the actual mechanical
+    data, only names.
+
+    Added a "Possible duplicates" section to the admin Content tab, backed by a new
+    `GET /api/custom-content/duplicates` endpoint (same `dm`/`admin` gating as the existing `/all`
+    listing). Two independent signals, either one flags a pair, both scoped to the same
+    `(type, system)` bucket (a spell and an item sharing a name aren't a collision):
+    - **Name similarity** -- normalized (lowercase/trim/collapsed-whitespace) exact match is
+      "Identical name"; otherwise a normalized Levenshtein ratio >= 0.82 is "Similar name (NN%
+      match)". A small self-contained Levenshtein implementation in the new
+      `contentDedupe.service.ts`, deliberately not shared with the existing one in
+      `lib/schemaErrors.ts` (schema-error field-name suggestions) -- same algorithm, different
+      problem.
+    - **Mechanical fingerprint equality** -- a generic, type-agnostic fingerprint rather than nine
+      bespoke per-type extractors (race/spell/item/monster/etc. all have wildly different data
+      shapes): deep-clone the parsed `data`, recursively strip `id` and `description` (the two
+      fields that are consistently flavor, not mechanics, across every schema in
+      `custom-content.ts`), deep-sort arrays by their own JSON so element order (a reordered trait
+      list) doesn't matter, then compare the canonical JSON strings for byte equality. Skipped
+      when the fingerprint is under ~20 chars -- two near-empty drafts matching each other isn't a
+      meaningful signal.
+
+    Compares across *all* content regardless of status or owner (pending-vs-pending,
+    pending-vs-approved, approved-vs-approved) so an admin can catch overlap in either direction,
+    not just in new submissions. `computeDuplicatePairs()` (the actual comparison) is split from
+    `findDuplicateContent()` (the DB fetch) so it's unit-testable against fabricated content
+    without a database -- new `listAllCustomContentWithData()` in `customContent.service.ts`
+    mirrors `listPendingCustomContent()`'s query but without the status filter, since the existing
+    lean `listAllCustomContent()` deliberately omits `data` for the admin table.
+
+    UI: each flagged pair shows both items' name/type/system/owner/status and the reason, with
+    the same inline Edit/Approve-or-Revoke/Delete actions the main "All custom content" table
+    already has (reusing the exact same handlers), so an admin can act without leaving the
+    section. Recomputes after every content mutation (approve/reject/revoke/delete/bulk actions),
+    same as the existing pending/all-content lists already do.
+
+**Verified (#196, done):** 8 new unit tests (`contentDedupe.service.test.ts`) -- normalized name
+equality across case/whitespace, a near-miss name pair crossing the threshold, a clearly-different
+pair staying under it, identical mechanical data flagging despite different names/descriptions/
+ids, array-order independence (a reordered trait list still fingerprints the same), no flag across
+different content types or different systems even with identical names, and near-empty drafts
+never flagging on a trivial shared fingerprint. `tsc -b` and both suites clean throughout (shared
+143/143, backend 36/36).
+
+Live: authored four spells through the real Custom Content Manager UI -- "Zzz Dedup Test Alpha"
+(level 3, 2d6 Force) and "Zzz Dedup Test Alphaa" (level 6, 9d10 Necrotic, name one letter off) as
+the name-similarity pair; "Zzz Dedup Test Beta" and "Zzz Completely Unrelated Gamma" (both level
+2, 3d4 Cold -- identical mechanics, unrelated names) as the mechanical-identity pair. Opened the
+Admin Panel's Content tab: "Possible duplicates (2)" correctly showed "Identical mechanical data"
+for Beta/Gamma and "Similar name (95% match)" for Alpha/Alphaa. Deleted one item from within the
+duplicates section -- the content count dropped and the now-orphaned pair correctly vanished from
+the list on the automatic recompute, confirming both the inline action buttons and the
+after-mutation refresh work. Confirmed Edit from the section correctly opens that exact item in
+the Custom Content Manager (verified by the loaded form's Name field). No console errors
+throughout. All test content, dice rolls, and the test user deleted after verification.

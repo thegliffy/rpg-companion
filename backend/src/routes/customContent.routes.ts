@@ -21,6 +21,7 @@ import {
   unapproveCustomContent,
   deleteCustomContent,
 } from "../services/customContent.service.js";
+import { findDuplicateContent } from "../services/contentDedupe.service.js";
 
 export const customContentRouter = Router();
 
@@ -35,6 +36,12 @@ customContentRouter.get("/pending", requireAdmin, (_req, res) => {
 // admin, matching requireCustomContentOwnerOrManager's "any DM/admin can manage any item" below.
 customContentRouter.get("/all", requireGlobalRole("dm", "admin"), (_req, res) => {
   res.json({ items: listAllCustomContent() });
+});
+
+// Candidate near-duplicate pairs (name similarity and/or mechanically-identical data), same
+// dm/admin gating as /all -- a companion view to that table, not an approval-only concern.
+customContentRouter.get("/duplicates", requireGlobalRole("dm", "admin"), (_req, res) => {
+  res.json({ pairs: findDuplicateContent() });
 });
 
 customContentRouter.get("/", (req, res) => {

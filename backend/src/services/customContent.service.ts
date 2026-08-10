@@ -54,6 +54,17 @@ export function listPendingCustomContent(): CustomContent[] {
   return rows.map((r) => toCustomContent(r.content, r.username));
 }
 
+// Same rows as listAllCustomContent() below, but with the full parsed `data` payload -- needed by
+// contentDedupe.service.ts to compare mechanical fingerprints, unlike the lean admin table view.
+export function listAllCustomContentWithData(): CustomContent[] {
+  const rows = db
+    .select({ content: customContent, username: users.username })
+    .from(customContent)
+    .innerJoin(users, eq(customContent.createdByUserId, users.id))
+    .all();
+  return rows.map((r) => toCustomContent(r.content, r.username));
+}
+
 // Admin-only, site-wide (#128) -- every item regardless of status or owner, unlike
 // listVisibleCustomContent above which feeds the player-facing pickers and must stay
 // approved-plus-own-pending. Lean summary (no `data`): an admin list view doesn't need a whole

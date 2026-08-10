@@ -1,4 +1,4 @@
-import type { CustomContent, CustomContentType, CustomContentSystem, ImportCustomContentResult } from "shared";
+import type { CustomContent, CustomContentType, CustomContentSystem, ImportCustomContentResult, DuplicateContentPair } from "shared";
 
 async function parseOrThrow(res: Response) {
   if (!res.ok) {
@@ -24,6 +24,12 @@ export async function listPendingCustomContent(): Promise<CustomContent[]> {
   const res = await fetch("/api/custom-content/pending");
   const data = await parseOrThrow(res);
   return data.items;
+}
+
+export async function listDuplicateContent(): Promise<DuplicateContentPair[]> {
+  const res = await fetch("/api/custom-content/duplicates");
+  const data = await parseOrThrow(res);
+  return data.pairs;
 }
 
 // Full single item, `data` included -- for opening the editor on an item that only appears in the

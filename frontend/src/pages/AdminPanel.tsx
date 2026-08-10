@@ -8,6 +8,7 @@ import type {
   CustomContentType,
   CustomContentSystem,
   CustomContentStatus,
+  DuplicateContentPair,
 } from "shared";
 import { CUSTOM_CONTENT_TYPES_BY_SYSTEM, SYSTEM_IDS } from "shared";
 import * as adminApi from "../api/admin";
@@ -62,6 +63,7 @@ export function AdminPanel({
   // Custom content tab
   const [pending, setPending] = useState<CustomContent[]>([]);
   const [content, setContent] = useState<AdminContentSummary[]>([]);
+  const [duplicates, setDuplicates] = useState<DuplicateContentPair[]>([]);
   const [contentSearch, setContentSearch] = useState("");
   const [contentStatusFilter, setContentStatusFilter] = useState<CustomContentStatus | "">("");
   const [contentTypeFilter, setContentTypeFilter] = useState<CustomContentType | "">("");
@@ -86,12 +88,15 @@ export function AdminPanel({
   function refreshContent() {
     return adminApi.listAllContent().then(setContent);
   }
+  function refreshDuplicates() {
+    return customContentApi.listDuplicateContent().then(setDuplicates);
+  }
   function refreshCharacters() {
     return adminApi.listAllCharacters().then(setCharacters);
   }
 
   useEffect(() => {
-    Promise.all([refreshUsers(), refreshPending(), refreshContent(), refreshCharacters()])
+    Promise.all([refreshUsers(), refreshPending(), refreshContent(), refreshDuplicates(), refreshCharacters()])
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load"))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -152,6 +157,7 @@ export function AdminPanel({
       await customContentApi.approveCustomContent(id);
       refreshPending();
       refreshContent();
+      refreshDuplicates();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to approve");
     }
@@ -163,6 +169,7 @@ export function AdminPanel({
       await customContentApi.deleteCustomContent(id);
       refreshPending();
       refreshContent();
+      refreshDuplicates();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to reject");
     }
@@ -181,6 +188,7 @@ export function AdminPanel({
       await customContentApi.unapproveCustomContent(id);
       refreshContent();
       refreshPending();
+      refreshDuplicates();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to revoke");
     }
@@ -192,6 +200,7 @@ export function AdminPanel({
       await customContentApi.deleteCustomContent(id);
       refreshContent();
       refreshPending();
+      refreshDuplicates();
       setContentSelected((prev) => {
         const next = new Set(prev);
         next.delete(id);
@@ -233,6 +242,7 @@ export function AdminPanel({
     setContentSelected(new Set());
     refreshContent();
     refreshPending();
+    refreshDuplicates();
   }
 
   async function handleReassign(characterId: number) {
@@ -454,6 +464,62 @@ export function AdminPanel({
                       Reject
                     </button>
                   </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {duplicates.length > 0 && (
+            <div style={{ marginBottom: "1.5rem" }}>
+              <h3>Possible duplicates ({duplicates.length})</h3>
+              <p>
+                <small>
+                  Pairs of same-type, same-system content with a near-identical name and/or identical mechanical data. A flag isn't
+                  proof -- review both before acting.
+                </small>
+              </p>
+              {duplicates.map(({ a, b, reason }) => (
+                <div
+                  key={`${a.id}-${b.id}`}
+                  style={{
+                    border: "1px solid var(--border)",
+                    borderRadius: 6,
+                    padding: "0.5rem 0.75rem",
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  <div style={{ marginBottom: "0.3rem" }}>
+                    <small style={{ color: "var(--text-muted)" }}>
+                      {reason} — {TYPE_LABELS[a.type]}, {SYSTEM_LABELS[a.system]}
+                    </small>
+                  </div>
+                  {[a, b].map((item) => (
+                    <div
+                      key={item.id}
+                      style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.15rem 0" }}
+                    >
+                      <span>
+                        <strong>{item.name}</strong> ({item.status}) — by {item.createdByUsername}
+                      </span>
+                      <span>
+                        <button type="button" onClick={() => onEditContent(item.id)}>
+                          Edit
+                        </button>{" "}
+                        {item.status === "pending" ? (
+                          <button type="button" onClick={() => approve(item.id)}>
+                            Approve
+                          </button>
+                        ) : (
+                          <button type="button" onClick={() => revoke(item.id)}>
+                            Revoke
+                          </button>
+                        )}{" "}
+                        <button type="button" onClick={() => deleteContentRow(item.id)}>
+                          Delete
+                        </button>
+                      </span>
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
