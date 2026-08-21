@@ -3,6 +3,7 @@ import type { Character, CampaignSummary } from "shared";
 import { characterIsActive } from "shared";
 import * as charactersApi from "../api/characters";
 import { CharacterCard } from "./CharacterCard";
+import { cardRaised } from "../styles";
 
 export function MyCharactersSection({
   campaigns,
@@ -37,8 +38,8 @@ export function MyCharactersSection({
   }
 
   return (
-    <div>
-      <h2>My characters</h2>
+    <div style={cardRaised}>
+      <h2 style={{ marginTop: 0 }}>My characters</h2>
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       {characters.length === 0 && <p>No characters yet.</p>}

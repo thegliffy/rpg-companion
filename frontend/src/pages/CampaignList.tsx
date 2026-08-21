@@ -9,6 +9,7 @@ import { ApiTokensPanel } from "../components/ApiTokensPanel";
 import { ThemePicker } from "../components/ThemePicker";
 import { NotesSection } from "../components/NotesSection";
 import { InitiativeTracker } from "../components/InitiativeTracker";
+import { cardRaised } from "../styles";
 
 export function CampaignList({
   onOpenCampaign,
@@ -65,86 +66,98 @@ export function CampaignList({
   }
 
   return (
-    <div style={{ maxWidth: 640, margin: "2rem auto" }}>
+    <div style={{ maxWidth: 1080, margin: "2rem auto", padding: "0 1rem" }}>
+      <div style={{ marginBottom: "1.25rem" }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: "0.8rem",
+            fontWeight: 600,
+            color: "var(--text-muted)",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+          }}
+        >
+          Welcome back
+        </p>
+        <h1 style={{ margin: 0, fontFamily: "var(--font-display)" }}>{user?.username}</h1>
+      </div>
+
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
-      <MyCharactersSection
-        campaigns={campaigns}
-        onOpenCharacter={onOpenCharacter}
-        onCreateCharacter={onCreateCharacter}
-      />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "1rem" }}>
+        <div style={{ gridColumn: "1 / -1" }}>
+          <MyCharactersSection
+            campaigns={campaigns}
+            onOpenCharacter={onOpenCharacter}
+            onCreateCharacter={onCreateCharacter}
+          />
+        </div>
 
-      <hr />
-      <HallOfHeroesSection onOpenCharacter={onOpenCharacter} />
+        <div style={{ gridColumn: "1 / -1" }}>
+          <HallOfHeroesSection onOpenCharacter={onOpenCharacter} />
+        </div>
 
-      <hr />
-      <DiceRoller campaignId={null} />
+        <DiceRoller campaignId={null} />
+        {user && <NotesSection campaignId={null} currentUserId={user.id} role={null} />}
+        <InitiativeTracker campaignId={null} role={null} />
+        <ThemePicker />
 
-      <hr />
-      {user && <NotesSection campaignId={null} currentUserId={user.id} role={null} />}
+        {/* DM/admin only -- tokens exist for scripted custom-content upload, which is already
+            gated to those roles, so a player has nothing to point one at. */}
+        {(user?.role === "dm" || user?.role === "admin") && <ApiTokensPanel />}
 
-      <hr />
-      <InitiativeTracker campaignId={null} role={null} />
+        <div style={cardRaised}>
+          <h2 style={{ marginTop: 0 }}>Campaigns</h2>
+          {loading ? (
+            <p>Loading…</p>
+          ) : campaigns.length === 0 ? (
+            <p>Not in any campaigns. Playing with a group? Create one or join with an invite code.</p>
+          ) : (
+            <ul style={{ margin: 0, paddingLeft: "1.2rem" }}>
+              {campaigns.map((c) => (
+                <li key={c.id}>
+                  <button onClick={() => onOpenCampaign(c.id)}>
+                    {c.name} <em>({c.role})</em>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
-      <hr />
-      <ThemePicker />
+        <div style={cardRaised}>
+          {(user?.role === "dm" || user?.role === "admin") && (
+            <>
+              <h3 style={{ marginTop: 0 }}>Create a campaign</h3>
+              <form onSubmit={handleCreate} style={{ marginBottom: "1rem" }}>
+                <div>
+                  <label>
+                    Name
+                    <input value={newName} onChange={(e) => setNewName(e.target.value)} required />
+                  </label>
+                </div>
+                <div>
+                  <label>
+                    Description
+                    <input value={newDescription} onChange={(e) => setNewDescription(e.target.value)} />
+                  </label>
+                </div>
+                <button type="submit">Create</button>
+              </form>
+            </>
+          )}
 
-      {/* DM/admin only -- tokens exist for scripted custom-content upload, which is already gated
-          to those roles, so a player has nothing to point one at. */}
-      {(user?.role === "dm" || user?.role === "admin") && (
-        <>
-          <hr />
-          <ApiTokensPanel />
-        </>
-      )}
-
-      <hr />
-      <h2>Campaigns</h2>
-      {loading ? (
-        <p>Loading…</p>
-      ) : campaigns.length === 0 ? (
-        <p>Not in any campaigns. Playing with a group? Create one or join with an invite code.</p>
-      ) : (
-        <ul>
-          {campaigns.map((c) => (
-            <li key={c.id}>
-              <button onClick={() => onOpenCampaign(c.id)}>
-                {c.name} <em>({c.role})</em>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {(user?.role === "dm" || user?.role === "admin") && (
-        <>
-          <h3>Create a campaign</h3>
-          <form onSubmit={handleCreate}>
-            <div>
-              <label>
-                Name
-                <input value={newName} onChange={(e) => setNewName(e.target.value)} required />
-              </label>
-            </div>
-            <div>
-              <label>
-                Description
-                <input value={newDescription} onChange={(e) => setNewDescription(e.target.value)} />
-              </label>
-            </div>
-            <button type="submit">Create</button>
+          <h3 style={{ marginTop: 0 }}>Join a campaign</h3>
+          <form onSubmit={handleJoin}>
+            <label>
+              Invite code
+              <input value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} required />
+            </label>
+            <button type="submit">Join</button>
           </form>
-        </>
-      )}
-
-      <h3>Join a campaign</h3>
-      <form onSubmit={handleJoin}>
-        <label>
-          Invite code
-          <input value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} required />
-        </label>
-        <button type="submit">Join</button>
-      </form>
+        </div>
+      </div>
     </div>
   );
 }

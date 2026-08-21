@@ -54,13 +54,21 @@ export function DiceRoller({ campaignId }: { campaignId: number | null }) {
   const oldestFirst = [...rolls].reverse();
 
   return (
-    <div>
-      <h2>Dice Roller</h2>
+    <div style={cardRaised}>
+      <h2 style={{ marginTop: 0 }}>Dice Roller</h2>
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       <div
         ref={historyRef}
-        style={{ ...cardRaised, height: 240, overflowY: "auto", marginBottom: "0.5rem" }}
+        style={{
+          height: 240,
+          overflowY: "auto",
+          marginBottom: "0.5rem",
+          border: "1px solid var(--border)",
+          borderRadius: "var(--radius)",
+          padding: "0.5rem",
+          background: "var(--surface-sunken)",
+        }}
       >
         {oldestFirst.length === 0 ? (
           <p style={{ color: "var(--text-dim)", margin: 0 }}>No rolls yet.</p>

@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import type { Character, SheetField, Dnd5eSheetData, Pf2eSheetData } from "shared";
 import { SYSTEMS } from "shared";
+import { CharacterPortrait } from "./CharacterPortrait";
+import { card, badge } from "../styles";
 
 function SheetSummary({ character }: { character: Character }) {
   if (character.system === "dnd5e") {
@@ -41,25 +43,27 @@ export function CharacterCard({
   actions?: ReactNode;
 }) {
   return (
-    <div style={{ border: "1px solid var(--border-subtle)", padding: "1rem", marginBottom: "0.5rem" }}>
-      <h3>
-        {character.name} <small>({character.ownerUsername})</small>{" "}
-        <small style={{ background: "var(--border-faint)", borderRadius: 4, padding: "0.1rem 0.4rem" }}>
-          {SYSTEMS[character.system]?.name ?? character.system}
-        </small>
-      </h3>
-      {showCampaign && (
-        <p>
-          <em>{character.campaignName ? `In campaign: ${character.campaignName}` : "Not in a campaign"}</em>
-        </p>
-      )}
-      {(character.hpCurrent != null || character.hpMax != null) && (
-        <p>
-          HP: {character.hpCurrent ?? "?"} / {character.hpMax ?? "?"}
-        </p>
-      )}
-      <SheetSummary character={character} />
-      {actions && <div>{actions}</div>}
+    <div style={{ ...card, display: "flex", gap: "0.85rem", alignItems: "flex-start", marginBottom: "0.5rem" }}>
+      <CharacterPortrait characterId={character.id} canEdit={false} size={64} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <h3 style={{ fontFamily: "var(--font-display)", display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
+          {character.name}
+          <small style={{ fontFamily: "var(--font-body)", fontWeight: "normal" }}>({character.ownerUsername})</small>
+          <span style={badge}>{SYSTEMS[character.system]?.name ?? character.system}</span>
+        </h3>
+        {showCampaign && (
+          <p>
+            <em>{character.campaignName ? `In campaign: ${character.campaignName}` : "Not in a campaign"}</em>
+          </p>
+        )}
+        {(character.hpCurrent != null || character.hpMax != null) && (
+          <p>
+            HP: {character.hpCurrent ?? "?"} / {character.hpMax ?? "?"}
+          </p>
+        )}
+        <SheetSummary character={character} />
+        {actions && <div>{actions}</div>}
+      </div>
     </div>
   );
 }

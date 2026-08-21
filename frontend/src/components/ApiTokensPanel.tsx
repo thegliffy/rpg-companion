@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ApiTokenSummary } from "shared";
 import * as tokensApi from "../api/tokens";
+import { cardRaised } from "../styles";
 
 /** Ready-to-run import call with the real token already in it (#149). The whole point of tokens
  * here is scripted uploads, so handing over the exact request costs nothing and saves
@@ -66,8 +67,8 @@ export function ApiTokensPanel() {
   }
 
   return (
-    <div>
-      <h2 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+    <div style={cardRaised}>
+      <h2 style={{ marginTop: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
         API tokens
         <button type="button" onClick={() => setExpanded((v) => !v)} style={{ fontSize: "0.8rem" }}>
           {expanded ? "Hide" : tokens.length > 0 ? `Show (${tokens.length})` : "Show"}

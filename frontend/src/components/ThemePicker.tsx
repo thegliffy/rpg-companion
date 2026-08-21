@@ -1,6 +1,7 @@
 import type { ThemeId } from "shared";
 import { THEME_IDS, THEME_LABELS, THEME_DESCRIPTIONS } from "shared";
 import { useTheme } from "../theme/ThemeProvider";
+import { cardRaised } from "../styles";
 
 // A literal swatch per theme rather than a plain <select>: the whole point is the look, and a
 // dropdown of names makes you apply each one to find out what it is. Values are duplicated from
@@ -20,8 +21,8 @@ export function ThemePicker() {
   const { theme, setTheme, saving } = useTheme();
 
   return (
-    <div>
-      <h2>Theme</h2>
+    <div style={cardRaised}>
+      <h2 style={{ marginTop: 0 }}>Theme</h2>
       <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: "0 0 0.6rem" }}>
         Applies everywhere and follows your account, so it's the same on every device.
         {saving && " Saving…"}

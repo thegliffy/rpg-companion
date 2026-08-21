@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import type { EncounterSnapshot, CampaignRole } from "shared";
 import * as encountersApi from "../api/encounters";
 import { useCampaignRoom, useSocketEvent } from "../socket/useSocketEvent";
+import { cardRaised } from "../styles";
 
 export function InitiativeTracker({
   campaignId,
@@ -53,8 +54,8 @@ export function InitiativeTracker({
   }
 
   return (
-    <div>
-      <h2>Initiative Tracker</h2>
+    <div style={cardRaised}>
+      <h2 style={{ marginTop: 0 }}>Initiative Tracker</h2>
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       {!encounter || !encounter.isActive ? (

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { Character, Dnd5eSheetData } from "shared";
 import * as charactersApi from "../api/characters";
 import { CharacterPortrait } from "./CharacterPortrait";
-import { card } from "../styles";
+import { card, cardRaised } from "../styles";
 
 export function HallOfHeroesSection({ onOpenCharacter }: { onOpenCharacter: (id: number) => void }) {
   const [characters, setCharacters] = useState<Character[]>([]);
@@ -26,8 +26,8 @@ export function HallOfHeroesSection({ onOpenCharacter }: { onOpenCharacter: (id:
   if (characters.length === 0) return null;
 
   return (
-    <div>
-      <h2>Hall of Heroes</h2>
+    <div style={cardRaised}>
+      <h2 style={{ marginTop: 0 }}>Hall of Heroes</h2>
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
       <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
         {characters.map((c) => {

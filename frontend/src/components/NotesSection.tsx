@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import type { Note, NotesChangedPayload, CampaignRole } from "shared";
 import * as notesApi from "../api/notes";
 import { useCampaignRoom, useSocketEvent } from "../socket/useSocketEvent";
-import { card } from "../styles";
+import { card, cardRaised } from "../styles";
 
 function NoteForm({
   initial,
@@ -108,8 +108,8 @@ export function NotesSection({
   }
 
   return (
-    <div>
-      <h2>{isPersonal ? "My notes" : "Notes"}</h2>
+    <div style={cardRaised}>
+      <h2 style={{ marginTop: 0 }}>{isPersonal ? "My notes" : "Notes"}</h2>
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       {notes.map((n) =>
