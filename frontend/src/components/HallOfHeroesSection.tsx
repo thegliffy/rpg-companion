@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Character, Dnd5eSheetData } from "shared";
 import * as charactersApi from "../api/characters";
 import { CharacterPortrait } from "./CharacterPortrait";
+import { card } from "../styles";
 
 export function HallOfHeroesSection({ onOpenCharacter }: { onOpenCharacter: (id: number) => void }) {
   const [characters, setCharacters] = useState<Character[]>([]);
@@ -37,14 +38,7 @@ export function HallOfHeroesSection({ onOpenCharacter }: { onOpenCharacter: (id:
             <div
               key={c.id}
               onClick={() => onOpenCharacter(c.id)}
-              style={{
-                border: "1px solid var(--border-subtle)",
-                borderRadius: 6,
-                padding: "0.75rem",
-                width: "10rem",
-                cursor: "pointer",
-                textAlign: "center",
-              }}
+              style={{ ...card, width: "10rem", cursor: "pointer", textAlign: "center" }}
             >
               <CharacterPortrait characterId={c.id} canEdit={false} size={96} />
               <div style={{ fontWeight: "bold", marginTop: "0.4rem" }}>{c.name}</div>

@@ -2,7 +2,7 @@ export type GlobalRole = "player" | "dm" | "admin";
 
 // Selectable themes (#153). "default" is the app's original appearance and has no override block --
 // it's the :root definition in index.css. Stored on the user (#154); null/absent means default.
-export const THEME_IDS = ["default", "ledger", "vellum", "graph", "console", "contrast"] as const;
+export const THEME_IDS = ["default", "ledger", "vellum", "graph", "console", "contrast", "folio"] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 
 export const THEME_LABELS: Record<ThemeId, string> = {
@@ -12,6 +12,7 @@ export const THEME_LABELS: Record<ThemeId, string> = {
   graph: "Graph",
   console: "Console",
   contrast: "High contrast",
+  folio: "Folio",
 };
 
 export const THEME_DESCRIPTIONS: Record<ThemeId, string> = {
@@ -21,6 +22,7 @@ export const THEME_DESCRIPTIONS: Record<ThemeId, string> = {
   graph: "Blueprint white on a drafting grid.",
   console: "Dark slate and phosphor, monospaced.",
   contrast: "Maximum legibility, heavy borders.",
+  folio: "Warm parchment palette with elevated card layout.",
 };
 
 export interface PublicUser {

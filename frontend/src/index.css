@@ -46,6 +46,9 @@
   --surface-texture: none;
   --surface-texture-size: auto;
 
+  /* Elevation for raised cards -- only Folio sets a real shadow; every other theme stays flat. */
+  --shadow-card: none;
+
   font: 18px/145% var(--font-body);
   letter-spacing: 0.18px;
   color: var(--text);

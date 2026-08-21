@@ -3,6 +3,7 @@ import { SRD_MONSTERS, formatMonsterCR, abilityModifier, formatModifier, customM
 import type { SrdMonster } from "shared";
 import { AttackRollControl } from "../components/systems/AttackRollControl";
 import { useCustomContent } from "../hooks/useCustomContent";
+import { cardRaised } from "../styles";
 
 function speedText(speed: SrdMonster["speed"]): string {
   return Object.entries(speed)
@@ -21,8 +22,8 @@ function sensesText(senses: SrdMonster["senses"]): string {
 
 function MonsterDetail({ monster }: { monster: SrdMonster }) {
   return (
-    <div style={{ border: "1px solid var(--border-strong)", borderRadius: 6, padding: "1rem" }}>
-      <h2 style={{ marginBottom: 0 }}>{monster.name}</h2>
+    <div style={cardRaised}>
+      <h2 style={{ marginBottom: 0, fontFamily: "var(--font-display)" }}>{monster.name}</h2>
       <p style={{ marginTop: "0.2rem", fontStyle: "italic", color: "var(--text-muted)" }}>
         {monster.size} {monster.type}, {monster.alignment}
       </p>
@@ -225,7 +226,7 @@ export function BestiaryPage({ onBack }: { onBack: () => void }) {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: "1rem", alignItems: "start" }}>
-        <div style={{ maxHeight: "70vh", overflowY: "auto", border: "1px solid var(--border)", borderRadius: 6 }}>
+        <div style={{ ...cardRaised, maxHeight: "70vh", overflowY: "auto", padding: 0 }}>
           {filtered.length === 0 && <p style={{ padding: "0.5rem" }}>No monsters match.</p>}
           {filtered.map((m) => (
             <button

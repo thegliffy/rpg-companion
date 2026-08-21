@@ -16,6 +16,7 @@ import type { Character, SrdMonster } from "shared";
 import * as charactersApi from "../api/characters";
 import { useCustomContent } from "../hooks/useCustomContent";
 import { useDiceRoll } from "../dice/DiceRollContext";
+import { cardRaised } from "../styles";
 
 interface ArenaAttack {
   name: string;
@@ -290,7 +291,7 @@ export function ArenaPage({ onBack }: { onBack: () => void }) {
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-            <div style={{ border: "1px solid var(--border)", borderRadius: 6, padding: "0.75rem" }}>
+            <div style={cardRaised}>
               <h3>Side A</h3>
               <select value={sideAId} onChange={(e) => setSideAId(e.target.value ? Number(e.target.value) : "")}>
                 <option value="">Choose a character…</option>
@@ -302,7 +303,7 @@ export function ArenaPage({ onBack }: { onBack: () => void }) {
               </select>
             </div>
 
-            <div style={{ border: "1px solid var(--border)", borderRadius: 6, padding: "0.75rem" }}>
+            <div style={cardRaised}>
               <h3>Side B</h3>
               <label style={{ marginRight: "1rem" }}>
                 <input
@@ -373,9 +374,8 @@ export function ArenaPage({ onBack }: { onBack: () => void }) {
               <div
                 key={c.key}
                 style={{
-                  border: turnKey === c.key && phase === "battle" ? "2px solid var(--success)" : "1px solid var(--border)",
-                  borderRadius: 6,
-                  padding: "0.75rem",
+                  ...cardRaised,
+                  border: turnKey === c.key && phase === "battle" ? "2px solid var(--success)" : cardRaised.border,
                 }}
               >
                 <h3 style={{ marginBottom: "0.2rem" }}>
@@ -419,7 +419,7 @@ export function ArenaPage({ onBack }: { onBack: () => void }) {
 
           <div
             ref={logRef}
-            style={{ height: 220, overflowY: "auto", border: "1px solid var(--border)", borderRadius: 6, padding: "0.5rem 0.75rem" }}
+            style={{ ...cardRaised, height: 220, overflowY: "auto" }}
           >
             {log.map((line, i) => (
               <div key={i}>{line}</div>

@@ -39,7 +39,7 @@ import * as charactersApi from "../api/characters";
 import { useDiceRoll } from "../dice/DiceRollContext";
 import { useCustomContent } from "../hooks/useCustomContent";
 import { WizardSpellbookPicker, type PickedSpell } from "../components/systems/WizardSpellbookPicker";
-import { panelRoomy as box } from "../styles";
+import { cardRaised } from "../styles";
 
 type StatMethod = "roll" | "array" | "pointbuy" | "manual";
 
@@ -1041,7 +1041,7 @@ export function CharacterCreationWizard({
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
 
       {step === "system" && (
-        <div style={box}>
+        <div style={cardRaised}>
           <label>
             Name
             <br />
@@ -1070,7 +1070,7 @@ export function CharacterCreationWizard({
       )}
 
       {step === "basics" && (
-        <div style={box}>
+        <div style={cardRaised}>
           <h3>Basics</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
             <label>
@@ -1430,7 +1430,7 @@ export function CharacterCreationWizard({
       )}
 
       {step === "equipment" && resolvedClassStartingEquipment && (
-        <div style={box}>
+        <div style={cardRaised}>
           <h3>Starting equipment</h3>
           <p style={{ fontSize: "0.9rem", color: "var(--text-muted)" }}>
             {charClass}'s equipment, in addition to what {background || "your background"} grants. Packs are expanded
@@ -1483,7 +1483,7 @@ export function CharacterCreationWizard({
       )}
 
       {step === "abilities" && (
-        <div style={box}>
+        <div style={cardRaised}>
           <h3>Ability scores</h3>
           {system === "dnd5e" && Object.keys(raceAndSubraceBonuses).length > 0 && (
             <p>
@@ -1623,7 +1623,7 @@ export function CharacterCreationWizard({
       )}
 
       {step === "spellbook" && (
-        <div style={box}>
+        <div style={cardRaised}>
           <h3>Spellbook</h3>
           <p>
             <small>
@@ -1662,7 +1662,7 @@ export function CharacterCreationWizard({
       )}
 
       {step === "warlock" && (
-        <div style={box}>
+        <div style={cardRaised}>
           <h3>Warlock</h3>
           <p>
             <small>
@@ -1717,7 +1717,7 @@ export function CharacterCreationWizard({
       )}
 
       {step === "review" && (
-        <div style={box}>
+        <div style={cardRaised}>
           <h3>Review</h3>
           <p>
             <strong>{name}</strong> — {SYSTEMS[system].name}

@@ -18,7 +18,7 @@ import {
   totalInventoryWeight,
 } from "shared";
 import * as charactersApi from "../api/characters";
-import { panel as box } from "../styles";
+import { cardRaised as box } from "../styles";
 
 /**
  * Public, read-only view of a shared character -- reached via /c/:token, bypassing auth entirely
@@ -88,7 +88,7 @@ function SharedDnd5e({ character, token }: { character: Character; token: string
           />
         )}
         <div>
-          <h1 style={{ margin: 0 }}>{character.name}</h1>
+          <h1 style={{ margin: 0, fontFamily: "var(--font-display)" }}>{character.name}</h1>
           <div style={{ color: "var(--text-muted)" }}>
             {sheet.race}
             {sheet.subrace ? ` (${sheet.subrace})` : ""} {sheet.class}

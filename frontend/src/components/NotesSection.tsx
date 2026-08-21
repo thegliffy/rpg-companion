@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import type { Note, NotesChangedPayload, CampaignRole } from "shared";
 import * as notesApi from "../api/notes";
 import { useCampaignRoom, useSocketEvent } from "../socket/useSocketEvent";
+import { card } from "../styles";
 
 function NoteForm({
   initial,
@@ -28,7 +29,7 @@ function NoteForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ border: "1px solid var(--border)", padding: "1rem" }}>
+    <form onSubmit={handleSubmit} style={card}>
       <div>
         <input
           placeholder="Title"
@@ -120,7 +121,7 @@ export function NotesSection({
             onCancel={() => setEditingId(null)}
           />
         ) : (
-          <div key={n.id} style={{ border: "1px solid var(--border-subtle)", padding: "1rem", marginBottom: "0.5rem" }}>
+          <div key={n.id} style={{ ...card, marginBottom: "0.5rem" }}>
             <h3>{n.title}</h3>
             <ReactMarkdown>{n.contentMd}</ReactMarkdown>
             <small>

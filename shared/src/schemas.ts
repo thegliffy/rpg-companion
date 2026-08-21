@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { THEME_IDS } from "./types.js";
 
 export const registerSchema = z.object({
   username: z.string().trim().min(3).max(32),
@@ -30,7 +31,7 @@ export type ReassignCharacterOwnerInput = z.infer<typeof reassignCharacterOwnerS
 // "set theme" so the next one (the dice-modal opt-out deferred during #139) extends this instead
 // of adding a second endpoint.
 export const updatePreferencesSchema = z.object({
-  theme: z.enum(["default", "ledger", "vellum", "graph", "console", "contrast"]).optional(),
+  theme: z.enum(THEME_IDS).optional(),
 });
 export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>;
 

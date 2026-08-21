@@ -47,6 +47,7 @@
     rgba(140, 47, 34, 0.07) 28px
   );
   --surface-texture-size: auto;
+  --shadow-card: none;
 }
 
 /* Vellum — aged warm paper; the heaviest of the paper set. */
@@ -86,6 +87,7 @@
     radial-gradient(ellipse at 78% 68%, rgba(109, 55, 25, 0.05), transparent 50%),
     radial-gradient(ellipse at 52% 88%, rgba(74, 55, 34, 0.05), transparent 45%);
   --surface-texture-size: auto;
+  --shadow-card: none;
 }
 
 /* Graph — blueprint white with a real grid, plan blue and pencil brown. */
@@ -125,6 +127,7 @@
     linear-gradient(rgba(185, 207, 224, 0.5) 1px, transparent 1px),
     linear-gradient(90deg, rgba(185, 207, 224, 0.5) 1px, transparent 1px);
   --surface-texture-size: 16px 16px;
+  --shadow-card: none;
 }
 
 /* Console — the futuristic one. Dark slate, phosphor accent, monospace data, square corners.
@@ -169,6 +172,7 @@
     transparent 3px
   );
   --surface-texture-size: auto;
+  --shadow-card: none;
 }
 
 /* High contrast — near-black on white, heavy borders, no decorative tint.
@@ -207,6 +211,52 @@
 
   --surface-texture: none;
   --surface-texture-size: auto;
+  --shadow-card: none;
+}
+
+/* Folio — warm parchment with an elevated card system: a softly shadowed raised rail holding
+ * individually bordered (unshadowed) unit cards. Palette measured directly from a reference
+ * character-sheet app's computed styles, not eyeballed. */
+:root[data-theme="folio"] {
+  --surface: #ded6c9;
+  --surface-raised: rgba(250, 246, 238, 0.95);
+  --surface-sunken: #f2ede4;
+
+  --text: #493a31;
+  --text-heading: #251d18;
+  --text-muted: #76685e;
+  --text-dim: #9c8d80;
+
+  --border-faint: rgba(67, 46, 33, 0.08);
+  --border-subtle: rgba(67, 46, 33, 0.12);
+  --border: rgba(67, 46, 33, 0.15);
+  --border-strong: rgba(67, 46, 33, 0.24);
+  --frame-border: rgba(67, 46, 33, 0.12);
+
+  --accent: #85561e;
+  --accent-contrast: #fffdf8;
+  --danger: #9c3b26;
+  --success: #3f6b3d;
+  --warning: #8a5a12;
+  --warning-bg: #f0e2c4;
+  --overlay: rgba(37, 29, 24, 0.45);
+  --code-bg: #efe6d8;
+
+  --font-body: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+  --font-data: var(--font-body);
+  --radius: 8px;
+
+  /* Faint uneven mottling, same technique as Vellum but lighter -- this theme's warmth already
+   * comes from the palette, the texture just keeps the page ground from reading as flat colour. */
+  --surface-texture:
+    radial-gradient(ellipse at 20% 20%, rgba(67, 46, 33, 0.035), transparent 55%),
+    radial-gradient(ellipse at 80% 70%, rgba(67, 46, 33, 0.03), transparent 50%);
+  --surface-texture-size: auto;
+
+  /* Shadow lives only on the outer elevated container (the rail), never on inner unit cards --
+   * matches the reference app exactly. */
+  --shadow-card: 0 14px 36px rgba(60, 41, 28, 0.11);
 }
 
 /* Print always renders as paper, whatever the theme (#155).
@@ -238,6 +288,7 @@
     --warning-bg: #ffffff;
     --code-bg: #ffffff;
     --surface-texture: none;
+    --shadow-card: none;
 
     --ts-ink: #1a1a1a;
     --ts-muted: #555555;

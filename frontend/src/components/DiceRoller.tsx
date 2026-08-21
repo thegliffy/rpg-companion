@@ -3,6 +3,7 @@ import type { DiceRoll } from "shared";
 import * as diceApi from "../api/dice";
 import { useCampaignRoom, useSocketEvent } from "../socket/useSocketEvent";
 import { useDiceRoll } from "../dice/DiceRollContext";
+import { cardRaised } from "../styles";
 
 export function DiceRoller({ campaignId }: { campaignId: number | null }) {
   const { roll: diceRoll } = useDiceRoll();
@@ -59,14 +60,7 @@ export function DiceRoller({ campaignId }: { campaignId: number | null }) {
 
       <div
         ref={historyRef}
-        style={{
-          height: 240,
-          overflowY: "auto",
-          border: "1px solid var(--border)",
-          borderRadius: 4,
-          padding: "0.4rem 0.6rem",
-          marginBottom: "0.5rem",
-        }}
+        style={{ ...cardRaised, height: 240, overflowY: "auto", marginBottom: "0.5rem" }}
       >
         {oldestFirst.length === 0 ? (
           <p style={{ color: "var(--text-dim)", margin: 0 }}>No rolls yet.</p>

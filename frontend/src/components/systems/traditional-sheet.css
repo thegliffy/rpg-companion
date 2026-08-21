@@ -309,6 +309,42 @@
   margin-bottom: 0.5rem;
 }
 
+/* Folio, on-screen only: warm parchment + elevated cards, mirroring the main sheet's card
+ * language. Scoped to `@media screen` so it never competes with the print override below (which
+ * pins --ts-* to a fixed light palette under @media print regardless of theme, for the same
+ * reason as the app's other tokens: printing warm parchment fill wastes ink and the sheet exists
+ * to be printed). */
+@media screen {
+  :root[data-theme="folio"] .traditional-sheet {
+    --ts-ink: #493a31;
+    --ts-muted: #76685e;
+    --ts-line: rgba(67, 46, 33, 0.24);
+    --ts-fill: #ded6c9;
+    --ts-box: rgba(250, 246, 238, 0.95);
+  }
+
+  :root[data-theme="folio"] .traditional-sheet .ts-panel {
+    border-radius: 8px;
+    box-shadow: 0 14px 36px rgba(60, 41, 28, 0.11);
+  }
+
+  :root[data-theme="folio"] .traditional-sheet .ts-ability-row,
+  :root[data-theme="folio"] .traditional-sheet .ts-stat-cell,
+  :root[data-theme="folio"] .traditional-sheet .ts-prof-badge {
+    border-radius: 6px;
+    background: rgba(94, 67, 45, 0.043);
+  }
+
+  :root[data-theme="folio"] .traditional-sheet .ts-ab-mod {
+    border-radius: 50%;
+  }
+
+  :root[data-theme="folio"] .traditional-sheet .ts-portrait,
+  :root[data-theme="folio"] .traditional-sheet .ts-portrait-placeholder {
+    border-radius: 6px;
+  }
+}
+
 @media (max-width: 900px) {
   .traditional-sheet .ts-main {
     grid-template-columns: 1fr;

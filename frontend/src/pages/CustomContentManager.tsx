@@ -39,7 +39,9 @@ import type { EquipmentEntry } from "shared";
 import * as customContentApi from "../api/customContent";
 import * as adminApi from "../api/admin";
 import { useAuth } from "../context/AuthContext";
-import { panelSpaced as box } from "../styles";
+import { cardRaised } from "../styles";
+
+const box: React.CSSProperties = { ...cardRaised, marginBottom: "1rem" };
 
 // Exported for AdminPanel's content tab (#130), so the two admin-facing item lists can't drift.
 export const TYPE_LABELS: Record<CustomContentType, string> = {

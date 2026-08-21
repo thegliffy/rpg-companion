@@ -17,6 +17,7 @@ import * as customContentApi from "../api/customContent";
 import * as charactersApi from "../api/characters";
 import { useAuth } from "../context/AuthContext";
 import { TYPE_LABELS, SYSTEM_LABELS } from "./CustomContentManager";
+import { card } from "../styles";
 
 const ROLES: GlobalRole[] = ["player", "dm", "admin"];
 const CONTENT_TYPES = CUSTOM_CONTENT_TYPES_BY_SYSTEM.dnd5e;
@@ -443,15 +444,7 @@ export function AdminPanel({
               {pending.map((item) => (
                 <div
                   key={item.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    border: "1px solid var(--border)",
-                    borderRadius: 6,
-                    padding: "0.5rem 0.75rem",
-                    marginBottom: "0.5rem",
-                  }}
+                  style={{ ...card, display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}
                 >
                   <span>
                     <strong>{item.name}</strong> ({item.type}) — by {item.createdByUsername}
@@ -479,15 +472,7 @@ export function AdminPanel({
                 </small>
               </p>
               {duplicates.map(({ a, b, reason }) => (
-                <div
-                  key={`${a.id}-${b.id}`}
-                  style={{
-                    border: "1px solid var(--border)",
-                    borderRadius: 6,
-                    padding: "0.5rem 0.75rem",
-                    marginBottom: "0.5rem",
-                  }}
-                >
+                <div key={`${a.id}-${b.id}`} style={{ ...card, marginBottom: "0.5rem" }}>
                   <div style={{ marginBottom: "0.3rem" }}>
                     <small style={{ color: "var(--text-muted)" }}>
                       {reason} — {TYPE_LABELS[a.type]}, {SYSTEM_LABELS[a.system]}

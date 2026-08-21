@@ -138,7 +138,7 @@ import { FamiliarPanel } from "./FamiliarPanel";
 import { CompanionPanel } from "./CompanionPanel";
 import { InvocationPickerModal, INVOCATION_PREFIX } from "./InvocationPickerModal";
 import { CollapsibleSection } from "./CollapsibleSection";
-import { panel as box } from "../../styles";
+import { panel as box, card, cardRaised, badge } from "../../styles";
 
 const numInput: React.CSSProperties = { width: "3.5rem", textAlign: "center" };
 
@@ -1272,19 +1272,32 @@ export function Dnd5eSheet({
 
       <fieldset disabled={readOnly} style={{ border: "none", margin: 0, padding: 0, display: "contents" }}>
       {/* Header */}
-      <div style={{ ...box, display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "end" }}>
-        <CharacterPortrait characterId={character.id} canEdit={!readOnly} onSaved={onSaved} />
-        <label>
-          Character name
-          <br />
+      <div style={{ ...cardRaised, display: "flex", flexDirection: "column", gap: "0.9rem" }}>
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
+          <CharacterPortrait characterId={character.id} canEdit={!readOnly} onSaved={onSaved} />
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={isOwner}
             title={isOwner ? "Only a DM or admin can rename a character after creation" : undefined}
-            style={{ fontSize: "1.2rem" }}
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "2rem",
+              fontWeight: 700,
+              letterSpacing: "-0.03em",
+              border: "none",
+              background: "transparent",
+              color: "var(--text-heading)",
+              padding: "0.1rem 0",
+              flex: "1 1 auto",
+              minWidth: "12rem",
+            }}
           />
-        </label>
+          <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+            Proficiency bonus: <strong style={{ color: "var(--accent)" }}>{formatModifier(pb)}</strong>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "end" }}>
         <label>
           Class
           <br />
@@ -1450,8 +1463,6 @@ export function Dnd5eSheet({
             ))}
           </select>
         </label>
-        <div>
-          Proficiency bonus: <strong>{formatModifier(pb)}</strong>
         </div>
       </div>
 
@@ -1594,46 +1605,41 @@ export function Dnd5eSheet({
       )}
 
       <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-        {/* Abilities */}
-        <div style={{ ...box, flex: "0 0 auto" }}>
-          <h3>Abilities</h3>
-          {DND5E_ABILITIES.map((a) => {
-            const eqBonus = equippedAbilityBonus(sheet, a);
-            return (
-              <div key={a} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.35rem" }}>
-                <span style={{ width: "6.5rem" }}>{DND5E_ABILITY_NAMES[a]}</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={sheet.abilities[a]}
-                  onChange={(e) => setAbility(a, e.target.value)}
-                  style={numInput}
-                />
-                <strong style={{ width: "2.5rem" }}>
-                  {formatModifier(abilityModifier(effectiveAbilityScore(sheet, a)))}
-                </strong>
-                {eqBonus !== 0 && (
-                  <small style={{ color: "var(--text-muted)" }} title="Bonus from equipped items">
-                    ({formatModifier(eqBonus)} eq)
-                  </small>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Saves */}
-        <div style={{ ...box, flex: "0 0 auto" }}>
-          <h3>Saving throws</h3>
+        {/* Ability rail: one card per ability, holding score, modifier, and save */}
+        <div style={{ ...cardRaised, flex: "0 0 auto", display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: "13rem" }}>
+          <h3 style={{ margin: 0 }}>Abilities</h3>
           {(() => {
             const grantedSaveAbilities = effectSaveProficiencies(sheet);
             return DND5E_ABILITIES.map((a) => {
+              const eqBonus = equippedAbilityBonus(sheet, a);
               const manuallyChecked = sheet.saveProficiencies.includes(a);
               const effectGranted = grantedSaveAbilities.includes(a);
               return (
-                <div key={a}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <div key={a} style={card}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
+                    <span style={{ color: "var(--accent)", fontWeight: 800, letterSpacing: "0.02em" }}>
+                      {DND5E_ABILITY_NAMES[a]}
+                    </span>
+                    <strong style={{ fontSize: "1.1rem" }}>
+                      {formatModifier(abilityModifier(effectiveAbilityScore(sheet, a)))}
+                    </strong>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginTop: "0.3rem" }}>
+                    <input
+                      type="number"
+                      min={1}
+                      max={30}
+                      value={sheet.abilities[a]}
+                      onChange={(e) => setAbility(a, e.target.value)}
+                      style={numInput}
+                    />
+                    {eqBonus !== 0 && (
+                      <small style={{ color: "var(--text-muted)" }} title="Bonus from equipped items">
+                        ({formatModifier(eqBonus)} eq)
+                      </small>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginTop: "0.35rem", fontSize: "0.85rem" }}>
                     <input
                       type="checkbox"
                       checked={manuallyChecked || effectGranted}
@@ -1642,22 +1648,18 @@ export function Dnd5eSheet({
                       title={effectGranted && !manuallyChecked ? "Granted by a feat/feature (e.g. Resilient)" : undefined}
                     />
                     <span
-                      style={{ width: "6.5rem", cursor: "pointer", textDecoration: "underline dotted" }}
+                      style={{ cursor: "pointer", textDecoration: "underline dotted", color: "var(--text-muted)" }}
                       title="Click to roll"
                       onClick={() => rollCheck(`save-${a}`, saveBonus(sheet, a), `${DND5E_ABILITY_NAMES[a]} save`, activeEffectSaveDice(sheet))}
                     >
-                      {DND5E_ABILITY_NAMES[a]}
+                      Save {formatModifier(saveBonus(sheet, a))}
                       {effectGranted && !manuallyChecked && (
-                        <small style={{ color: "var(--text-muted)" }} title="Granted by a feat/feature (e.g. Resilient)">
-                          {" "}
-                          (granted)
-                        </small>
+                        <small title="Granted by a feat/feature (e.g. Resilient)"> (granted)</small>
                       )}
                     </span>
-                    <strong>{formatModifier(saveBonus(sheet, a))}</strong>
                   </div>
                   {rollResults[`save-${a}`] && (
-                    <div style={{ marginLeft: "1.9rem" }}>
+                    <div style={{ marginTop: "0.2rem" }}>
                       <small style={{ color: "var(--text-muted)" }}>{rollResults[`save-${a}`]}</small>
                     </div>
                   )}
@@ -2259,8 +2261,8 @@ export function Dnd5eSheet({
       </div>
 
       {/* Attacks */}
-      <div style={box}>
-        <h3>Attacks</h3>
+      <div style={cardRaised}>
+        <h3 style={{ marginTop: 0 }}>Attacks</h3>
         {sheet.attacks.map((atk, i) => {
           function updateAttack(patch: Partial<Dnd5eSheetData["attacks"][number]>) {
             set("attacks", sheet.attacks.map((x, j) => (j === i ? { ...x, ...patch } : x)));
@@ -2273,7 +2275,7 @@ export function Dnd5eSheet({
           // attack bonus into `bonus` above).
           const damageBonus = attackDamageBonus(sheet, atk);
           return (
-            <div key={atk.id} style={{ marginBottom: "0.5rem" }}>
+            <div key={atk.id} style={{ ...card, marginBottom: "0.5rem" }}>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                 <input placeholder="Name" value={atk.name} onChange={(e) => updateAttack({ name: e.target.value })} />
                 <label>
@@ -2295,7 +2297,7 @@ export function Dnd5eSheet({
                     style={{ width: "3rem" }}
                   />
                 </label>
-                <strong>Bonus: {formatModifier(bonus)}</strong>
+                <strong style={{ color: "var(--accent)" }}>Bonus: {formatModifier(bonus)}</strong>
                 <input
                   placeholder="Damage dice, e.g. 1d8"
                   value={atk.damageDice}
@@ -2372,7 +2374,7 @@ export function Dnd5eSheet({
         title="Spellcasting"
         relevant={spellcastingRelevant}
         summary="not used"
-        style={box}
+        style={cardRaised}
       >
         <div style={{ display: "flex", gap: "1.5rem", alignItems: "center", flexWrap: "wrap", marginBottom: "0.75rem" }}>
           <label>
@@ -2542,9 +2544,10 @@ export function Dnd5eSheet({
           }
 
           return (
-            <div key={sp.id} style={{ marginBottom: "0.5rem", paddingBottom: "0.5rem", borderBottom: "1px solid var(--border-faint)" }}>
+            <div key={sp.id} style={{ ...card, marginBottom: "0.5rem" }}>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                 <strong style={{ minWidth: "8rem" }}>{sp.name || "(unnamed)"}</strong>
+                {sp.level !== 0 && !sp.atWill && !sp.prepared && <span style={badge}>Not prepared</span>}
                 {isCustom && (
                   <>
                     <input
@@ -2784,7 +2787,7 @@ export function Dnd5eSheet({
           </>
         }
         relevant
-        style={box}
+        style={cardRaised}
       >
         <datalist id="srd-magic-items-list">
           {SRD_MAGIC_ITEMS.map((mi) => (
@@ -2861,7 +2864,7 @@ export function Dnd5eSheet({
               | undefined
           )?.description;
           return (
-            <div key={item.id} style={{ marginBottom: "0.5rem" }}>
+            <div key={item.id} style={{ ...card, marginBottom: "0.5rem" }}>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                 <input
                   placeholder="Item"
@@ -3348,14 +3351,14 @@ export function Dnd5eSheet({
         title="Feats"
         relevant={featsRelevant}
         summary="none"
-        style={box}
+        style={cardRaised}
       >
         {sheet.feats.map((feat, i) => {
           function updateFeat(patch: Partial<Dnd5eSheetData["feats"][number]>) {
             set("feats", sheet.feats.map((x, j) => (j === i ? { ...x, ...patch } : x)));
           }
           return (
-            <div key={feat.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid var(--border-faint)", paddingBottom: "0.5rem" }}>
+            <div key={feat.id} style={{ ...card, marginBottom: "0.6rem" }}>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                 <input
                   placeholder="Feat name"
@@ -3445,14 +3448,14 @@ export function Dnd5eSheet({
         title="Features & traits"
         relevant={featuresRelevant}
         summary="none"
-        style={box}
+        style={cardRaised}
       >
         {sheet.features.map((feature, i) => {
           function updateFeature(patch: Partial<Dnd5eSheetData["features"][number]>) {
             set("features", sheet.features.map((x, j) => (j === i ? { ...x, ...patch } : x)));
           }
           return (
-            <div key={feature.id} style={{ marginBottom: "0.6rem", borderBottom: "1px solid var(--border-faint)", paddingBottom: "0.5rem" }}>
+            <div key={feature.id} style={{ ...card, marginBottom: "0.6rem" }}>
               <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                 <input
                   placeholder="Feature/trait name"
@@ -3571,7 +3574,7 @@ export function Dnd5eSheet({
           title="Personality & notes"
           relevant={notesRelevant}
           summary="empty"
-          style={{ ...box, gridColumn: "1 / -1" }}
+          style={{ ...cardRaised, gridColumn: "1 / -1" }}
         >
           <label style={{ display: "block", marginBottom: isOwner ? "0.75rem" : 0 }}>
             Personality, ideals, bonds &amp; flaws

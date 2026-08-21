@@ -13,6 +13,7 @@ const SWATCHES: Record<ThemeId, { bg: string; ink: string; accent: string }> = {
   graph: { bg: "#fbfaf7", ink: "#2f343a", accent: "#2f5d8a" },
   console: { bg: "#0e1418", ink: "#c6d4dc", accent: "#35e0c8" },
   contrast: { bg: "#ffffff", ink: "#000000", accent: "#0b4fa8" },
+  folio: { bg: "#ded6c9", ink: "#493a31", accent: "#85561e" },
 };
 
 export function ThemePicker() {

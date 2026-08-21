@@ -29,6 +29,37 @@ export const panelSpaced: CSSProperties = {
   marginBottom: "1rem",
 };
 
+/** A nested, tinted card -- e.g. one item inside a card-based list. Under every theme but Folio
+ * this reads as a subtle recessed panel; Folio is the only one that gives it real visual weight. */
+export const card: CSSProperties = {
+  background: "var(--surface-sunken)",
+  border: "1px solid var(--border)",
+  borderRadius: "var(--radius)",
+  padding: "0.75rem",
+};
+
+/** An elevated container (e.g. a sidebar rail holding several `card`s). `--shadow-card` is `none`
+ * on every theme except Folio, so this is a no-op visual upgrade everywhere else. */
+export const cardRaised: CSSProperties = {
+  background: "var(--surface-raised)",
+  border: "1px solid var(--border)",
+  borderRadius: "var(--radius)",
+  boxShadow: "var(--shadow-card)",
+  padding: "1rem",
+};
+
+/** Small rounded status pill -- e.g. "Not prepared", a condition tag. */
+export const badge: CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  padding: "0.1rem 0.5rem",
+  borderRadius: "999px",
+  border: "1px solid var(--border)",
+  fontSize: "0.75rem",
+  fontWeight: 600,
+  color: "var(--text-muted)",
+};
+
 export const modalOverlay: CSSProperties = {
   position: "fixed",
   inset: 0,
