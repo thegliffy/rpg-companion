@@ -1,0 +1,51 @@
+name: CI
+
+# Type-checks every workspace and runs the pure-TypeScript test suites on every push and PR.
+# The docker-image workflow alone does NOT catch type errors: `npm ci` succeeds even when
+# `tsc` fails, so a broken build ships silently. This job is the gate.
+#
+# Note: backend tests are NOT run here — better-sqlite3@11 has no prebuilt binary for the
+# Node majors on the runner and fails to compile from source (see README). The backend's
+# hardening integration test is exercised in the Docker build path (node:20) instead.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  typecheck-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build shared (workspaces import its dist)
+        run: npm run build -w shared
+
+      - name: Typecheck backend
+        run: npx tsc -p backend/tsconfig.json --noEmit
+
+      - name: Typecheck frontend
+        run: npm run build -w frontend
+
+      - name: Test shared
+        run: npm test --workspace shared
+
+      - name: Test backend (native-module-free subset)
+        # better-sqlite3 can't compile on current Node majors, so any test whose import chain
+        # reaches db/client.js is skipped here and exercised via the Docker build path
+        # (node:20) instead. contentDedupe.service.test.ts is excluded for that reason: the
+        # service itself is pure, but it imports customContent.service.js, which pulls in the
+        # DB client at module load.
+        run: npx tsx --test backend/src/lib/portraits.test.ts backend/src/lib/pagination.test.ts backend/src/lib/schemaErrors.test.ts

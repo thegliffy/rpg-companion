@@ -22,6 +22,14 @@ export const resetUserPasswordSchema = z.object({
   password: z.string().min(8).max(200),
 });
 
+// Self-service password change: the caller proves knowledge of the current password, so no
+// admin and no email infrastructure is needed. Same strength rules as registration.
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1).max(200),
+  newPassword: z.string().min(8).max(200),
+});
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
 export const reassignCharacterOwnerSchema = z.object({
   ownerUserId: z.number().int(),
 });
