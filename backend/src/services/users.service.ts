@@ -71,6 +71,16 @@ export async function resetUserPassword(id: number, newPassword: string) {
   return updated;
 }
 
+/** Self-service change: verifies the current password before replacing it. Returns null when the
+ * current password is wrong (the route turns that into a 403). */
+export async function changeUserPassword(id: number, currentPassword: string, newPassword: string) {
+  const user = findUserById(id);
+  if (!user || !(await verifyPassword(user, currentPassword))) {
+    return null;
+  }
+  return resetUserPassword(id, newPassword);
+}
+
 export function findUserByUsername(username: string) {
   return db.select().from(users).where(eq(users.username, username)).get();
 }

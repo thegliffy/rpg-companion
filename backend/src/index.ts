@@ -6,6 +6,7 @@ import type { ErrorRequestHandler } from "express";
 import { db } from "./db/client.js";
 import { sql } from "drizzle-orm";
 import { createSessionMiddleware } from "./middleware/session.js";
+import { requireSameSiteOrigin } from "./middleware/csrf.js";
 import { resolveAuth } from "./middleware/auth.js";
 import { authRouter } from "./routes/auth.routes.js";
 import { campaignsRouter } from "./routes/campaigns.routes.js";
@@ -30,6 +31,12 @@ const sessionMiddleware = createSessionMiddleware();
 
 app.use(express.json());
 app.use(sessionMiddleware);
+// Same-site guard for cookie-riding state changes (see middleware/csrf.ts for the threat model).
+// Mounted app-wide so no future router forgets it; GETs are exempt since they never mutate.
+app.use((req, res, next) => {
+  if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") return next();
+  return requireSameSiteOrigin()(req, res, next);
+});
 // Resolves caller identity from a bearer token or the session cookie into req.authUserId (#147).
 // Must run after sessionMiddleware (it reads req.session) and before every router.
 app.use(resolveAuth);

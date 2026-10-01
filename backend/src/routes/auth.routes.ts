@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { registerSchema, loginSchema, updatePreferencesSchema } from "shared";
+import { registerSchema, loginSchema, updatePreferencesSchema, changePasswordSchema } from "shared";
 import {
   createUser,
   findUserByUsername,
   findUserById,
   verifyPassword,
+  changeUserPassword,
   toPublicUser,
   updateUserTheme,
   UsernameTakenError,
@@ -80,6 +81,33 @@ authRouter.post("/login", loginIpLimit, loginUserLimit, async (req, res) => {
 
   req.session.userId = user.id;
   res.json({ user: toPublicUser(user) });
+});
+
+// Self-service password change. Requires an existing session (cookie or token) AND proof of the
+// current password, so a stolen session cookie alone can't lock the owner out by rotating the
+// password. Rate-limited per user like login: bcrypt makes brute force slow anyway, but the
+// limiter keeps a leaked session from grinding guesses cheaply.
+const changePasswordLimit = rateLimit({
+  name: "change-password",
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  key: (req) => `change-password:${req.authUserId ?? "anon"}:${req.ip ?? "unknown"}`,
+  message: "Too many password change attempts, try again later",
+});
+
+authRouter.post("/change-password", requireAuth, changePasswordLimit, async (req, res) => {
+  const parsed = changePasswordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });
+    return;
+  }
+
+  const updated = await changeUserPassword(req.authUserId!, parsed.data.currentPassword, parsed.data.newPassword);
+  if (!updated) {
+    res.status(403).json({ error: "Current password is incorrect" });
+    return;
+  }
+  res.json({ user: toPublicUser(updated) });
 });
 
 authRouter.post("/logout", (req, res) => {

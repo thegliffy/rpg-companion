@@ -35,7 +35,14 @@ function ensureSweep() {
   timer.unref();
 }
 
-/** Simple in-memory sliding-window rate limiter (per-process). */
+/** Simple in-memory sliding-window rate limiter (per-process).
+ *
+ * Scope note: buckets live in this process's memory, so limits reset on restart and are not
+ * shared across instances. That is deliberate for the single-container self-hosted deployment
+ * this app targets; if it ever runs behind multiple workers, move the buckets to SQLite or
+ * Redis, and make sure `trust proxy` is configured (index.ts sets it in production) so `req.ip`
+ * is the real client rather than the reverse proxy on every request.
+ */
 export function rateLimit(opts: RateLimitOptions): RequestHandler {
   const message = opts.message ?? "Too many requests, try again later";
   maxWindowMs = Math.max(maxWindowMs, opts.windowMs);

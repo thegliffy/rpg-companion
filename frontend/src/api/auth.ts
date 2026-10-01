@@ -33,6 +33,15 @@ export async function logout(): Promise<void> {
   if (!res.ok) throw new Error("Failed to log out");
 }
 
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const res = await fetch("/api/auth/change-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  await parseOrThrow(res);
+}
+
 export async function fetchSession(): Promise<PublicUser | null> {
   const res = await fetch("/api/auth/session");
   if (res.status === 401) return null;
