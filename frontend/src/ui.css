@@ -621,3 +621,40 @@
   color: var(--text-heading);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
 }
+
+/* ---- Import panel (drop zone + results) ---- */
+
+.import-panel {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface-raised) 95%);
+}
+
+.drop-zone {
+  display: grid;
+  place-content: center;
+  gap: 0.35rem;
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--surface-soft, var(--surface-sunken));
+  border-radius: 0.9rem;
+  padding: 1.1rem;
+  cursor: pointer;
+  text-align: center;
+  color: var(--text-muted);
+  font-weight: 700;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.drop-zone:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-soft, var(--surface-sunken)));
+}
+
+.drop-zone input[type="file"] {
+  display: none;
+}
+
+.import-results {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.35rem;
+}

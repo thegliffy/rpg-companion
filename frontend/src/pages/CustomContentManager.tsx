@@ -2802,6 +2802,66 @@ export function CustomContentManager({
         </small>
       </p>
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
+      <div className="panel import-panel">
+        <h3 className="panel__title">📦 Import a pack</h3>
+        <p style={{ margin: "0 0 0.75rem", fontSize: "0.9rem", color: "var(--text-muted)" }}>
+          Upload or paste a JSON array of <code>{"{ type, name, data }"}</code> objects, validated against the same
+          per-type rules as the form below. All rows import into the <strong>System</strong> selected below (currently{" "}
+          <strong>{SYSTEM_LABELS[system]}</strong>). Re-importing a corrected pack updates rows that match an
+          existing item of yours by name instead of duplicating them.
+        </p>
+        <label className="drop-zone">
+          <input
+            type="file"
+            accept="application/json"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImportFile(file);
+              e.target.value = "";
+            }}
+          />
+          <span>Choose a .json pack file…</span>
+        </label>
+        <div style={{ marginTop: "0.6rem" }}>
+          <textarea
+            value={importText}
+            onChange={(e) => setImportText(e.target.value)}
+            rows={6}
+            style={{ width: "100%", fontFamily: "monospace", fontSize: "0.85rem" }}
+            placeholder='[&#10;  { "type": "spell", "name": "Wrathful Smite", "data": { "level": 1, ... } }&#10;]'
+          />
+        </div>
+        <button type="button" className="btn btn--primary" onClick={handleImport} disabled={importBusy || !importText.trim()} style={{ marginTop: "0.6rem" }}>
+          {importBusy ? "Importing…" : "Import"}
+        </button>
+        {importError && <p style={{ color: "var(--danger)" }}>{importError}</p>}
+        {importResults && (
+          <div className="import-results">
+            <div className="stat-pills">
+              <span className="stat-pill">{importResults.filter((r) => r.status === "created").length} created</span>
+              <span className="stat-pill">{importResults.filter((r) => r.status === "updated").length} updated</span>
+              <span className="stat-pill">{importResults.filter((r) => r.status === "error").length} failed</span>
+            </div>
+            {importResults.map((r) => (
+              <div key={r.index} style={{ fontSize: "0.85rem", padding: "0.15rem 0" }}>
+                {r.status === "error" ? (
+                  <span style={{ color: "var(--danger)" }}>
+                    ✗ Row {r.index + 1} ({r.name || "unnamed"}): {r.error}
+                    {r.issues && r.issues.length > 0 && (
+                      <> — {r.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}</>
+                    )}
+                  </span>
+                ) : (
+                  <span style={{ color: "var(--success)" }}>
+                    ✓ Row {r.index + 1} ({r.name}): {r.status}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
 
       <div style={box}>
         <h3>{canManageAllContent ? "All items" : "My items"}</h3>
@@ -2847,65 +2907,6 @@ export function CustomContentManager({
               </div>
             ))}
           </>
-        )}
-      </div>
-
-      <div style={box}>
-        <h3>Import a pack</h3>
-        <p style={{ margin: "0 0 0.5rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
-          Upload or paste a JSON array of <code>{"{ type, name, data }"}</code> objects, validated against the same
-          per-type rules as the form below. All rows import into the <strong>System</strong> selected below (currently{" "}
-          <strong>{SYSTEM_LABELS[system]}</strong>). Re-importing a corrected pack updates rows that match an
-          existing item of yours by name instead of duplicating them.
-        </p>
-        <input
-          type="file"
-          accept="application/json"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleImportFile(file);
-            e.target.value = "";
-          }}
-        />
-        <div style={{ marginTop: "0.4rem" }}>
-          <textarea
-            value={importText}
-            onChange={(e) => setImportText(e.target.value)}
-            rows={6}
-            style={{ width: "100%", fontFamily: "monospace", fontSize: "0.85rem" }}
-            placeholder='[&#10;  { "type": "spell", "name": "Wrathful Smite", "data": { "level": 1, ... } }&#10;]'
-          />
-        </div>
-        <button type="button" onClick={handleImport} disabled={importBusy || !importText.trim()} style={{ marginTop: "0.4rem" }}>
-          {importBusy ? "Importing…" : "Import"}
-        </button>
-        {importError && <p style={{ color: "var(--danger)" }}>{importError}</p>}
-        {importResults && (
-          <div style={{ marginTop: "0.5rem" }}>
-            <p>
-              <small>
-                {importResults.filter((r) => r.status === "created").length} created,{" "}
-                {importResults.filter((r) => r.status === "updated").length} updated,{" "}
-                {importResults.filter((r) => r.status === "error").length} failed.
-              </small>
-            </p>
-            {importResults.map((r) => (
-              <div key={r.index} style={{ fontSize: "0.85rem", padding: "0.15rem 0" }}>
-                {r.status === "error" ? (
-                  <span style={{ color: "var(--danger)" }}>
-                    ✗ Row {r.index + 1} ({r.name || "unnamed"}): {r.error}
-                    {r.issues && r.issues.length > 0 && (
-                      <> — {r.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}</>
-                    )}
-                  </span>
-                ) : (
-                  <span style={{ color: "var(--success)" }}>
-                    ✓ Row {r.index + 1} ({r.name}): {r.status}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
         )}
       </div>
 
