@@ -35,7 +35,7 @@ export interface PublicUser {
   theme: ThemeId | null;
 }
 
-export type CustomContentType = "race" | "class" | "background" | "subrace" | "subclass" | "feat" | "spell" | "item" | "monster";
+export type CustomContentType = "race" | "class" | "background" | "subrace" | "subclass" | "feat" | "spell" | "item" | "monster" | "deity" | "language";
 export type CustomContentStatus = "pending" | "approved";
 export type CustomContentSystem = "generic" | "dnd5e" | "pf2e";
 
