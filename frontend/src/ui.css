@@ -375,3 +375,213 @@
 .view-nav button.is-selected::after {
   background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 60%, var(--text-heading)));
 }
+
+/* ---- Title plate (reference's character header: eyebrow, serif name, stat cells) ---- */
+
+.plate {
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+  box-shadow: var(--shadow-card);
+  border-radius: 1.15rem;
+  padding: 1.1rem clamp(1rem, 3vw, 1.6rem);
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 2rem);
+  flex-wrap: wrap;
+}
+
+.plate__identity {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 14rem;
+  flex: 1 1 18rem;
+}
+
+.plate__eyebrow {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: 0.62rem;
+  font-weight: 850;
+  margin: 0;
+}
+
+.plate__name {
+  color: var(--text-heading);
+  font-family: var(--font-display);
+  letter-spacing: -0.045em;
+  margin: 0;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  line-height: 1.02;
+}
+
+.plate__subtitle {
+  color: var(--text-muted);
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.plate__stats {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.stat-cell {
+  display: grid;
+  place-content: center;
+  gap: 0.15rem;
+  text-align: center;
+  padding: 0.2rem 1.15rem;
+  border-left: 1px solid var(--border);
+}
+
+.stat-cell:first-child {
+  border-left: 0;
+}
+
+.stat-cell__value {
+  color: var(--text-heading);
+  font-size: 1.5rem;
+  font-weight: 850;
+  line-height: 1.1;
+}
+
+.stat-cell__label {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.58rem;
+  font-weight: 850;
+}
+
+.stat-cell__badge {
+  display: inline-grid;
+  place-content: center;
+  background: color-mix(in srgb, var(--accent) 22%, var(--surface-raised));
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--text-heading);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  width: 2.6rem;
+  height: 2.9rem;
+  font-size: 1.25rem;
+  font-weight: 850;
+  margin: 0 auto;
+}
+
+/* ---- Resource tracker strip (reference's spell-slot / feature trackers) ---- */
+
+.tracker-strip {
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-raised) 90%, transparent);
+  border-radius: 1rem;
+  padding: 0.7rem 0.9rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.tracker-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--border);
+  background: var(--surface-soft, var(--surface-sunken));
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tracker-pill__value {
+  background: color-mix(in srgb, var(--surface-raised) 90%, var(--text-heading) 8%);
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  color: var(--text-heading);
+  padding: 0.12rem 0.45rem;
+  font-size: 0.85rem;
+  letter-spacing: 0;
+}
+
+.tracker-pill--active {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+  color: var(--text-heading);
+}
+
+/* ---- Quick-reference table (reference's yaml-table) ---- */
+
+.yaml-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.yaml-table th {
+  text-align: left;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.6rem;
+  font-weight: 850;
+  padding: 0.3rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.yaml-table td {
+  padding: 0.42rem 0.6rem;
+  border-bottom: 1px solid var(--border-faint, var(--border));
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.yaml-table tr:hover td {
+  background: var(--surface-hover, var(--surface-sunken));
+}
+
+.yaml-table td.num {
+  color: var(--text-heading);
+  font-weight: 800;
+}
+
+/* ---- Ability card (reference rail: abbreviation + big modifier + save) ---- */
+
+.ability-card {
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-raised) 95%, transparent);
+  box-shadow: var(--shadow-card);
+  border-radius: 0.9rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.ability-card__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.ability-card__abbr {
+  font-family: var(--font-display);
+  color: var(--accent);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.ability-card__mod {
+  color: var(--text-heading);
+  font-size: 1.45rem;
+  font-weight: 850;
+}
+
+.ability-card__save {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  margin-top: 0.15rem;
+}

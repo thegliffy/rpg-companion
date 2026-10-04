@@ -1276,28 +1276,43 @@ export function Dnd5eSheet({
       <fieldset disabled={readOnly} style={{ border: "none", margin: 0, padding: 0, display: "contents" }}>
       {/* Header */}
       <div style={{ ...cardRaised, display: "flex", flexDirection: "column", gap: "0.9rem" }}>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
+        <div className="plate" style={{ boxShadow: "none", border: "none", padding: "0.2rem 0 0.6rem" }}>
           <CharacterPortrait characterId={character.id} canEdit={!readOnly} onSaved={onSaved} />
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={isOwner}
-            title={isOwner ? "Only a DM or admin can rename a character after creation" : undefined}
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "2rem",
-              fontWeight: 700,
-              letterSpacing: "-0.03em",
-              border: "none",
-              background: "transparent",
-              color: "var(--text-heading)",
-              padding: "0.1rem 0",
-              flex: "1 1 auto",
-              minWidth: "12rem",
-            }}
-          />
-          <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-            Proficiency bonus: <strong style={{ color: "var(--accent)" }}>{formatModifier(pb)}</strong>
+          <div className="plate__identity">
+            <p className="plate__eyebrow">
+              {[sheet.race || "—", `Level ${sheet.level}`].filter(Boolean).join(" · ")}
+            </p>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={isOwner}
+              title={isOwner ? "Only a DM or admin can rename a character after creation" : undefined}
+              className="plate__name"
+              style={{ border: "none", background: "transparent", padding: "0.1rem 0", width: "100%" }}
+            />
+            <p className="plate__subtitle">
+              {[sheet.class || "—", sheet.subclass].filter(Boolean).join(" · ")}
+            </p>
+          </div>
+          <div className="plate__stats">
+            <div className="stat-cell">
+              <span className="stat-cell__badge">{effectiveAC(sheet)}</span>
+              <span className="stat-cell__label">AC</span>
+            </div>
+            <div className="stat-cell">
+              <span className="stat-cell__value">{formatModifier(initiativeBonus(sheet))}</span>
+              <span className="stat-cell__label">Initiative</span>
+            </div>
+            <div className="stat-cell">
+              <span className="stat-cell__value">{effectiveSpeed(sheet)} ft.</span>
+              <span className="stat-cell__label">Speed</span>
+            </div>
+            <div className="stat-cell">
+              <span className="stat-cell__value">
+                {hpNumbers().current}/{hpNumbers().max}
+              </span>
+              <span className="stat-cell__label">HP</span>
+            </div>
           </div>
         </div>
         <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "end" }}>
@@ -1617,6 +1632,38 @@ export function Dnd5eSheet({
       )}
 
       {view === "martial" && (<>
+      {/* Resource tracker strip (reference's combat-header trackers) */}
+      {(sheet.spellSlots.length > 0 || sheet.concentratingOn || martialPools.length > 0) && (
+        <div className="tracker-strip">
+          {sheet.spellSlots.map((s) => (
+            <span key={s.level} className={`tracker-pill${s.available > 0 ? " tracker-pill--active" : ""}`}>
+              L{s.level}
+              <span className="tracker-pill__value">
+                {s.available} / {s.total}
+              </span>
+            </span>
+          ))}
+          <span className={`tracker-pill${sheet.concentratingOn ? " tracker-pill--active" : ""}`}>
+            Concentration
+            <span className="tracker-pill__value">{sheet.concentratingOn ? sheet.concentratingOn.spellName : "—"}</span>
+          </span>
+          {martialPools.map((pool, poolIndex) => {
+            const available = martialResourceAvailable(sheet, pool);
+            const unlimited = available === -1;
+            return (
+              <span key={`strip-${pool.key}-${poolIndex}`} className={`tracker-pill${available > 0 || unlimited ? " tracker-pill--active" : ""}`}>
+                {pool.label}
+                <span className="tracker-pill__value">{unlimited ? "∞" : `${available} / ${pool.max}`}</span>
+                {!unlimited && (
+                  <button type="button" className="btn" onClick={() => useMartialResource(pool)} disabled={available <= 0}>
+                    Use
+                  </button>
+                )}
+              </span>
+            );
+          })}
+        </div>
+      )}
       <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
         {/* Ability rail: one card per ability, holding score, modifier, and save */}
         <div style={{ ...cardRaised, flex: "0 0 auto", display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: "13rem" }}>
@@ -1628,12 +1675,10 @@ export function Dnd5eSheet({
               const manuallyChecked = sheet.saveProficiencies.includes(a);
               const effectGranted = grantedSaveAbilities.includes(a);
               return (
-                <div key={a} style={card}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.5rem" }}>
-                    <span style={{ color: "var(--accent)", fontWeight: 800, letterSpacing: "0.02em" }}>
-                      {DND5E_ABILITY_NAMES[a]}
-                    </span>
-                    <strong style={{ fontSize: "1.1rem" }}>
+                <div key={a} className="ability-card">
+                  <div className="ability-card__top">
+                    <span className="ability-card__abbr">{DND5E_ABILITY_NAMES[a]}</span>
+                    <strong className="ability-card__mod">
                       {formatModifier(abilityModifier(effectiveAbilityScore(sheet, a)))}
                     </strong>
                   </div>
@@ -1652,7 +1697,7 @@ export function Dnd5eSheet({
                       </small>
                     )}
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginTop: "0.35rem", fontSize: "0.85rem" }}>
+                  <div className="ability-card__save" style={{ display: "flex", alignItems: "center", gap: "0.4rem", marginTop: "0.35rem" }}>
                     <input
                       type="checkbox"
                       checked={manuallyChecked || effectGranted}
@@ -2278,6 +2323,28 @@ export function Dnd5eSheet({
       {view === "martial" && (<>
       <div style={cardRaised}>
         <h3 style={{ marginTop: 0 }}>Attacks</h3>
+        {sheet.attacks.length > 0 && (
+          <table className="yaml-table">
+            <thead>
+              <tr>
+                <th>Attack</th>
+                <th>To Hit</th>
+                <th>Damage</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sheet.attacks.map((atk) => (
+                <tr key={atk.id}>
+                  <td>{atk.name || "—"}</td>
+                  <td className="num">{formatModifier(attackBonus(sheet, atk))}</td>
+                  <td>
+                    {atk.damageDice ? `${atk.damageDice}${attackDamageBonus(sheet, atk) !== 0 ? ` ${formatModifier(attackDamageBonus(sheet, atk))}` : ""} ${atk.damageType.toLowerCase()}` : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
         {sheet.attacks.map((atk, i) => {
           function updateAttack(patch: Partial<Dnd5eSheetData["attacks"][number]>) {
             set("attacks", sheet.attacks.map((x, j) => (j === i ? { ...x, ...patch } : x)));
