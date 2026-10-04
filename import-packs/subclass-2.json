@@ -1,0 +1,599 @@
+{
+ "system": "dnd5e",
+ "items": [
+  {
+   "type": "subclass",
+   "name": "Oath of the Watchers",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of the Noble Genies",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Lore",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Lore",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Valor",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Valor",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Glamour",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Glamour",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Swords",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Swords",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Whispers",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Whispers",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Creation",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Creation",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Eloquence",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Eloquence",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Spirits",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Spirits",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of the Moon",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "College of Spirits",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Circle of the Land",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Circle of the Land",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Circle of the Moon",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Circle of the Moon",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Circle of Dreams",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Circle of Dreams",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Circle of the Shepherd",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Circle of the Shepherd",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Circle of Spores",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Circle of Spores",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Circle of Stars",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Circle of Stars",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Circle of Wildfire",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Circle of Wildfire",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of Shadow",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of Shadow",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Four Elements",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Four Elements",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Open Hand",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Open Hand",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Long Death",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Long Death",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Drunken Master",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Drunken Master",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Kensei",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Kensei",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Sun Soul",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Sun Soul",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of Mercy",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of Mercy",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Astral Self",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Astral Self",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Ascendant Dragon",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Way of the Ascendant Dragon",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  }
+ ]
+}

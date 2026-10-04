@@ -1,0 +1,1314 @@
+{
+ "system": "dnd5e",
+ "items": [
+  {
+   "type": "class",
+   "name": "Wizard",
+   "data": {
+    "hitDie": 6,
+    "casterType": "known",
+    "levels": [
+     {
+      "level": 1,
+      "cantripsKnown": 3,
+      "spellsKnown": 6
+     },
+     {
+      "level": 2,
+      "cantripsKnown": 3,
+      "spellsKnown": 2
+     },
+     {
+      "level": 3,
+      "cantripsKnown": 3,
+      "spellsKnown": 2
+     },
+     {
+      "level": 4,
+      "cantripsKnown": 4,
+      "spellsKnown": 2
+     },
+     {
+      "level": 5,
+      "cantripsKnown": 4,
+      "spellsKnown": 2
+     },
+     {
+      "level": 6,
+      "cantripsKnown": 4,
+      "spellsKnown": 2
+     },
+     {
+      "level": 7,
+      "cantripsKnown": 4,
+      "spellsKnown": 2
+     },
+     {
+      "level": 8,
+      "cantripsKnown": 4,
+      "spellsKnown": 2
+     },
+     {
+      "level": 9,
+      "cantripsKnown": 4,
+      "spellsKnown": 2
+     },
+     {
+      "level": 10,
+      "cantripsKnown": 5,
+      "spellsKnown": 2
+     },
+     {
+      "level": 11,
+      "cantripsKnown": 5,
+      "spellsKnown": 2
+     },
+     {
+      "level": 12,
+      "cantripsKnown": 5,
+      "spellsKnown": 2
+     },
+     {
+      "level": 13,
+      "cantripsKnown": 5,
+      "spellsKnown": 2
+     },
+     {
+      "level": 14,
+      "cantripsKnown": 5,
+      "spellsKnown": 2
+     },
+     {
+      "level": 15,
+      "cantripsKnown": 5,
+      "spellsKnown": 2
+     },
+     {
+      "level": 16,
+      "cantripsKnown": 5,
+      "spellsKnown": 2
+     },
+     {
+      "level": 17,
+      "cantripsKnown": 5,
+      "spellsKnown": 2
+     },
+     {
+      "level": 18,
+      "cantripsKnown": 5,
+      "spellsKnown": 2
+     },
+     {
+      "level": 19,
+      "cantripsKnown": 5,
+      "spellsKnown": 2
+     },
+     {
+      "level": 20,
+      "cantripsKnown": 5,
+      "spellsKnown": 2
+     }
+    ],
+    "resources": [],
+    "startingEquipment": {
+     "fixed": [],
+     "choices": []
+    }
+   }
+  },
+  {
+   "type": "class",
+   "name": "Warlock",
+   "data": {
+    "hitDie": 8,
+    "casterType": "pact",
+    "levels": [
+     {
+      "level": 1,
+      "cantripsKnown": 2,
+      "spellsKnown": 2
+     },
+     {
+      "level": 2,
+      "cantripsKnown": 2,
+      "spellsKnown": 3
+     },
+     {
+      "level": 3,
+      "cantripsKnown": 2,
+      "spellsKnown": 4
+     },
+     {
+      "level": 4,
+      "cantripsKnown": 3,
+      "spellsKnown": 5
+     },
+     {
+      "level": 5,
+      "cantripsKnown": 3,
+      "spellsKnown": 6
+     },
+     {
+      "level": 6,
+      "cantripsKnown": 3,
+      "spellsKnown": 7
+     },
+     {
+      "level": 7,
+      "cantripsKnown": 3,
+      "spellsKnown": 8
+     },
+     {
+      "level": 8,
+      "cantripsKnown": 3,
+      "spellsKnown": 9
+     },
+     {
+      "level": 9,
+      "cantripsKnown": 3,
+      "spellsKnown": 10
+     },
+     {
+      "level": 10,
+      "cantripsKnown": 4,
+      "spellsKnown": 10
+     },
+     {
+      "level": 11,
+      "cantripsKnown": 4,
+      "spellsKnown": 11
+     },
+     {
+      "level": 12,
+      "cantripsKnown": 4,
+      "spellsKnown": 11
+     },
+     {
+      "level": 13,
+      "cantripsKnown": 4,
+      "spellsKnown": 12
+     },
+     {
+      "level": 14,
+      "cantripsKnown": 4,
+      "spellsKnown": 12
+     },
+     {
+      "level": 15,
+      "cantripsKnown": 4,
+      "spellsKnown": 13
+     },
+     {
+      "level": 16,
+      "cantripsKnown": 4,
+      "spellsKnown": 13
+     },
+     {
+      "level": 17,
+      "cantripsKnown": 4,
+      "spellsKnown": 14
+     },
+     {
+      "level": 18,
+      "cantripsKnown": 4,
+      "spellsKnown": 14
+     },
+     {
+      "level": 19,
+      "cantripsKnown": 4,
+      "spellsKnown": 15
+     },
+     {
+      "level": 20,
+      "cantripsKnown": 4,
+      "spellsKnown": 15
+     }
+    ],
+    "resources": [],
+    "startingEquipment": {
+     "fixed": [],
+     "choices": []
+    }
+   }
+  },
+  {
+   "type": "class",
+   "name": "Sorcerer",
+   "data": {
+    "hitDie": 6,
+    "casterType": "known",
+    "levels": [
+     {
+      "level": 1,
+      "cantripsKnown": 4,
+      "spellsKnown": 2
+     },
+     {
+      "level": 2,
+      "cantripsKnown": 4,
+      "spellsKnown": 3
+     },
+     {
+      "level": 3,
+      "cantripsKnown": 4,
+      "spellsKnown": 4
+     },
+     {
+      "level": 4,
+      "cantripsKnown": 5,
+      "spellsKnown": 5
+     },
+     {
+      "level": 5,
+      "cantripsKnown": 5,
+      "spellsKnown": 6
+     },
+     {
+      "level": 6,
+      "cantripsKnown": 5,
+      "spellsKnown": 7
+     },
+     {
+      "level": 7,
+      "cantripsKnown": 5,
+      "spellsKnown": 8
+     },
+     {
+      "level": 8,
+      "cantripsKnown": 5,
+      "spellsKnown": 9
+     },
+     {
+      "level": 9,
+      "cantripsKnown": 5,
+      "spellsKnown": 10
+     },
+     {
+      "level": 10,
+      "cantripsKnown": 6,
+      "spellsKnown": 11
+     },
+     {
+      "level": 11,
+      "cantripsKnown": 6,
+      "spellsKnown": 12
+     },
+     {
+      "level": 12,
+      "cantripsKnown": 6,
+      "spellsKnown": 12
+     },
+     {
+      "level": 13,
+      "cantripsKnown": 6,
+      "spellsKnown": 13
+     },
+     {
+      "level": 14,
+      "cantripsKnown": 6,
+      "spellsKnown": 13
+     },
+     {
+      "level": 15,
+      "cantripsKnown": 6,
+      "spellsKnown": 14
+     },
+     {
+      "level": 16,
+      "cantripsKnown": 6,
+      "spellsKnown": 14
+     },
+     {
+      "level": 17,
+      "cantripsKnown": 6,
+      "spellsKnown": 15
+     },
+     {
+      "level": 18,
+      "cantripsKnown": 6,
+      "spellsKnown": 15
+     },
+     {
+      "level": 19,
+      "cantripsKnown": 6,
+      "spellsKnown": 15
+     },
+     {
+      "level": 20,
+      "cantripsKnown": 6,
+      "spellsKnown": 15
+     }
+    ],
+    "resources": [],
+    "startingEquipment": {
+     "fixed": [],
+     "choices": []
+    }
+   }
+  },
+  {
+   "type": "class",
+   "name": "Cleric",
+   "data": {
+    "hitDie": 8,
+    "casterType": "prepared",
+    "levels": [
+     {
+      "level": 1,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 2,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 3,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 4,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 5,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 6,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 7,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 8,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 9,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 10,
+      "cantripsKnown": 5
+     },
+     {
+      "level": 11,
+      "cantripsKnown": 5
+     },
+     {
+      "level": 12,
+      "cantripsKnown": 5
+     },
+     {
+      "level": 13,
+      "cantripsKnown": 5
+     },
+     {
+      "level": 14,
+      "cantripsKnown": 5
+     },
+     {
+      "level": 15,
+      "cantripsKnown": 5
+     },
+     {
+      "level": 16,
+      "cantripsKnown": 5
+     },
+     {
+      "level": 17,
+      "cantripsKnown": 5
+     },
+     {
+      "level": 18,
+      "cantripsKnown": 5
+     },
+     {
+      "level": 19,
+      "cantripsKnown": 5
+     },
+     {
+      "level": 20,
+      "cantripsKnown": 5
+     }
+    ],
+    "resources": [],
+    "startingEquipment": {
+     "fixed": [],
+     "choices": []
+    }
+   }
+  },
+  {
+   "type": "class",
+   "name": "Fighter",
+   "data": {
+    "hitDie": 10,
+    "casterType": "none",
+    "levels": [
+     {
+      "level": 1
+     },
+     {
+      "level": 2
+     },
+     {
+      "level": 3
+     },
+     {
+      "level": 4
+     },
+     {
+      "level": 5
+     },
+     {
+      "level": 6
+     },
+     {
+      "level": 7
+     },
+     {
+      "level": 8
+     },
+     {
+      "level": 9
+     },
+     {
+      "level": 10
+     },
+     {
+      "level": 11
+     },
+     {
+      "level": 12
+     },
+     {
+      "level": 13
+     },
+     {
+      "level": 14
+     },
+     {
+      "level": 15
+     },
+     {
+      "level": 16
+     },
+     {
+      "level": 17
+     },
+     {
+      "level": 18
+     },
+     {
+      "level": 19
+     },
+     {
+      "level": 20
+     }
+    ],
+    "resources": [],
+    "startingEquipment": {
+     "fixed": [],
+     "choices": []
+    }
+   }
+  },
+  {
+   "type": "class",
+   "name": "Ranger",
+   "data": {
+    "hitDie": 10,
+    "casterType": "known",
+    "levels": [
+     {
+      "level": 1
+     },
+     {
+      "level": 2,
+      "spellsKnown": 2
+     },
+     {
+      "level": 3,
+      "spellsKnown": 3
+     },
+     {
+      "level": 4,
+      "spellsKnown": 3
+     },
+     {
+      "level": 5,
+      "spellsKnown": 4
+     },
+     {
+      "level": 6,
+      "spellsKnown": 4
+     },
+     {
+      "level": 7,
+      "spellsKnown": 5
+     },
+     {
+      "level": 8,
+      "spellsKnown": 5
+     },
+     {
+      "level": 9,
+      "spellsKnown": 6
+     },
+     {
+      "level": 10,
+      "spellsKnown": 6
+     },
+     {
+      "level": 11,
+      "spellsKnown": 7
+     },
+     {
+      "level": 12,
+      "spellsKnown": 7
+     },
+     {
+      "level": 13,
+      "spellsKnown": 8
+     },
+     {
+      "level": 14,
+      "spellsKnown": 8
+     },
+     {
+      "level": 15,
+      "spellsKnown": 9
+     },
+     {
+      "level": 16,
+      "spellsKnown": 9
+     },
+     {
+      "level": 17,
+      "spellsKnown": 10
+     },
+     {
+      "level": 18,
+      "spellsKnown": 10
+     },
+     {
+      "level": 19,
+      "spellsKnown": 11
+     },
+     {
+      "level": 20,
+      "spellsKnown": 11
+     }
+    ],
+    "resources": [],
+    "startingEquipment": {
+     "fixed": [],
+     "choices": []
+    }
+   }
+  },
+  {
+   "type": "class",
+   "name": "Artificer",
+   "data": {
+    "hitDie": 8,
+    "casterType": "none",
+    "levels": [
+     {
+      "level": 1,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 2,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 3,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 4,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 5,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 6,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 7,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 8,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 9,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 10,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 11,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 12,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 13,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 14,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 15,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 16,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 17,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 18,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 19,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 20,
+      "cantripsKnown": 4
+     }
+    ],
+    "resources": [],
+    "startingEquipment": {
+     "fixed": [],
+     "choices": []
+    }
+   }
+  },
+  {
+   "type": "class",
+   "name": "Artificer",
+   "data": {
+    "hitDie": 8,
+    "casterType": "none",
+    "levels": [
+     {
+      "level": 1,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 2,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 3,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 4,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 5,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 6,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 7,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 8,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 9,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 10,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 11,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 12,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 13,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 14,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 15,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 16,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 17,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 18,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 19,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 20,
+      "cantripsKnown": 4
+     }
+    ],
+    "resources": [],
+    "startingEquipment": {
+     "fixed": [],
+     "choices": []
+    }
+   }
+  },
+  {
+   "type": "class",
+   "name": "Barbarian",
+   "data": {
+    "hitDie": 12,
+    "casterType": "none",
+    "levels": [
+     {
+      "level": 1
+     },
+     {
+      "level": 2
+     },
+     {
+      "level": 3
+     },
+     {
+      "level": 4
+     },
+     {
+      "level": 5
+     },
+     {
+      "level": 6
+     },
+     {
+      "level": 7
+     },
+     {
+      "level": 8
+     },
+     {
+      "level": 9
+     },
+     {
+      "level": 10
+     },
+     {
+      "level": 11
+     },
+     {
+      "level": 12
+     },
+     {
+      "level": 13
+     },
+     {
+      "level": 14
+     },
+     {
+      "level": 15
+     },
+     {
+      "level": 16
+     },
+     {
+      "level": 17
+     },
+     {
+      "level": 18
+     },
+     {
+      "level": 19
+     },
+     {
+      "level": 20
+     }
+    ],
+    "resources": [],
+    "startingEquipment": {
+     "fixed": [],
+     "choices": []
+    }
+   }
+  },
+  {
+   "type": "class",
+   "name": "Rogue",
+   "data": {
+    "hitDie": 8,
+    "casterType": "none",
+    "levels": [
+     {
+      "level": 1
+     },
+     {
+      "level": 2
+     },
+     {
+      "level": 3
+     },
+     {
+      "level": 4
+     },
+     {
+      "level": 5
+     },
+     {
+      "level": 6
+     },
+     {
+      "level": 7
+     },
+     {
+      "level": 8
+     },
+     {
+      "level": 9
+     },
+     {
+      "level": 10
+     },
+     {
+      "level": 11
+     },
+     {
+      "level": 12
+     },
+     {
+      "level": 13
+     },
+     {
+      "level": 14
+     },
+     {
+      "level": 15
+     },
+     {
+      "level": 16
+     },
+     {
+      "level": 17
+     },
+     {
+      "level": 18
+     },
+     {
+      "level": 19
+     },
+     {
+      "level": 20
+     }
+    ],
+    "resources": [],
+    "startingEquipment": {
+     "fixed": [],
+     "choices": []
+    }
+   }
+  },
+  {
+   "type": "class",
+   "name": "Paladin",
+   "data": {
+    "hitDie": 10,
+    "casterType": "none",
+    "levels": [
+     {
+      "level": 1
+     },
+     {
+      "level": 2
+     },
+     {
+      "level": 3
+     },
+     {
+      "level": 4
+     },
+     {
+      "level": 5
+     },
+     {
+      "level": 6
+     },
+     {
+      "level": 7
+     },
+     {
+      "level": 8
+     },
+     {
+      "level": 9
+     },
+     {
+      "level": 10
+     },
+     {
+      "level": 11
+     },
+     {
+      "level": 12
+     },
+     {
+      "level": 13
+     },
+     {
+      "level": 14
+     },
+     {
+      "level": 15
+     },
+     {
+      "level": 16
+     },
+     {
+      "level": 17
+     },
+     {
+      "level": 18
+     },
+     {
+      "level": 19
+     },
+     {
+      "level": 20
+     }
+    ],
+    "resources": [],
+    "startingEquipment": {
+     "fixed": [],
+     "choices": []
+    }
+   }
+  },
+  {
+   "type": "class",
+   "name": "Bard",
+   "data": {
+    "hitDie": 8,
+    "casterType": "known",
+    "levels": [
+     {
+      "level": 1,
+      "cantripsKnown": 2,
+      "spellsKnown": 4
+     },
+     {
+      "level": 2,
+      "cantripsKnown": 2,
+      "spellsKnown": 5
+     },
+     {
+      "level": 3,
+      "cantripsKnown": 2,
+      "spellsKnown": 6
+     },
+     {
+      "level": 4,
+      "cantripsKnown": 3,
+      "spellsKnown": 7
+     },
+     {
+      "level": 5,
+      "cantripsKnown": 3,
+      "spellsKnown": 8
+     },
+     {
+      "level": 6,
+      "cantripsKnown": 3,
+      "spellsKnown": 9
+     },
+     {
+      "level": 7,
+      "cantripsKnown": 3,
+      "spellsKnown": 10
+     },
+     {
+      "level": 8,
+      "cantripsKnown": 3,
+      "spellsKnown": 11
+     },
+     {
+      "level": 9,
+      "cantripsKnown": 3,
+      "spellsKnown": 12
+     },
+     {
+      "level": 10,
+      "cantripsKnown": 4,
+      "spellsKnown": 14
+     },
+     {
+      "level": 11,
+      "cantripsKnown": 4,
+      "spellsKnown": 15
+     },
+     {
+      "level": 12,
+      "cantripsKnown": 4,
+      "spellsKnown": 15
+     },
+     {
+      "level": 13,
+      "cantripsKnown": 4,
+      "spellsKnown": 16
+     },
+     {
+      "level": 14,
+      "cantripsKnown": 4,
+      "spellsKnown": 18
+     },
+     {
+      "level": 15,
+      "cantripsKnown": 4,
+      "spellsKnown": 19
+     },
+     {
+      "level": 16,
+      "cantripsKnown": 4,
+      "spellsKnown": 19
+     },
+     {
+      "level": 17,
+      "cantripsKnown": 4,
+      "spellsKnown": 20
+     },
+     {
+      "level": 18,
+      "cantripsKnown": 4,
+      "spellsKnown": 22
+     },
+     {
+      "level": 19,
+      "cantripsKnown": 4,
+      "spellsKnown": 22
+     },
+     {
+      "level": 20,
+      "cantripsKnown": 4,
+      "spellsKnown": 22
+     }
+    ],
+    "resources": [],
+    "startingEquipment": {
+     "fixed": [],
+     "choices": []
+    }
+   }
+  },
+  {
+   "type": "class",
+   "name": "Druid",
+   "data": {
+    "hitDie": 8,
+    "casterType": "prepared",
+    "levels": [
+     {
+      "level": 1,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 2,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 3,
+      "cantripsKnown": 2
+     },
+     {
+      "level": 4,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 5,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 6,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 7,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 8,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 9,
+      "cantripsKnown": 3
+     },
+     {
+      "level": 10,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 11,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 12,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 13,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 14,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 15,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 16,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 17,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 18,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 19,
+      "cantripsKnown": 4
+     },
+     {
+      "level": 20,
+      "cantripsKnown": 4
+     }
+    ],
+    "resources": [],
+    "startingEquipment": {
+     "fixed": [],
+     "choices": []
+    }
+   }
+  },
+  {
+   "type": "class",
+   "name": "Monk",
+   "data": {
+    "hitDie": 8,
+    "casterType": "none",
+    "levels": [
+     {
+      "level": 1
+     },
+     {
+      "level": 2
+     },
+     {
+      "level": 3
+     },
+     {
+      "level": 4
+     },
+     {
+      "level": 5
+     },
+     {
+      "level": 6
+     },
+     {
+      "level": 7
+     },
+     {
+      "level": 8
+     },
+     {
+      "level": 9
+     },
+     {
+      "level": 10
+     },
+     {
+      "level": 11
+     },
+     {
+      "level": 12
+     },
+     {
+      "level": 13
+     },
+     {
+      "level": 14
+     },
+     {
+      "level": 15
+     },
+     {
+      "level": 16
+     },
+     {
+      "level": 17
+     },
+     {
+      "level": 18
+     },
+     {
+      "level": 19
+     },
+     {
+      "level": 20
+     }
+    ],
+    "resources": [],
+    "startingEquipment": {
+     "fixed": [],
+     "choices": []
+    }
+   }
+  }
+ ]
+}

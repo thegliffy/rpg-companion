@@ -1,0 +1,4430 @@
+{
+ "system": "dnd5e",
+ "items": [
+  {
+   "type": "background",
+   "name": "Aberrant Heir",
+   "data": {
+    "skills": {
+     "fixed": [
+      "history",
+      "intimidation"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "disguise kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "dagger|xphb (choose one: a)",
+      "disguise kit|xphb (choose one: a)",
+      "costume|xphb (choose one: a)",
+      "traveler's clothes|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Acolyte",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "religion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "holy symbol (a gift to you when you entered the priesthood)",
+      "5x sticks of incense",
+      "vestments",
+      "common clothes|phb",
+      "pouch|phb",
+      "prayer book (choose one: a)",
+      "prayer wheel (choose one: b)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Anthropologist",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "religion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "leather-bound diary",
+      "ink (1-ounce bottle)|phb",
+      "ink pen|phb",
+      "traveler's clothes|phb",
+      "trinket of special significance",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Archaeologist",
+   "data": {
+    "skills": {
+     "fixed": [
+      "history",
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "cartographer's tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "cartographer's tools|xphb (choose one: a)",
+      "bullseye lantern|xphb (choose one: a)",
+      "map|xphb (choose one: a)",
+      "map or scroll case|xphb (choose one: a)",
+      "shovel|xphb (choose one: a)",
+      "tent|xphb (choose one: a)",
+      "traveler's clothes|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Archaeologist",
+   "data": {
+    "skills": {
+     "fixed": [
+      "history",
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "choose"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "wooden case containing a map to a ruin or dungeon",
+      "bullseye lantern|phb",
+      "miner's pick|phb",
+      "traveler's clothes|phb",
+      "shovel|phb",
+      "two-person tent|phb",
+      "trinket recovered from a dig site",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 25.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Astral Drifter",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "religion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "traveler's clothes|phb",
+      "diary",
+      "ink pen|phb",
+      "ink (1-ounce bottle)|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Athlete",
+   "data": {
+    "skills": {
+     "fixed": [
+      "acrobatics",
+      "athletics"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "vehicles (land)"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "bronze discus (choose one: a)",
+      "leather ball (choose one: b)",
+      "lucky charm (choose one: a)",
+      "past trophy (choose one: b)",
+      "traveler's clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Azorius Functionary",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "intimidation"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "Azorius insignia",
+      "scroll containing the text of a law important to you",
+      "ink (1-ounce bottle)|phb",
+      "ink pen|phb",
+      "fine clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Boros Legionnaire",
+   "data": {
+    "skills": {
+     "fixed": [
+      "athletics",
+      "intimidation"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [
+      "choose"
+     ],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "Boros insignia",
+      "feather from an angel's wing",
+      "tattered piece of a Boros banner (a souvenir from a famous battle)",
+      "common clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 2.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Celebrity Adventurer's Scion",
+   "data": {
+    "skills": {
+     "fixed": [
+      "perception",
+      "performance"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "disguise kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "disguise kit|phb",
+      "fine clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 30.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Charlatan",
+   "data": {
+    "skills": {
+     "fixed": [
+      "deception",
+      "sleight-of-hand"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "disguise kit",
+      "forgery kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "fine clothes|phb",
+      "disguise kit|phb",
+      "pouch|phb",
+      "10x stoppered bottles filled with colored liquid (choose one: a)",
+      "set of weighted dice (choose one: b)",
+      "deck of marked cards (choose one: c)",
+      "signet ring of an imaginary duke (choose one: d)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Chondathan Freebooter",
+   "data": {
+    "skills": {
+     "fixed": [
+      "athletics",
+      "sleight-of-hand"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "weaver's tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "dagger|xphb (choose one: A)",
+      "weaver's tools|xphb (choose one: A)",
+      "backpack|xphb (choose one: A)",
+      "ball bearings|xphb (choose one: A)",
+      "basket|xphb (choose one: A)",
+      "bedroll|xphb (choose one: A)",
+      "bucket|xphb (choose one: A)",
+      "3x Rations (3 days' worth) (choose one: A)",
+      "rope|xphb (choose one: A)",
+      "signal whistle|xphb (choose one: A)",
+      "traveler's clothes|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "City Watch",
+   "data": {
+    "skills": {
+     "fixed": [
+      "athletics",
+      "insight"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "uniform in the style of your unit and indicative of your rank",
+      "horn with which to summon help",
+      "set of manacles",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Clan Crafter",
+   "data": {
+    "skills": {
+     "fixed": [
+      "history",
+      "insight"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyArtisansTool"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [
+      "dwarvish"
+     ],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "maker's mark chisel used to mark your handiwork with the symbol of the clan of crafters you learned your skill from",
+      "traveler's clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Cloistered Scholar",
+   "data": {
+    "skills": {
+     "fixed": [
+      "history"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "The scholar's robes of your cloister",
+      "pouch|phb",
+      "quill",
+      "ink",
+      "folded parchment",
+      "small penknife",
+      "borrowed book on the subject of your current study",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Cobalt Scholar (Sage)",
+   "data": {
+    "skills": {
+     "fixed": [
+      "arcana",
+      "history"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "ink (1-ounce bottle)|phb",
+      "quill",
+      "small knife",
+      "letter from a dead colleague posing a question you have not yet been able to answer",
+      "common clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Courtier",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "fine clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 5.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Criminal",
+   "data": {
+    "skills": {
+     "fixed": [
+      "deception",
+      "stealth"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "thieves' tools"
+     ],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "crowbar|phb",
+      "dark common clothes including a hood",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Custom Background",
+   "data": {
+    "skills": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 2,
+       "from": {
+        "kind": "any"
+       }
+      }
+     ]
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Dead Magic Dweller",
+   "data": {
+    "skills": {
+     "fixed": [
+      "medicine",
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "leatherworker's tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "greatclub|xphb (choose one: A)",
+      "leatherworker's tools|xphb (choose one: A)",
+      "bedroll|xphb (choose one: A)",
+      "blanket|xphb (choose one: A)",
+      "healer's kit|xphb (choose one: A)",
+      "pole|xphb (choose one: A)",
+      "3x Rations (3 days' worth) (choose one: A)",
+      "tent|xphb (choose one: A)",
+      "tinderbox|xphb (choose one: A)",
+      "5x Torches (choose one: A)",
+      "traveler's clothes|xphb (choose one: A)",
+      "waterskin|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Dimir Operative",
+   "data": {
+    "skills": {
+     "fixed": [
+      "deception",
+      "stealth"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "disguise kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "Dimir insignia",
+      "3x small knives",
+      "dark-colored common clothes",
+      "the starting equipment of the background described in this chapter for your secondary guild"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Dragon Cultist",
+   "data": {
+    "skills": {
+     "fixed": [
+      "deception",
+      "stealth"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "calligrapher's supplies"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "calligrapher's supplies|xphb (choose one: A)",
+      "dagger|xphb (choose one: A)",
+      "glass bottle|xphb (choose one: A)",
+      "lamp|xphb (choose one: A)",
+      "manacles|xphb (choose one: A)",
+      "Oil (5 flasks) (choose one: A)",
+      "2x Pouches (choose one: A)",
+      "robe|xphb (choose one: A)",
+      "rope|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Emerald Enclave Caretaker",
+   "data": {
+    "skills": {
+     "fixed": [
+      "nature",
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "herbalism kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "shortbow|xphb (choose one: A)",
+      "arrows (20)|xphb (choose one: A)",
+      "herbalism kit|xphb (choose one: A)",
+      "bedroll|xphb (choose one: A)",
+      "blanket|xphb (choose one: A)",
+      "pouch|xphb (choose one: A)",
+      "tent|xphb (choose one: A)",
+      "traveler's clothes|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Entertainer",
+   "data": {
+    "skills": {
+     "fixed": [
+      "acrobatics",
+      "performance"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "disguise kit"
+     ],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyMusicalInstrument"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "the favor of an admirer (love letter, lock of hair, or trinket)",
+      "costume clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Faction Agent",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "Badge or emblem of your faction",
+      "copy of a seminal faction text (or code-book for a covert faction)",
+      "common clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Failed Merchant",
+   "data": {
+    "skills": {
+     "fixed": [
+      "investigation",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyArtisansTool"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "merchant's scale|phb",
+      "fine clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Far Traveler",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "perception"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "choose"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "traveler's clothes|phb",
+      "poorly wrought maps from your homeland that depict where you are in Faer\u00fbn",
+      "small piece of jewelry in the style of your homeland's craftsmanship",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 5.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Flaming Fist Mercenary",
+   "data": {
+    "skills": {
+     "fixed": [
+      "intimidation",
+      "perception"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "smith's tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "mace|xphb (choose one: A)",
+      "smith's tools|xphb (choose one: A)",
+      "fine clothes|xphb (choose one: A)",
+      "manacles|xphb (choose one: A)",
+      "portable ram|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Folk Hero",
+   "data": {
+    "skills": {
+     "fixed": [
+      "animal-handling",
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "vehicles (land)"
+     ],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyArtisansTool"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "shovel|phb",
+      "iron pot|phb",
+      "common clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Gambler",
+   "data": {
+    "skills": {
+     "fixed": [
+      "deception",
+      "insight"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "lucky charm",
+      "fine clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Genie Touched",
+   "data": {
+    "skills": {
+     "fixed": [
+      "perception",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "glassblower's tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "light hammer|xphb (choose one: A)",
+      "glassblower's tools|xphb (choose one: A)",
+      "fine clothes|xphb (choose one: A)",
+      "lamp|xphb (choose one: A)",
+      "Oil (3 flasks) (choose one: A)",
+      "waterskin|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Giant Foundling",
+   "data": {
+    "skills": {
+     "fixed": [
+      "intimidation",
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [
+      "giant"
+     ],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "backpack|phb",
+      "traveler's clothes|phb",
+      "pouch|phb",
+      "small stone that reminds you of home (choose one: a)",
+      "sprig that reminds you of home (choose one: b)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Golgari Agent",
+   "data": {
+    "skills": {
+     "fixed": [
+      "nature",
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "poisoner's kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [
+      "choose"
+     ],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "Golgari insignia",
+      "poisoner's kit|phb",
+      "common clothes|phb",
+      "pouch|phb",
+      "pet beetle (choose one: a)",
+      "pet spider (choose one: b)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Grinner",
+   "data": {
+    "skills": {
+     "fixed": [
+      "deception",
+      "performance"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "thieves' tools"
+     ],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyMusicalInstrument"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "fine clothes|phb",
+      "disguise kit|phb",
+      "gold-plated ring depicting a smiling face",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Gruul Anarch",
+   "data": {
+    "skills": {
+     "fixed": [
+      "animal-handling",
+      "athletics"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "herbalism kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [
+      "choose"
+     ],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "Gruul insignia",
+      "hunting trap|phb",
+      "herbalism kit|phb",
+      "the skull of a boar",
+      "beast-hide cloak",
+      "traveler's clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Guild Artisan",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyArtisansTool"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "letter of introduction from your guild",
+      "traveler's clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Harper",
+   "data": {
+    "skills": {
+     "fixed": [
+      "performance",
+      "sleight-of-hand"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "disguise kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "disguise kit|xphb (choose one: A)",
+      "bedroll|xphb (choose one: A)",
+      "costume|xphb (choose one: A)",
+      "grappling hook|xphb (choose one: A)",
+      "rope|xphb (choose one: A)",
+      "traveler's clothes|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Haunted One",
+   "data": {
+    "skills": {
+     "fixed": [
+      "arcana",
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "Gaming Set (same as above) (choose one: a)",
+      "crowbar|xphb (choose one: a)",
+      "Holy Water (1 flask) (choose one: a)",
+      "mirror|xphb (choose one: a)",
+      "Oil (2 flasks) (choose one: a)",
+      "signal whistle|xphb (choose one: a)",
+      "tinderbox|xphb (choose one: a)",
+      "traveler's clothes|xphb (choose one: a)",
+      "5x Torches (choose one: a)",
+      "waterskin|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Haunted One",
+   "data": {
+    "skills": {
+     "fixed": [],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [
+      "choose"
+     ],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "monster hunter's pack|vrgr",
+      "common clothes|phb",
+      "trinket of special significance (choose one or roll on the Horror Trinkets table)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Hermit",
+   "data": {
+    "skills": {
+     "fixed": [
+      "medicine",
+      "religion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "herbalism kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "scroll case stuffed full of notes from your studies or prayers",
+      "winter blanket",
+      "common clothes|phb",
+      "herbalism kit|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Agent",
+   "data": {
+    "skills": {
+     "fixed": [
+      "investigation",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyArtisansTool"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "fine clothes|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Agent",
+   "data": {
+    "skills": {
+     "fixed": [
+      "investigation",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "alchemist's supplies",
+      "tinker's tools",
+      "vehicles (land)",
+      "brewer's supplies",
+      "cook's utensils",
+      "alchemist's supplies",
+      "herbalism kit",
+      "tinker's tools",
+      "thieves' tools",
+      "vehicles (water)",
+      "vehicles (air)",
+      "navigator's tools",
+      "thieves' tools",
+      "disguise kit",
+      "disguise kit",
+      "calligrapher's supplies",
+      "forgery kit",
+      "thieves' tools",
+      "poisoner's kit",
+      "vehicles (land)"
+     ],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      },
+      {
+       "count": 1,
+       "from": [
+        "anyMusicalInstrument"
+       ]
+      },
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      },
+      {
+       "count": 1,
+       "from": [
+        "anyMusicalInstrument"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "fine clothes|phb",
+      "house signet ring",
+      "identification papers",
+      "purse"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 20.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Cannith Heir",
+   "data": {
+    "skills": {
+     "fixed": [
+      "investigation",
+      "sleight-of-hand"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyArtisansTool"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "crowbar|xphb (choose one: a)",
+      "fine clothes|xphb (choose one: a)",
+      "2x Pouches (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Deneith Heir",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "perception"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "spear|xphb (choose one: a)",
+      "shortbow|xphb (choose one: a)",
+      "arrows (20)|xphb (choose one: a)",
+      "Gaming Set (same as above) (choose one: a)",
+      "fine clothes|xphb (choose one: a)",
+      "healer's kit|xphb (choose one: a)",
+      "quiver|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Ghallanda Heir",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "cook's utensils"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "cook's utensils|xphb (choose one: a)",
+      "fine clothes|xphb (choose one: a)",
+      "iron pot|xphb (choose one: a)",
+      "lamp|xphb (choose one: a)",
+      "5x oil|xphb (choose one: a)",
+      "perfume|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Jorasco Heir",
+   "data": {
+    "skills": {
+     "fixed": [
+      "medicine",
+      "stealth"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "herbalism kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "herbalism kit|xphb (choose one: a)",
+      "fine clothes|xphb (choose one: a)",
+      "healer's kit|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Kundarak Heir",
+   "data": {
+    "skills": {
+     "fixed": [
+      "arcana",
+      "investigation"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "thieves' tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "thieves' tools|xphb (choose one: a)",
+      "fine clothes|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Lyrandar Heir",
+   "data": {
+    "skills": {
+     "fixed": [
+      "acrobatics",
+      "nature"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "navigator's tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "navigator's tools|xphb (choose one: a)",
+      "fine clothes|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Medani Heir",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "investigation"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "disguise kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "disguise kit|xphb (choose one: a)",
+      "fine clothes|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Orien Heir",
+   "data": {
+    "skills": {
+     "fixed": [
+      "acrobatics",
+      "athletics"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "cartographer's tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "cartographer's tools|xphb (choose one: a)",
+      "fine clothes|xphb (choose one: a)",
+      "map|xphb (choose one: a)",
+      "map or scroll case|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Phiarlan Heir",
+   "data": {
+    "skills": {
+     "fixed": [
+      "deception",
+      "stealth"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "disguise kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "disguise kit|xphb (choose one: a)",
+      "fine clothes|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Sivis Heir",
+   "data": {
+    "skills": {
+     "fixed": [
+      "history",
+      "perception"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "calligrapher's supplies"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "calligrapher's supplies|xphb (choose one: a)",
+      "fine clothes|xphb (choose one: a)",
+      "ink|xphb (choose one: a)",
+      "5x ink pen|xphb (choose one: a)",
+      "30x paper|xphb (choose one: a)",
+      "9x parchment|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Tharashk Heir",
+   "data": {
+    "skills": {
+     "fixed": [
+      "perception",
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "Gaming Set (same as above) (choose one: a)",
+      "climber's kit|xphb (choose one: a)",
+      "fine clothes|xphb (choose one: a)",
+      "hunting trap|xphb (choose one: a)",
+      "manacles|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Thuranni Heir",
+   "data": {
+    "skills": {
+     "fixed": [
+      "performance",
+      "stealth"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyMusicalInstrument"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "Musical Instrument (same as above) (choose one: a)",
+      "costume|xphb (choose one: a)",
+      "fine clothes|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "House Vadalis Heir",
+   "data": {
+    "skills": {
+     "fixed": [
+      "animal-handling",
+      "nature"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "herbalism kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "herbalism kit|xphb (choose one: a)",
+      "fine clothes|xphb (choose one: a)",
+      "net|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Ice Fisher",
+   "data": {
+    "skills": {
+     "fixed": [
+      "animal-handling",
+      "athletics"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "woodcarver's tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "woodcarver's tools|xphb (choose one: A)",
+      "basket|xphb (choose one: A)",
+      "block and tackle|xphb (choose one: A)",
+      "chain|xphb (choose one: A)",
+      "hunting trap|xphb (choose one: A)",
+      "net|xphb (choose one: A)",
+      "pole|xphb (choose one: A)",
+      "3x Rations (3 days' worth) (choose one: A)",
+      "traveler's clothes|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Inheritor",
+   "data": {
+    "skills": {
+     "fixed": [
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "choose"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "Your inheritance",
+      "traveler's clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Inquisitive",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "investigation"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "thieves' tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "thieves' tools|xphb (choose one: a)",
+      "bullseye lantern|xphb (choose one: a)",
+      "crowbar|xphb (choose one: a)",
+      "10x oil|xphb (choose one: a)",
+      "traveler's clothes|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Investigator",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "investigation"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "disguise kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "disguise kit|xphb (choose one: a)",
+      "manacles|xphb (choose one: a)",
+      "shovel|xphb (choose one: a)",
+      "traveler's clothes|xphb (choose one: a)",
+      "3x Vials (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Investigator",
+   "data": {
+    "skills": {
+     "fixed": [],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "disguise kit",
+      "thieves' tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "magnifying glass|PHB",
+      "common clothes|phb",
+      "evidence from a past case (choose one or roll for a trinket from the Horror Trinket|VRGR|Horror Trinkets)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Izzet Engineer",
+   "data": {
+    "skills": {
+     "fixed": [
+      "arcana",
+      "investigation"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyArtisansTool"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [
+      "choose"
+     ],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "Izzet insignia",
+      "the charred and twisted remains of a failed experiment",
+      "hammer|phb",
+      "block and tackle|phb",
+      "common clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 5.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Knight of the Gauntlet",
+   "data": {
+    "skills": {
+     "fixed": [
+      "athletics",
+      "medicine"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "smith's tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "spear|xphb (choose one: A)",
+      "smith's tools|xphb (choose one: A)",
+      "bullseye lantern|xphb (choose one: A)",
+      "holy symbol|xphb (choose one: A)",
+      "manacles|xphb (choose one: A)",
+      "Oil (5 flasks) (choose one: A)",
+      "tinderbox|xphb (choose one: A)",
+      "traveler's clothes|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Knight of the Order",
+   "data": {
+    "skills": {
+     "fixed": [
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "choose"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "traveler's clothes|phb",
+      "signet, banner, or seal representing your place or rank in the order",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Lords' Alliance Vassal",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "calligrapher's supplies"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "2x Javelins (choose one: A)",
+      "calligrapher's supplies|xphb (choose one: A)",
+      "fine clothes|xphb (choose one: A)",
+      "ink|xphb (choose one: A)",
+      "5x ink pen|xphb (choose one: A)",
+      "Parchment (9 sheets) (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Lorehold Student",
+   "data": {
+    "skills": {
+     "fixed": [
+      "history",
+      "religion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "ink (1-ounce bottle)|phb",
+      "ink pen|phb",
+      "hammer|phb",
+      "hooded lantern|phb",
+      "tinderbox|phb",
+      "tome of history",
+      "school uniform",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Luxonborn (Acolyte)",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "religion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "holy symbol (a gift to you when you entered the priesthood)",
+      "5x sticks of incense",
+      "vestments",
+      "common clothes|phb",
+      "pouch|phb",
+      "prayer book (choose one: a)",
+      "prayer wheel (choose one: b)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Mercenary Veteran",
+   "data": {
+    "skills": {
+     "fixed": [
+      "athletics",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "vehicles (land)"
+     ],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "uniform of your company",
+      "insignia of your rank",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Mist Wanderer",
+   "data": {
+    "skills": {
+     "fixed": [
+      "survival",
+      "stealth"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyArtisansTool"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "Artisan's Tools (same as above) (choose one: a)",
+      "lamp|xphb (choose one: a)",
+      "Oil (5 flasks) (choose one: a)",
+      "pouch|xphb (choose one: a)",
+      "rope|xphb (choose one: a)",
+      "tinderbox|xphb (choose one: a)",
+      "traveler's clothes|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Moonwell Pilgrim",
+   "data": {
+    "skills": {
+     "fixed": [
+      "nature",
+      "performance"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "painter's supplies"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "quarterstaff|xphb (choose one: A)",
+      "painter's supplies|xphb (choose one: A)",
+      "bedroll|xphb (choose one: A)",
+      "bell|xphb (choose one: A)",
+      "pouch|xphb (choose one: A)",
+      "robe|xphb (choose one: A)",
+      "string|xphb (choose one: A)",
+      "traveler's clothes|xphb (choose one: A)",
+      "waterskin|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Mulhorandi Tomb Raider",
+   "data": {
+    "skills": {
+     "fixed": [
+      "investigation",
+      "religion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "mason's tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "dagger|xphb (choose one: A)",
+      "light hammer|xphb (choose one: A)",
+      "mason's tools|xphb (choose one: A)",
+      "backpack|xphb (choose one: A)",
+      "bedroll|xphb (choose one: A)",
+      "crowbar|xphb (choose one: A)",
+      "ladder|xphb (choose one: A)",
+      "pole|xphb (choose one: A)",
+      "2x Pouches (choose one: A)",
+      "rope|xphb (choose one: A)",
+      "string|xphb (choose one: A)",
+      "tinderbox|xphb (choose one: A)",
+      "5x Torches (choose one: A)",
+      "traveler's clothes|xphb (choose one: A)",
+      "Waterskin 26 GP (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Myriad Operative (Criminal)",
+   "data": {
+    "skills": {
+     "fixed": [
+      "deception",
+      "stealth"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "thieves' tools"
+     ],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "crowbar|phb",
+      "dark common clothes including a hood",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Mythalkeeper",
+   "data": {
+    "skills": {
+     "fixed": [
+      "arcana",
+      "history"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "jeweler's tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "quarterstaff|xphb (choose one: A)",
+      "jeweler's tools|xphb (choose one: A)",
+      "perfume|xphb (choose one: A)",
+      "pouch|xphb (choose one: A)",
+      "robe|xphb (choose one: A)",
+      "shovel|xphb (choose one: A)",
+      "string|xphb (choose one: A)",
+      "waterskin|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Noble",
+   "data": {
+    "skills": {
+     "fixed": [
+      "history",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "fine clothes|phb",
+      "signet ring|phb",
+      "scroll of pedigree",
+      "purse"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 25.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Orzhov Representative",
+   "data": {
+    "skills": {
+     "fixed": [
+      "intimidation",
+      "religion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "Orzhov insignia",
+      "foot-long chain made of ten gold coins",
+      "vestments",
+      "fine clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Outlander",
+   "data": {
+    "skills": {
+     "fixed": [
+      "athletics",
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyMusicalInstrument"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "staff|phb",
+      "hunting trap|phb",
+      "trophy from an animal you killed",
+      "traveler's clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Plaintiff",
+   "data": {
+    "skills": {
+     "fixed": [
+      "medicine",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyArtisansTool"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "fine clothes|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Prismari Student",
+   "data": {
+    "skills": {
+     "fixed": [
+      "acrobatics",
+      "performance"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "choose"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "ink (1-ounce bottle)|phb",
+      "ink pen|phb",
+      "school uniform",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Purple Dragon Squire",
+   "data": {
+    "skills": {
+     "fixed": [
+      "animal-handling",
+      "insight"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "navigator's tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "spear|xphb (choose one: A)",
+      "navigator's tools|xphb (choose one: A)",
+      "fine clothes|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Quandrix Student",
+   "data": {
+    "skills": {
+     "fixed": [
+      "arcana",
+      "nature"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyArtisansTool"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "ink (1-ounce bottle)|phb",
+      "ink pen|phb",
+      "abacus|phb",
+      "book of arcane theory",
+      "school uniform",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Rakdos Cultist",
+   "data": {
+    "skills": {
+     "fixed": [
+      "acrobatics",
+      "performance"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyMusicalInstrument"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [
+      "choose"
+     ],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "Rakdos insignia",
+      "costume clothes|phb",
+      "hooded lantern made of wrought iron",
+      "10-foot length of chain with sharply spiked links",
+      "tinderbox|phb",
+      "10x torch|phb",
+      "common clothes|phb",
+      "pouch|phb",
+      "bottle of sweet, red juice"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Rashemi Wanderer",
+   "data": {
+    "skills": {
+     "fixed": [
+      "intimidation",
+      "perception"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "cartographer's tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "cartographer's tools|xphb (choose one: A)",
+      "backpack|xphb (choose one: A)",
+      "bedroll|xphb (choose one: A)",
+      "hooded lantern|xphb (choose one: A)",
+      "Oil (3 flasks) (choose one: A)",
+      "rope|xphb (choose one: A)",
+      "tinderbox|xphb (choose one: A)",
+      "traveler's clothes|xphb (choose one: A)",
+      "waterskin|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Revelry Pirate (Sailor)",
+   "data": {
+    "skills": {
+     "fixed": [
+      "athletics",
+      "perception"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "navigator's tools",
+      "vehicles (water)"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "belaying pin",
+      "silk rope (50 feet)|phb",
+      "lucky charm",
+      "common clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Rewarded",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "bottle of black ink",
+      "ink pen|phb",
+      "5x sheets of paper",
+      "gaming set matching your chosen proficiency",
+      "signet ring|phb",
+      "fine clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 18.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Rival Intern",
+   "data": {
+    "skills": {
+     "fixed": [
+      "history",
+      "investigation"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyArtisansTool"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "ledger from your previous employer containing a small piece of useful information",
+      "fine clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Ruined",
+   "data": {
+    "skills": {
+     "fixed": [
+      "stealth",
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "cracked hourglass",
+      "set of rusty manacles",
+      "half-empty bottle",
+      "hunting trap|phb",
+      "gaming set matching your chosen proficiency",
+      "traveler's clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 13.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Rune Carver",
+   "data": {
+    "skills": {
+     "fixed": [
+      "history",
+      "perception"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyArtisansTool"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [
+      "giant"
+     ],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "small knife",
+      "whetstone|phb",
+      "common clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Sage",
+   "data": {
+    "skills": {
+     "fixed": [
+      "arcana",
+      "history"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "ink (1-ounce bottle)|phb",
+      "quill",
+      "small knife",
+      "letter from a dead colleague posing a question you have not yet been able to answer",
+      "common clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Sailor",
+   "data": {
+    "skills": {
+     "fixed": [
+      "athletics",
+      "perception"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "navigator's tools",
+      "vehicles (water)"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "belaying pin",
+      "silk rope (50 feet)|phb",
+      "lucky charm",
+      "common clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Selesnya Initiate",
+   "data": {
+    "skills": {
+     "fixed": [
+      "nature",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "choose"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [
+      "choose"
+     ],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "Selesnya insignia",
+      "healer's kit|phb",
+      "robes|phb",
+      "common clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 5.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Shadowmasters Exile",
+   "data": {
+    "skills": {
+     "fixed": [
+      "acrobatics",
+      "stealth"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "thieves' tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "2x Daggers (choose one: A)",
+      "thieves' tools|xphb (choose one: A)",
+      "caltrops|xphb (choose one: A)",
+      "costume|xphb (choose one: A)",
+      "grappling hook|xphb (choose one: A)",
+      "iron spikes|xphb (choose one: A)",
+      "mirror|xphb (choose one: A)",
+      "2x Pouches (choose one: A)",
+      "rope|xphb (choose one: A)",
+      "traveler's clothes|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Silverquill Student",
+   "data": {
+    "skills": {
+     "fixed": [
+      "intimidation",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "ink (1-ounce bottle)|phb",
+      "ink pen|phb",
+      "book of poetry",
+      "school uniform",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Simic Scientist",
+   "data": {
+    "skills": {
+     "fixed": [
+      "arcana",
+      "medicine"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "Simic insignia",
+      "common clothes|phb",
+      "book of research notes",
+      "ink pen|phb",
+      "ink (1-ounce bottle)|phb",
+      "flask of oil (made from blubber)",
+      "vial of acid (derived from digestive juices)",
+      "vial of fish scales",
+      "vial of seaweed",
+      "vial of jellyfish stingers",
+      "glass bottle of unidentified slime",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Soldier",
+   "data": {
+    "skills": {
+     "fixed": [
+      "athletics",
+      "intimidation"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "vehicles (land)"
+     ],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "insignia of rank",
+      "trophy taken from a fallen enemy (a dagger, broken blade, or piece of a banner)",
+      "common clothes|phb",
+      "pouch|phb",
+      "bone dice set (choose one: a)",
+      "playing card set|phb (choose one: b)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Spellfire Initiate",
+   "data": {
+    "skills": {
+     "fixed": [
+      "arcana",
+      "perception"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "Gaming Set (same as above) (choose one: A)",
+      "Arcane Focus (Crystal or Wand) (choose one: A)",
+      "2x Pouches (choose one: A)",
+      "traveler's clothes|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Spirit Medium",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "religion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "dagger|xphb (choose one: a)",
+      "Gaming Set (same as above) (choose one: a)",
+      "basket|xphb (choose one: a)",
+      "bell|xphb (choose one: a)",
+      "8x Candles (choose one: a)",
+      "ink|xphb (choose one: a)",
+      "ink pen|xphb (choose one: a)",
+      "Paper (5 sheets) (choose one: a)",
+      "tinderbox|xphb (choose one: a)",
+      "traveler's clothes|xphb (choose one: a)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Urban Bounty Hunter",
+   "data": {
+    "skills": {
+     "fixed": [],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "choose"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 20.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Urchin",
+   "data": {
+    "skills": {
+     "fixed": [
+      "sleight-of-hand",
+      "stealth"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "disguise kit",
+      "thieves' tools"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "small knife",
+      "map of the city you grew up in",
+      "pet mouse",
+      "token to remember your parents by",
+      "common clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Uthgardt Tribe Member",
+   "data": {
+    "skills": {
+     "fixed": [
+      "athletics",
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "choose"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "hunting trap|phb",
+      "traveler's clothes|phb",
+      "pouch|phb",
+      "totemic token (choose one: a)",
+      "set of tattoos marking your loyalty to Uthgar and your tribal totem (choose one: b)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Variant City Watch (Investigator)",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "investigation"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 2
+    },
+    "equipment": {
+     "items": [
+      "uniform in the style of your unit and indicative of your rank",
+      "horn with which to summon help",
+      "set of manacles",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Variant Criminal (Spy)",
+   "data": {
+    "skills": {
+     "fixed": [
+      "deception",
+      "stealth"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "thieves' tools"
+     ],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "crowbar|phb",
+      "dark common clothes including a hood",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Variant Entertainer (Gladiator)",
+   "data": {
+    "skills": {
+     "fixed": [
+      "acrobatics",
+      "performance"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "disguise kit"
+     ],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyMusicalInstrument"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "the favor of an admirer (love letter, lock of hair, or trinket)",
+      "costume clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Variant Guild Artisan (Guild Merchant)",
+   "data": {
+    "skills": {
+     "fixed": [
+      "insight",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "choose"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "letter of introduction from your guild",
+      "traveler's clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Variant Noble (Knight)",
+   "data": {
+    "skills": {
+     "fixed": [
+      "history",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "fine clothes|phb",
+      "signet ring|phb",
+      "scroll of pedigree",
+      "purse"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 25.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Variant Noble (Retainers)",
+   "data": {
+    "skills": {
+     "fixed": [
+      "history",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [],
+     "choices": [
+      {
+       "count": 1,
+       "from": [
+        "anyGamingSet"
+       ]
+      }
+     ]
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "fine clothes|phb",
+      "signet ring|phb",
+      "scroll of pedigree",
+      "purse"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 25.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Variant Sailor (Pirate)",
+   "data": {
+    "skills": {
+     "fixed": [
+      "athletics",
+      "perception"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "navigator's tools",
+      "vehicles (water)"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "belaying pin",
+      "silk rope (50 feet)|phb",
+      "lucky charm",
+      "common clothes|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Volstrucker Agent",
+   "data": {
+    "skills": {
+     "fixed": [
+      "deception",
+      "stealth"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "poisoner's kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "common clothes|phb",
+      "black cloak with a hood",
+      "poisoner's kit|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Waterdhavian Noble",
+   "data": {
+    "skills": {
+     "fixed": [
+      "history",
+      "persuasion"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "choose"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "fine clothes|phb",
+      "scroll of pedigree",
+      "skin of fine zzar or wine",
+      "purse",
+      "signet ring|phb (choose one: a)",
+      "brooch (choose one: b)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 20.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Wildspacer",
+   "data": {
+    "skills": {
+     "fixed": [
+      "athletics",
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "navigator's tools",
+      "vehicles (space)"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "belaying pin",
+      "traveler's clothes|phb",
+      "grappling hook|phb",
+      "hempen rope (50 feet)|phb",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 10.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Witherbloom Student",
+   "data": {
+    "skills": {
+     "fixed": [
+      "nature",
+      "survival"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "herbalism kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 1
+    },
+    "equipment": {
+     "items": [
+      "ink (1-ounce bottle)|phb",
+      "ink pen|phb",
+      "book about plant identification",
+      "iron pot|phb",
+      "herbalism kit|phb",
+      "school uniform",
+      "pouch|phb"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 15.0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  },
+  {
+   "type": "background",
+   "name": "Zhentarim Mercenary",
+   "data": {
+    "skills": {
+     "fixed": [
+      "intimidation",
+      "perception"
+     ],
+     "choices": []
+    },
+    "tools": {
+     "fixed": [
+      "forgery kit"
+     ],
+     "choices": []
+    },
+    "languages": {
+     "fixed": [],
+     "anyCount": 0
+    },
+    "equipment": {
+     "items": [
+      "club|xphb (choose one: A)",
+      "dagger|xphb (choose one: A)",
+      "forgery kit|xphb (choose one: A)",
+      "fine clothes|xphb (choose one: A)",
+      "hooded lantern|xphb (choose one: A)",
+      "Oil (3 flasks) (choose one: A)",
+      "2x Pouches (choose one: A)",
+      "string|xphb (choose one: A)",
+      "tinderbox|xphb (choose one: A)"
+     ],
+     "gold": 0,
+     "startingCurrency": {
+      "gp": 0
+     }
+    },
+    "features": [],
+    "variantTables": []
+   }
+  }
+ ]
+}

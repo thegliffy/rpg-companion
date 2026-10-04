@@ -1,0 +1,2205 @@
+{
+ "system": "dnd5e",
+ "items": [
+  {
+   "type": "subclass",
+   "name": "School of Abjuration",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Abjuration",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Conjuration",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Conjuration",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Divination",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Divination",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Enchantment",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Enchantment",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Evocation",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Evocation",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Illusion",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Illusion",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Necromancy",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Necromancy",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Transmutation",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "School of Transmutation",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "War Magic",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "War Magic",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Chronurgy Magic",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Chronurgy Magic",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Graviturgy Magic",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Graviturgy Magic",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Bladesinging",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Bladesinging",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Order of Scribes",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Order of Scribes",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Bladesinger",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Archfey",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Archfey",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Fiend",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Fiend",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Great Old One",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Great Old One",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Undying",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Undying",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Celestial",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Celestial",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Hexblade",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Hexblade",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Fathomless",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Fathomless",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Genie",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Genie",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Undead",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "The Undead",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Undead Patron",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Draconic Bloodline",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Draconic Bloodline",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Wild Magic",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Wild Magic",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Divine Soul",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Divine Soul",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Shadow Magic",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Shadow Magic",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Storm Sorcery",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Storm Sorcery",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Aberrant Mind",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Aberrant Mind",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Clockwork Soul",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Clockwork Soul",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Spellfire Sorcery",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Shadow Sorcery",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Knowledge Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Knowledge Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Life Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Life Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Light Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Light Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Nature Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Nature Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Tempest Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Tempest Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Trickery Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Trickery Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "War Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "War Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Death Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Death Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Arcana Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Arcana Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Forge Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Forge Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Grave Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Grave Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Order Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Order Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Peace Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Peace Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Twilight Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Twilight Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Knowledge Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Grave Domain",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Battle Master",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Battle Master",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Champion",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Champion",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Eldritch Knight",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Eldritch Knight",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Purple Dragon Knight (Banneret)",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Purple Dragon Knight (Banneret)",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Arcane Archer",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Arcane Archer",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Cavalier",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Cavalier",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Samurai",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Samurai",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Echo Knight",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Echo Knight",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Psi Warrior",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Psi Warrior",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Rune Knight",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Rune Knight",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Banneret",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Beast Master",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Beast Master",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Hunter",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Hunter",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Gloom Stalker",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Gloom Stalker",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Horizon Walker",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Horizon Walker",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Monster Slayer",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Monster Slayer",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Fey Wanderer",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Fey Wanderer",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Swarmkeeper",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Swarmkeeper",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Drakewarden",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Drakewarden",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Winter Walker",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Hollow Warden",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Alchemist",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Alchemist",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Armorer",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Armorer",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Artillerist",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Artillerist",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Battle Smith",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Battle Smith",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Alchemist",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Armorer",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Artillerist",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Battle Smith",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Cartographer",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Reanimator",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Berserker",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Berserker",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Totem Warrior",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Totem Warrior",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Battlerager",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Battlerager",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Ancestral Guardian",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Ancestral Guardian",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Storm Herald",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Storm Herald",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Zealot",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Zealot",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Beast",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Beast",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of Wild Magic",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of Wild Magic",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Giant",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Path of the Giant",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Arcane Trickster",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Arcane Trickster",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Assassin",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Assassin",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Thief",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Thief",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Inquisitive",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Inquisitive",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Mastermind",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Mastermind",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Scout",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Scout",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Swashbuckler",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Swashbuckler",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Phantom",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Phantom",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Soulknife",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Soulknife",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Scion of the Three",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Phantom",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of Devotion",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of Devotion",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of the Ancients",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of the Ancients",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of Vengeance",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of Vengeance",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oathbreaker",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oathbreaker",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of the Crown",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of the Crown",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of Conquest",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of Conquest",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of Redemption",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of Redemption",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of Glory",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of Glory",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  },
+  {
+   "type": "subclass",
+   "name": "Oath of the Watchers",
+   "data": {
+    "parentClass": "",
+    "levels": [],
+    "features": [],
+    "spells": [],
+    "resources": []
+   }
+  }
+ ]
+}

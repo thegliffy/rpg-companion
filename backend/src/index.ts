@@ -29,7 +29,9 @@ if (process.env.NODE_ENV === "production") {
 
 const sessionMiddleware = createSessionMiddleware();
 
-app.use(express.json());
+// 100kb default is too small for bulk-import packs (#123): a 200-row pack of full book
+// entries (descriptions, actions) easily runs 300kb+.
+app.use(express.json({ limit: "2mb" }));
 app.use(sessionMiddleware);
 // Same-site guard for cookie-riding state changes (see middleware/csrf.ts for the threat model).
 // Mounted app-wide so no future router forgets it; GETs are exempt since they never mutate.
