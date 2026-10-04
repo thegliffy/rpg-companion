@@ -161,7 +161,8 @@ export function Dnd5eSheet({
   const { roll: diceRoll } = useDiceRoll();
   const isOwner = user?.id === character.ownerUserId;
   const [sheet, setSheet] = useState<Dnd5eSheetData>(() => dnd5eSheetSchema.parse(character.sheetData ?? {}));
-  const [view, setView] = useState<"overview" | "magic" | "equipment" | "martial">("overview");
+  const [view, setView] = useState<"combat" | "equipment" | "feats" | "overview">("combat");
+  const [combatSub, setCombatSub] = useState<"martial" | "magic">("martial");
   const [name, setName] = useState(character.name);
   const [hpCurrent, setHpCurrent] = useState(character.hpCurrent != null ? String(character.hpCurrent) : "");
   const [hpMax, setHpMax] = useState(character.hpMax != null ? String(character.hpMax) : "");
@@ -1484,7 +1485,7 @@ export function Dnd5eSheet({
         </div>
       </div>
       <nav className="view-nav">
-        {([["overview", "📜 Overview"], ["magic", "✨ Magic"], ["equipment", "🎒 Equipment"], ["martial", "⚔️ Martial"]] as const).map(
+        {([["combat", "⚔️ Combat"], ["equipment", "🎒 Equipment"], ["feats", "🌟 Feats & Traits"], ["overview", "📜 Overview"]] as const).map(
           ([id, label]) => (
             <button key={id} type="button" className={view === id ? "is-selected" : ""} onClick={() => setView(id)}>
               {label}
@@ -1631,7 +1632,16 @@ export function Dnd5eSheet({
         </div>
       )}
 
-      {view === "martial" && (<>
+      {view === "combat" && (<>
+      <nav className="sub-nav">
+        {([["martial", "⚔️ Martial"], ["magic", "✨ Magic"]] as const).map(
+          ([id, label]) => (
+            <button key={id} type="button" className={combatSub === id ? "is-selected" : ""} onClick={() => setCombatSub(id)}>
+              {label}
+            </button>
+          ),
+        )}
+      </nav>
       {/* Resource tracker strip (reference's combat-header trackers) */}
       {(sheet.spellSlots.length > 0 || sheet.concentratingOn || martialPools.length > 0) && (
         <div className="tracker-strip">
@@ -1664,6 +1674,7 @@ export function Dnd5eSheet({
           })}
         </div>
       )}
+      {combatSub === "martial" && (<>
       <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
         {/* Ability rail: one card per ability, holding score, modifier, and save */}
         <div style={{ ...cardRaised, flex: "0 0 auto", display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: "13rem" }}>
@@ -2318,9 +2329,10 @@ export function Dnd5eSheet({
         </div>
       </div>
       </>)}
+      </>)}
 
       {/* Attacks */}
-      {view === "martial" && (<>
+      {view === "combat" && combatSub === "martial" && (<>
       <div style={cardRaised}>
         <h3 style={{ marginTop: 0 }}>Attacks</h3>
         {sheet.attacks.length > 0 && (
@@ -2451,7 +2463,7 @@ export function Dnd5eSheet({
       </>)}
 
       {/* Spellcasting */}
-      {view === "magic" && (<>
+      {view === "combat" && combatSub === "magic" && (<>
       <CollapsibleSection
         characterId={character.id}
         sectionId="spellcasting"
@@ -3224,7 +3236,7 @@ export function Dnd5eSheet({
       </CollapsibleSection>
       </>)}
 
-      {view === "magic" && (<>
+      {view === "combat" && combatSub === "magic" && (<>
       {/* Wild Shape (Druid) */}
       {isDruid && <WildShapePanel sheet={sheet} setSheet={setSheet} campaignId={character.campaignId} />}
 
@@ -3243,7 +3255,7 @@ export function Dnd5eSheet({
       {showCompanion && <CompanionPanel sheet={sheet} setSheet={setSheet} campaignId={character.campaignId} />}
       </>)}
 
-      {view === "magic" && (<>
+      {view === "combat" && combatSub === "magic" && (<>
       {/* Pact Magic (Warlock): invocations, Mystic Arcanum, Pact Boon */}
       {isWarlock && (
         <div style={box}>
@@ -3436,7 +3448,7 @@ export function Dnd5eSheet({
       </>)}
 
       {/* Feats */}
-      {view === "overview" && (<>
+      {view === "feats" && (<>
       <CollapsibleSection
         characterId={character.id}
         sectionId="feats"
@@ -3535,7 +3547,7 @@ export function Dnd5eSheet({
       )}
 
       {/* Features & traits */}
-      {view === "overview" && (<>
+      {view === "feats" && (<>
       <CollapsibleSection
         characterId={character.id}
         sectionId="features"
