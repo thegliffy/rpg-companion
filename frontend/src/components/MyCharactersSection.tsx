@@ -49,6 +49,7 @@ export function MyCharactersSection({
           key={c.id}
           character={c}
           showCampaign
+          onClick={() => onOpenCharacter(c.id)}
           actions={
             <>
               <button onClick={() => onOpenCharacter(c.id)}>Open sheet</button>

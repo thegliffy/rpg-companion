@@ -12,42 +12,52 @@
  * (#666/#555/#777/#888/#999) and four for borders. Text collapses to two roles (muted/dim); borders
  * keep four, because those genuinely read as different weights in the layout. */
 :root {
-  --surface: #ffffff;
-  --surface-raised: #ffffff;
-  --surface-sunken: #f4f4f4;
+  /* Default theme restyled after the Statkeeper reference: dark navy canvas, warm cream text,
+   * gold accent, serif display face. Values lifted from the reference's own design tokens. */
+  --surface: #10161f;
+  --surface-raised: #171e2a;
+  --surface-sunken: #0c1119;
 
-  --text: #6b6375;
-  --text-heading: #08060d;
-  --text-muted: #666666;
-  --text-dim: #888888;
+  --text: #e8e0d4;
+  --text-heading: #fff9ef;
+  --text-muted: #a99e91;
+  --text-dim: #8b8175;
 
-  --border-faint: #eeeeee;
-  --border-subtle: #dddddd;
-  --border: #cccccc;
-  --border-strong: #bbbbbb;
+  --border-faint: rgba(239, 228, 212, 0.08);
+  --border-subtle: rgba(239, 228, 212, 0.13);
+  --border: rgba(239, 228, 212, 0.13);
+  --border-strong: rgba(239, 228, 212, 0.22);
   /* The app frame's own hairline, distinct from component borders. */
-  --frame-border: #e5e4e7;
+  --frame-border: rgba(239, 228, 212, 0.1);
 
-  --accent: #aa3bff;
-  --accent-contrast: #ffffff;
-  --danger: crimson;
-  --success: #1f6e1f;
-  --warning: #aa6600;
-  --warning-bg: #fff3cd;
-  --overlay: rgba(0, 0, 0, 0.4);
-  --code-bg: #f4f3ec;
+  --accent: #d7ab63;
+  --accent-contrast: #1a1206;
+  --danger: #e16d61;
+  --success: #62b884;
+  --warning: #e3934f;
+  --warning-bg: #2a2012;
+  --overlay: rgba(3, 6, 10, 0.78);
+  --code-bg: #1a2230;
 
-  --font-body: system-ui, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-body);
+  /* Reference palette extras, kept as their own roles so ui.css can use them directly. */
+  --gold: #d7ab63;
+  --gold-bright: #f0c87f;
+  --info-accent: #9cb2c6;
+  --surface-soft: rgba(255, 255, 255, 0.043);
+  --surface-hover: rgba(255, 255, 255, 0.075);
+  --brand-gradient-end: #78332f;
+
+  --font-body: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
   --font-data: ui-monospace, Consolas, monospace;
-  --radius: 6px;
+  --radius: 12px;
 
   /* Decorative page texture -- only the paper/grid themes set these. */
   --surface-texture: none;
   --surface-texture-size: auto;
 
   /* Elevation for raised cards -- only Folio sets a real shadow; every other theme stays flat. */
-  --shadow-card: none;
+  --shadow-card: 0 14px 36px rgba(0, 0, 0, 0.3);
 
   font: 18px/145% var(--font-body);
   letter-spacing: 0.18px;
@@ -55,6 +65,7 @@
   background: var(--surface);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 

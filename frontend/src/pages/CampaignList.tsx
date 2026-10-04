@@ -10,7 +10,6 @@ import { PasswordChangePanel } from "../components/PasswordChangePanel";
 import { ThemePicker } from "../components/ThemePicker";
 import { NotesSection } from "../components/NotesSection";
 import { InitiativeTracker } from "../components/InitiativeTracker";
-import { cardRaised } from "../styles";
 
 export function CampaignList({
   onOpenCampaign,
@@ -67,21 +66,13 @@ export function CampaignList({
   }
 
   return (
-    <div style={{ maxWidth: 1080, margin: "2rem auto", padding: "0 1rem" }}>
-      <div style={{ marginBottom: "1.25rem" }}>
-        <p
-          style={{
-            margin: 0,
-            fontSize: "0.8rem",
-            fontWeight: 600,
-            color: "var(--text-muted)",
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-          }}
-        >
-          Welcome back
+    <div className="page-shell">
+      <div className="hero" style={{ marginBottom: "0.25rem" }}>
+        <p className="eyebrow" style={{ margin: 0 }}>Welcome back</p>
+        <h1 style={{ margin: 0 }}>{user?.username}</h1>
+        <p className="hero__description">
+          Your characters, campaigns, dice and notes — everything a tabletop adventurer carries.
         </p>
-        <h1 style={{ margin: 0, fontFamily: "var(--font-display)" }}>{user?.username}</h1>
       </div>
 
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
@@ -109,26 +100,27 @@ export function CampaignList({
             gated to those roles, so a player has nothing to point one at. */}
         {(user?.role === "dm" || user?.role === "admin") && <ApiTokensPanel />}
 
-        <div style={cardRaised}>
-          <h2 style={{ marginTop: 0 }}>Campaigns</h2>
+        <div className="panel">
+          <h2 className="panel__title">Campaigns</h2>
           {loading ? (
             <p>Loading…</p>
           ) : campaigns.length === 0 ? (
             <p>Not in any campaigns. Playing with a group? Create one or join with an invite code.</p>
           ) : (
-            <ul style={{ margin: 0, paddingLeft: "1.2rem" }}>
+            <ul className="card-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(100%,14rem),1fr))" }}>
               {campaigns.map((c) => (
-                <li key={c.id}>
-                  <button onClick={() => onOpenCampaign(c.id)}>
-                    {c.name} <em>({c.role})</em>
-                  </button>
+                <li key={c.id} style={{ minWidth: 0 }}>
+                  <div className="click-card" style={{ minHeight: 0 }} onClick={() => onOpenCampaign(c.id)} role="button" tabIndex={0}>
+                    <p className="click-card__eyebrow">{c.role}</p>
+                    <p className="click-card__title" style={{ fontSize: "1.3rem" }}>{c.name}</p>
+                  </div>
                 </li>
               ))}
             </ul>
           )}
         </div>
 
-        <div style={cardRaised}>
+        <div className="panel">
           {(user?.role === "dm" || user?.role === "admin") && (
             <>
               <h3 style={{ marginTop: 0 }}>Create a campaign</h3>

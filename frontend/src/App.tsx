@@ -38,30 +38,38 @@ function App() {
 
   return (
     <div>
-      <header className="no-print" style={{ display: "flex", justifyContent: "space-between", padding: "1rem 2rem" }}>
-        <span>Signed in as {user.username}</span>
-        <span>
+      <header className="no-print app-header">
+        <span className="brand">
+          <span className="brand__mark">⚔</span>
+          <span className="brand__wordmark">RPG Companion</span>
+        </span>
+        <span className="app-header__nav">
+          <span style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginRight: "0.5rem" }}>
+            Signed in as <strong style={{ color: "var(--text-heading)" }}>{user.username}</strong>
+          </span>
           {view.name !== "bestiary" && (
-            <button onClick={() => setView({ name: "bestiary" })} style={{ marginRight: "0.5rem" }}>
+            <button className="btn" onClick={() => setView({ name: "bestiary" })}>
               Bestiary
             </button>
           )}
           {view.name !== "arena" && (
-            <button onClick={() => setView({ name: "arena" })} style={{ marginRight: "0.5rem" }}>
+            <button className="btn" onClick={() => setView({ name: "arena" })}>
               Arena
             </button>
           )}
           {(user.role === "dm" || user.role === "admin") && view.name !== "custom-content" && (
-            <button onClick={() => setView({ name: "custom-content" })} style={{ marginRight: "0.5rem" }}>
+            <button className="btn" onClick={() => setView({ name: "custom-content" })}>
               My custom content
             </button>
           )}
           {user.role === "admin" && view.name !== "admin" && (
-            <button onClick={() => setView({ name: "admin" })} style={{ marginRight: "0.5rem" }}>
+            <button className="btn" onClick={() => setView({ name: "admin" })}>
               Admin panel
             </button>
           )}
-          <button onClick={() => logout()}>Log out</button>
+          <button className="btn" onClick={() => logout()}>
+            Log out
+          </button>
         </span>
       </header>
 
