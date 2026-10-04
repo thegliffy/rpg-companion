@@ -310,3 +310,68 @@
 * {
   scrollbar-color: var(--border-strong) var(--surface);
 }
+
+/* ---- View navigation (sticky tab bar, from the reference's .view-navigation) ---- */
+
+.view-nav {
+  position: sticky;
+  top: 0;
+  z-index: 35;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(14px) saturate(1.15);
+  border-radius: 0.9rem;
+  overflow: hidden;
+}
+
+.view-nav button {
+  border: 0;
+  border-right: 1px solid var(--border);
+  min-width: 0;
+  min-height: 3.25rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: center;
+  background: transparent;
+  gap: 0.07rem;
+  padding: 0.58rem 0.9rem;
+  display: grid;
+  place-items: center;
+  position: relative;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 850;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.view-nav button:last-child {
+  border-right: 0;
+}
+
+.view-nav button::after {
+  content: "";
+  background: transparent;
+  border-radius: 99px 99px 0 0;
+  height: 0.18rem;
+  position: absolute;
+  bottom: 0;
+  left: 0.85rem;
+  right: 0.85rem;
+  transition: background 120ms ease;
+}
+
+.view-nav button:hover {
+  background: var(--surface-hover, var(--surface-sunken));
+  color: var(--text-heading);
+}
+
+.view-nav button.is-selected {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text-heading);
+}
+
+.view-nav button.is-selected::after {
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 60%, var(--text-heading)));
+}

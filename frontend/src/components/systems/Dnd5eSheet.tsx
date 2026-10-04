@@ -161,6 +161,7 @@ export function Dnd5eSheet({
   const { roll: diceRoll } = useDiceRoll();
   const isOwner = user?.id === character.ownerUserId;
   const [sheet, setSheet] = useState<Dnd5eSheetData>(() => dnd5eSheetSchema.parse(character.sheetData ?? {}));
+  const [view, setView] = useState<"overview" | "magic" | "equipment" | "martial">("overview");
   const [name, setName] = useState(character.name);
   const [hpCurrent, setHpCurrent] = useState(character.hpCurrent != null ? String(character.hpCurrent) : "");
   const [hpMax, setHpMax] = useState(character.hpMax != null ? String(character.hpMax) : "");
@@ -1222,6 +1223,7 @@ export function Dnd5eSheet({
   return (
     <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: "1rem" }}>
       {/* Status: always interactive even in read-only mode, so Reactivate can escape it */}
+      {view === "overview" && (<>
       <div style={box}>
         <h3>Status</h3>
         {sheet.status === "active" ? (
@@ -1269,6 +1271,7 @@ export function Dnd5eSheet({
           </p>
         </div>
       )}
+      </>)}
 
       <fieldset disabled={readOnly} style={{ border: "none", margin: 0, padding: 0, display: "contents" }}>
       {/* Header */}
@@ -1465,6 +1468,15 @@ export function Dnd5eSheet({
         </label>
         </div>
       </div>
+      <nav className="view-nav">
+        {([["overview", "📜 Overview"], ["magic", "✨ Magic"], ["equipment", "🎒 Equipment"], ["martial", "⚔️ Martial"]] as const).map(
+          ([id, label]) => (
+            <button key={id} type="button" className={view === id ? "is-selected" : ""} onClick={() => setView(id)}>
+              {label}
+            </button>
+          ),
+        )}
+      </nav>
 
       {levelUpPending && (
         <div style={box}>
@@ -1604,6 +1616,7 @@ export function Dnd5eSheet({
         </div>
       )}
 
+      {view === "martial" && (<>
       <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
         {/* Ability rail: one card per ability, holding score, modifier, and save */}
         <div style={{ ...cardRaised, flex: "0 0 auto", display: "flex", flexDirection: "column", gap: "0.5rem", minWidth: "13rem" }}>
@@ -2259,8 +2272,10 @@ export function Dnd5eSheet({
           {restMessage && <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", maxWidth: "16rem" }}>{restMessage}</p>}
         </div>
       </div>
+      </>)}
 
       {/* Attacks */}
+      {view === "martial" && (<>
       <div style={cardRaised}>
         <h3 style={{ marginTop: 0 }}>Attacks</h3>
         {sheet.attacks.map((atk, i) => {
@@ -2366,8 +2381,10 @@ export function Dnd5eSheet({
           Add attack
         </button>
       </div>
+      </>)}
 
       {/* Spellcasting */}
+      {view === "magic" && (<>
       <CollapsibleSection
         characterId={character.id}
         sectionId="spellcasting"
@@ -2754,6 +2771,7 @@ export function Dnd5eSheet({
           />
         )}
       </CollapsibleSection>
+      </>)}
       {/* Rendered outside the Spellcasting CollapsibleSection above: a prepared caster who hid
           that section would otherwise get no modal when longRest() sets prepareSpellsOpen, since
           the section unmounts its children while collapsed. */}
@@ -2770,6 +2788,7 @@ export function Dnd5eSheet({
       )}
 
       {/* Inventory */}
+      {view === "equipment" && (<>
       <CollapsibleSection
         characterId={character.id}
         sectionId="inventory"
@@ -3136,7 +3155,9 @@ export function Dnd5eSheet({
         <h4>Other equipment notes</h4>
         <textarea value={sheet.equipmentText} onChange={(e) => set("equipmentText", e.target.value)} rows={3} style={{ width: "100%" }} />
       </CollapsibleSection>
+      </>)}
 
+      {view === "magic" && (<>
       {/* Wild Shape (Druid) */}
       {isDruid && <WildShapePanel sheet={sheet} setSheet={setSheet} campaignId={character.campaignId} />}
 
@@ -3153,7 +3174,9 @@ export function Dnd5eSheet({
 
       {/* Companion creature (any subclass/class feature with grantsCompanion set) */}
       {showCompanion && <CompanionPanel sheet={sheet} setSheet={setSheet} campaignId={character.campaignId} />}
+      </>)}
 
+      {view === "magic" && (<>
       {/* Pact Magic (Warlock): invocations, Mystic Arcanum, Pact Boon */}
       {isWarlock && (
         <div style={box}>
@@ -3343,8 +3366,10 @@ export function Dnd5eSheet({
           </div>
         </div>
       )}
+      </>)}
 
       {/* Feats */}
+      {view === "overview" && (<>
       <CollapsibleSection
         characterId={character.id}
         sectionId="feats"
@@ -3433,6 +3458,7 @@ export function Dnd5eSheet({
           Add feat
         </button>
       </CollapsibleSection>
+      </>)}
       {/* Rendered outside the Feats CollapsibleSection above: that section defaults collapsed
           (unmounting its children) whenever the character has no feats yet -- exactly the state
           at a first ASI's "take a feat" pick, which would otherwise silently consume the ASI with
@@ -3442,6 +3468,7 @@ export function Dnd5eSheet({
       )}
 
       {/* Features & traits */}
+      {view === "overview" && (<>
       <CollapsibleSection
         characterId={character.id}
         sectionId="features"
@@ -3561,8 +3588,10 @@ export function Dnd5eSheet({
         </h4>
         <textarea value={sheet.featuresText} onChange={(e) => set("featuresText", e.target.value)} rows={5} style={{ width: "100%" }} />
       </CollapsibleSection>
+      </>)}
 
       {/* Text sections */}
+      {view === "overview" && (<>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
         <label style={box}>
           Proficiencies &amp; languages
@@ -3593,6 +3622,7 @@ export function Dnd5eSheet({
           )}
         </CollapsibleSection>
       </div>
+      </>)}
 
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
       {!readOnly && (
@@ -3611,9 +3641,11 @@ export function Dnd5eSheet({
         </div>
       )}
 
+      {view === "overview" && (<>
       <div style={box}>
         <DiceRoller campaignId={character.campaignId} />
       </div>
+      </>)}
       </fieldset>
     </div>
   );
