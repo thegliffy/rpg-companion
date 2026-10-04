@@ -176,7 +176,7 @@ export const shopItems = sqliteTable("shop_items", {
 
 export const customContent = sqliteTable("custom_content", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  type: text("type", { enum: ["race", "class", "background", "subrace", "subclass", "feat", "spell", "item", "monster"] }).notNull(),
+  type: text("type", { enum: ["race", "class", "background", "subrace", "subclass", "feat", "spell", "item", "monster", "deity", "language"] }).notNull(),
   // Which game system this content belongs to -- existing rows (pre-dating this column) are
   // all 5e, hence the default. Determines which sheet pickers/manager forms show the item.
   system: text("system", { enum: ["generic", "dnd5e", "pf2e"] }).notNull().default("dnd5e"),

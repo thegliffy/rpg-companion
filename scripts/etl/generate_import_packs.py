@@ -766,6 +766,34 @@ def map_monster(x):
             d["legendaryActions"].append(entry)
     return d
 
+# ---------------------------------------------------------------- deities ----
+def map_deity(x):
+    return {"pantheon": strip_tags(x.get("pantheon", ""))[:60],
+            "title": strip_tags(x.get("title", ""))[:120],
+            "category": strip_tags(x.get("category", ""))[:60],
+            "alignment": ALIGN_TEXT(x.get("alignment")),
+            "domains": [strip_tags(d)[:40] for d in (x.get("domains") or [])[:10] if isinstance(d, str)],
+            "province": strip_tags(x.get("province", ""))[:120],
+            "symbol": strip_tags(x.get("symbol", ""))[:200],
+            "description": join_desc(x.get("entries"), 4000)}
+
+def ALIGN_TEXT(al):
+    if isinstance(al, str):
+        al = [al]
+    if not isinstance(al, list):
+        return ""
+    parts = [ALIGN.get(str(a), str(a)) for a in al if a]
+    return " ".join(p for p in parts if p)[:40]
+
+# -------------------------------------------------------------- languages ----
+def map_language(x, scripts_by_name):
+    speakers = [strip_tags(s)[:60] for s in (x.get("typicalSpeakers") or [])[:20] if isinstance(s, str)]
+    script = x.get("script") or scripts_by_name.get(x["name"].lower(), "")
+    return {"languageType": str(x.get("type", ""))[:30],
+            "script": strip_tags(script)[:60],
+            "typicalSpeakers": speakers,
+            "description": join_desc(x.get("entries"), 4000)}
+
 # ------------------------------------------------------------------ main ----
 def main():
     os.makedirs(OUT, exist_ok=True)
@@ -843,6 +871,16 @@ def main():
             m = map_monster(x)
             if m:
                 packs["monster"].append({"type": "monster", "name": strip_tags(x["name"])[:60], "data": m})
+
+    # deities + languages (reference content)
+    deity_index = build_index([f"{DATA}/deities.json"], "deity")
+    for x in resolve_copies([e for e in entries_of(load(f"{DATA}/deities.json"), "deity") if isinstance(e, dict) and in_shelf(e)], deity_index):
+        packs["deity"].append({"type": "deity", "name": strip_tags(x["name"])[:60], "data": map_deity(x)})
+    langd = load(f"{DATA}/languages.json")
+    scripts_by_name = {str(s.get("name","")).lower(): s.get("name","") for s in langd.get("languageScript", []) if isinstance(s, dict)}
+    lang_index = build_index([f"{DATA}/languages.json"], "language")
+    for x in resolve_copies([e for e in entries_of(load(f"{DATA}/languages.json"), "language") if isinstance(e, dict) and in_shelf(e)], lang_index):
+        packs["language"].append({"type": "language", "name": strip_tags(x["name"])[:60], "data": map_language(x, scripts_by_name)})
 
     # write chunked packs
     CAP = 200

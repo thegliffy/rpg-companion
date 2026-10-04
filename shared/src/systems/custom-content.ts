@@ -1383,7 +1383,7 @@ export function customMonsterToSrdShape(item: CustomContent): SrdMonster {
 }
 
 export const createCustomContentSchema = z.object({
-  type: z.enum(["race", "class", "background", "subrace", "subclass", "feat", "spell", "item", "monster"]),
+  type: z.enum(["race", "class", "background", "subrace", "subclass", "feat", "spell", "item", "monster", "deity", "language"]),
   system: z.enum(["generic", "dnd5e", "pf2e"]).default("dnd5e"),
   name: z.string().trim().min(1).max(60),
   data: z.unknown(),
@@ -1393,10 +1393,35 @@ export const createCustomContentSchema = z.object({
 // custom-content types yet (their sheets don't have the SRD-backed pickers 5e does) -- the
 // manager UI uses this to show only the types that apply to the selected system.
 export const CUSTOM_CONTENT_TYPES_BY_SYSTEM: Record<CustomContentSystem, CustomContentType[]> = {
-  dnd5e: ["race", "subrace", "class", "subclass", "background", "feat", "spell", "item", "monster"],
+  dnd5e: ["race", "subrace", "class", "subclass", "background", "feat", "spell", "item", "monster", "deity", "language"],
   pf2e: [],
   generic: [],
 };
+
+// Deity and language reference entries (book-import counterpart of the wiki's deities.json /
+// languages.json). Reference-only content: nothing computes off them yet, they exist so a
+// character's faith and the languages it speaks can point at a real entry (and so bulk-import
+// packs from the books land whole). Kept deliberately flat and text-shaped for the same reason.
+export const customDeityDataSchema = z.object({
+  pantheon: z.string().trim().max(60).default(""),
+  title: z.string().trim().max(120).default(""),
+  category: z.string().trim().max(60).default(""),
+  alignment: z.string().trim().max(40).default(""),
+  domains: z.array(z.string().trim().max(40)).max(10).default([]),
+  province: z.string().trim().max(120).default(""),
+  symbol: z.string().trim().max(200).default(""),
+  description: z.string().trim().max(4000).default(""),
+}).strict();
+export type CustomDeityData = z.infer<typeof customDeityDataSchema>;
+
+export const customLanguageDataSchema = z.object({
+  // "standard" | "exotic" | "secret" (wiki's type field); free text so homebrew can label its own.
+  languageType: z.string().trim().max(30).default(""),
+  script: z.string().trim().max(60).default(""),
+  typicalSpeakers: z.array(z.string().trim().max(60)).max(20).default([]),
+  description: z.string().trim().max(4000).default(""),
+}).strict();
+export type CustomLanguageData = z.infer<typeof customLanguageDataSchema>;
 
 // The single per-type schema lookup every write path (create, PATCH, import) already needs --
 // moved here from customContent.routes.ts so the frontend can reuse it too (#181). A stored
@@ -1428,6 +1453,10 @@ export function customContentDataSchemaFor(type: CustomContentType) {
       return customItemDataSchema;
     case "monster":
       return customMonsterDataSchema;
+    case "deity":
+      return customDeityDataSchema;
+    case "language":
+      return customLanguageDataSchema;
   }
 }
 
@@ -1446,7 +1475,7 @@ export const importCustomContentSchema = z.object({
   items: z
     .array(
       z.object({
-        type: z.enum(["race", "class", "background", "subrace", "subclass", "feat", "spell", "item", "monster"]),
+        type: z.enum(["race", "class", "background", "subrace", "subclass", "feat", "spell", "item", "monster", "deity", "language"]),
         name: z.string().trim().min(1).max(60),
         data: z.unknown(),
       }),

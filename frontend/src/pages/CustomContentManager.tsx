@@ -54,6 +54,8 @@ export const TYPE_LABELS: Record<CustomContentType, string> = {
   spell: "Spell",
   item: "Item",
   monster: "Monster",
+  deity: "Deity",
+  language: "Language",
 };
 
 export const SYSTEM_LABELS: Record<CustomContentSystem, string> = {
@@ -1024,6 +1026,22 @@ export function CustomContentManager({
   const [monsterLegendaryActionsText, setMonsterLegendaryActionsText] = useState("");
   const [monsterLegendaryActionsPerRound, setMonsterLegendaryActionsPerRound] = useState("3");
 
+  // Deity fields (reference content; nothing computes off them yet)
+  const [deityPantheon, setDeityPantheon] = useState("");
+  const [deityTitle, setDeityTitle] = useState("");
+  const [deityCategory, setDeityCategory] = useState("");
+  const [deityAlignment, setDeityAlignment] = useState("");
+  const [deityDomainsText, setDeityDomainsText] = useState("");
+  const [deityProvince, setDeityProvince] = useState("");
+  const [deitySymbol, setDeitySymbol] = useState("");
+  const [deityDescription, setDeityDescription] = useState("");
+
+  // Language fields
+  const [languageType, setLanguageType] = useState("");
+  const [languageScript, setLanguageScript] = useState("");
+  const [languageSpeakersText, setLanguageSpeakersText] = useState("");
+  const [languageDescription, setLanguageDescription] = useState("");
+
   function refresh() {
     customContentApi
       .listCustomContent()
@@ -1479,6 +1497,18 @@ export function CustomContentManager({
     setMonsterActionsText("");
     setMonsterLegendaryActionsText("");
     setMonsterLegendaryActionsPerRound("3");
+    setDeityPantheon("");
+    setDeityTitle("");
+    setDeityCategory("");
+    setDeityAlignment("");
+    setDeityDomainsText("");
+    setDeityProvince("");
+    setDeitySymbol("");
+    setDeityDescription("");
+    setLanguageType("");
+    setLanguageScript("");
+    setLanguageSpeakersText("");
+    setLanguageDescription("");
   }
 
   function startEdit(item: CustomContent) {
@@ -1904,6 +1934,27 @@ export function CustomContentManager({
       setItemToggleSpeedMultiplier(String(d.toggledEffect?.speedMultiplier ?? 1));
       setItemToggleDamageTypeOptionsText((d.toggledEffect?.damageTypeOptions ?? []).join(", "));
       setItemToggleFlySpeed(String(d.toggledEffect?.flySpeed ?? 0));
+    } else if (item.type === "deity") {
+      const d = item.data as {
+        pantheon?: string; title?: string; category?: string; alignment?: string;
+        domains?: string[]; province?: string; symbol?: string; description?: string;
+      };
+      setDeityPantheon(d.pantheon ?? "");
+      setDeityTitle(d.title ?? "");
+      setDeityCategory(d.category ?? "");
+      setDeityAlignment(d.alignment ?? "");
+      setDeityDomainsText((d.domains ?? []).join(", "));
+      setDeityProvince(d.province ?? "");
+      setDeitySymbol(d.symbol ?? "");
+      setDeityDescription(d.description ?? "");
+    } else if (item.type === "language") {
+      const d = item.data as {
+        languageType?: string; script?: string; typicalSpeakers?: string[]; description?: string;
+      };
+      setLanguageType(d.languageType ?? "");
+      setLanguageScript(d.script ?? "");
+      setLanguageSpeakersText((d.typicalSpeakers ?? []).join(", "));
+      setLanguageDescription(d.description ?? "");
     } else {
       const d = item.data as {
         size: string;
@@ -2313,6 +2364,24 @@ export function CustomContentManager({
             damageTypeOptions: splitCsv(itemToggleDamageTypeOptionsText),
             flySpeed: Number(itemToggleFlySpeed) || 0,
           },
+        };
+      } else if (type === "deity") {
+        data = {
+          pantheon: deityPantheon.trim(),
+          title: deityTitle.trim(),
+          category: deityCategory.trim(),
+          alignment: deityAlignment.trim(),
+          domains: splitCsv(deityDomainsText),
+          province: deityProvince.trim(),
+          symbol: deitySymbol.trim(),
+          description: deityDescription.trim(),
+        };
+      } else if (type === "language") {
+        data = {
+          languageType: languageType.trim(),
+          script: languageScript.trim(),
+          typicalSpeakers: splitCsv(languageSpeakersText),
+          description: languageDescription.trim(),
         };
       } else {
         data = {
@@ -5437,6 +5506,80 @@ export function CustomContentManager({
                   onChange={(e) => setItemToggleAppliesToSpellAttacks(e.target.checked)}
                 />{" "}
                 Applies to spell attacks too (not just weapon attacks)
+              </label>
+            </div>
+          </>
+        ) : type === "deity" ? (
+          <>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
+              <label>
+                Pantheon <input value={deityPantheon} onChange={(e) => setDeityPantheon(e.target.value)} placeholder="e.g. Dwarven" style={{ width: "10rem" }} />
+              </label>
+              <label>
+                Category <input value={deityCategory} onChange={(e) => setDeityCategory(e.target.value)} placeholder="e.g. Greater Deity" style={{ width: "10rem" }} />
+              </label>
+              <label>
+                Alignment <input value={deityAlignment} onChange={(e) => setDeityAlignment(e.target.value)} placeholder="e.g. neutral evil" style={{ width: "10rem" }} />
+              </label>
+            </div>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
+              <label>
+                Title <input value={deityTitle} onChange={(e) => setDeityTitle(e.target.value)} placeholder="e.g. The Blood Queen" style={{ width: "14rem" }} />
+              </label>
+              <label>
+                Province <input value={deityProvince} onChange={(e) => setDeityProvince(e.target.value)} placeholder="e.g. War, Strategy" style={{ width: "14rem" }} />
+              </label>
+            </div>
+            <div style={{ marginTop: "0.5rem" }}>
+              <label>
+                Domains (comma-separated)
+                <br />
+                <input value={deityDomainsText} onChange={(e) => setDeityDomainsText(e.target.value)} placeholder="e.g. War, Tempest" style={{ width: "20rem" }} />
+              </label>
+            </div>
+            <div style={{ marginTop: "0.5rem" }}>
+              <label>
+                Symbol
+                <br />
+                <input value={deitySymbol} onChange={(e) => setDeitySymbol(e.target.value)} placeholder="e.g. Jeweled dagger, point down" style={{ width: "100%" }} />
+              </label>
+            </div>
+            <div style={{ marginTop: "0.5rem" }}>
+              <label style={{ display: "block" }}>
+                Description
+                <br />
+                <textarea value={deityDescription} onChange={(e) => setDeityDescription(e.target.value)} rows={4} style={{ width: "100%" }} />
+              </label>
+            </div>
+          </>
+        ) : type === "language" ? (
+          <>
+            <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
+              <label>
+                Type{" "}
+                <select value={languageType} onChange={(e) => setLanguageType(e.target.value)}>
+                  <option value="">—</option>
+                  <option value="standard">Standard</option>
+                  <option value="exotic">Exotic</option>
+                  <option value="secret">Secret</option>
+                </select>
+              </label>
+              <label>
+                Script <input value={languageScript} onChange={(e) => setLanguageScript(e.target.value)} placeholder="e.g. Common, Draconic" style={{ width: "10rem" }} />
+              </label>
+            </div>
+            <div style={{ marginTop: "0.5rem" }}>
+              <label>
+                Typical speakers (comma-separated)
+                <br />
+                <input value={languageSpeakersText} onChange={(e) => setLanguageSpeakersText(e.target.value)} placeholder="e.g. Humans, dwarves" style={{ width: "100%" }} />
+              </label>
+            </div>
+            <div style={{ marginTop: "0.5rem" }}>
+              <label style={{ display: "block" }}>
+                Description
+                <br />
+                <textarea value={languageDescription} onChange={(e) => setLanguageDescription(e.target.value)} rows={3} style={{ width: "100%" }} />
               </label>
             </div>
           </>
