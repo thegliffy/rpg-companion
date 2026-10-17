@@ -74,3 +74,9 @@ export async function removeCombatant(id: number): Promise<EncounterSnapshot> {
   const data = await parseOrThrow(res);
   return data.encounter;
 }
+
+export async function rollInitiative(id: number): Promise<EncounterSnapshot> {
+  const res = await fetch(`/api/encounters/combatants/${id}/roll-initiative`, { method: "POST" });
+  const data = await parseOrThrow(res);
+  return data.encounter;
+}

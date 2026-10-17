@@ -77,7 +77,19 @@ export function InitiativeTracker({
                   fontWeight: index === encounter.currentTurnIndex ? "bold" : "normal",
                 }}
               >
-                {c.name} (init {c.initiative}) &mdash; HP {c.hpCurrent ?? "?"}/{c.hpMax ?? "?"}
+                {c.name} (init{" "}
+                {isDM ? (
+                  <button
+                    style={{ padding: "0 2px", background: "none", border: "none", cursor: "pointer", font: "inherit", color: "var(--accent)" }}
+                    title="Roll initiative (d20 + this character's initiative modifier)"
+                    onClick={() => guard(() => encountersApi.rollInitiative(c.id))}
+                  >
+                    {c.initiative}
+                  </button>
+                ) : (
+                  c.initiative
+                )}
+                ) &mdash; HP {c.hpCurrent ?? "?"}/{c.hpMax ?? "?"}
                 {c.conditions.length > 0 && <em> [{c.conditions.join(", ")}]</em>}
                 {isDM && (
                   <>
