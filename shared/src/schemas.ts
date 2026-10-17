@@ -195,3 +195,13 @@ export const createRollSchema = z.object({
 });
 
 export type CreateRollInput = z.infer<typeof createRollSchema>;
+
+// Admin AI settings (Settings page). All fields optional so PATCH can update a subset; the
+// backend validates URLs/models against the live backends' own shape (see settings.service).
+export const aiSettingsSchema = z.object({
+  llmUrl: z.string().trim().url().max(300).optional(),
+  llmModel: z.string().trim().max(200).optional(),
+  comfyUrl: z.string().trim().url().max(300).optional(),
+  comfyCheckpoint: z.string().trim().max(300).optional(),
+});
+export type AiSettingsInput = z.infer<typeof aiSettingsSchema>;

@@ -141,6 +141,13 @@
       "when": 1792199963957,
       "tag": "0019_elite_lorna_dane",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1792202483703,
+      "tag": "0020_redundant_fallen_one",
+      "breakpoints": true
     }
   ]
 }

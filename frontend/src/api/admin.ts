@@ -77,3 +77,37 @@ export async function reassignCharacterOwner(id: number, ownerUserId: number): P
   const data = await parseOrThrow(res);
   return data.character;
 }
+
+// --- AI settings ---------------------------------------------------------------------------
+
+export interface AiSettings {
+  llmUrl: string;
+  llmModel: string;
+  comfyUrl: string;
+  comfyCheckpoint: string;
+}
+
+export interface AiTestResult {
+  llm: { ok: boolean; detail: string };
+  comfy: { ok: boolean; detail: string };
+}
+
+export async function getAiSettings(): Promise<AiSettings> {
+  const data = await parseOrThrow(await fetch("/api/admin/settings/ai"));
+  return data.settings;
+}
+
+export async function saveAiSettings(settings: Partial<AiSettings>): Promise<AiSettings> {
+  const data = await parseOrThrow(
+    await fetch("/api/admin/settings/ai", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    }),
+  );
+  return data.settings;
+}
+
+export async function testAiSettings(): Promise<AiTestResult> {
+  return parseOrThrow(await fetch("/api/admin/settings/ai/test"));
+}

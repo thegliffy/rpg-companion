@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { updateUserRoleSchema, resetUserPasswordSchema, reassignCharacterOwnerSchema } from "shared";
+import { updateUserRoleSchema, resetUserPasswordSchema, reassignCharacterOwnerSchema, aiSettingsSchema } from "shared";
+import { getAiSettings, setAiSettings } from "../services/settings.service.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import {
   listUsers,
@@ -131,4 +132,66 @@ adminRouter.delete("/users/:id", async (req, res) => {
 
   await deleteUser(id);
   res.status(204).send();
+});
+
+// --- AI settings ---------------------------------------------------------------------------
+// Admin-configurable AI backends (see settings.service.ts). GET returns the effective values
+// (saved overrides, falling back to env defaults); PUT upserts a subset. The test endpoints
+// ping each backend so the Settings page can show which one is broken before you generate.
+
+adminRouter.get("/settings/ai", (_req, res) => {
+  res.json({ settings: getAiSettings() });
+});
+
+adminRouter.put("/settings/ai", async (req, res) => {
+  const parsed = aiSettingsSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });
+    return;
+  }
+  res.json({ settings: await setAiSettings(parsed.data) });
+});
+
+adminRouter.get("/settings/ai/test", async (_req, res) => {
+  const settings = getAiSettings();
+  const out: { llm: { ok: boolean; detail: string }; comfy: { ok: boolean; detail: string } } = {
+    llm: { ok: false, detail: "" },
+    comfy: { ok: false, detail: "" },
+  };
+
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 10_000);
+    const r = await fetch(`${settings.llmUrl}/models`, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (r.ok) {
+      const data = (await r.json()) as { data?: { id: string }[] };
+      const ids = (data.data ?? []).map((m) => m.id);
+      const found = ids.includes(settings.llmModel);
+      out.llm = { ok: found, detail: found ? `model present (${settings.llmModel})` : `reachable, but model not loaded. Loaded: ${ids.join(", ") || "none"}` };
+    } else {
+      out.llm = { ok: false, detail: `HTTP ${r.status}` };
+    }
+  } catch (err) {
+    out.llm = { ok: false, detail: err instanceof Error ? err.message : "unreachable" };
+  }
+
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 10_000);
+    const r = await fetch(`${settings.comfyUrl}/object_info/CheckpointLoaderSimple`, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (r.ok) {
+      const data = (await r.json()) as Record<string, { input?: { required?: Record<string, [string[]]> } }>;
+      const names = data.CheckpointLoaderSimple?.input?.required?.ckpt_name?.[0] ?? [];
+      const found = names.includes(settings.comfyCheckpoint);
+      out.comfy = { ok: found, detail: found ? `checkpoint present (${settings.comfyCheckpoint})` : `reachable, but checkpoint missing. Available: ${names.join(", ") || "none"}` };
+    } else {
+      out.comfy = { ok: false, detail: `HTTP ${r.status}` };
+    }
+  } catch (err) {
+    out.comfy = { ok: false, detail: err instanceof Error ? err.message : "unreachable" };
+  }
+
+  res.json(out);
 });

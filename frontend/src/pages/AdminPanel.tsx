@@ -22,7 +22,7 @@ import { card } from "../styles";
 const ROLES: GlobalRole[] = ["player", "dm", "admin"];
 const CONTENT_TYPES = CUSTOM_CONTENT_TYPES_BY_SYSTEM.dnd5e;
 
-type Tab = "users" | "content" | "characters";
+type Tab = "users" | "content" | "characters" | "settings";
 
 // Loops single-item routes rather than adding bulk endpoints (#130), same reuse #123's importer
 // makes of the per-row create/update routes. Partial failure is reported per-row, not all-or-nothing.
@@ -80,6 +80,13 @@ export function AdminPanel({
   const [characterBulkMessage, setCharacterBulkMessage] = useState<string | null>(null);
   const [reassignTarget, setReassignTarget] = useState<Record<number, string>>({});
 
+  // Settings tab (AI backends)
+  const [aiSettings, setAiSettings] = useState<adminApi.AiSettings | null>(null);
+  const [aiTest, setAiTest] = useState<adminApi.AiTestResult | null>(null);
+  const [aiSaving, setAiSaving] = useState(false);
+  const [aiTesting, setAiTesting] = useState(false);
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
+
   function refreshUsers() {
     return adminApi.listUsers().then(setUsers);
   }
@@ -95,9 +102,12 @@ export function AdminPanel({
   function refreshCharacters() {
     return adminApi.listAllCharacters().then(setCharacters);
   }
+  function refreshAiSettings() {
+    return adminApi.getAiSettings().then(setAiSettings);
+  }
 
   useEffect(() => {
-    Promise.all([refreshUsers(), refreshPending(), refreshContent(), refreshDuplicates(), refreshCharacters()])
+    Promise.all([refreshUsers(), refreshPending(), refreshContent(), refreshDuplicates(), refreshCharacters(), refreshAiSettings()])
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load"))
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -358,6 +368,7 @@ export function AdminPanel({
             ["users", `Users (${users.length})`],
             ["content", `Custom content (${content.length})`],
             ["characters", `Characters (${characters.length})`],
+            ["settings", "Settings"],
           ] as [Tab, string][]
         ).map(([t, label]) => (
           <button
@@ -625,7 +636,7 @@ export function AdminPanel({
           </table>
           {filteredContent.length === 0 && <p>No matching items.</p>}
         </div>
-      ) : (
+      ) : tab === "characters" ? (
         <div>
           <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.5rem" }}>
             <input
@@ -719,7 +730,75 @@ export function AdminPanel({
           </table>
           {filteredCharacters.length === 0 && <p>No matching characters.</p>}
         </div>
+      ) : (
+        <div style={{ maxWidth: 640 }}>
+          <h3>AI backends</h3>
+          <p style={{ color: "var(--text-dim)", fontSize: "0.85rem" }}>
+            Used by the AI Studio on character sheets: backstory generation talks to an
+            OpenAI-compatible chat endpoint; portrait generation queues jobs on a ComfyUI server.
+            Leave a field at its default to keep the env-based fallback.
+          </p>
+          {aiSettings && (
+            <>
+              <label style={settingsLabel}>LLM base URL (OpenAI-compatible, e.g. http://host:port/v1)</label>
+              <input style={settingsInput} value={aiSettings.llmUrl} onChange={(e) => setAiSettings({ ...aiSettings, llmUrl: e.target.value })} />
+              <label style={settingsLabel}>LLM model name</label>
+              <input style={settingsInput} value={aiSettings.llmModel} onChange={(e) => setAiSettings({ ...aiSettings, llmModel: e.target.value })} />
+              <label style={settingsLabel}>ComfyUI server URL</label>
+              <input style={settingsInput} value={aiSettings.comfyUrl} onChange={(e) => setAiSettings({ ...aiSettings, comfyUrl: e.target.value })} />
+              <label style={settingsLabel}>ComfyUI checkpoint (must exist on that server)</label>
+              <input style={settingsInput} value={aiSettings.comfyCheckpoint} onChange={(e) => setAiSettings({ ...aiSettings, comfyCheckpoint: e.target.value })} />
+              <p style={{ marginTop: "0.75rem" }}>
+                <button
+                  type="button"
+                  disabled={aiSaving}
+                  onClick={async () => {
+                    setAiSaving(true);
+                    setAiMessage(null);
+                    try {
+                      setAiSettings(await adminApi.saveAiSettings(aiSettings));
+                      setAiMessage("Saved.");
+                    } catch (err) {
+                      setAiMessage(err instanceof Error ? err.message : "Save failed");
+                    } finally {
+                      setAiSaving(false);
+                    }
+                  }}
+                >
+                  {aiSaving ? "Saving…" : "Save"}
+                </button>{" "}
+                <button
+                  type="button"
+                  disabled={aiTesting}
+                  onClick={async () => {
+                    setAiTesting(true);
+                    setAiTest(null);
+                    try {
+                      setAiTest(await adminApi.testAiSettings());
+                    } catch (err) {
+                      setAiMessage(err instanceof Error ? err.message : "Test failed");
+                    } finally {
+                      setAiTesting(false);
+                    }
+                  }}
+                >
+                  {aiTesting ? "Testing…" : "Test connections"}
+                </button>
+              </p>
+              {aiMessage && <p style={{ color: "var(--accent)" }}>{aiMessage}</p>}
+              {aiTest && (
+                <ul style={{ fontSize: "0.85rem" }}>
+                  <li style={{ color: aiTest.llm.ok ? "var(--success, green)" : "var(--danger)" }}>LLM: {aiTest.llm.detail}</li>
+                  <li style={{ color: aiTest.comfy.ok ? "var(--success, green)" : "var(--danger)" }}>ComfyUI: {aiTest.comfy.detail}</li>
+                </ul>
+              )}
+            </>
+          )}
+        </div>
       )}
     </div>
   );
 }
+
+const settingsLabel: React.CSSProperties = { display: "block", fontSize: "0.8rem", color: "var(--text-dim)", margin: "0.5rem 0 0.25rem" };
+const settingsInput: React.CSSProperties = { width: "100%" };

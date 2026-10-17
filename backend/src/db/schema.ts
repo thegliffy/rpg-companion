@@ -194,3 +194,12 @@ export const customContent = sqliteTable("custom_content", {
   approvedAt: text("approved_at"),
   createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
 });
+
+// Simple key/value store for admin-configurable settings (AI backends etc.). Values are
+// stored as text; the settings service owns the known keys and their validation. Env vars
+// remain the fallback when a key has never been saved, so a fresh deploy behaves as before.
+export const appSettings = sqliteTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: text("updated_at").notNull().default(sql`(current_timestamp)`),
+});

@@ -9,12 +9,11 @@
 // - The Comfy graph is built in code (not loaded from a saved workflow file) so the backend
 //   has no dependency on files outside the container. Only core nodes are used.
 import { getCharacterRow } from "./characters.service.js";
+import { getAiSettings } from "./settings.service.js";
 import { savePortrait } from "../lib/portraits.js";
 
-const LLM_URL = process.env.AI_LLM_URL ?? "http://10.0.0.10:18280/v1";
-const LLM_MODEL = process.env.AI_LLM_MODEL ?? "orcarouter-qwen3.8-flash-next-uncensored-iq4_xs";
-const COMFY_URL = process.env.AI_COMFY_URL ?? "http://10.1.202.26:8188";
-const CHECKPOINT = process.env.AI_COMFY_CHECKPOINT ?? "juggernautXL_version4NSFW.safetensors";
+// Backends are resolved per-call through the settings service (admin Settings page), with env
+// vars as the never-saved fallback.
 
 const LLM_TIMEOUT_MS = 180_000;
 const COMFY_TIMEOUT_MS = 600_000;
@@ -94,12 +93,13 @@ async function chatCompletion(messages: { role: string; content: string }[]): Pr
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), LLM_TIMEOUT_MS);
   try {
-    const res = await fetch(`${LLM_URL}/chat/completions`, {
+    const settings = getAiSettings();
+    const res = await fetch(`${settings.llmUrl}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       // Reasoning models spend part of the budget on thinking before answering; keep this
       // generous or the answer gets truncated mid-thought.
-      body: JSON.stringify({ model: LLM_MODEL, messages, temperature: 0.9, max_tokens: 4000 }),
+      body: JSON.stringify({ model: settings.llmModel, messages, temperature: 0.9, max_tokens: 4000 }),
       signal: ctrl.signal,
     });
     if (!res.ok) {
@@ -166,7 +166,7 @@ interface ComfyNode {
 }
 
 /** Minimal core-node SDXL txt2img graph: checkpoint -> CLIP pair -> KSampler -> VAE -> Save. */
-function buildComfyGraph(prompt: string, seed: number): Record<string, ComfyNode> {
+function buildComfyGraph(prompt: string, seed: number, checkpoint: string): Record<string, ComfyNode> {
   return {
     "3": {
       class_type: "KSampler",
@@ -183,7 +183,7 @@ function buildComfyGraph(prompt: string, seed: number): Record<string, ComfyNode
         latent_image: ["5", 0],
       },
     },
-    "4": { class_type: "CheckpointLoaderSimple", inputs: { ckpt_name: CHECKPOINT } },
+    "4": { class_type: "CheckpointLoaderSimple", inputs: { ckpt_name: checkpoint } },
     // Portrait aspect (matches the sheet's portrait box better than a square).
     "5": { class_type: "EmptyLatentImage", inputs: { width: 896, height: 1152, batch_size: 1 } },
     "6": { class_type: "CLIPTextEncode", inputs: { text: prompt, clip: ["4", 1] } },
@@ -197,7 +197,7 @@ async function comfyFetch(path: string, init?: RequestInit): Promise<Response> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), COMFY_TIMEOUT_MS);
   try {
-    return await fetch(`${COMFY_URL}${path}`, { ...init, signal: ctrl.signal });
+    return await fetch(`${getAiSettings().comfyUrl}${path}`, { ...init, signal: ctrl.signal });
   } finally {
     clearTimeout(timer);
   }
@@ -205,7 +205,7 @@ async function comfyFetch(path: string, init?: RequestInit): Promise<Response> {
 
 /** Queue a txt2img job on ComfyUI and wait for the output image bytes. */
 export async function generateImage(prompt: string, seed?: number): Promise<Buffer> {
-  const graph = buildComfyGraph(prompt, seed ?? Math.floor(Math.random() * 2 ** 52));
+  const graph = buildComfyGraph(prompt, seed ?? Math.floor(Math.random() * 2 ** 52), getAiSettings().comfyCheckpoint);
   const queueRes = await comfyFetch("/prompt", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
