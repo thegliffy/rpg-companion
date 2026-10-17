@@ -97,14 +97,22 @@ async function chatCompletion(messages: { role: string; content: string }[]): Pr
     const res = await fetch(`${LLM_URL}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: LLM_MODEL, messages, temperature: 0.9, max_tokens: 900 }),
+      // Reasoning models spend part of the budget on thinking before answering; keep this
+      // generous or the answer gets truncated mid-thought.
+      body: JSON.stringify({ model: LLM_MODEL, messages, temperature: 0.9, max_tokens: 4000 }),
       signal: ctrl.signal,
     });
     if (!res.ok) {
       throw new AiUnavailableError(`LLM backend returned ${res.status}`, 502);
     }
-    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const text = data.choices?.[0]?.message?.content;
+    const data = (await res.json()) as {
+      choices?: { message?: { content?: string; reasoning_content?: string } }[];
+    };
+    // Reasoning models (e.g. moneta's Strata qwen) stream their chain-of-thought in
+    // reasoning_content and can return content:null when the budget is spent thinking --
+    // accept either, preferring the final answer.
+    const message = data.choices?.[0]?.message;
+    const text = message?.content ?? message?.reasoning_content;
     if (!text) throw new AiUnavailableError("LLM backend returned an empty completion", 502);
     return text.trim();
   } catch (err) {
