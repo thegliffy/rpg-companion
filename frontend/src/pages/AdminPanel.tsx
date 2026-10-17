@@ -164,6 +164,23 @@ export function AdminPanel({
     }
   }
 
+  // Approves every pending item via the same single-item route the per-row buttons use (same
+  // runBulk loop as bulkContent). Partial failure is reported per-row, not all-or-nothing.
+  async function approveAllPending() {
+    if (pending.length === 0) return;
+    if (!window.confirm(`Approve all ${pending.length} pending item(s)?`)) return;
+    setError(null);
+    setContentBulkMessage(null);
+    const { ok, failed } = await runBulk(
+      pending.map((i) => i.id),
+      customContentApi.approveCustomContent,
+    );
+    setContentBulkMessage(`${ok} pending item(s) approved${failed > 0 ? `, ${failed} failed` : ""}.`);
+    refreshPending();
+    refreshContent();
+    refreshDuplicates();
+  }
+
   async function reject(id: number) {
     setError(null);
     try {
@@ -440,7 +457,12 @@ export function AdminPanel({
         <div>
           {pending.length > 0 && (
             <div style={{ marginBottom: "1.5rem" }}>
-              <h3>Pending approval ({pending.length})</h3>
+              <h3>
+                Pending approval ({pending.length}){" "}
+                <button type="button" onClick={approveAllPending}>
+                  Approve all
+                </button>
+              </h3>
               {pending.map((item) => (
                 <div
                   key={item.id}
