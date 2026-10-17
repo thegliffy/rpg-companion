@@ -224,7 +224,7 @@ export async function generateImage(prompt: string, seed?: number): Promise<Buff
     if (!histRes.ok) continue;
     const hist = (await histRes.json()) as Record<
       string,
-      { status?: { status_str?: string }; outputs?: Record<string, { filename?: string; subfolder?: string; type?: string }[]> }
+      { status?: { status_str?: string }; outputs?: Record<string, unknown> }
     >;
     const entry = hist[promptId];
     if (!entry) continue; // still queued/running
@@ -232,8 +232,9 @@ export async function generateImage(prompt: string, seed?: number): Promise<Buff
     if (status === "error" || status === "execution_error") {
       throw new AiUnavailableError("ComfyUI failed to generate the image", 502);
     }
+    // Comfy history shape: outputs is { [nodeId]: { images: [{filename, subfolder, type}] } }.
     const image = Object.values(entry.outputs ?? {})
-      .flat()
+      .flatMap((o) => (o as { images?: { filename?: string; subfolder?: string; type?: string }[] }).images ?? [])
       .find((o) => o.filename);
     if (!image?.filename) continue;
     const viewRes = await comfyFetch(
