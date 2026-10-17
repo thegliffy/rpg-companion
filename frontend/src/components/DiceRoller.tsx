@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { DiceRoll } from "shared";
 import * as diceApi from "../api/dice";
+import * as campaignsApi from "../api/campaigns";
 import { useCampaignRoom, useSocketEvent } from "../socket/useSocketEvent";
 import { useDiceRoll } from "../dice/DiceRollContext";
 import { cardRaised } from "../styles";
 
-export function DiceRoller({ campaignId }: { campaignId: number | null }) {
+export function DiceRoller({ campaignId, role = "player" }: { campaignId: number | null; role?: "dm" | "player" }) {
   const { roll: diceRoll } = useDiceRoll();
   const [rolls, setRolls] = useState<DiceRoll[]>([]);
   const [formula, setFormula] = useState("");
   const [label, setLabel] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [flavorOn, setFlavorOn] = useState(false);
   const historyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -18,6 +20,14 @@ export function DiceRoller({ campaignId }: { campaignId: number | null }) {
       .listRolls(campaignId)
       .then(setRolls)
       .catch((err) => setError(err.message));
+  }, [campaignId]);
+
+  useEffect(() => {
+    if (campaignId === null) return;
+    campaignsApi
+      .getCampaign(campaignId)
+      .then((c) => setFlavorOn(c.flavorRolls))
+      .catch(() => {});
   }, [campaignId]);
 
   useCampaignRoom(campaignId);
@@ -78,6 +88,11 @@ export function DiceRoller({ campaignId }: { campaignId: number | null }) {
               <li key={r.id}>
                 <strong>{r.username}</strong>
                 {r.label && <> ({r.label})</>}: {r.breakdown}
+                {r.flavor && (
+                  <em style={{ display: "block", color: "var(--text-dim)", marginLeft: "1rem" }}>
+                    {r.flavor}
+                  </em>
+                )}
               </li>
             ))}
           </ul>
@@ -94,6 +109,20 @@ export function DiceRoller({ campaignId }: { campaignId: number | null }) {
         <input placeholder="Label (optional)" value={label} onChange={(e) => setLabel(e.target.value)} />
         <button type="submit">Roll</button>
       </form>
+      {campaignId !== null && role === "dm" && (
+        <label style={{ fontSize: "0.8rem", color: "var(--text-dim)", display: "flex", gap: "0.4rem", alignItems: "center", marginTop: "0.4rem" }}>
+          <input
+            type="checkbox"
+            checked={flavorOn}
+            onChange={(e) => {
+              const next = e.target.checked;
+              setFlavorOn(next);
+              campaignsApi.updateCampaign(campaignId, { flavorRolls: next }).catch((err) => setError(err instanceof Error ? err.message : "Failed to save"));
+            }}
+          />
+          AI flavor text on rolls
+        </label>
+      )}
     </div>
   );
 }

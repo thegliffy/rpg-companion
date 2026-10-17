@@ -2,6 +2,7 @@ import { eq, or } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { customContent, users } from "../db/schema.js";
 import type { CustomContent, CustomContentType, CustomContentSystem, CustomContentStatus, AdminContentSummary } from "shared";
+import { removeGeneratedImage } from "../lib/portraits.js";
 
 function toCustomContent(row: typeof customContent.$inferSelect, creatorUsername: string): CustomContent {
   return {
@@ -12,6 +13,7 @@ function toCustomContent(row: typeof customContent.$inferSelect, creatorUsername
     createdByUsername: creatorUsername,
     name: row.name,
     data: JSON.parse(row.data),
+    imageFilename: row.imageFilename,
     status: row.status as CustomContent["status"],
     approvedByUserId: row.approvedByUserId,
     approvedAt: row.approvedAt,
@@ -108,10 +110,11 @@ export async function createCustomContent(
   return created;
 }
 
-export async function updateCustomContent(id: number, updates: { name?: string; data?: unknown }) {
-  const values: { name?: string; data?: string } = {};
+export async function updateCustomContent(id: number, updates: { name?: string; data?: unknown; imageFilename?: string | null }) {
+  const values: { name?: string; data?: string; imageFilename?: string | null } = {};
   if (updates.name !== undefined) values.name = updates.name;
   if (updates.data !== undefined) values.data = JSON.stringify(updates.data);
+  if (updates.imageFilename !== undefined) values.imageFilename = updates.imageFilename;
   const [updated] = await db.update(customContent).set(values).where(eq(customContent.id, id)).returning();
   return updated;
 }
@@ -141,5 +144,7 @@ export async function unapproveCustomContent(id: number) {
 }
 
 export async function deleteCustomContent(id: number) {
+  const row = getCustomContentRow(id);
+  if (row?.imageFilename) removeGeneratedImage(row.imageFilename);
   await db.delete(customContent).where(eq(customContent.id, id));
 }

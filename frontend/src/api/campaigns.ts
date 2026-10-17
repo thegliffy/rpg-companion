@@ -1,4 +1,4 @@
-import type { CampaignSummary, CampaignDetail } from "shared";
+import type { CampaignSummary, CampaignDetail, Npc } from "shared";
 
 async function parseOrThrow(res: Response) {
   if (!res.ok) {
@@ -40,6 +40,16 @@ export async function getCampaign(id: number): Promise<CampaignDetail> {
   return data.campaign;
 }
 
+export async function updateCampaign(id: number, updates: { flavorRolls?: boolean }): Promise<void> {
+  await parseOrThrow(
+    await fetch(`/api/campaigns/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    }),
+  );
+}
+
 export async function regenerateInviteCode(id: number): Promise<string> {
   const res = await fetch(`/api/campaigns/${id}/invite/regenerate`, { method: "POST" });
   const data = await parseOrThrow(res);
@@ -52,4 +62,63 @@ export async function deleteCampaign(id: number): Promise<void> {
     const body = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(body.error ?? "Request failed");
   }
+}
+
+// --- NPC roster (DM-only) ------------------------------------------------------------------
+
+export async function listNpcs(campaignId: number): Promise<Npc[]> {
+  const data = await parseOrThrow(await fetch(`/api/campaigns/${campaignId}/npcs`));
+  return data.npcs;
+}
+
+export async function createNpc(campaignId: number, input: { name: string; role?: string }): Promise<Npc> {
+  const data = await parseOrThrow(
+    await fetch(`/api/campaigns/${campaignId}/npcs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+  );
+  return data.npc;
+}
+
+export async function updateNpc(id: number, updates: Partial<Npc>): Promise<Npc> {
+  const data = await parseOrThrow(
+    await fetch(`/api/campaigns/npcs/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    }),
+  );
+  return data.npc;
+}
+
+export async function deleteNpc(id: number): Promise<void> {
+  await parseOrThrow(await fetch(`/api/campaigns/npcs/${id}`, { method: "DELETE" }));
+}
+
+export async function generateNpc(id: number, instructions?: string): Promise<Npc> {
+  const data = await parseOrThrow(
+    await fetch(`/api/campaigns/npcs/${id}/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ instructions: instructions ?? "" }),
+    }),
+  );
+  return data.npc;
+}
+
+export async function generateNpcArt(id: number, instructions?: string): Promise<Npc> {
+  const data = await parseOrThrow(
+    await fetch(`/api/campaigns/npcs/${id}/generate-art`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ instructions: instructions ?? "" }),
+    }),
+  );
+  return data.npc;
+}
+
+export function npcImageUrl(id: number, version: number): string {
+  return `/api/campaigns/npcs/${id}/image?v=${version}`;
 }

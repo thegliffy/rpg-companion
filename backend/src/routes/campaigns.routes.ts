@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type RequestHandler, type NextFunction } from "express";
 import {
   createCampaignSchema,
   updateCampaignSchema,
@@ -25,6 +25,8 @@ import {
   joinCampaignByInviteCode,
   deleteCampaign,
   getCampaignOwnerId,
+  getCampaignRow,
+  getMembership,
   InviteCodeNotFoundError,
   AlreadyMemberError,
 } from "../services/campaigns.service.js";
@@ -38,11 +40,16 @@ import {
   advanceTurn,
   addCombatant,
 } from "../services/encounters.service.js";
-import { createRoll, listRecentRolls } from "../services/dice.service.js";
+import { createRoll, listRecentRolls, setRollFlavor } from "../services/dice.service.js";
+import { generateRollFlavor, AiUnavailableError } from "../services/ai.service.js";
 import { InvalidDiceFormulaError } from "../lib/dice.js";
 import { parseLimit } from "../lib/pagination.js";
 import { rateLimit } from "../middleware/rateLimit.js";
 import { isGlobalAdmin } from "../services/users.service.js";
+import { createNpcSchema, updateNpcSchema, generateNpcSchema } from "shared";
+import { listNpcs, createNpc, updateNpc, deleteNpc, generateNpcProse, generateNpcArt, getNpcRow } from "../services/npcs.service.js";
+import { portraitFilePath, mimeTypeForFilename } from "../lib/portraits.js";
+import fs from "node:fs";
 import {
   getShop,
   updateShop,
@@ -259,7 +266,21 @@ campaignsRouter.post("/:id/rolls", requireCampaignMember, async (req, res) => {
 
   const campaignId = req.campaignMembership!.campaignId;
   try {
-    const roll = await createRoll(campaignId, req.authUserId!, parsed.data.formula, parsed.data.label);
+    let roll = await createRoll(campaignId, req.authUserId!, parsed.data.formula, parsed.data.label);
+    // Best-effort narration: a failed/slow LLM must never block or fail the roll itself.
+    if (getCampaignRow(campaignId)?.flavorRolls) {
+      try {
+        const flavor = await generateRollFlavor({
+          roller: roll.username,
+          label: parsed.data.label,
+          formula: roll.formula,
+          total: roll.total,
+        });
+        roll = await setRollFlavor(roll.id, flavor);
+      } catch {
+        // leave flavor null
+      }
+    }
     emitToCampaign(campaignId, "roll:created", roll);
     res.status(201).json({ roll });
   } catch (err) {
@@ -397,4 +418,135 @@ campaignsRouter.post("/:id/shop/sell", requireCampaignMember, async (req, res) =
     }
     throw err;
   }
+});
+
+// --- NPC roster (DM-only: the roster holds secrets) ----------------------------------------
+// CRUD plus AI generation endpoints; generation is rate-limited like the AI Studio.
+
+declare global {
+  namespace Express {
+    interface Request {
+      npcRow?: typeof import("../db/schema.js").npcs.$inferSelect;
+    }
+  }
+}
+
+// Same DM gate as requireDM, but keyed off the NPC's own campaign instead of a :id param.
+function requireDmForNpc(req: Parameters<RequestHandler>[0], res: Parameters<RequestHandler>[1], next: NextFunction) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) {
+    res.status(400).json({ error: "Invalid id" });
+    return;
+  }
+  const row = getNpcRow(id);
+  if (!row) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const userId = req.authUserId!;
+  const membership = getMembership(row.campaignId, userId);
+  if (membership?.role !== "dm" && !isGlobalAdmin(userId)) {
+    res.status(403).json({ error: "Only the DM can do this" });
+    return;
+  }
+  req.npcRow = row;
+  next();
+}
+
+const npcAiLimit = rateLimit({ name: "ai-generate", windowMs: 60_000, max: 6 });
+
+campaignsRouter.get("/:id/npcs", requireDM, async (req, res) => {
+  res.json({ npcs: listNpcs(req.campaignMembership!.campaignId) });
+});
+
+campaignsRouter.post("/:id/npcs", requireDM, async (req, res) => {
+  const parsed = createNpcSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });
+    return;
+  }
+  res.status(201).json({ npc: await createNpc(req.campaignMembership!.campaignId, parsed.data) });
+});
+
+campaignsRouter.patch("/npcs/:id", requireDmForNpc, async (req, res) => {
+  const parsed = updateNpcSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });
+    return;
+  }
+  const npc = await updateNpc(req.npcRow!.id, parsed.data);
+  if (!npc) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  res.json({ npc });
+});
+
+campaignsRouter.delete("/npcs/:id", requireDmForNpc, async (req, res) => {
+  const ok = await deleteNpc(req.npcRow!.id);
+  if (!ok) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  res.status(204).send();
+});
+
+campaignsRouter.post("/npcs/:id/generate", requireDmForNpc, npcAiLimit, async (req, res) => {
+  const parsed = generateNpcSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });
+    return;
+  }
+  try {
+    const npc = await generateNpcProse(req.npcRow!.id, parsed.data.instructions);
+    if (!npc) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    res.json({ npc });
+  } catch (err) {
+    if (err instanceof AiUnavailableError) {
+      res.status(err.status).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
+});
+
+campaignsRouter.post("/npcs/:id/generate-art", requireDmForNpc, npcAiLimit, async (req, res) => {
+  const parsed = generateNpcSchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    res.status(400).json({ error: "Invalid input", issues: parsed.error.issues });
+    return;
+  }
+  try {
+    const npc = await generateNpcArt(req.npcRow!.id, parsed.data.instructions);
+    if (!npc) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    res.json({ npc });
+  } catch (err) {
+    if (err instanceof AiUnavailableError) {
+      res.status(err.status).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
+});
+
+campaignsRouter.get("/npcs/:id/image", requireDmForNpc, (req, res) => {
+  const filename = req.npcRow!.imageFilename;
+  if (!filename) {
+    res.status(404).json({ error: "No image" });
+    return;
+  }
+  const filePath = portraitFilePath(filename);
+  if (!fs.existsSync(filePath)) {
+    res.status(404).json({ error: "No image" });
+    return;
+  }
+  res.setHeader("Content-Type", mimeTypeForFilename(filename));
+  res.setHeader("Cache-Control", "private, max-age=60");
+  fs.createReadStream(filePath).pipe(res);
 });

@@ -49,6 +49,9 @@ export const campaigns = sqliteTable("campaigns", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   description: text("description"),
+  // When on, campaign dice rolls get a one-line AI narration appended (best-effort; a failed
+  // generation never blocks the roll itself).
+  flavorRolls: integer("flavor_rolls", { mode: "boolean" }).notNull().default(false),
   ownerUserId: integer("owner_user_id")
     .notNull()
     .references(() => users.id),
@@ -136,6 +139,9 @@ export const diceRolls = sqliteTable("dice_rolls", {
   // Structured per-die roll data (#136), JSON-encoded RollDetail -- null for rolls made before
   // this column existed, or anything buildRollDetail() couldn't confidently structure.
   detail: text("detail"),
+  // Optional one-line AI narration (campaigns with flavor rolls on). Best-effort: a failed
+  // generation leaves it null and the roll stands on its own.
+  flavor: text("flavor"),
   createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
 });
 
@@ -189,6 +195,8 @@ export const customContent = sqliteTable("custom_content", {
     .references(() => users.id),
   name: text("name").notNull(),
   data: text("data").notNull(),
+  // Generated art filename (same storage dir as character portraits), null when none.
+  imageFilename: text("image_filename"),
   status: text("status", { enum: ["pending", "approved"] }).notNull().default("pending"),
   approvedByUserId: integer("approved_by_user_id").references(() => users.id),
   approvedAt: text("approved_at"),
@@ -201,5 +209,24 @@ export const customContent = sqliteTable("custom_content", {
 export const appSettings = sqliteTable("app_settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
+  updatedAt: text("updated_at").notNull().default(sql`(current_timestamp)`),
+});
+
+// DM's NPC roster per campaign. Prose fields are LLM-fillable (AI Studio-style generate
+// buttons) but hand-editable; image_filename uses the shared generated-art storage dir.
+export const npcs = sqliteTable("npcs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  campaignId: integer("campaign_id")
+    .notNull()
+    .references(() => campaigns.id),
+  name: text("name").notNull(),
+  role: text("role").notNull().default(""),
+  appearance: text("appearance").notNull().default(""),
+  personality: text("personality").notNull().default(""),
+  motivation: text("motivation").notNull().default(""),
+  secret: text("secret").notNull().default(""),
+  notes: text("notes").notNull().default(""),
+  imageFilename: text("image_filename"),
+  createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
   updatedAt: text("updated_at").notNull().default(sql`(current_timestamp)`),
 });

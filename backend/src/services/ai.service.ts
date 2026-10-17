@@ -257,3 +257,72 @@ export async function generatePortrait(
   await opts.setPortrait(characterId, filename);
   return filename;
 }
+
+// --- NPC generation ------------------------------------------------------------------------
+// The LLM returns a JSON object; reasoning models often wrap it in prose or markdown fences,
+// so extraction scans for the outermost {...} block before parsing.
+
+export interface NpcProse {
+  name: string;
+  role: string;
+  appearance: string;
+  personality: string;
+  motivation: string;
+  secret: string;
+}
+
+function extractJson(text: string): unknown {
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end <= start) throw new Error("no JSON object in completion");
+  return JSON.parse(text.slice(start, end + 1));
+}
+
+/** Generate a full NPC card. `seed` is an optional steering line ("a treacherous lighthouse
+ * keeper", "dragonborn merchant who owes the party"). Existing fields act as canon hints. */
+export async function generateNpc(
+  campaignName: string,
+  hints: Partial<NpcProse> & { notes?: string },
+): Promise<NpcProse> {
+  const system =
+    "You are a tabletop RPG NPC generator. Respond with ONLY a JSON object with exactly these " +
+    "string keys: name, role, appearance, personality, motivation, secret. Invent vivid, " +
+    "specific, playable details; keep each field under 60 words; appearance must be a concrete " +
+    "visual description usable as an art prompt. If a field is already provided in the request, " +
+    "keep it unchanged. No markdown fences, no commentary.";
+  const provided = Object.entries(hints).filter(([, v]) => v);
+  const user =
+    `Generate an NPC for the campaign "${campaignName}".` +
+    (provided.length ? `\nAlready decided (keep these):\n${provided.map(([k, v]) => `${k}: ${v}`).join("\n")}` : "");
+  const raw = await chatCompletion([
+    { role: "system", content: system },
+    { role: "user", content: user },
+  ]);
+  const obj = extractJson(raw) as Record<string, unknown>;
+  const str = (k: keyof NpcProse) => (typeof obj[k] === "string" ? (obj[k] as string).trim() : (hints[k] ?? ""));
+  return {
+    name: str("name") || hints.name || "Unnamed NPC",
+    role: str("role"),
+    appearance: str("appearance"),
+    personality: str("personality"),
+    motivation: str("motivation"),
+    secret: str("secret"),
+  };
+}
+
+/** One-line narration for a dice roll, for campaigns with flavor rolls enabled. */
+export async function generateRollFlavor(
+  context: { roller: string; label?: string; formula: string; total: number },
+): Promise<string> {
+  const system =
+    "You write one-line tabletop RPG narration for dice rolls. One sentence, max 25 words, " +
+    "present tense, vivid but grounded — no stat-block mechanics, no roll totals restated.";
+  const user =
+    `Roll: ${context.formula} → ${context.total}, rolled by ${context.roller}` +
+    (context.label ? ` for "${context.label}"` : "") +
+    ". Narrate it.";
+  return chatCompletion([
+    { role: "system", content: system },
+    { role: "user", content: user },
+  ]);
+}

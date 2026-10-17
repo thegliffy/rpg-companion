@@ -94,3 +94,17 @@ export async function unapproveCustomContent(id: number): Promise<CustomContent>
   const body = await parseOrThrow(res);
   return body.item;
 }
+
+export async function generateContentArt(id: number, instructions?: string): Promise<CustomContent> {
+  const res = await fetch(`/api/custom-content/${id}/generate-art`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ instructions: instructions ?? "" }),
+  });
+  const body = await parseOrThrow(res);
+  return body.content;
+}
+
+export function contentImageUrl(id: number, version: number): string {
+  return `/api/custom-content/${id}/image?v=${version}`;
+}

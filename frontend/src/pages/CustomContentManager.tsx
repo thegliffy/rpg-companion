@@ -784,6 +784,9 @@ export function CustomContentManager({
   const [visibleItems, setVisibleItems] = useState<CustomContent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
+  // Generated art (edit form only): busy flag + cache-buster for the preview <img>.
+  const [artBusy, setArtBusy] = useState(false);
+  const [artVersion, setArtVersion] = useState(0);
 
   const [system, setSystem] = useState<CustomContentSystem>("dnd5e");
   const [type, setType] = useState<CustomContentType>("race");
@@ -3019,6 +3022,39 @@ export function CustomContentManager({
                 Name <input value={name} onChange={(e) => setName(e.target.value)} />
               </label>
             </div>
+
+            {editingId !== null && (
+              <div style={{ marginTop: "0.5rem", border: "1px solid var(--border)", borderRadius: 8, padding: "0.5rem 0.75rem" }}>
+                <h4 style={{ marginTop: 0 }}>Generated art</h4>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-dim)" }}>
+                  ComfyUI illustration from this item&apos;s name and description. Save the item first so the prompt includes your latest edits.
+                </p>
+                <button type="button" disabled={artBusy} onClick={async () => {
+                  setArtBusy(true);
+                  setError(null);
+                  try {
+                    const updated = await customContentApi.generateContentArt(editingId);
+                    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+                    setArtVersion((v) => v + 1);
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "Art generation failed");
+                  } finally {
+                    setArtBusy(false);
+                  }
+                }}>
+                  {artBusy ? "Generating… (this can take a minute)" : items.find((i) => i.id === editingId)?.imageFilename ? "Regenerate art" : "Generate art"}
+                </button>
+                {items.find((i) => i.id === editingId)?.imageFilename && (
+                  <div style={{ marginTop: "0.5rem" }}>
+                    <img
+                      src={customContentApi.contentImageUrl(editingId, artVersion)}
+                      alt="Generated item art"
+                      style={{ width: 200, borderRadius: 6, border: "1px solid var(--border)" }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {type === "race" ? (
           <>

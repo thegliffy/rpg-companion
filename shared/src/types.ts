@@ -47,6 +47,8 @@ export interface CustomContent {
   createdByUsername: string;
   name: string;
   data: unknown;
+  /** Generated art filename (same storage dir as character portraits); null/absent when none. */
+  imageFilename?: string | null;
   status: CustomContentStatus;
   approvedByUserId: number | null;
   approvedAt: string | null;
@@ -60,6 +62,8 @@ export interface CampaignSummary {
   name: string;
   description: string | null;
   role: CampaignRole;
+  /** When true, campaign dice rolls get an AI-generated one-line narration. */
+  flavorRolls: boolean;
   createdAt: string;
 }
 
@@ -68,6 +72,23 @@ export interface CampaignMember {
   username: string;
   role: CampaignRole;
   joinedAt: string;
+}
+
+// DM's NPC roster. Prose fields are LLM-fillable but hand-editable; `imageFilename` is the
+// generated portrait (same storage as character portraits).
+export interface Npc {
+  id: number;
+  campaignId: number;
+  name: string;
+  role: string;
+  appearance: string;
+  personality: string;
+  motivation: string;
+  secret: string;
+  notes: string;
+  imageFilename: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CampaignDetail extends CampaignSummary {
@@ -286,5 +307,7 @@ export interface DiceRoll {
   // Null for rolls made before #136 (or anything the zip couldn't confidently structure) -- the
   // renderer falls back to `breakdown` text in that case rather than faking an empty roll.
   detail: RollDetail | null;
+  /** Optional one-line AI narration (campaigns with flavor rolls on); null when none. */
+  flavor: string | null;
   createdAt: string;
 }

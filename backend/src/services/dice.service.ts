@@ -16,6 +16,7 @@ function toDiceRoll(row: typeof diceRolls.$inferSelect, username: string): DiceR
     breakdown: row.breakdown,
     // Rows from before #136 (or a roll buildRollDetail() couldn't structure) store no JSON here.
     detail: row.detail ? (JSON.parse(row.detail) as RollDetail) : null,
+    flavor: row.flavor ?? null,
     createdAt: row.createdAt,
   };
 }
@@ -56,4 +57,16 @@ export function listRecentRolls(campaignId: number, limit: number): DiceRoll[] {
     .all();
 
   return rows.map((r) => toDiceRoll(r.roll, r.username));
+}
+
+/** Stamps AI narration onto an existing roll row and returns the updated shape. */
+export async function setRollFlavor(rollId: number, flavor: string): Promise<DiceRoll> {
+  const updated = await db
+    .update(diceRolls)
+    .set({ flavor })
+    .where(eq(diceRolls.id, rollId))
+    .returning()
+    .get();
+  const user = db.select().from(users).where(eq(users.id, updated.userId)).get()!;
+  return toDiceRoll(updated, user.username);
 }

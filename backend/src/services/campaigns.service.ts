@@ -45,6 +45,7 @@ export function listCampaignsForUser(userId: number): CampaignSummary[] {
       id: campaigns.id,
       name: campaigns.name,
       description: campaigns.description,
+      flavorRolls: campaigns.flavorRolls,
       createdAt: campaigns.createdAt,
       role: campaignMemberships.role,
     })
@@ -59,7 +60,7 @@ export function listCampaignsForUser(userId: number): CampaignSummary[] {
 // For a global admin: every campaign site-wide, not just ones they belong to.
 export function listAllCampaigns(): CampaignSummary[] {
   const rows = db
-    .select({ id: campaigns.id, name: campaigns.name, description: campaigns.description, createdAt: campaigns.createdAt })
+    .select({ id: campaigns.id, name: campaigns.name, description: campaigns.description, flavorRolls: campaigns.flavorRolls, createdAt: campaigns.createdAt })
     .from(campaigns)
     .all();
 
@@ -111,6 +112,7 @@ export function getCampaignDetail(
     id: campaign.id,
     name: campaign.name,
     description: campaign.description,
+    flavorRolls: campaign.flavorRolls,
     createdAt: campaign.createdAt,
     role,
     inviteCode: role === "dm" ? campaign.inviteCode : null,
@@ -119,7 +121,11 @@ export function getCampaignDetail(
   };
 }
 
-export async function updateCampaign(campaignId: number, updates: { name?: string; description?: string }) {
+export function getCampaignRow(campaignId: number) {
+  return db.select().from(campaigns).where(eq(campaigns.id, campaignId)).get();
+}
+
+export async function updateCampaign(campaignId: number, updates: { name?: string; description?: string; flavorRolls?: boolean }) {
   const [updated] = await db
     .update(campaigns)
     .set(updates)

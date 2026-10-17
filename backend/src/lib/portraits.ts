@@ -80,3 +80,26 @@ export function mimeTypeForFilename(filename: string): string {
   const found = Object.entries(ALLOWED_PORTRAIT_MIME_TYPES).find(([, e]) => e === ext);
   return found ? found[0] : "application/octet-stream";
 }
+
+/** Same storage dir as character portraits, but the caller controls the full basename
+ * (e.g. "content-53", "npc-12") so different tables' ids can't collide on one filename. */
+export function saveGeneratedImage(basename: string, buffer: Buffer): string {
+  const detected = detectImageMime(buffer);
+  if (!detected) {
+    throw new Error("Unsupported or invalid image file");
+  }
+  ensureDir();
+  for (const ext of Object.values(ALLOWED_PORTRAIT_MIME_TYPES)) {
+    const p = path.join(PORTRAITS_DIR, `${basename}.${ext}`);
+    if (fs.existsSync(p)) fs.unlinkSync(p);
+  }
+  const filename = `${basename}.${ALLOWED_PORTRAIT_MIME_TYPES[detected]}`;
+  fs.writeFileSync(path.join(PORTRAITS_DIR, filename), buffer);
+  return filename;
+}
+
+export function removeGeneratedImage(filename: string | null) {
+  if (!filename) return;
+  const p = path.join(PORTRAITS_DIR, filename);
+  if (fs.existsSync(p)) fs.unlinkSync(p);
+}

@@ -59,6 +59,7 @@ export const createCampaignSchema = z.object({
 export const updateCampaignSchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
   description: z.string().trim().max(2000).optional(),
+  flavorRolls: z.boolean().optional(),
 });
 
 export const joinCampaignSchema = z.object({
@@ -205,3 +206,27 @@ export const aiSettingsSchema = z.object({
   comfyCheckpoint: z.string().trim().max(300).optional(),
 });
 export type AiSettingsInput = z.infer<typeof aiSettingsSchema>;
+
+// NPC roster CRUD. All fields optional on create except name; the generate endpoint fills
+// the prose fields from a one-line seed (or nothing at all).
+export const createNpcSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  role: z.string().trim().max(200).optional(),
+  appearance: z.string().trim().max(2000).optional(),
+  personality: z.string().trim().max(2000).optional(),
+  motivation: z.string().trim().max(2000).optional(),
+  secret: z.string().trim().max(2000).optional(),
+  notes: z.string().trim().max(4000).optional(),
+});
+export type CreateNpcInput = z.infer<typeof createNpcSchema>;
+
+export const updateNpcSchema = createNpcSchema.partial().extend({
+  name: z.string().trim().min(1).max(100).optional(),
+});
+export type UpdateNpcInput = z.infer<typeof updateNpcSchema>;
+
+// Body for POST /npcs/:id/generate — optional steering line, same convention as the AI Studio.
+export const generateNpcSchema = z.object({
+  instructions: z.string().trim().max(500).optional(),
+});
+export type GenerateNpcInput = z.infer<typeof generateNpcSchema>;

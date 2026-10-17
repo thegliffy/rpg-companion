@@ -22,6 +22,10 @@ import {
   deleteCustomContent,
 } from "../services/customContent.service.js";
 import { findDuplicateContent } from "../services/contentDedupe.service.js";
+import { generateImage, AiUnavailableError } from "../services/ai.service.js";
+import { saveGeneratedImage, portraitFilePath, mimeTypeForFilename } from "../lib/portraits.js";
+import { rateLimit } from "../middleware/rateLimit.js";
+import fs from "node:fs";
 
 export const customContentRouter = Router();
 
@@ -232,4 +236,57 @@ customContentRouter.post("/:id/unapprove", requireAdmin, async (req, res) => {
     return;
   }
   res.json({ item: getCustomContent(updated.id) });
+});
+
+// --- Generated art ---------------------------------------------------------------------------
+// ComfyUI txt2img conditioned on the item's own name/type/description. Same rate limiter
+// namespace as the character AI Studio.
+
+const aiLimit = rateLimit({ name: "ai-generate", windowMs: 60_000, max: 6 });
+
+function buildContentArtPrompt(row: { type: string; name: string; data: unknown }, instructions?: string): string {
+  const data = (row.data ?? {}) as Record<string, unknown>;
+  const desc = typeof data.description === "string" ? data.description : "";
+  const parts = [
+    `${row.type} card art: ${row.name}`,
+    desc ? `description: ${desc.slice(0, 300)}` : "",
+    instructions ?? "",
+    "detailed fantasy illustration, painted, dramatic lighting, high detail",
+  ]
+    .filter(Boolean)
+    .join(", ");
+  return parts;
+}
+
+customContentRouter.post("/:id/generate-art", requireCustomContentOwnerOrManager, aiLimit, async (req, res, next) => {
+  const instructions = typeof req.body?.instructions === "string" ? req.body.instructions.trim().slice(0, 500) : "";
+  const row = req.customContentRow!;
+  try {
+    const buffer = await generateImage(buildContentArtPrompt(row, instructions || undefined));
+    const filename = saveGeneratedImage(`content-${row.id}`, buffer);
+    await updateCustomContent(row.id, { imageFilename: filename });
+    res.status(201).json({ content: getCustomContent(row.id) });
+  } catch (err) {
+    if (err instanceof AiUnavailableError) {
+      res.status(err.status).json({ error: err.message });
+      return;
+    }
+    next(err);
+  }
+});
+
+customContentRouter.get("/:id/image", requireCustomContentOwnerOrManager, (req, res) => {
+  const filename = req.customContentRow!.imageFilename;
+  if (!filename) {
+    res.status(404).json({ error: "No image" });
+    return;
+  }
+  const filePath = portraitFilePath(filename);
+  if (!fs.existsSync(filePath)) {
+    res.status(404).json({ error: "No image" });
+    return;
+  }
+  res.setHeader("Content-Type", mimeTypeForFilename(filename));
+  res.setHeader("Cache-Control", "private, max-age=60");
+  fs.createReadStream(filePath).pipe(res);
 });

@@ -6,6 +6,7 @@ import { CharactersSection } from "../components/CharactersSection";
 import { NotesSection } from "../components/NotesSection";
 import { InitiativeTracker } from "../components/InitiativeTracker";
 import { DiceRoller } from "../components/DiceRoller";
+import { NpcSection } from "../components/NpcSection";
 import { ShopSection } from "../components/ShopSection";
 
 export function CampaignDashboard({
@@ -92,7 +93,8 @@ export function CampaignDashboard({
         />
       )}
       {user && <InitiativeTracker campaignId={campaignId} role={campaign.role} />}
-      {user && <DiceRoller campaignId={campaignId} />}
+      {user && <DiceRoller campaignId={campaignId} role={campaign.role} />}
+      {user && campaign.role === "dm" && <NpcSection campaignId={campaignId} />}
       {user && <ShopSection campaignId={campaignId} currentUserId={user.id} role={campaign.role} />}
       {user && <NotesSection campaignId={campaignId} currentUserId={user.id} role={campaign.role} />}
 
