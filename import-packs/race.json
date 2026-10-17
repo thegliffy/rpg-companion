@@ -1,0 +1,2095 @@
+{
+ "system": "dnd5e",
+ "items": [
+  {
+   "type": "race",
+   "name": "Aarakocra",
+   "data": {
+    "abilityBonuses": {
+     "dex": 2,
+     "wis": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 20,
+    "size": "Medium",
+    "languages": [
+     "auran"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Aarakocra",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Aasimar",
+   "data": {
+    "abilityBonuses": {
+     "wis": 1,
+     "cha": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "celestial"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Aasimar",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Aasimar",
+   "data": {
+    "abilityBonuses": {
+     "cha": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "celestial"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Astral Elf",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Autognome",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Bugbear",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "dex": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "goblin"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Bugbear",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Bugbear",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "dex": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "goblin"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Bullywug",
+   "data": {
+    "abilityBonuses": {
+     "int": -2,
+     "cha": -2
+    },
+    "abilityBonusChoices": [],
+    "speed": 20,
+    "size": "Medium",
+    "languages": [
+     "other"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Centaur",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "wis": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 40,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "sylvan"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Centaur",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "wis": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 40,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "sylvan"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Centaur",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 40,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Changeling",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Changeling",
+   "data": {
+    "abilityBonuses": {
+     "cha": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Changeling",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Custom Lineage",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Deep Gnome",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 120
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Dhampir",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 35,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Dhampir",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 35,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Dragonborn",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "cha": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "draconic"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Dragonborn (Chromatic)",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Dragonborn (Gem)",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Dragonborn (Metallic)",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Duergar",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 120
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Dwarf",
+   "data": {
+    "abilityBonuses": {
+     "con": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 25,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "dwarvish"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Eladrin",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Elf",
+   "data": {
+    "abilityBonuses": {
+     "dex": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "elvish"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Fairy",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Firbolg",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Firbolg",
+   "data": {
+    "abilityBonuses": {
+     "wis": 2,
+     "str": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "elvish",
+     "giant"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Genasi",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Giff",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Gith",
+   "data": {
+    "abilityBonuses": {
+     "int": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "other"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Githyanki",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Githzerai",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Gnoll",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "int": -2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Gnome",
+   "data": {
+    "abilityBonuses": {
+     "int": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 25,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "gnomish"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Gnome (Deep)",
+   "data": {
+    "abilityBonuses": {
+     "str": 1,
+     "dex": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 20,
+    "size": "Medium",
+    "languages": [
+     "gnomish",
+     "terran",
+     "undercommon"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 120
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Goblin",
+   "data": {
+    "abilityBonuses": {
+     "str": -2,
+     "dex": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "goblin"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Goblin",
+   "data": {
+    "abilityBonuses": {
+     "dex": 2,
+     "con": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "goblin"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Goblin",
+   "data": {
+    "abilityBonuses": {
+     "dex": 2,
+     "con": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "goblin"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Goblin",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Goblin",
+   "data": {
+    "abilityBonuses": {
+     "dex": 2,
+     "con": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "goblin"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Goliath",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Goliath",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "con": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "giant"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Grimlock",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "cha": -2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "undercommon"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Hadozee",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Half-Elf",
+   "data": {
+    "abilityBonuses": {
+     "cha": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "elvish"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Half-Orc",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "con": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "orc"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Halfling",
+   "data": {
+    "abilityBonuses": {
+     "dex": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 25,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "halfling"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Harengon",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Hexblood",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Hexblood",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Hobgoblin",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "goblin"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Hobgoblin",
+   "data": {
+    "abilityBonuses": {
+     "con": 2,
+     "int": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "goblin"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Hobgoblin",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Hobgoblin",
+   "data": {
+    "abilityBonuses": {
+     "con": 2,
+     "int": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "goblin"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Human",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Kalashtar",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Kalashtar",
+   "data": {
+    "abilityBonuses": {
+     "wis": 2,
+     "cha": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "other"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Kenku",
+   "data": {
+    "abilityBonuses": {
+     "dex": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "auran"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Kenku",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Kenku",
+   "data": {
+    "abilityBonuses": {
+     "dex": 2,
+     "wis": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "auran"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Khoravar",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Kobold",
+   "data": {
+    "abilityBonuses": {
+     "dex": 2,
+     "str": -4
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "draconic"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Kobold",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Kobold",
+   "data": {
+    "abilityBonuses": {
+     "dex": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "draconic"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Kuo-Toa",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "undercommon"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 120
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Leonin",
+   "data": {
+    "abilityBonuses": {
+     "str": 1,
+     "con": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 35,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "other"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Lizardfolk",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "int": -2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "draconic"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Lizardfolk",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Lizardfolk",
+   "data": {
+    "abilityBonuses": {
+     "con": 2,
+     "wis": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "draconic"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Loxodon",
+   "data": {
+    "abilityBonuses": {
+     "con": 2,
+     "wis": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "other"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Lupin",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Merfolk",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 10,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "aquan"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Minotaur",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "con": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "other"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Minotaur",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "con": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "other"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Minotaur",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Orc",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "int": -2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "orc"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Orc",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "con": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "orc"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Orc",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "con": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "orc"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Orc",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Orc",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "con": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "orc"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Owlin",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 120
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Plasmoid",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Reborn",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Reborn",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Satyr",
+   "data": {
+    "abilityBonuses": {
+     "cha": 2,
+     "dex": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 35,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "sylvan"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Satyr",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 35,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Sea Elf",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Shadar-Kai",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Shifter",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Shifter",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Shifter",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Simic Hybrid",
+   "data": {
+    "abilityBonuses": {
+     "con": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "choose"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Skeleton",
+   "data": {
+    "abilityBonuses": {
+     "dex": 2,
+     "int": -4,
+     "cha": -4
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Tabaxi",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Tabaxi",
+   "data": {
+    "abilityBonuses": {
+     "dex": 2,
+     "cha": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Thri-kreen",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Tiefling",
+   "data": {
+    "abilityBonuses": {
+     "cha": 2,
+     "int": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "infernal"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Tortle",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Triton",
+   "data": {
+    "abilityBonuses": {
+     "str": 1,
+     "cha": 1,
+     "con": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "primordial"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Triton",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Triton",
+   "data": {
+    "abilityBonuses": {
+     "str": 1,
+     "cha": 1,
+     "con": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "primordial"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Troglodyte",
+   "data": {
+    "abilityBonuses": {
+     "str": 2,
+     "con": 2,
+     "int": -4,
+     "cha": -4
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "other"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Vedalken",
+   "data": {
+    "abilityBonuses": {
+     "int": 2,
+     "wis": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "other"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Verdan",
+   "data": {
+    "abilityBonuses": {
+     "con": 1,
+     "cha": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "goblin"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Warforged",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Warforged",
+   "data": {
+    "abilityBonuses": {
+     "con": 2
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common"
+    ],
+    "traits": []
+   }
+  },
+  {
+   "type": "race",
+   "name": "Yuan-Ti",
+   "data": {
+    "abilityBonuses": {},
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Yuan-ti Pureblood",
+   "data": {
+    "abilityBonuses": {
+     "cha": 2,
+     "int": 1
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [
+     "common",
+     "abyssal",
+     "draconic"
+    ],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  },
+  {
+   "type": "race",
+   "name": "Zombie",
+   "data": {
+    "abilityBonuses": {
+     "str": 1,
+     "con": 2,
+     "int": -4,
+     "wis": -4,
+     "cha": -4
+    },
+    "abilityBonusChoices": [],
+    "speed": 30,
+    "size": "Medium",
+    "languages": [],
+    "traits": [
+     {
+      "id": "trait1",
+      "name": "Darkvision",
+      "darkvisionFeet": 60
+     }
+    ]
+   }
+  }
+ ]
+}

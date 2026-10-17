@@ -1,0 +1,1880 @@
+{
+ "system": "dnd5e",
+ "items": [
+  {
+   "type": "deity",
+   "name": "Sune",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "God of love and beauty",
+    "category": "",
+    "alignment": "",
+    "domains": [],
+    "province": "",
+    "symbol": "",
+    "description": "Sune Firehair is a deity of passion and the delights of the senses. She is the god of beauty in all its forms\u2014not just pleasing sights, but also enchanting sounds, luxurious tastes and scents, and exquisite sensual pleasures, from a lover's caress to the whispering brush of silk on the skin. Her worshipers seek out these pleasures in life, not out of mere decadence, but because the experience of pleasure is an act of worship.\nSune appears as a woman of unearthly beauty. Regardless of what features she takes on, her hair is always impossibly long and fiery red. When she doesn't speak in dreams or visions, she sends a Couatl|XMM or Deva|XMM to act as muse on her behalf.\nThe followers of Sune have a reputation as hedonists. Her priests foster beauty in the world by creating art or acting as patrons for promising talents. Her priests consider loveliness to be one of their greatest callings and train in comportment, fashion, and cosmetics.\nBut beauty is more than skin deep, say Sune's followers; it issues from the core of one's being and shows one's true face to the world. The followers of Sune believe in romance, true love winning over all, and following the heart to its true destination. Fated matches, impossible loves, and embracing beauty beyond the physical are the purview of Sune.\nTemples dedicated to Sune serve as public baths and places of relaxation. A temple features a mirrored and well-lit salon where individuals can enhance their appearance, as well as see others and be seen. In remote locales or in parts of sprawling cities far from a temple, small, roofed shrines to Sune provide her followers convenient access to beautification resources. Each shrine bears a mirror and is stocked with free perfumes and cosmetics.\nSune's Chosen exemplify some aspect of beauty. For some, this is physical loveliness, but others create beauty through art, music, writing, or other creative endeavors. They inspire through expression and show that beauty exists in all facets of the world.\nSodality of the Ruby Rose\nThe Sodality of the Ruby Rose is a knightly order dedicated to Lady Firehair and tasked with guarding Sune's temples and holy sites. The Sodality also accompanies Sune's priests and those questing on the Lady's behalf. Anyone with a drive to protect beauty and oppose those who seek to tear it down find acceptance in the Ruby Rose.\nProspective members are called Hopefuls. A Hopeful who demonstrates adherence to Sune's ideals accompanies knights on simple assignments. When the Hopeful wishes to pursue initiation, they keep vigil in a temple of Sune for one night. If the god shows her favor by granting a vision or other boon, the Hopeful is accepted as a Sodalis, also known as a Companion.\nTo win Sune's acceptance, a Hopeful must have protected a meaningful aspect of beauty from something that would destroy it, whether through ignorance or malice. Once inducted, the Companion is granted an enameled red rose brooch and joins the order. Members of special distinction bear brooches with ruby petals. (If your campaign uses renown, a character must have a Renown Score of 3+ with the Sodality of the Ruby Rose to join the organization.)\nCompanions of the Ruby Rose are trained in battle, presentation, and poise. Companions receive a free Comfortable lifestyle when staying at holdings of Sune's faithful. When need arises, Companions can requisition the aid of a Mage|XMM or Priest|XMM of Sune.\nThe Sodality of the Ruby Rose strives against creatures that are corrupt and eager to destroy beauty. Sune's nature ensures that most people, even followers of other gods, are unlikely to remain in conflict with her for long, though the Ruby Rose occasionally clashes with the faithful of Talona, Talos, Tempus, and Umberlee."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Sune",
+   "data": {
+    "pantheon": "Forgotten Realms",
+    "title": "Goddess of love and beauty",
+    "category": "",
+    "alignment": "chaotic evil good",
+    "domains": [
+     "Life",
+     "Light"
+    ],
+    "province": "",
+    "symbol": "Face of a beautiful red-haired woman",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Sune",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "Goddess of love and beauty",
+    "category": "",
+    "alignment": "chaotic evil good",
+    "domains": [
+     "Life",
+     "Light"
+    ],
+    "province": "",
+    "symbol": "Face of a beautiful red-haired woman",
+    "description": "Sune Firehair is a deity of passion and the delights of the senses. She is the goddess of beauty in all its forms - not just pleasing sights, but also enchanting sounds, luxurious tastes and scents, and the exquisite pleasures of the flesh, from a lover's caress to the brush of silk on the skin. Her worshipers seek out these pleasures in life, not out of mere decadence, but because the experience of pleasure is the touch of Sune herself.\nThe followers of Sune have a reputation as hedonists, and so they are, to a degree. More than that, her priests foster beauty in the world. They do so by creating art, by acting as patrons for promising talents, and by investing in merchants who bring luxuries to far-off places that have never seen satin or tasted a luscious wine.\nHer priests consider loveliness to be one of their greatest callings, and all are trained in comportment, fashion, and cosmetics. Indeed, so talented are Sune's priests in the creation of beautiful appearances that many take pride in their ability to present themselves as stunningly attractive examples of either gender.\nBut beauty is more than skin deep, say the Sunites; it issues from the core of one's being and shows one's true face to the world, whether fair or foul. The followers of Sune are believers in romance, true love winning over all, and following one's heart to one's true destination. Fated matches, impossible loves, and ugly ducklings becoming swans are all in the purview of Sune.\nTemples dedicated to Sune are common in human lands, and they frequently serve as public baths and places of relaxation. A temple usually features a mirrored and well-lit salon where folks can primp, as well as see others and be seen. Where a temple doesn't exist, or in a large city where the nearest temple might be too far to walk to, a small shrine to Sune often stands near a street corner. These sites consist of a mirror hung beneath a small roof where one can say a prayer while checking one's appearance. The spot might feature a shelf or a cupboard holding various perfumes and cosmetics so that those without the funds to purchase such items can still make themselves feel beautiful."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Surtur",
+   "data": {
+    "pantheon": "Nonhuman",
+    "title": "God of fire giants and craft",
+    "category": "",
+    "alignment": "lawful good evil",
+    "domains": [
+     "Knowledge",
+     "War"
+    ],
+    "province": "",
+    "symbol": "Flaming sword",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Surtur",
+   "data": {
+    "pantheon": "Norse",
+    "title": "God of fire giants and war",
+    "category": "",
+    "alignment": "lawful good evil",
+    "domains": [
+     "War"
+    ],
+    "province": "",
+    "symbol": "Flaming sword",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Takhisis",
+   "data": {
+    "pantheon": "Dragonlance",
+    "title": "Goddess of night and hatred",
+    "category": "The Gods of Evil",
+    "alignment": "lawful good evil",
+    "domains": [
+     "Death"
+    ],
+    "province": "",
+    "symbol": "Black crescent",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Talona",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "God of poison and disease",
+    "category": "",
+    "alignment": "",
+    "domains": [],
+    "province": "",
+    "symbol": "",
+    "description": "One of Faer\u00fbn's most feared deities, Talona is a god of plague and poison, blamed for everything from common illnesses to crop failure, from brackish wells to plague. She craves propitiation from mortals and pursues it by any means necessary.\nTalona is a fickle god. She is more petulant than conniving, more reactive than active. Though she receives many prayers, Talona has almost no temples or cults dedicated to her, and she resents the neglect. When she lashes out with plagues, blights, and magical contagions, victims desperately pray to her for respite, placating her for a time. But once the contagion ends, prayers dwindle, and it isn't long before the neglected god lashes out again.\nWhen Talona communicates with mortals\u2014usually to demand some sort of propitiation\u2014she sends a Vulture|XMM, a Giant Rat|XMM, or the corpse of a creature infested by insects. Whatever method she chooses, her messenger is shrouded in a sickly yellow-brown glow.\nRituals to placate Talona involve three drops of blood or three tears dropped into a well that has gone bad, dripped into the handkerchief of someone beset by coughing, dropped into a fire made by burning a withered crop, dripped into the mouth of a plague sufferer, and so on. It's common practice to mark a container of poison with her holy symbol, three droplets in a triangle. During epidemics, this image is painted on the homes of the infected.\nTalona's priests rarely enter into her service willingly. Some are forced into the role by their communities, while other individuals simply have nothing else to live for. This latter category includes the sole survivors of harrowing magical contagions, or people who have lost loved ones to Talona's whims. They dedicate their lives to the priesthood to make sure the same fate doesn't befall others. A priest of Talona maintains a small shrine instead of a temple. Despite the priest's best efforts, people often lavish these shrines with offerings during tough times while neglecting them in times of health and abundance.\nDevoted followers of Talona brew poisons in her name and summon magical contagions to unleash on the people of Faer\u00fbn as punishments for neglecting the Mistress of Disease. Among these fanatics, her Chosen are gifted with immunity to poisons and magical maladies."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Talona",
+   "data": {
+    "pantheon": "Forgotten Realms",
+    "title": "Goddess of disease and poison",
+    "category": "",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Death"
+    ],
+    "province": "",
+    "symbol": "Three teardrops on a triangle",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Talona",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "Goddess of poison and disease",
+    "category": "",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Death"
+    ],
+    "province": "",
+    "symbol": "Three teardrops in a triangle",
+    "description": "One of the most often beseeched of Faer\u00fbn's deities, Talona is the goddess of disease and poison, blamed for everything from common illnesses to crop failure to brackish wells to plague. Depicted in temple iconography as a withered crone with a cup or a vase that holds all the varieties of disease and poison, Talona is a fearsome goddess, and many are the prayers that beg her for protection from illness and poison. Various rituals to placate her involve the use of three drops of blood or three tears - to be dropped into a well that has gone bad, dripped into the handkerchief of someone beset by coughing, dropped into a fire made by burning a withered crop, dripped into the mouth of a plague sufferer, and so on. It's common practice to mark a container of poison with her holy symbol, three droplets in a triangle, and during epidemics folk paint the same image on the homes of the infected.\nThough she is often the recipient of prayers, Talona has almost no temples and few cults dedicated to her. A cult or a shrine to her might arise in an area after it suffers from pestilence, when some of those who survived decide to revere her or even become priests."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Talos",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "God of storms",
+    "category": "",
+    "alignment": "",
+    "domains": [],
+    "province": "",
+    "symbol": "",
+    "description": "Talos personifies the destructive aspects of nature. He is best known as a god of storms, but he is also associated with forest fires, earthquakes, tornadoes, and general destruction. Raiders, looters, and brigands flock to his worship.\nThe Storm Lord's actions seem petty and vengeful, motivated by rage, anger, and the need to posture among other gods. Talos is an ancient god who sprang up from the wreckage of the first battle between Sel\u00fbne and Shar. Religious art often depicts him as a broad-shouldered, bearded man with an eye patch, but the folk of Calimshan|FRHoF|2|Calimshan know him by the name Bhaelros and depict him with a genie-like appearance. Talos rules over the gods of fury\u2014Auril, Malar, and Umberlee\u2014though it's said Malar would kill him if he could. The Raging One manifests to mortals as bellowing laughter in the heart of strong winds or as red lightning strikes in a storm.\nDay-to-day worship of the Storm Lord is outlawed in most of Faer\u00fbn, though folk make desperate offerings to save themselves from natural disasters. Talos's faithful love destruction, and they call storms on towns and cities in the name of their deity. Many become brigands, wandering from place to place demanding loot and threatening destruction. Sometimes Talos's faithful forgo any ultimatum, causing wanton destruction for destruction's sake. They are taught that life is chaos and that each person should seize what they can when they can\u2014after all, who can say when Talos will strike and bring them to the afterlife?\nPriests of Talos have few temples, instead traveling like a wayward storm.They wear ragged robes and cloaks shot through with jagged lines of gold and silver. Many wear an eye patch in deference to their god. Priests and other devout worshipers of Talos make pilgrimages to a canyon called the Gulf of Storms in eastern Amn|FRHoF|2|Amn. The peculiar iron ore in the canyon's walls attracts electrical charges, making the chasm prone to spectacular, deadly arrays of crisscrossing, leaping lightning bolts. This energy develops into storms that race down the valley to lash across Amn and Tethyr|FRHoF|2|Tethyr.\nTalos's Chosen bring terror to Faer\u00fbn. They wield incredibly powerful destructive spells such as Storm of Vengeance|XPHB, Earthquake|XPHB, and Meteor Swarm|XPHB, unleashing annihilation on cities and villages that don't bend to the Storm Lord's will."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Talos",
+   "data": {
+    "pantheon": "Forgotten Realms",
+    "title": "God of storms",
+    "category": "",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Tempest"
+    ],
+    "province": "",
+    "symbol": "Three lightning bolts radiating from a central point",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Talos",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "God of storms",
+    "category": "",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Tempest"
+    ],
+    "province": "",
+    "symbol": "Three lightning bolts radiating from a point",
+    "description": "Talos is the dark side of nature, the uncaring and destructive force that might strike at any time. He is the god of storms, forest fires, earthquakes, tornadoes, and general destruction. He counts the ravager, the raider, the looter, and the brigand among his followers. Those who favor him see life as a succession of random effects in a sea of chaos, so the devout should grab what they can, when they can - for who can say when Talos will strike and send them into the afterlife?\nTalos is portrayed as a broad-shouldered, bearded young man with a single good eye, the other covered by a dark patch. He is said to carry a collection of three staffs, made from the first tree cut down in the world, the first silver smelted, and the first iron forged. He uses these staffs to raise destructive winds, cause terrible storms, and split the land in acts of rage. The three lightning bolts of his holy symbol represent these staffs, and when he vents his wrath on the world, he is thought to hurl them down from the sky as lightning strikes.\nAlthough Talos is a popular deity, his name is invoked more often out of fear than out of reverence. He does have priests, mostly traveling doomsayers, who warn of disasters to come and accept charity in exchange for blessings of protection. Many of his faithful wear a black eyepatch, even if both eyes are intact."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tarsellis Meunniduin",
+   "data": {
+    "pantheon": "Elven",
+    "title": "",
+    "category": "The Seldarine",
+    "alignment": "chaotic evil neutral",
+    "domains": [
+     "Nature",
+     "Tempest"
+    ],
+    "province": "Mountains, rivers, wild places",
+    "symbol": "Mountain with a river",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tempus",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "God of war",
+    "category": "",
+    "alignment": "",
+    "domains": [],
+    "province": "",
+    "symbol": "",
+    "description": "Tempus is a war god concerned with brave conduct, using force to settle disputes, and encouraging bloodshed. The Foehammer is friendly with Gond for his war machines and was once Beshaba's lover. Tempus sponsored the Red Knight's ascension to divinity.\nThis god of war is random in his favors, meaning his chaotic nature favors all sides equally. Tempus might be an army's ally one day and its enemy the next. When he manifests before a battle, he can appear to either side in the conflict. If he rides Veiros, his white mare, the army will succeed. If he rides Deiros, his black stallion, defeat is certain. Most often, he rides with one foot in each mount's stirrup, signifying the unpredictable nature of battle.\nIn such visions, Tempus is a powerfully built warrior dressed for battle in the style of those who see him. When he speaks to mortals directly, his voice reverberates in a clash of weapons, or he sends a Celestial Berserker|XMM to carry his will.\nOver the centuries, Tempus's priests have spread and enforced a common code that encourages rules of war, respect for reputation, and professional behavior on the battlefield. This code, called Tempus's Honor, encourages conflicts to be brief, decisive, and as safe as possible for bystanders. The rules in the code include the following: arm anyone who has need of a weapon, disparage no foe, acquit yourself with bravery, train all for battle, and don't engage in feuds. Those who poison wells, taint fields, kill noncombatants, or engage in torture in the name of war are considered enemies.\nWorshipers of Tempus are a legion, and soldiers carry his name in their hearts. His priests are tacticians skilled in the art of war. Many of his priests serve as battlefield chaplains with armies and mercenary companies, encouraging fellow soldiers with word and blade. Priests of Tempus teach that war conducted properly is fair because it impacts all sides equally, with each soldier poised for both death and glory. Mortals shouldn't fear war but should see it as a natural force\u2014the storm that civilization brings about by its existence.\nThe Chosen of Tempus are masterful tacticians, fearsome warriors, and powerful leaders. They find their way to battlefields with such certainty that many suspect the Chosen's presence causes battles to break out.\nStormknives\nMercenaries loyal to Tempus have long identified themselves through the symbol of a rusty dagger dripping four drops of blood. In recent years, these mercenaries have organized around a common code of conduct beyond Tempus's Honor. These individuals call themselves Stormknives.\nA warrior who wishes to become a Stormknife simply declares themself to be one. They carry a dagger at all times\u2014even while sleeping or bathing\u2014and wear a patch bearing four drops of blood. When these individuals sign a mercenary contract, or any other binding agreement related to war or conflict, they add four red marks to their signature, signifying the commitments of a Stormknife.\nEach of the four drops of blood in the Stormknives' symbol represents a commitment, ranked in ascending order of importance. The first of these represents loyalty to the sword and signifies the Stormknife's obligation to seek out battle at every opportunity. Whenever a Stormknife is given a choice between violent and nonviolent methods to solve a problem, they should choose violence.\nThe second drop represents loyalty to the client. A Stormknife respects the wishes of the individual they're working for, obeying them whenever possible. A client, for example, might order a Stormknife to put away their weapons and retreat from battle, and the Stormknife is obliged to obey.\nThe third drop represents loyalty to the contract, emphasizing the letter of the contract over the client's wishes. If, for example, a client instructs a Stormknife not to loot a body, but the contract includes such plunder as the Stormknife's right, the mercenary can disobey the client in favor of the contract.\nAnd finally, th"
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tempus",
+   "data": {
+    "pantheon": "Forgotten Realms",
+    "title": "God of war",
+    "category": "",
+    "alignment": "neutral",
+    "domains": [
+     "War"
+    ],
+    "province": "",
+    "symbol": "Upright flaming sword",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tempus",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "God of war",
+    "category": "",
+    "alignment": "neutral",
+    "domains": [
+     "War"
+    ],
+    "province": "",
+    "symbol": "Upright flaming sword",
+    "description": "Tempus is a war god concerned with brave conduct during war, using force of arms over talk for settling disputes, and encouraging bloodshed. The god of war is random in his favors, meaning that his chaotic nature favors all sides equally. Lord Tempus might be an army's ally one day, and its enemy the next. He might seem to manifest before a battle, appearing to one side or the other. If he is seen riding a white mare (Veiros), then the army will succeed. If he rides a black stallion (Deiros), then defeat is certain. Most often he appears to be riding with one foot in each mount's stirrup, signifying the unpredictable nature of battle. In such visions, Tempus is always a powerfully built warrior dressed for battle in the style of those who envision him.\nTempus's favor might be randomly distributed, but over the centuries his priests have made an effort to spread and enforce a common code of warfare - to make war a thing of rules, respect for reputations, and professional behavior. This code, called Tempus's Honor, has the purpose of making conflicts brief, decisive, and as safe as possible for those not directly involved. The rules in the code include the following: arm anyone who has need of a weapon; disparage no foe; acquit oneself with bravery; train all for battle; and don't engage in feuds. Those who poison wells, taint fields, kill noncombatants, or engage in torture in the name of war are all considered sinners.\nWorshipers of Tempus are legion, and his name is often on the lips of soldiers. His priests are tacticians, often skilled in the art of war. Many of his ordained don't serve in temples, but as battlefield chaplains with armies and mercenary companies, encouraging their fellow soldiers with both word and blade. Priests of Tempus teach that war conducted properly is fair in that it oppresses all sides equally, and that in any given battle, a mortal might be slain or might become a great leader among his or her companions. Mortals shouldn't fear war but should see it as a natural force, the storm that civilization brings about by its very existence."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tethrin Verald\u00e9",
+   "data": {
+    "pantheon": "Elven",
+    "title": "",
+    "category": "The Seldarine",
+    "alignment": "neutral good",
+    "domains": [
+     "War"
+    ],
+    "province": "Battle, sword fighting",
+    "symbol": "Crossed swords beneath a quarter moon and above a full moon",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Thard Harr",
+   "data": {
+    "pantheon": "Dwarven",
+    "title": "",
+    "category": "The Mordinsamman",
+    "alignment": "chaotic evil good",
+    "domains": [
+     "Nature"
+    ],
+    "province": "Wilderness, hunting",
+    "symbol": "Two clawed gauntlets",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tharizdun",
+   "data": {
+    "pantheon": "Dawn War",
+    "title": "God of madness",
+    "category": "",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Trickery"
+    ],
+    "province": "",
+    "symbol": "Jagged counter-clockwise spiral",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tharizdun",
+   "data": {
+    "pantheon": "Exandria",
+    "title": "the Chained Oblivion",
+    "category": "Betrayer Gods",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Death",
+     "Grave",
+     "Trickery"
+    ],
+    "province": "Darkness, destruction",
+    "symbol": "Crooked, seven-pointed star made of chains",
+    "description": "It is darkness unending, less like a god and more like another world. Life and death do not exist within Tharizdun, only utter destruction and madness. Even the other Betrayer Gods treat this mad god with caution. In its endless imprisonment, Tharizdun dreams the infinite depths of the Abyss into reality, along with all its demonic legions. The Prime Deities had thought it locked away during the Founding until it nearly returned to ruin the world during the conflicts of the Calamity.\nNow, its chaotic mind has fallen into more frightful dreams, imagining nightmarish aberrations into existence deep beneath Exandria. The Chained Oblivion's demented cultists work without word from their twisted patron, awaiting the Epoch of Ends, when its freedom will be attained and all beings shall be consumed in deathlessness unending.\nTharizdun is believed to be chained in the deepest pits of the Abyss, bound by divine shackles that slowly weaken, leaking its madness into the planes.\nDepiction\nFew visual attempts to depict Tharizdun exist, but the texts speak of a creature of rolling, hungry ink and darkness, a spreading cloud of lightless destruction born from a thousand ravenous mouths. Current references show the nightmare constrained by chains of gold and black, barely keeping the dark at bay.\nEnemies\nThe few remaining followers of Ioun are dedicated to ensuring that Tharizdun is never again unchained. Ioun led the charge against the all-consuming destroyer god's reemergence, and her bravery allowed the other Prime Deities to shackle their enemy, though the victory nearly cost her immortal life. Some say Ioun can only be fully restored if the Chained Oblivion is destroyed for good.\nCommandments of Tharizdun\nOffer and siphon power to Tharizdun until his liberation comes.\nUncover, restore, and exalt forgotten shrines and relics in his honor.\nRuin and raze the realms to prepare for the Epoch of Ends."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tharizdun",
+   "data": {
+    "pantheon": "Greyhawk",
+    "title": "God of eternal darkness",
+    "category": "",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Trickery"
+    ],
+    "province": "",
+    "symbol": "Dark spiral or inverted ziggurat",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tharmekh\u00fbl",
+   "data": {
+    "pantheon": "Dwarven",
+    "title": "",
+    "category": "The Mordinsamman",
+    "alignment": "neutral",
+    "domains": [
+     "Forge",
+     "Light"
+    ],
+    "province": "Fire, forges, molten rock",
+    "symbol": "Fiery axe",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Thassa",
+   "data": {
+    "pantheon": "Theros",
+    "title": "God of the Sea",
+    "category": "",
+    "alignment": "neutral",
+    "domains": [
+     "Knowledge",
+     "Tempest"
+    ],
+    "province": "",
+    "symbol": "",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Thautam",
+   "data": {
+    "pantheon": "Dwarven",
+    "title": "",
+    "category": "The Mordinsamman",
+    "alignment": "neutral",
+    "domains": [
+     "Knowledge",
+     "Trickery"
+    ],
+    "province": "Mysteries, darkness, lost treasures",
+    "symbol": "Blindfold",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Blood of Vol",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "",
+    "category": "Other Faiths of Eberron",
+    "alignment": "",
+    "domains": [
+     "Death",
+     "Life"
+    ],
+    "province": "Immortality",
+    "symbol": "Red teardrop gem",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Blood of Vol",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "Philosophy of immortality and undeath",
+    "category": "Other Faiths of Eberron",
+    "alignment": "lawful good neutral",
+    "domains": [
+     "Death",
+     "Life"
+    ],
+    "province": "",
+    "symbol": "Stylized dragon skull on red teardrop gem",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Daghdha",
+   "data": {
+    "pantheon": "Celtic",
+    "title": "God of weather and crops",
+    "category": "",
+    "alignment": "chaotic evil good",
+    "domains": [
+     "Nature",
+     "Trickery"
+    ],
+    "province": "",
+    "symbol": "Bubbling cauldron or shield",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Devourer",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "",
+    "category": "The Dark Six",
+    "alignment": "",
+    "domains": [
+     "Tempest"
+    ],
+    "province": "Nature's wrath",
+    "symbol": "Bundle of five sharpened bones or dragon turtle",
+    "description": "The Devourer governs the destructive power of nature, both pure elemental force and savagery in beasts."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Devourer",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "God of nature's wrath",
+    "category": "The Dark Six",
+    "alignment": "neutral evil",
+    "domains": [
+     "Tempest"
+    ],
+    "province": "",
+    "symbol": "Bundle of five sharpened bones",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Fury",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "",
+    "category": "The Dark Six",
+    "alignment": "",
+    "domains": [
+     "War"
+    ],
+    "province": "Passion, revenge",
+    "symbol": "Winged wyrm with woman's head and arms",
+    "description": "The Fury governs both passion and revenge, rage and despair. She offers revenge to those who have been wronged, but her vengeance often leads to suffering."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Fury",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "Goddess of wrath and madness",
+    "category": "The Dark Six",
+    "alignment": "neutral evil",
+    "domains": [
+     "War"
+    ],
+    "province": "",
+    "symbol": "Winged wyrm with woman's head and upper body",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Hag Mother",
+   "data": {
+    "pantheon": "Exandria",
+    "title": "",
+    "category": "Lesser Idols",
+    "alignment": "neutral evil",
+    "domains": [
+     "Knowledge",
+     "Trickery"
+    ],
+    "province": "The Fiend",
+    "symbol": "Single red horn",
+    "description": "Rumored to be the oldest hag and progenitor of all other hags in Exandria, the Hag Mother arrived in the world just after the Founding. She has a soft spot for humanoids in peril that caused her original coven to exile and bind her to Exandria with a magical curse. She wanders the land, making deals with people in dire straits, offering the power to save themselves in return for their service. The tasks the Hag Mother asks of those who accept her deals are always dangerous and sometimes grotesque and cruel. Some of these quests save lives, while others end them. Others still result in the creation of more hags. Many of the missions seem to serve no purpose, but the Hag Mother always has a plan. Whether her endgame is to destroy her enemies, break her curse, or rule Exandria is known only to the Hag Mother herself.\nAppearance\nThe Hag Mother can take any female humanoid form she chooses and often travels in disguise, but her true form is that of a gnarled, purple-skinned crone with stringy black hair, yellow eyes, and red ram's horns that curl back from her forehead."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Keeper",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "",
+    "category": "The Dark Six",
+    "alignment": "",
+    "domains": [
+     "Death"
+    ],
+    "province": "Death, greed",
+    "symbol": "Dragonshard in the shape of a fang or dracolich",
+    "description": "The Keeper snatches souls before they can reach Dolurrh and hoards them along with his vast wealth. Those driven by greed call him their patron, and his priests often act as criminal fixers."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Keeper",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "God of greed and death",
+    "category": "The Dark Six",
+    "alignment": "neutral evil",
+    "domains": [
+     "Death"
+    ],
+    "province": "",
+    "symbol": "Dragonshard stone in the shape of a fang",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Luxon",
+   "data": {
+    "pantheon": "Exandria",
+    "title": "the First Radiance",
+    "category": "Lesser Idols",
+    "alignment": "neutral",
+    "domains": [
+     "Arcana",
+     "Light"
+    ],
+    "province": "",
+    "symbol": "Hollow dodecahedron",
+    "description": "Very few throughout Exandria have heard of the Luxon, and fewer still believe they even exist. The Luxon is the central deity of the Kryn Dynasty and their way of life, but study of the Luxon beyond the borders of Xhorhas has only recently begun\u2014and such study is mostly motivated by the Dwendalian Empire's desire to gain an advantage in the war.\nThe Luxon doesn't have an active consciousness or personality. The worship of them is largely a system of pure faith, backed by scientific and metaphysical truths that stem from the discovery of the beacons and the Umavi who interpret their meaning (see \"Kryn Dynasty|EGW|3|Kryn Dynasty\" in chapter 2). Priests of the Luxon often study dunamis and its primal arcane nature, while others are born with dunamantic gifts granted by the reality-bending powers of the beacons. Those that do call on the rarer threads of divinity use the beacons themselves as a source of magic.\nAppearance\nBy all accounts, the Luxon's original form is believed to be a colossal, shapeless body of impossibly bright light, like a burning star. Followers of the Luxon carry small, often hollow, dodecahedrons as a symbol of their faith.\nOrigins of the Luxon\nAccording to the teachings of the Kryn and the Umavi who scribe their faith, it is believed that long before the gods of Exandria came to shape this world, there was a time when a single Light came from the dark nothingness. Other lights came into being around them, settling as the stars in the cosmos. This one Light, however, resisted the force that beckoned them to burn like their star-fated brethren. This one Light wanted to understand what they were and chose to wander alone, choosing a different path. This choice led to endless stretches of lonely dark, the voices of the stars silent to the Light that walked away. Lonely, they wandered until they found a cold, dark rock: a world. The Light grew fond of this rock, seeing it as lonely as they were, and embraced it. They sparked a fire within, cracking the surface and giving fiery life to the cold world.\nFrom within the fiery core, the Light began to watch the world change and turn, the chaos giving birth to the first souls: the Primordials. Amazed with their children, the Light wanted to guide them to learn of themselves, which in turn would help the Light discover their own purpose\u2014but the children warred amongst themselves and killed one another, their souls born of the Light becoming lost to the dark beyond. Confused but determined, the Light decided that a time of learning was required, and that a cycle of trial and error must be enacted for their children of chaos to better themselves. Sacrificing a majority of their own essence, the Light created beacons of their own self, crystals of great power that enacted a cycle of rebirth for those who were bound to the Light.\nThis act exhausted the Light, and they fell into a deep slumber within the core of the world, awaiting a time where the children of their own mind would learn from life to life, through eons of struggle and self-reflection, until the knowledge had matured enough to reassemble them, awaken them, and the children could grant the answer to the question the Light had sought from the very beginning: what are they and what was their purpose? This Light is now referred to by the mortal followers of the Kryn as the Luxon."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Mockery",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "",
+    "category": "The Dark Six",
+    "alignment": "",
+    "domains": [
+     "Trickery",
+     "War"
+    ],
+    "province": "Betrayal, bloodshed",
+    "symbol": "Five blood-spattered blades or flayed dragon",
+    "description": "The Mockery is the patron of treachery and of terror in battle. He guides those who seek victory through guile, both warriors and assassins. He was once the brother of Dol Dorn and Dol Arrah, but he was stripped of his skin and his name after betraying them."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Mockery",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "God of violence and treachery",
+    "category": "The Dark Six",
+    "alignment": "neutral evil",
+    "domains": [
+     "War"
+    ],
+    "province": "",
+    "symbol": "Five blood-spattered tools",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Path of Light",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "",
+    "category": "Other Faiths of Eberron",
+    "alignment": "",
+    "domains": [
+     "Life",
+     "Light"
+    ],
+    "province": "Light, self-improvement",
+    "symbol": "Brilliant crystal",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Path of Light",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "Philosophy of light and self-improvement",
+    "category": "Other Faiths of Eberron",
+    "alignment": "lawful good neutral",
+    "domains": [
+     "Life",
+     "Light"
+    ],
+    "province": "",
+    "symbol": "Brilliant crystal",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Raven Queen",
+   "data": {
+    "pantheon": "Exandria",
+    "title": "Matron of Death",
+    "category": "Prime Deities",
+    "alignment": "lawful good neutral",
+    "domains": [
+     "Death",
+     "Grave"
+    ],
+    "province": "Death, fate, winter",
+    "symbol": "White, humanoid mask framed in black feathers",
+    "description": "Master of the skein of fate and the mistress of winter, the Raven Queen is the god of death. Her gaze follows and marks the end of each mortal life, watching over the border between life and death and ensuring the natural transition is undefiled. Many funerals ask her blessing to protect the deceased from the terrible curse of undeath. Those who study ancient lore believe that the Matron of Death was once mortal herself and is the only known mortal to have ascended to godhood. Her rise instantly obliterated the previous, now-forgotten god of death, and the other gods quickly and fearfully destroyed the secrets to the rites of ascension.\nThe Raven Queen tugs at the threads of fate from her stronghold of black ice within the frozen realm of Letherna, nestled in a frigid corner of the Shadowfell.\nDepiction\nFew existing visual depictions of the Raven Queen exist; many temples merely use the raven as a symbol of her blessing. The few illustrations of her portray a tall, pale woman wrapped in dangling black linens, with her face obscured by a white porcelain mask and her onyx-black hair straight and never-ending.\nHoly Day\nThe Raven Queen's holy day is called the Night of Ascension, celebrating her apotheosis. The actual date of the her rise to divinity is unclear, but the Night of Ascension is celebrated on the thirteenth day of the tenth month. What was once a night of cheery celebration of the dead in the Dwendalian Empire has recently become an occasion to burn effigies and decry the Kryn Dynasty for their unnatural relationship with death.\nCommandments of the Raven Queen\nDeath is the natural end of life. There is no pity for those who have fallen.\nThe path of Fate is sacrosanct. Those who pridefully attempt to cast off their destiny must be punished.\nUndeath is an atrocity. Those who would pervert the transition of the soul must be brought down."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Red Knight",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "God of strategy",
+    "category": "",
+    "alignment": "",
+    "domains": [],
+    "province": "",
+    "symbol": "",
+    "description": "Where other war gods focus on the bravery, duty, or pain of battle, the Red Knight is concerned solely with the art of tactics. She is a god of planning and strategy. Her military genius allows her and her followers to see the greater picture in any war, rather than a series of battles won and lost.\nIn spite of her calm and logical demeanor, the Lady of Strategy isn't without compassion. Faer\u00fbn's myths and legends depict her as a wise, daughter-like figure to the god Tempus, advising him in times of need. She aids mortal tacticians by fashioning boulders into red-veined Stone Golem|XMM|Stone Golems shaped like lanceboard pieces, sending crimson Pegasi from the heavens above, or animating lanceboard pieces to demonstrate tactical maneuvers.\nDevotees of the Red Knight are rare in the general population. Her name is seldom invoked outside of battle, except perhaps in games of strategy such as lanceboard. High-ranking commanders of armies, instructors in colleges of war, quartermasters, and authors of tomes of tactics revere her.\nWorship of the Red Knight arose among a hero-venerating monastic order of Tempus in Tethyr|FRHoF|2|Tethyr shortly after the Time of Troubles. The Lady of Strategy visited these monks in a dream and delivered to them the Great Stratagem: an imperative to travel to places of warfare to educate generals and monarchs in the arts of strategy and battlefield tactics. Known as the Red Fellowship, her priests traveled throughout southwestern Faer\u00fbn sharing their wisdom. Many leaders they approached turned them away at first, but it soon became apparent that those who accepted the counsel of the Lady of Strategy gained a distinct tactical edge. Grateful victors built temples to the Red Knight, and gradually her faith spread. Today, her followers appear in nearly any land that has seen warfare in the past century. The Red Knight's greatest temples include an enchanted war table that visiting generals can rent out to visualize their tactics.\nThe Red Knight's Chosen ride the god's crimson pegasi into combat. However, their most crucial work takes place in war rooms far from the front lines. These Chosen act as trusted advisers to powerful military forces in Faer\u00fbn, predicting their foes' next moves with eerie accuracy."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Red Knight",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "Goddess of strategy",
+    "category": "",
+    "alignment": "lawful good neutral",
+    "domains": [
+     "War"
+    ],
+    "province": "",
+    "symbol": "Red knight lanceboard piece with stars for eyes",
+    "description": "The Red Knight is the goddess of planning and strategy. Those who favor her call themselves the Red Fellowship. They believe wars are won by the best planning, strategy, and tactics. The worship of the Red Knight is filled with doctrine about strategy, such as: \"Every war is a series of battles. Losing one doesn't mean losing the war.\" \"In war, plan for peace. In peace, plan for war.\" \"Seek allies among your enemy's enemies.\"\nWorship of the Red Knight arose among a hero-venerating monastic order of Tempus in Tethyr shortly after the Time of Troubles. The Red Knight has since grown in popularity because of what her followers call the Great Stratagem: for decades, her priests have been traveling to places of warfare to educate generals and kings in the arts of strategy and battlefield tactics. Many of the leaders they approached turned them away at first, but it soon became apparent that those who accepted the counsel of the Crimson General's followers gained a distinct benefit. Grateful victors built temples to the Lady of Strategy, and gradually her faith spread.\nToday, followers of the Red Knight can be found in nearly any land that has seen warfare in the past century. Worshipers of the Red Knight are rare in the general population, but those who revere her can frequently be found among high-ranking commanders of armies, instructors in colleges of war, quartermasters, and the authors of tomes of strategy. Each temple to the Red Knight includes an altar dedicated to Tempus, and so such a place is likely to be frequented by mercenaries and soldiers. A temple is surrounded by a vast pavilion and courtyard, which can be rented by companies of soldiers and mercenaries for practice and training. Her priests believe that drilling one's troops in a temple courtyard is a form of propitiation that the Red Knight looks upon with special favor."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Shadow",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "",
+    "category": "The Dark Six",
+    "alignment": "",
+    "domains": [
+     "Knowledge"
+    ],
+    "province": "Ambition, dark magic",
+    "symbol": "Obsidian tower",
+    "description": "The Shadow is the dark side of knowledge and ambition. It's said to be Aureon's shadow, given malign life when Aureon mastered magic. The Shadow is the maker of monsters and the keeper of forbidden secrets, and it offers malevolent spells to warlocks and wizards."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Shadow",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "God of dark magic",
+    "category": "The Dark Six",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Knowledge"
+    ],
+    "province": "",
+    "symbol": "Obsidian tower",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Silver Flame",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "",
+    "category": "Other Faiths of Eberron",
+    "alignment": "",
+    "domains": [
+     "Life",
+     "Light",
+     "War"
+    ],
+    "province": "Good, protection",
+    "symbol": "Flame drawn on silver or molded from silver",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Silver Flame",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "Deity of protection and good",
+    "category": "Other Faiths of Eberron",
+    "alignment": "lawful good good",
+    "domains": [
+     "Life",
+     "Light",
+     "War"
+    ],
+    "province": "",
+    "symbol": "Flame drawn on silver or molded from silver",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Spirits of the Past",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "",
+    "category": "Other Faiths of Eberron",
+    "alignment": "",
+    "domains": [
+     "Nature",
+     "War"
+    ],
+    "province": "Elven ancestors",
+    "symbol": "Varies",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Spirits of the Past",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "Elven ancestors",
+    "category": "Other Faiths of Eberron",
+    "alignment": "chaotic evil good",
+    "domains": [
+     "War"
+    ],
+    "province": "",
+    "symbol": "Varies",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Traveler",
+   "data": {
+    "pantheon": "Exandria",
+    "title": "",
+    "category": "Lesser Idols",
+    "alignment": "chaotic evil neutral",
+    "domains": [
+     "Nature",
+     "Trickery"
+    ],
+    "province": "The Archfey",
+    "symbol": "Arched doorway over a road that vanishes into the distance",
+    "description": "This powerful archfey of selfish and anarchic intent, who was once known by the name Artagan, drew the ire of Corellon a millennium ago when his prank-like dabblings on the Material Plane left an entire nascent elven culture worshipping a whale carcass. Banished to the Feywild and barred from the mortal realm, Artagan wandered his home plane for hundreds of years, sowing chaos for his own enjoyment\u2014until he struck a deal with the heroes of Vox Machina that enabled him to return to the Material Plane. There, he embarked on his latest plot of dubious divinity under a new identity: the Traveler.\nEccentric, fickle, and prone to whimsy and impulse, the Traveler wanders Exandria, seeking allies and followers who entertain him. Lending his powerful fey magics in the guise of divine boons and weaving a spreading myth surrounding his secretive purpose, the Traveler appears when least expected and leaves when least preferred. Those who hear of his tenets are prone to disbelief, but the occasional \"miracle\" serves to reinforce his influence. Does he wish to become a new god, or is this all still just a game?\nAppearance\nThe Traveler is often depicted as a tall elf man hidden within a billowing green cloak, the hood obscuring his face except for his knowing grin."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Traveler",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "",
+    "category": "The Dark Six",
+    "alignment": "",
+    "domains": [
+     "Forge",
+     "Knowledge",
+     "Trickery"
+    ],
+    "province": "Change, chaos",
+    "symbol": "Four crossed, rune-inscribed bones",
+    "description": "The Traveler asserts that chaos drives evolution and that change makes us stronger. The Traveler is a trickster and the giver of dangerous gifts. Some artificers worship the Traveler, seeing it as the lord of innovation, but the gifts of the Traveler always have unexpected consequences."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Traveler",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "Deity of chaos and change",
+    "category": "The Dark Six",
+    "alignment": "chaotic evil neutral",
+    "domains": [
+     "Knowledge",
+     "Trickery"
+    ],
+    "province": "",
+    "symbol": "Four crossed, rune-inscribed bones",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Undying Court",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "",
+    "category": "Other Faiths of Eberron",
+    "alignment": "",
+    "domains": [
+     "Grave",
+     "Knowledge",
+     "Life"
+    ],
+    "province": "Elven ancestors",
+    "symbol": "Golden mask",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "The Undying Court",
+   "data": {
+    "pantheon": "Eberron",
+    "title": "Elven ancestors",
+    "category": "Other Faiths of Eberron",
+    "alignment": "neutral good",
+    "domains": [
+     "Grave",
+     "Knowledge",
+     "Life"
+    ],
+    "province": "",
+    "symbol": "Varies",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Thor",
+   "data": {
+    "pantheon": "Norse",
+    "title": "God of storms and thunder",
+    "category": "",
+    "alignment": "chaotic evil good",
+    "domains": [
+     "Tempest",
+     "War"
+    ],
+    "province": "",
+    "symbol": "Hammer",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Thoth",
+   "data": {
+    "pantheon": "Egyptian",
+    "title": "God of knowledge and wisdom",
+    "category": "",
+    "alignment": "neutral",
+    "domains": [
+     "Knowledge"
+    ],
+    "province": "",
+    "symbol": "Ibis",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Thrym",
+   "data": {
+    "pantheon": "Nonhuman",
+    "title": "God of frost giants and strength",
+    "category": "",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "War"
+    ],
+    "province": "",
+    "symbol": "White double-bladed axe",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Thrym",
+   "data": {
+    "pantheon": "Norse",
+    "title": "God of frost giants and cold",
+    "category": "",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "War"
+    ],
+    "province": "",
+    "symbol": "White double-bladed axe",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tiamat",
+   "data": {
+    "pantheon": "Dawn War",
+    "title": "Goddess of wealth, greed, and vengeance",
+    "category": "",
+    "alignment": "lawful good evil",
+    "domains": [
+     "Trickery",
+     "War"
+    ],
+    "province": "",
+    "symbol": "Five-pointed star with curved points",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tiamat",
+   "data": {
+    "pantheon": "Exandria",
+    "title": "the Scaled Tyrant",
+    "category": "Betrayer Gods",
+    "alignment": "lawful good evil",
+    "domains": [
+     "Order",
+     "Trickery",
+     "War"
+    ],
+    "province": "Dragon god of evil",
+    "symbol": "Taloned dragon claw",
+    "description": "The evil queen of dragons is a fearsome god of greed, envy, and hoarded wealth. While chromatic dragons are her foremost worshipers, Tiamat accepts the worship of any who crave wealth. All chromatic dragons have a fearful reverence for their tyrannical queen, but many dragons of near-deific power and ambition chafe under her rule.\nTiamat remains imprisoned in Avernus, the first of the Nine Hells, influencing the souls of chromatic dragons across the planes and seeking the means to free herself.\nDepiction\nMost representations of Tiamat exist as warnings within sanctuaries of the Platinum Dragon Bahamut. She is shown as a drake of frightful size, with massive leathery wings spreading clouds of poisonous mist, while she shouts from five vicious dragon heads, each one a chromatic color of her evil children.\nEnemies\nThe Scaled Tyrant's hatred for Bahamut is as old as the Founding, and her cults are ever hunted by his justice. For centuries, the zealous paladins of Bahamut have limited her worship to the chromatic dragons, but a rise in cult activity in the underbelly of Dwendalian society has priests of the Platinum Dragon on edge.\nCommandments of Tiamat\nAmass wealth, but spend little. The gold\u2014and the power that comes with it\u2014is sufficient reward in itself.\nDo not forgive nor forget an indignity to yourself. Let no affront go unpunished.\nTake what you covet. Those without the strength to defend their dominion are not worthy to have one."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tiamat",
+   "data": {
+    "pantheon": "Nonhuman",
+    "title": "Dragon goddess of evil",
+    "category": "",
+    "alignment": "lawful good evil",
+    "domains": [
+     "Trickery"
+    ],
+    "province": "",
+    "symbol": "Dragon head with five claw marks",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Torm",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "God of courage and self-sacrifice",
+    "category": "",
+    "alignment": "",
+    "domains": [],
+    "province": "",
+    "symbol": "",
+    "description": "Those who favor Torm believe salvation is found through service. He is a god of courage and self-sacrifice, an unyielding deity who dutifully puts himself on the front line of the fight against evil and injustice. He is a patron god of many Paladins, embodying the tenets of the Oath of Devotion.\nTorm's name carries gravitas and strikes fear into treacherous hearts, but his heart is filled with goodness. In legends, he is kind and gentle when dealing with faithful friends, the weak, and the defenseless. But he is stern and righteous against the forces of evil and injustice. When Torm appears in dreams, he takes the form of an enormous, flying metal gauntlet surrounded by arcs of lightning. He might send a golden Lion|XMM or, in extreme cases, a Deva|XMM clad in gleaming armor to make his will known.\nTorm's faithful believe that brave acts of service please their god. They strive to maintain peace and order while opposing unjust laws and standing alert against corruption. Though many of Torm's followers are warriors, skill in combat isn't required to uphold Torm's ideals. For instance, a council member who worships Torm advocates for what is just, even if this puts their position at risk. Torm's followers believe every failure of duty diminishes Torm and every success adds to his luster. The faithful know everyone stumbles from time to time, but they never cease aspiring to Torm's standards.\nFollowers construct fortress-temples dedicated to Torm on defensible heights. These structures offer drilling grounds, stables, and austere quarters for residents and visiting knights. Lion statues and armored figures feature in these temples' decor, with the coats of arms of fallen heroes decorating the white-granite walls. The priesthood of Torm is friendly with the priesthoods of Tyr and Ilmater: together with Torm, these gods make up a trio of deities called the Triad. Torm's priests are also allied with the Red Knight and Lathander.\nChosen of Torm dedicate themselves to the fight against evil, especially against the forces of Bane. Torm and Bane battled each other to their mutual destruction during the Time of Troubles\u2014both gods have since returned, and the animosity between them still seethes.\nOrder of the Golden Lion\nEast of the Dalelands|FRHoF|2|Dalelands, the city of Tantras is home to the greatest concentration of Torm worshipers in Faer\u00fbn. There, Torm manifested and slew Bane during the Time of Troubles. While this era was a time of great pride for Torm's followers, it also became one of great shame. After returning to his godly state, Torm was disgusted to find that Tantras's priests had been persecuting believers of other gods, and that this practice had spread throughout the Dalelands and along the Sea of Fallen Stars. As punishment, Torm dictated a series of responsibilities and obligations\u2014the Penance of Duty\u2014for his followers to perform as atonement. Over a century has passed since this decree, and Torm's followers have regained trust in the regions around Tantras. Still, a select group of Torm's faithful vowed to continue the atonement of the Penance of Duty, and those people are known as the Order of the Golden Lion.\nThe Order of the Golden Lion involves righting three Debts: Persecution, Dereliction, and Destruction. Typically knights of the Golden Lion devote themselves to righting a single debt. Those who choose the Debt of Persecution aid good religions wherever possible. Followers of the Debt of Dereliction atone for abdications of duty by seeking out and eliminating cults of Bane, as well as routing the Zhentarim|FRHoF|6|Zhentarim. Adherents to the Debt of Destruction are obliged to report and repair areas of dead magic and wild magic throughout Faer\u00fbn as penance for the destruction to the Weave|FRHoF|5|The Weave caused by Torm's battle against Bane.\nThe Order of the Golden Lion is most active in the Dalelands and the region around Tantras, but faithful as far as the Sword Coast|FRHoF|2|Sword Coast have picked up the"
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Torm",
+   "data": {
+    "pantheon": "Forgotten Realms",
+    "title": "God of courage and self-sacrifice",
+    "category": "",
+    "alignment": "lawful good good",
+    "domains": [
+     "War"
+    ],
+    "province": "",
+    "symbol": "White right gauntlet",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Torm",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "God of courage and self-sacrifice",
+    "category": "",
+    "alignment": "lawful good good",
+    "domains": [
+     "War"
+    ],
+    "province": "",
+    "symbol": "White right gauntlet",
+    "description": "Torm is the god of duty and loyalty, revered by those who face danger to bring about a greater good. Those who favor Torm believe that one's salvation can be found through service, that every failure to perform one's duty diminishes Torm, and that every success adds to his luster. Those who take Torm to heart must strive to fulfill his commandment to go out into the world and be an active force for good, to right wrongs, and to help the hopeless. They must strive to maintain peace and order while opposing unjust laws. Followers of Torm stand ever alert against corruption and are expected to strike quickly and hard against any evidence of rot in the hearts of mortals. As the sword arm of justice, Torm's faithful are expected to bring quick deaths to betrayers. Considering these tenets, it should be no surprise that most human paladins have Torm as their patron.\nMost temples dedicated to Torm are fortresses built on heights. These structures offer austere quarters for residents and visiting knights, drilling grounds, and stables. White granite, lion statues, and armored figures predominate in the architecture, with the coats of arms of fallen heroes decorating the walls of the great halls.\nTorm is seen as the good right hand of Tyr, and as such his symbol is a white gauntlet made for the right hand. It represents Tyr's sword hand, but it is also a symbol of forbearance. Torm is frequently depicted with his right gauntlet extended palm forward, which worshipers call the Hand Resolute. It signifies the principle that the just and true must pause before acting to judge whether their intentions uphold Torm's ideals. Temples, civic structures, and the homes of the faithful are often decorated with images of the Hand Resolute as a constant reminder of this principle.\nWorshipers of Torm come from most walks of life, for he welcomes any who seek the best in themselves and others, who uphold his tenets of loyalty, responsibility, duty, and kindness, or who are willing to sacrifice to keep evil from gaining ascendancy in the world. The faithful know that all of them will stumble from time to time while following in Torm's footsteps, but Torm's priests teach that the shame of a minor fall from grace is far less severe than declining to rise oneself up to Torm's standards."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Torog",
+   "data": {
+    "pantheon": "Dawn War",
+    "title": "God of the Underdark",
+    "category": "",
+    "alignment": "neutral evil",
+    "domains": [
+     "Death"
+    ],
+    "province": "",
+    "symbol": "T attached to a circular shackle",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Torog",
+   "data": {
+    "pantheon": "Exandria",
+    "title": "the Crawling King",
+    "category": "Betrayer Gods",
+    "alignment": "neutral evil",
+    "domains": [
+     "Death",
+     "Trickery"
+    ],
+    "province": "Enslavement, torture",
+    "symbol": "Three pale arms clawing from a dark void",
+    "description": "The dark god of the endless tunnels and caverns beneath Exandria, Torog is the patron of torturers, slavers, and jailers across the realms. His violent tears carved the pathways under the world, and his realm of imprisonment is a network of deadly caves and manacles from which few return. Creatures that wander the desolation of Carceri often construct prisons in his image. Those who rob others of their freedom offer prayers to him in cellars and other subterranean domains, and many creatures who live in the darkness below worship him and seek his guidance.\nTorog remains banished within an unknown sliver of the Far Realm that now borders the deepest pits of the Underdark, where the boundaries between worlds grow thin and birth terrible abominations bent on subjugation.\nDepiction\nThe Crawling King is rendered as a swollen, malformed worm that slithers through the dark below, with a screaming, hairless human head at the helm and three arms carving through the lightless rock.\nEnemies\nPelor and Raei defeated Torog during the Calamity by luring their nemesis above ground. Pelor pierced Torog's tenebrous body with ten thousand lances of sunlight, and the Everlight imprisoned him beyond the boundaries of Exandria. The tears of pain and anger the Crawling King shed burned through Exandria, and his faithful fled into these tunnels to escape their enemies' holy light.\nCommandments of Torog\nSeek and exalt places where no light touches.\nRevel in the pain you inflict on others, and relish the pain you suffer yourself as an offering to Torog.\nImprison those who cannot resist you, and drag all life into the darkness."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Trithereon",
+   "data": {
+    "pantheon": "Greyhawk",
+    "title": "God of liberty and retribution",
+    "category": "",
+    "alignment": "chaotic evil good",
+    "domains": [
+     "War"
+    ],
+    "province": "",
+    "symbol": "Triskelion",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tyche",
+   "data": {
+    "pantheon": "Greek",
+    "title": "Goddess of good fortune",
+    "category": "",
+    "alignment": "neutral",
+    "domains": [
+     "Trickery"
+    ],
+    "province": "",
+    "symbol": "Red pentagram",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tymora",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "God of good fortune",
+    "category": "",
+    "alignment": "",
+    "domains": [],
+    "province": "",
+    "symbol": "",
+    "description": "Tymora is a bright-faced god of fortune, the patron deity of game players and gamblers. Our Smiling Lady loves those who gamble with skill and daring. She watches over all who take risks to better their fortunes. Tymora takes the form of a tall, graceful young woman with flowing platinum-blond or silver hair. She might send a faerie dragon as an emissary.\nTymora is Beshaba's sister. Long ago, the Netherese revered Tyche, the god of luck, whose influence extended over both good luck and bad. Tyche perished, but Beshaba and Tymora manifested soon after, each commanding half of Tyche's portfolio.\nThe battle cry of Tymora is \"Fortune favors the bold.\" Folk pray to Tymora before any endeavor in which a little good luck would help. One common method of divining the future is to toss a coin to a stranger and ask if it's heads. If it is, the coin is left with the stranger as payment for Tymora's favor. If it's not, the stranger can keep it (and the bad luck that comes with it) or return it.\nThose who favor Tymora\u2014as distinct from those who merely invoke her name whenever they roll dice\u2014are daring sorts. Many of her followers are adventurers and gamblers. They believe that the good in their lives results from having both good luck and the bravery to seek it out. Tymora draws all sorts of worshipers: the dashing noble, the risk-taking merchant, the daydreaming field hand, and the scheming ne'er-do-well.\nPriests of Tymora and temples devoted to Lady Luck are scarce, since her faith doesn't stress a need for intermediaries: \"Let the lucky man and the Smiling Lady suss it out,\" as the old saying goes. Shrines to Tymora at gambling parlors aren't unusual, however, and such establishments might attract a priest and effectively become temples.\nTymora's Chosen become infused with her extraordinary luck. Some never realize they are Chosen, ascribing their luck to mere chance. The Smiling Lady chooses individuals who embrace her tenets and dive boldly into action and risk, rolling the dice and betting big."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tymora",
+   "data": {
+    "pantheon": "Forgotten Realms",
+    "title": "Goddess of good fortune",
+    "category": "",
+    "alignment": "chaotic evil good",
+    "domains": [
+     "Trickery"
+    ],
+    "province": "",
+    "symbol": "Face-up coin",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tymora",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "Goddess of good fortune",
+    "category": "",
+    "alignment": "chaotic evil good",
+    "domains": [
+     "Trickery"
+    ],
+    "province": "",
+    "symbol": "Face-up coin",
+    "description": "Tymora is the bright-faced goddess of fortune, the one to whom gamblers and game-players pray in Faer\u00fbn. Our Smiling Lady is said to love none so much as those who gamble with the utmost skill and daring. Yet she is thought to watch over all who take risks to better their fortunes.\nThe battle cry of the followers of Tymora is \"Fortune favors the bold.\" Someone might say words to Tymora before any endeavor in which a little good luck would help, but not when an incidence of bad luck might occur. (On such occasions folk pray to Beshaba to spare them from bad luck; praying to both is thought to anger both goddesses.) One common method of divining the future is to toss a coin to a stranger (typically a beggar) and ask if it's heads. If it is, the coin is left with the stranger as payment for Tymora's favor. If it's not, the stranger can choose to keep it (and the bad luck) or return it.\nThose who favor Tymora - as distinct from folk who invoke her name by mumbling over the dice - tend to be daring sorts. Adventurers and gamblers make up much of their ranks. They all have the belief that what is good about their lives is the result of having both good luck and the bravery to seek it out. Tymora has worshipers among all sorts of folk: the dashing young noble, the risk-taking merchant, the daydreaming field hand, and the scheming ne'er-do-well.\nPriests of Tymora and temples devoted to Lady Luck are scarce, since her faith tends not to stress a need for intermediaries: \"Let the lucky man and the Smiling Lady suss it out,\" as the old saying goes. Shrines to Tymora at gambling parlors aren't unusual, however, and sometimes such establishments attract a priest and effectively become temples.\nThe Legend of Tyche and Her Twin Daughters\nBefore the Dawn Cataclysm, there was but one goddess of luck, Tyche. Ever flirting with fortune and disaster, Lady Luck bestowed and withdrew her favor at a whim. When her current paramour, Lathander, started a fight among the gods, Tyche kissed the Morninglord with misfortune and wandered off to explore the world.\nDuring her travels, Lady Luck discovered a budding rose of unequaled beauty. Delighted with this fortuitous happenstance, Tyche reached to pluck this delightful token, which she assumed was a peace overture from Lathander, who sought to regain her good graces. Much to her amazement, Lady Luck couldn't pluck the rose from its bush no matter how hard she tried. Frustrated, she cursed the rose with bad luck, and the flower's stem broke in her hands. Tyche put the plucked rose behind her ear and continued on her way. Unknown to Tyche, the rose was a manifestation of Moander, god of corruption and decay. The severed rose stem crept into Tyche's ear and subtly began to rot her from the inside out.\nWhen Tyche returned home, she came across her dear friend, the goddess Sel\u00fbne, waiting to speak with her. Also waiting for her were Lathander, who wished to regain her affections, and Azuth, who had come to mediate the dispute between the two. Sel\u00fbne wept great tears as she saw the corruption destroying her friend from within, and before Tyche could discern her intent, Sel\u00fbne lashed out with a bolt of purifying light. Tyche's rotted core split down the middle and a smaller, brighter version of the goddess of luck stepped out, allowing the goddess of the moon to save that which was good and pure in her friend. However, following this first figure out of the rotten shell was another form stunning to behold, but full of dark malice and capricious ill will. As the two forms emerged, they immediately fell upon each other in hate, struggling madly, and were separated only by the combined efforts of all three visitors.\nIt is said that Tymora, Tyche's Fair-Haired Daughter, embodies all the grace and kindness of her mother, while Beshaba, Tyche's Unpleasant Daughter, got only her looks. Since their birth, the twin aspects of Tyche - Tymora, Lady Luck, and Beshaba, Maid of Misfortune - have battled each other, contestin"
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tyr",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "God of justice",
+    "category": "",
+    "alignment": "",
+    "domains": [],
+    "province": "",
+    "symbol": "",
+    "description": "Tyr Grimjaws, Tyr the Evenhanded, Wounded Tyr, the Maimed God, the Lord of Justice\u2014all these names speak to the nature of the god of justice.\nTyr appears as a noble warrior without his right hand, which he lost to Kezef the Chaos Hound in an act of bravery and sacrifice. His eyes are wrapped in cloth, his blindness signifying that justice applies evenly to all. Weary of the foolishness of mortals, Tyr seldom appears or speaks directly to mortals, instead sending an awakened Mastiff|XMM as an emissary or sending the sound of a war gong or a choir.\nTyr's followers devote themselves to achieving justice, righting wrongs, and delivering vengeance. This devotion isn't concerned with equality or fairness, but rather discovering the truth and punishing the guilty. Those who favor Tyr are stiff necked about theology and laws, evaluating actions according to a rigid moral code.\nTyr's credo of lawfulness and honesty is demanding, and his priests remind the faithful not to judge too harshly those who fail to live up to Tyr's standards. If Tyr's commands were easily followed, they wouldn't be worth obeying.\nMany orders of knighthood devote their lives to Tyr, including the Knights of Holy Judgment and the Knights of the Merciful Sword. Such knights\u2014as well as judges, priests, and others who worship Tyr\u2014wear thin strips of diaphanous cloth over their eyes as a symbol of their faith.\nTyr's Chosen have suffered in their commitment to pursuing justice, but Tyr's power strengthens them, helping them remain true to Tyr's strict code."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tyr",
+   "data": {
+    "pantheon": "Forgotten Realms",
+    "title": "God of justice",
+    "category": "",
+    "alignment": "lawful good good",
+    "domains": [
+     "War",
+     "Order"
+    ],
+    "province": "",
+    "symbol": "Balanced scales resting on a warhammer",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tyr",
+   "data": {
+    "pantheon": "Norse",
+    "title": "God of courage and strategy",
+    "category": "",
+    "alignment": "lawful good neutral",
+    "domains": [
+     "Knowledge",
+     "War",
+     "Order"
+    ],
+    "province": "",
+    "symbol": "Sword",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Tyr",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "God of justice",
+    "category": "",
+    "alignment": "lawful good good",
+    "domains": [
+     "War",
+     "Order"
+    ],
+    "province": "",
+    "symbol": "Balanced scales resting on a warhammer",
+    "description": "Tyr Grimjaws, Tyr the Evenhanded, Wounded Tyr, the Maimed God, the Blind, Blind Tyr, the Lord of Justice - all of these names speak to the nature of the Faer\u00fbnian god of justice. Tyr appears as a noble warrior missing his right hand, which he lost to Kezef the Chaos Hound in an act of bravery and sacrifice, and with his eyes wrapped in cloth to signify his blindness, caused by a wound dealt to him by Ao when he questioned the justice of the Overgod's actions.\nTyr's followers devote themselves to the cause of justice, to the righting of wrongs and the deliverance of vengeance. This devotion isn't necessarily concerned with equality or fairness, but rather the discovery of truth and the punishment of the guilty. Those who favor Tyr tend to be stiff-necked about matters of theology and laws, seeing things in terms of black and white. Tyr's credo of lawfulness and honesty is a demanding one, and his priests remind the faithful not to hold in contempt others who can't live by it - it wouldn't be an honorable calling if everyone could muster the strength of will to follow it.\nMany orders of knighthood are devoted to Tyr, including the Knights of Holy Judgment and the Knights of the Merciful Sword. Such knights-as well as judges and priests, clerics, and paladins who worship Tyr - sometimes wear thin strips of diaphanous cloth over their eyes to remind others of the blindness of justice."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Uk'otoa",
+   "data": {
+    "pantheon": "Exandria",
+    "title": "the Leviathan Lord",
+    "category": "Lesser Idols",
+    "alignment": "neutral evil",
+    "domains": [
+     "Knowledge",
+     "Tempest"
+    ],
+    "province": "The Great Old One, the Hexblade",
+    "symbol": "Yellow, slitted eye",
+    "description": "Uk'otoa was created by Zehir and terrorized the seas of Wildemount until the Divergence left the leviathan without master or purpose. The surviving indigenous people of the Swavain Islands, the Ki'Nau, took Uk'otoa as their guide and god to rule the waters and bring them prosperity. The leviathan elevated the Ki'Nau to conquer the southern coasts of the continent until the jealous will of Zehir reached beyond the Divine Gate and discovered the insolence of his creation, commanding his followers to seal away Uk'otoa in the bedrock beneath the Lucidian Ocean.\nUk'otoa now reaches out to the dreams of nautical wanderers and shipwrecked sailors, lending his power to those who wish to rule the sea as he once did, beckoning them to free him from his suboceanic prison with promises of arcane gifts and the blessing of the blade known as the Sword of Fathoms, an extension of Uk'otoa's will and influence. His consciousness has found the minds of Desirat and Quajath, and the three have a tenuous accord to convince mortals to find and free them from their binds.\nAppearance\nUk'otoa takes the form of an incredibly massive sea serpent. His coiled and twisting length is covered with fins, scales, and amber eyes, with a head ending in a pointed, fanged jaw and a face of three amber eyes."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Ulaa",
+   "data": {
+    "pantheon": "Dwarven",
+    "title": "",
+    "category": "The Mordinsamman",
+    "alignment": "lawful good good",
+    "domains": [
+     "Forge"
+    ],
+    "province": "Mining, quarrying",
+    "symbol": "A miner's pick",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Ulaa",
+   "data": {
+    "pantheon": "Greyhawk",
+    "title": "Goddess of hills and mountains",
+    "category": "",
+    "alignment": "lawful good good",
+    "domains": [
+     "Life",
+     "War"
+    ],
+    "province": "",
+    "symbol": "Mountain with a circle at its heart",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Uller",
+   "data": {
+    "pantheon": "Norse",
+    "title": "God of hunting and winter",
+    "category": "",
+    "alignment": "chaotic evil neutral",
+    "domains": [
+     "Nature"
+    ],
+    "province": "",
+    "symbol": "Longbow",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Umberlee",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "God of the sea",
+    "category": "",
+    "alignment": "",
+    "domains": [],
+    "province": "",
+    "symbol": "",
+    "description": "No seaside community can ignore the influence of Umberlee, the furious sea god whose tempestuous nature is reflected by the waters of the deep. Coastal villages and towns host festivals to propitiate the Wavemother, seek her favor, and avoid seafaring disaster. Although mercurial in temperament, she can be generous to those who do her honor, as any great queen should be. Some Druids worship Umberlee as a manifestation of nature in its cruelest form.\nUmberlee manifests as a woman colored like the sea in blues and greens, with taloned hands and fins on her elbows. Clad in a cape of purple jellyfish and wielding a trident, she rises from the sea to terrify sailors. When she speaks through emissaries, she sends an Air Elemental|XMM, a Water Elemental|XMM, an awakened Giant Shark|XMM, or a Kraken|XMM.\nThe Wavemother is worshiped out of fear instead of adoration. Ship crews toss gems over the side as offerings to calm storm-tossed waters. She is capricious and cruel; the sea is a savage place, and those who travel it must be willing to pay the price of challenging her domain.\nUmberlee's priesthood thrives in its lack of organization. Her priests roam coastal cities, warning of doom and demanding free passage on ships in return for ensuring the god's pleasure, or at least her indifference. They wear the colors of waves and decorative items reminiscent of the sea's dangerous nature\u2014a necklace of shark teeth, seaweed wrapped around a bone, and so on. The preserved hand of a drowned person is thought to be a particularly holy object, and her priests use such severed hands as holy symbols. Sailors leave flowers or small candies at Umberlee's shrines in coastal cities in hope she will spare them on their next voyage. Both Waterdeep|FRHoF|2|Waterdeep and Baldur's Gate|FRHoF|2|Baldur's Gate have temples dedicated to Umberlee, staffed by priests whose loved ones were lost at sea.\nUmberlee imbues aquatic people and creatures as her Chosen, counting mighty sahuagin warlords and krakens among their ranks. These Chosen enjoy power over the tides and storm and carry their queen's fury into the dry world."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Umberlee",
+   "data": {
+    "pantheon": "Forgotten Realms",
+    "title": "Goddess of the sea",
+    "category": "",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Tempest"
+    ],
+    "province": "",
+    "symbol": "Wave curling left and right",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Umberlee",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "Goddess of the sea",
+    "category": "",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Tempest"
+    ],
+    "province": "",
+    "symbol": "Wave curling left and right",
+    "description": "No community that lives by the sea can ignore the influence of Umberlee, the furious goddess whose tempestuous nature reflects and is reflected by the waters of the deep. Any such community makes sure to host festivals to propitiate the Wavemother and seek her favor. Although mercurial in temperament, she can be generous to those who do her honor, as is any great queen.\nThe Bitch Queen is worshiped out of fear instead of adoration, and ship crews offer her gems, tossed over the side, to calm storm-tossed waters. As her most common moniker suggests, she is viewed as capricious and cruel with no firm ethical outlook; the sea is a savage place, and those who travel it had best be willing to pay the price of challenging her domain.\nThere is little in the way of an organized clergy of Umberlee. Her priests roam coastal cities, warning of doom and demanding free passage on ships in return for ensuring the goddess's pleasure. Often they wear the colors of waves and storms, and they decorate themselves with items that remind others of the sea's dangerous nature - a necklace of shark teeth, seaweed wrapped about a human bone, and so on. The preserved hand of a drowned person is thought to be a particularly holy object, and some of her few clerics use such severed hands as holy symbols. Umberlee does have a large number of shrines in the coastal cities, and sailors often leave flowers or small candies at them in hopes that she will spare them on their next voyage. Both Waterdeep and Baldur's Gate have true temples dedicated to Umberlee, staffed largely by the widows of sailors lost at sea."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Urdlen",
+   "data": {
+    "pantheon": "Gnome",
+    "title": "",
+    "category": "",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Death",
+     "War"
+    ],
+    "province": "Greed, murder",
+    "symbol": "White-clawed mole emerging from ground",
+    "description": "Many pantheons include in their number a miscreant or an outlier-someone not to be emulated in the customary way, and often an entity whose existence serves as an object lesson and an example of what befalls mortals who conduct themselves the same way. For the gnomes, this niche is filled by Urdlen, also known as the Glutton for its selfish and cruel behavior.\nThough the details differ from telling to telling, all gnomes know the story of how Garl banished Urdlen from the Golden Hills because Urdlen refused to go on an important quest. Despite Garl's efforts and the pleas of the rest of the pantheon, Urdlen selfishly refused to set his own interests aside and contribute to the group. Every version of this story ends in some sort of tragedy-perhaps the loss of Gaerdal's hand, the affliction that caused Flandal to need new skin, or the disappearance of Baravar's shadow-and each one concludes with \"And that is why Garl sent Urdlen into exile.\" In tales of his later life, Urdlen is no longer a gnome but has become a greedy and destructive monster, a great blind and hairless mole with iron claws and teeth.\nGnomes believe that Urdlen exerts influence on their lives when they experience jealousy, greed, petulance, or envy. Individuals are more likely to fall prey to these feelings when they don't spend enough time in activities with others, and so tales of Urdlen serve as a somber reminder of the importance of participating in society."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Urdlen",
+   "data": {
+    "pantheon": "Gnomish",
+    "title": "God of greed and murder",
+    "category": "",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Death",
+     "War"
+    ],
+    "province": "",
+    "symbol": "White clawed mole emerging from ground",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Urogalan",
+   "data": {
+    "pantheon": "Halfling",
+    "title": "",
+    "category": "",
+    "alignment": "lawful good neutral",
+    "domains": [
+     "Death",
+     "Grave",
+     "Knowledge"
+    ],
+    "province": "Earth, death",
+    "symbol": "Silhouette of a dog's head",
+    "description": "In ancient times the halfling hero Urogalan left his village with his faithful hound to venture into the afterlife-and then, much to the villagers' amazement, he returned. They could see that Urogalan had been deeply affected by his experiences, since he didn't speak for a long time. He merely sat in a white robe with his hound by his side, watching the world go by. When he did speak at last, he told of a place he called the Green Fields, where the halflings' god-heroes live alongside mortals who have passed on, enjoying lush farmland, bright sunshine, and all the comforts of home.\nUrogalan declared that all who have gone before still watch over their loved ones from this place of eternal peace, sending messages to the material world. In acknowledgement of this assertion, halflings look for signs from their departed loved ones. One might be thinking about catching butterflies with his grandmother long ago, when suddenly a butterfly lands on his hand-clear evidence that, as Urogalan promised, she is still looking out for her grandson from beyond the veil of death.\nAs a divine being, Urogalan can move freely through the earth and across the planes of existence. He holds aloft a magic lantern that protects him on his journeys. With his black hound leading the way, Urogalan scours the multiverse and shepherds deceased halflings to their eternal home in the Green Fields.\nUnlike other halfling deities, Urogalan is surrounded by a cloud of melancholy. He is gaunt, with his dusky skin covered by white robes. Priests who venerate Urogalan emulate this practice of dress and demeanor."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Urogalan",
+   "data": {
+    "pantheon": "Halfling",
+    "title": "God of earth and death",
+    "category": "",
+    "alignment": "lawful good neutral",
+    "domains": [
+     "Death",
+     "Knowledge"
+    ],
+    "province": "",
+    "symbol": "Silhouette of a dog's head",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Valkauna",
+   "data": {
+    "pantheon": "Dwarven",
+    "title": "",
+    "category": "The Mordinsamman",
+    "alignment": "lawful good neutral",
+    "domains": [
+     "Grave",
+     "Life"
+    ],
+    "province": "Oaths, birth, aging, death",
+    "symbol": "A silver ewer",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Valkur",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "Northlander god of sailors",
+    "category": "",
+    "alignment": "chaotic evil good",
+    "domains": [
+     "Tempest",
+     "War"
+    ],
+    "province": "",
+    "symbol": "A cloud and three lightning bolts",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Vandria Gilmadrith",
+   "data": {
+    "pantheon": "Elven",
+    "title": "",
+    "category": "The Seldarine",
+    "alignment": "lawful good neutral",
+    "domains": [
+     "Grave",
+     "War"
+    ],
+    "province": "War, grief, justice, vigilance",
+    "symbol": "Weeping eye",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Vecna",
+   "data": {
+    "pantheon": "Dawn War",
+    "title": "God of evil secrets",
+    "category": "",
+    "alignment": "neutral evil",
+    "domains": [
+     "Death",
+     "Knowledge",
+     "Arcana"
+    ],
+    "province": "",
+    "symbol": "Partially shattered one-eyed skull",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Vecna",
+   "data": {
+    "pantheon": "Exandria",
+    "title": "the Whispered One",
+    "category": "Betrayer Gods",
+    "alignment": "neutral evil",
+    "domains": [
+     "Arcana",
+     "Death",
+     "Grave",
+     "Knowledge"
+    ],
+    "province": "Necromancy, secrets",
+    "symbol": "Desiccated hand with an eye in the palm",
+    "description": "The lich lord Vecna presides over villainous mages, conspiring politicians, and envious servants as the dark god of necromancy, undeath, and secrets. Once a dangerously clever and powerful archmage-turned-lich, his hunger for dominion over all mysteries and obsession with conquering the pantheon led to his own dissolution, leaving behind only his left hand and eye. His enduring spirit reformed through the ages and managed to reconstruct the Raven Queen's rites of ascension to become the newest of gods to walk Exandria. Defeated by the legendary heroes Vox Machina and sealed behind the Divine Gate, the Whispered One now quietly rules over that which is not meant to be known.\nVecna calls no place among the planes his home, instead wandering in search of powerful artifacts and secrets to further his unknowable plots.\nDepiction\nThose who claim to have looked on Vecna's form speak of a tall, skeletal lich swathed in tattered robes and enchanted jewels, missing both his left hand and left eye.\nEnemies\nWhile Vecna loathes all other gods and wishes to destroy them and become the sole divine power in the planes, he has a particular hatred for Ioun. Ioun seeks to share with the world the same secrets Vecna guards for himself, and his followers work diligently to undermine and destroy the Library of the Cobalt Soul and any others who follow her path. The Raven Queen also despises Vecna, and sees his presence as a mighty affront to her purpose.\nCommandments of Vecna\nLearn all you can, and keep hidden that which you know. Reveal what pieces you must, but never the whole.\nExpress and cultivate the evil within yourself, and in doing so, recognize it in others to exploit them for your own benefit.\nSeed the ruin of all who worship other deities, until only those who kneel before Vecna remain."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Vecna",
+   "data": {
+    "pantheon": "Greyhawk",
+    "title": "God of evil secrets",
+    "category": "",
+    "alignment": "neutral evil",
+    "domains": [
+     "Knowledge",
+     "Arcana"
+    ],
+    "province": "",
+    "symbol": "Hand with eye in the palm",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Vergadain",
+   "data": {
+    "pantheon": "Dwarven",
+    "title": "",
+    "category": "The Mordinsamman",
+    "alignment": "neutral",
+    "domains": [
+     "Trickery"
+    ],
+    "province": "Luck, wealth",
+    "symbol": "Gold coin bearing a dwarf's face",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Vergadain",
+   "data": {
+    "pantheon": "Dwarven",
+    "title": "God of luck and wealth",
+    "category": "",
+    "alignment": "neutral",
+    "domains": [
+     "Trickery"
+    ],
+    "province": "",
+    "symbol": "Gold coin with the face of a dwarf",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Vesh",
+   "data": {
+    "pantheon": "Exandria",
+    "title": "the Bloody Siren",
+    "category": "Lesser Idols",
+    "alignment": "neutral evil",
+    "domains": [
+     "Death",
+     "Life"
+    ],
+    "province": "The Archfey, the Undying",
+    "symbol": "Crimson ring hanging from a chain",
+    "description": "None know whether Vesh is a witch or a demigod, but she has walked Exandria for centuries, seducing those who pry into forbidden magics and drawing them to her as possible suitors. Acolytes cultivate sects of worshipers who engage in ritualistic orgies and masochistic rites, these hedonistic rituals culminating with her selection of a mate. Vesh feeds on the unchosen in a bloody massacre before laying with her selected survivor and vanishing to her realm. Their essences intertwined, she then lends her strength to her mate, watching over them for life.\nA being with conflicting duality, Vesh has moods that demand sacrifice and pain, and others that ask for benevolence and mercy. Because Vesh's whims are truly unknown, many who wish to gain her favor and attention commit terrible acts. While she has many partners, she is a jealous patron who demands the true heart of her chosen. Those who stray are never heard from again.\nAppearance\nVesh resembles a nude woman with faintly glowing gray skin, long purple hair, and unnaturally long arms and fingers that end in claw-like nails. Her eyes are pale white with no iris, and her expression varies from alluring to monstrous depending on her mood."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Vhaeraun",
+   "data": {
+    "pantheon": "Drow",
+    "title": "",
+    "category": "The Dark Seldarine",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Trickery",
+     "War"
+    ],
+    "province": "Arrogance, thieves",
+    "symbol": "Black mask with blue glass lenses inset over eyes",
+    "description": "Vhaeraun stands for the dark elves' superiority over other races and for the primacy of individual drow over other drow. He is a god of arrogance, and thus he condones all acts of avarice, fair and foul alike. Those who take what they want from whom they wish, whether through stealth or bullying, pay homage to Vhaeraun. He is patron to thieves and often the object of prayer before drow embark on a raid.\nAmong the male gods of the Dark Seldarine, he is as widely recognized and accepted as Keptolo. But Vhaeraun represents a different aspect of drow masculinity: strong, silent, obedient, swift, and deadly. He is thought of as Lolth's favored son, in contrast to Keptolo's role as her beautiful consort.\nDue to his high status in the Dark Seldarine (for a male) and because of his arrogance, a few of his worshipers look on him as an advocate of equality between male and female drow. That heresy, when it is expressed openly, is liable to be savagely crushed by the priestesses of Lolth. So most of Vhaeraun's male followers honor him simply by trying to carve out better lives for themselves, and that activity is tolerated. Even so, adherents of Vhaeraun don't appear in public without wearing masks. This practice exists in part because Vhaeraun is never portrayed unmasked, and partly because anonymity is a wise precaution when one challenges the social structure of the drow in even a small way.\nTo quash any challenge to the matriarchy that Vhaeraun might inspire in his followers, some drow communities preach that he wears a mask to hide the terrible scars from the wounds inflicted on him by Lolth as punishment for his arrogance. His silence, too, is part of his punishment, for his tongue was removed for questioning Lolth's orders. Worshipers of Vhaeraun who believe this dogma sometimes ritually scar and silence themselves as signs of their devotion, and then serve as voiceless, masked bodyguards for the matrons of their house."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Vhaeraun",
+   "data": {
+    "pantheon": "Drow",
+    "title": "God of thieves",
+    "category": "",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Trickery"
+    ],
+    "province": "",
+    "symbol": "Black mask with blue glass lenses inset over eyes",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Waukeen",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "God of trade",
+    "category": "",
+    "alignment": "",
+    "domains": [],
+    "province": "",
+    "symbol": "",
+    "description": "Waukeen is a god of wealth and trade. She is interested in anything that increases trade and the flow of money, whether new trade routes, new inventions, or the whim of changing fashion. Waukeen keeps cordial relationships with other deities, save for Mask, who is her only real enemy\u2014larceny is bad for business, after all.\nWaukeen takes the form of a splendidly dressed woman with long golden hair, often accompanied by two golden Lion|XMM|Lions. She might more subtly manifest as sprouting golden daffodils, or a stack of gold coins that writhes and slithers like a snake. When she sends an emissary, she sends an awakened golden Cat|XMM, Lion|XMM, or eagle (Hawk|XMM), or she might send a Sphinx of Lore|XMM.\nHer ardent worshipers include shopkeepers, members of trade organizations, wealthy merchants, caravan guides, itinerant peddlers, moneychangers, and smugglers. Greed motivates those who take Waukeen as a patron, but the Coinmaiden frowns on misers and smiles on the industrious and the profligate. For these reasons, priests who bear her holy symbol are welcome in towns and cities.\nTemples of Waukeen resemble guildhalls and serve as meeting places for trade associations. Those who follow Waukeen's ethos create opportunity for all and see competition for wealth as society's best method of progress. Thus, the faithful of Our Lady of Gold are at odds with guilds and others who form monopolies. It's common practice for her followers to set aside a tithe of ten percent of their profits, but rather than being given to a temple, the money is spent to help a struggling business, to finance a new endeavor, or, if all else fails, on frivolous fun.\nChosen of Waukeen possess their god's keen understanding of contracts and agreements and can rival powerful devils at unwinding convoluted terms. They intervene when the wealth of nations is at stake."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Waukeen",
+   "data": {
+    "pantheon": "Forgotten Realms",
+    "title": "Goddess of trade",
+    "category": "",
+    "alignment": "neutral",
+    "domains": [
+     "Knowledge",
+     "Trickery"
+    ],
+    "province": "",
+    "symbol": "Upright coin with Waukeen's profile facing left",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Waukeen",
+   "data": {
+    "pantheon": "Faer\u00fbnian",
+    "title": "Goddess of trade",
+    "category": "",
+    "alignment": "neutral",
+    "domains": [
+     "Knowledge",
+     "Trickery"
+    ],
+    "province": "",
+    "symbol": "Upright coin with Waukeen's profile facing left",
+    "description": "Waukeen is the goddess of wealth and trade, on both sides of the law. Her most ardent worshipers include shopkeepers, members of trading costers, wealthy merchants, caravan guides, itinerant peddlers, moneychangers, and smugglers. She is interested in anything that increases trade and the flow of money, whether new trade routes, new inventions, or the whim of changing fashion. Those who take Waukeen as a patron can be reliably thought of as greedy, but the Coinmaiden is said to frown upon misers and smile upon the industrious and the profligate, and thus priests who bear her holy symbol find themselves welcome in many towns and cities.\nTemples of Waukeen resemble guildhalls and often serve as meeting places for trade consortiums. Those who follow Waukeen's ethos seek to create more opportunity for all and see competition for wealth as one of society's main means of progress. Thus, the faithful of Our Lady of Gold often find themselves at odds with trade guilds and others who would form monopolies. It's common practice among those who seek Waukeen's favor to set aside a tithe of ten percent of their profits, but rather than being given to a temple, the money is meant to be spent to help a struggling business, to finance a new endeavor, or, if all else fails, on frivolous fun."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Wee Jas",
+   "data": {
+    "pantheon": "Greyhawk",
+    "title": "Goddess of magic and death",
+    "category": "",
+    "alignment": "lawful good neutral",
+    "domains": [
+     "Death",
+     "Grave",
+     "Knowledge",
+     "Order",
+     "Arcana"
+    ],
+    "province": "",
+    "symbol": "Red skull in front of fireball",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Xalicas",
+   "data": {
+    "pantheon": "Exandria",
+    "title": "",
+    "category": "Lesser Idols",
+    "alignment": "lawful good good",
+    "domains": [
+     "Life",
+     "Light"
+    ],
+    "province": "The Archfey, the Celestial",
+    "symbol": "Single blackened wing",
+    "description": "The Calamity took the lives of mortals and immortals alike. Many angels that fought with the Prime Deities were slain, and most that survived were wounded. The solar Xalicas, the right hand of the Arch Heart, was so injured that even the magic of the gods cannot help the angel regain the ability to see, fly, or leave Exandria. For over a century, Xalicas lay broken and blinded in the Greying Wildlands, moss and plants covering her body, until she had the strength to move, blaming herself for the small part she played in the Calamity.\nNow Xalicas wanders Wildemount to make up for the sins of the Calamity and prevent another devastating war. Her followers attempt to heal war-scarred lands and repair the natural world. Xalicas knows that alone and in her injured state she cannot stop all the evils in the world, so the angel lends her power to those she finds worthy: creatures who wish to stop unnecessary war, stand up to tyranny, and defend the innocent.\nAppearance\nXalicas is a silver-skinned solar who wears a clean white bandage around her eyes. Her body is covered in scars, and one of her wings is blackened and burned."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Ye'Cind",
+   "data": {
+    "pantheon": "Elven",
+    "title": "",
+    "category": "The Seldarine",
+    "alignment": "chaotic evil good",
+    "domains": [
+     "Life",
+     "Trickery"
+    ],
+    "province": "Music, enchantment",
+    "symbol": "Recorder",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Yondalla",
+   "data": {
+    "pantheon": "Halfling",
+    "title": "",
+    "category": "",
+    "alignment": "lawful good good",
+    "domains": [
+     "Life",
+     "Twilight"
+    ],
+    "province": "Primary goddess of halflings",
+    "symbol": "Cornucopia",
+    "description": "The story of Yondalla begins at the dawn of the world, when halflings were timid wanderers, scraping out a meager existence. The goddess Yondalla took note of them and decided to adopt the halflings as her people. She was a strong leader with a vision for her people, and she dedicated her life to gathering them together and protecting them. Over time, she elevated to godhood those halflings who were the most adept at the skills halflings needed to survive. Those legendary halflings comprise the rest of the pantheon.\nYondalla created the first halfling villages and showed the people how to build, plant, and harvest. She knew that the bounty of a halfling village would be tempting plunder for any brigand or monster, so she used her powers to conceal their homes from easy discovery, blending them into the landscape so that most travelers would pass by without a second glance.\nTo the halflings, Yondalla is responsible for the spring in their step and the bubbly excitement they feel from knowing that luck is on their side. When a pumpkin grows to enormous size or a garden yields twice as many carrots as usual, credit goes to Yondalla. When a halfling trips, slides down a hillside, and lands on a nugget of gold, that's Yondalla turning bad luck into good."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Yondalla",
+   "data": {
+    "pantheon": "Nonhuman",
+    "title": "Halfling goddess of fertility and protection",
+    "category": "",
+    "alignment": "lawful good good",
+    "domains": [
+     "Life",
+     "Twilight"
+    ],
+    "province": "",
+    "symbol": "Shield",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Yondalla",
+   "data": {
+    "pantheon": "Halfling",
+    "title": "Goddess of fertility and protection",
+    "category": "",
+    "alignment": "lawful good good",
+    "domains": [
+     "Life",
+     "Twilight"
+    ],
+    "province": "",
+    "symbol": "Cornucopia on a shield",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Yurtrus",
+   "data": {
+    "pantheon": "Orc",
+    "title": "God of death and disease",
+    "category": "",
+    "alignment": "neutral evil",
+    "domains": [
+     "Death"
+    ],
+    "province": "",
+    "symbol": "White hand, palm outward",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Yurtrus",
+   "data": {
+    "pantheon": "Orc",
+    "title": "the White Hand",
+    "category": "",
+    "alignment": "neutral evil",
+    "domains": [
+     "Death"
+    ],
+    "province": "",
+    "symbol": "White hand, palm outward",
+    "description": "Yurtrus is often depicted as consumed by rot and covered in oozing pustules, utterly repulsive except for his hands, which are pure white and free of any blemish. Yurtrus has no mouth and never utters a sound, so that he may come in absolute silence for his chosen.\nThe followers of Yurtrus are allowed to dwell on the fringes of the tribe, but are looked upon with distaste and unease. They interact with the tribe mostly on occasions of death, claiming the bones of fallen warriors to add to the ossuary shrines of Yurtrus, and sometimes during shamanic rites when contact with spirits occurs.\nThe White Hands\nShamans who heed the telepathic whispers of Yurtrus walk the perilous line between the living and the dead, and gain uncanny powers from doing so. Through this nonverbal communion, they begin to comprehend how to use the magic of death. These shamans, known as White Hands, cover their hands in white ash or wear pale gloves made of elf skin to symbolize their connection to the power of Yurtrus. The necromancy practiced by the shamans of Yurtrus is a force considered taboo by orcs, which makes them both revered and feared by the rest of the tribe.\nTraffickers of the Dead\nOrcs who die \"a good death\" are sent to Gruumsh by the priests of Yurtrus. The priests seek out the bodies of such fallen heroes and sever their heads, boil or smoke them to rid them of most of the flesh, and then use a ritual punch to break out the bridge of the nose and leave the skull with a single eye. Orcs that appreciate the strength and ferocity of a foe might choose to honor that enemy by giving it the same treatment. The bodies of orcs that die in a failed battle are left behind; they were weak and don't deserve to join Gruumsh. Those that die of old age have typically already been taken into Yurtrus's fold, and their bones are used to build furnishings and structures in the area of the lair dedicated to the worship of Yurtrus.\nChosen of Yurtrus\nOrcs that suffer from gruesome diseases are brought into Yurtrus's fold and tended like prized cattle. These orcs are called nurtured ones, and they are considered the chosen of Yurtrus because they have been picked for the special purpose of spreading his virulent message among the enemy. At night, or during a heavy fog, these infected orcs rush toward an enemy's encampment, often through a hail of arrows, in order to spread their affliction within their foe's ranks."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Zandilar",
+   "data": {
+    "pantheon": "Elven",
+    "title": "",
+    "category": "The Seldarine",
+    "alignment": "chaotic evil neutral",
+    "domains": [
+     "Life"
+    ],
+    "province": "Romance, lust, dance",
+    "symbol": "Lips",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Zeboim",
+   "data": {
+    "pantheon": "Dragonlance",
+    "title": "Goddess of the sea and storms",
+    "category": "The Gods of Evil",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Tempest"
+    ],
+    "province": "",
+    "symbol": "Turtle shell",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Zehir",
+   "data": {
+    "pantheon": "Dawn War",
+    "title": "God of darkness and poison",
+    "category": "",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Trickery",
+     "Death"
+    ],
+    "province": "",
+    "symbol": "Snake in the shape of a dagger",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Zehir",
+   "data": {
+    "pantheon": "Exandria",
+    "title": "the Cloaked Serpent",
+    "category": "Betrayer Gods",
+    "alignment": "chaotic evil evil",
+    "domains": [
+     "Nature",
+     "Trickery"
+    ],
+    "province": "Assassins, poison, snakes",
+    "symbol": "Coiled serpent",
+    "description": "A wanderer in the shadows and the creator of snakes and serpentkin, Zehir is the evil god of poisons, assassins, and darkness. The ancient serpentkin worship him over all other deities, dragging screaming offerings to their temples in his honor. Most of the Cloaked Serpent's worshipers were annihilated during the Calamity, and the rest are either suspended in self-induced stasis or hunted for sport by the servants of Lolth and Torog. But perhaps Zehir is merely biding his time, waiting for the proper moment to unleash his hidden armies on the world once more.\nZehir subverts and poisons Exandria from the shadowed Towers of Night, hidden among the ever-shifting winds of the Astral Plane.\nDepiction\nMany forgotten temples were once built to the Cloaked Serpent, and within these chambers his image was embedded within much of the architecture. He is shown as a human body with six arms and a gargantuan serpentine head, fanged and frilled in aggression. Strands of thick, dark hair that sprout from his scaled body form layers of swirling shadow, obscuring his form.\nEnemies\nZehir loathes Erathis and Melora, for he despises life, order, and love above all things. His surviving worshipers use poison and fire to undermine civilization and consume nature, hoping to infuriate both gods and cast Exandria into chaos.\nCommandments of Zehir\nKeep your acts obfuscated and secret. The night is your greatest ally.\nStrike quickly and without reason. Blind the target with their own confusion.\nKill slowly. Agonizingly. Or worse, make them enjoy it."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Zeus",
+   "data": {
+    "pantheon": "Greek",
+    "title": "God of the sky, ruler of the gods",
+    "category": "",
+    "alignment": "neutral",
+    "domains": [
+     "Tempest"
+    ],
+    "province": "",
+    "symbol": "Fist full of lightning bolts",
+    "description": ""
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Zinzerena",
+   "data": {
+    "pantheon": "Drow",
+    "title": "",
+    "category": "The Dark Seldarine",
+    "alignment": "chaotic evil neutral",
+    "domains": [
+     "Trickery"
+    ],
+    "province": "Assassination, illusion, lies",
+    "symbol": "Shortsword draped with cloth",
+    "description": "As the patron of assassination, illusions, and lies, Zinzerena personifies cruelty, stealth, misdirection, and survival by any means necessary. In some ways, Malyk is her reflection, and in many interpretations of the age-old stories, the two gods are siblings or lovers. But Zinzerena is more palatable to female drow than Malyk, and she condones the study of arcane magic.\nThe liturgy of Zinzerena is passed on in the form of folk tales, for her faith has no place among the leadership of drow society. Her tales usually describe her hiding and waiting until her foes are weakened or lax in their attention before she attacks. Those who respect or revere Zinzerena are almost always of modest social status, or worse. Even the most prestigious of noble estates, where a high priestess reigns supreme, might have a number of her followers among the commoners who work as servants and staff. Only the most capricious of nobles would enter her priesthood, though some have done so. Inevitably, when such traitors are discovered, they are cast out from their houses. Ironically, these maverick nobles often become leading figures in Zinzerena's cult, for they are the best educated and most politically experienced of her followers. Her adherents come from a wide range of occupations, including common thieves, laborers, guides, physicians, poets, and nearly any other profession. What they all share is a rebellious spirit and a desire for change.\nIn some stories, Zinzerena is Lolth's daughter, who was spirited away and hidden from her by illusions. In other tales, she begins life as a mortal elf who uses glamors to trick her way into the company of the gods. Regardless, Zinzerena always has some element of illusion magic about her, and she uses it and other deceptions to get the better of more powerful opponents. Deceit and taking advantage of others' weaknesses are recurring themes in the tales of her exploits. The only figure in the Dark Seldarine immune to Zinzerena's deceptions is Lolth, although even the Queen of Spiders is sometimes tricked when Zinzerena shifts blame for her actions onto others.\nNot many female drow devote their lives to the study of magic, because it's held to be a low-status avocation more suited to males. Most females who pursue it seriously do so in secret. Even rumors that a drow matron practices arcane magic, if they aren't quashed, can sabotage her standing in society. Yet there's no denying that knowledge of arcane magic could be a great boon to an ambitious female. Zinzerena's worshipers encourage this pursuit and offer tutelage and tools in exchange for a candidate's alliance with Zinzerena's secret cult."
+   }
+  },
+  {
+   "type": "deity",
+   "name": "Zivilyn",
+   "data": {
+    "pantheon": "Dragonlance",
+    "title": "God of wisdom",
+    "category": "The Gods of Neutrality",
+    "alignment": "neutral",
+    "domains": [
+     "Knowledge"
+    ],
+    "province": "",
+    "symbol": "Great green or gold tree",
+    "description": ""
+   }
+  }
+ ]
+}

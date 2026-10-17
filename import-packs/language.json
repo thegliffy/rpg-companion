@@ -1,0 +1,1525 @@
+{
+ "system": "dnd5e",
+ "items": [
+  {
+   "type": "language",
+   "name": "Aarakocra",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "aarakocra"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Abyssal",
+   "data": {
+    "languageType": "standard",
+    "script": "Infernal",
+    "typicalSpeakers": [
+     "demons|bestiary|source=GGR|tag=demon",
+     "devils|bestiary|source=GGR|tag=devil"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Abyssal",
+   "data": {
+    "languageType": "exotic",
+    "script": "Infernal",
+    "typicalSpeakers": [
+     "demons|bestiary|tag=demon"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Aglarondan",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Alzhedo",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Alzhedo",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Calishite ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Blink Dog",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Blink Dog||blink dogs"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Bothii",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Bullywug",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Bullywug||bullywugs"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Celestial",
+   "data": {
+    "languageType": "exotic",
+    "script": "Celestial",
+    "typicalSpeakers": [
+     "celestials|bestiary|source=ERLW|type=celestial"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Celestial",
+   "data": {
+    "languageType": "standard",
+    "script": "Celestial",
+    "typicalSpeakers": [
+     "angels|bestiary|source=GGR|tag=angel"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Celestial",
+   "data": {
+    "languageType": "",
+    "script": "Celestial",
+    "typicalSpeakers": [
+     "Gods"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Celestial",
+   "data": {
+    "languageType": "exotic",
+    "script": "Celestial",
+    "typicalSpeakers": [
+     "celestials|bestiary|type=celestial"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Chessentan",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Chessentan",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Mulan ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Chondathan",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Chondathan",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Chondathan ethnic group",
+     "Tethyrian ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Common",
+   "data": {
+    "languageType": "standard",
+    "script": "Common",
+    "typicalSpeakers": [
+     "The Five Nations",
+     "trade language of Khorvaire"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Common",
+   "data": {
+    "languageType": "standard",
+    "script": "Common",
+    "typicalSpeakers": [
+     "humans|bestiary|type=humanoid|tag=any race;human|source=GGR"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Common",
+   "data": {
+    "languageType": "",
+    "script": "Common",
+    "typicalSpeakers": [
+     "Humans"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Common",
+   "data": {
+    "languageType": "standard",
+    "script": "Common",
+    "typicalSpeakers": [
+     "humans|bestiary|type=humanoid|tag=any race;human"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Daelkyr",
+   "data": {
+    "languageType": "exotic",
+    "script": "Daelkyr",
+    "typicalSpeakers": [
+     "aberrations|bestiary|type=aberration|source=ERLW",
+     "denizens of Khyber"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Damaran",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Damaran",
+   "data": {
+    "languageType": "",
+    "script": "Dethek",
+    "typicalSpeakers": [
+     "Damaran ethnic group",
+     "Nar ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Dambrathan",
+   "data": {
+    "languageType": "",
+    "script": "Espruar",
+    "typicalSpeakers": [
+     "Arkaiun ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Deep Crow",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Deep Crow|AI|deep crows"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Deep Speech",
+   "data": {
+    "languageType": "exotic",
+    "script": "none",
+    "typicalSpeakers": [
+     "mind flayer||mind flayers",
+     "beholder||beholders"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Draconic",
+   "data": {
+    "languageType": "exotic",
+    "script": "Draconic",
+    "typicalSpeakers": [
+     "dragons|bestiary|source=ERLW|type=dragon",
+     "dragonborn|bestiary|type=humanoid|tag=any race;dragonborn|so"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Draconic",
+   "data": {
+    "languageType": "standard",
+    "script": "Draconic",
+    "typicalSpeakers": [
+     "dragons|bestiary|source=GGR|type=dragon"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Draconic",
+   "data": {
+    "languageType": "",
+    "script": "Draconic",
+    "typicalSpeakers": [
+     "Dragons"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Draconic",
+   "data": {
+    "languageType": "exotic",
+    "script": "Draconic",
+    "typicalSpeakers": [
+     "dragons|bestiary|type=dragon",
+     "dragonborn"
+    ],
+    "description": "Draconic is thought to be one of the oldest languages and is often used in the study of magic. The language sounds harsh to most other creatures and includes numerous hard consonants and sibilants."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Druidic",
+   "data": {
+    "languageType": "secret",
+    "script": "",
+    "typicalSpeakers": [
+     "Selesnya druid||druids/druid||druids",
+     "Golgari druid||druids/druid||druids"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Druidic",
+   "data": {
+    "languageType": "secret",
+    "script": "",
+    "typicalSpeakers": [
+     "druid||druids/druid||druids",
+     "treant||treants"
+    ],
+    "description": "Druidic is the secret language of druids. It can be spoken or used to leave hidden messages. Creatures who know this language automatically spot such a message. Others spot the message's presence with a successful 15 Wisdom (Perception) check but can't decipher it without magic."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Dwarvish",
+   "data": {
+    "languageType": "standard",
+    "script": "Dwarvish",
+    "typicalSpeakers": [
+     "Mror Holds"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Dwarvish",
+   "data": {
+    "languageType": "standard",
+    "script": "Dwarvish",
+    "typicalSpeakers": [
+     "dwarves|bestiary|type=humanoid|tag=any race;dwarf"
+    ],
+    "description": "Dwarvish is full of hard consonants and guttural sounds, and those characteristics spill over into whatever other language a dwarf might speak."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Elvish",
+   "data": {
+    "languageType": "standard",
+    "script": "Elvish",
+    "typicalSpeakers": [
+     "Aerenal",
+     "Valenar"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Elvish",
+   "data": {
+    "languageType": "standard",
+    "script": "Elvish",
+    "typicalSpeakers": [
+     "elves|bestiary|type=humanoid|tag=any race;elf|source=GGR"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Elvish",
+   "data": {
+    "languageType": "standard",
+    "script": "Elvish",
+    "typicalSpeakers": [
+     "elves|bestiary|type=humanoid|tag=any race;elf"
+    ],
+    "description": "Elvish is fluid, with subtle intonations and intricate grammar. Elven literature is rich and varied, and their songs and poems are famous among other races. Many bards learn their language so they can add Elvish ballads to their repertoires."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Giant",
+   "data": {
+    "languageType": "standard",
+    "script": "Giant",
+    "typicalSpeakers": [
+     "Inhabitants of Xen'drik"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Giant",
+   "data": {
+    "languageType": "standard",
+    "script": "Minotaur",
+    "typicalSpeakers": [
+     "ogre||ogres",
+     "giants|bestiary|type=giant|source=ERLW"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Giant",
+   "data": {
+    "languageType": "",
+    "script": "Minotaur",
+    "typicalSpeakers": [
+     "Cyclopes, giants"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Giant",
+   "data": {
+    "languageType": "standard",
+    "script": "Dwarvish",
+    "typicalSpeakers": [
+     "ogre||ogres",
+     "giants|bestiary|type=giant"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Giant Eagle",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Giant Eagle||giant eagles"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Giant Elk",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Giant Elk||giant elks"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Giant Owl",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Giant Owl||giant owls"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Gith",
+   "data": {
+    "languageType": "",
+    "script": "Tir'su",
+    "typicalSpeakers": [
+     "Githzerai Monk||githzerai monks",
+     "Githyanki Warrior||githyanki warriors",
+     "Githzerai Zerth||githzerai zerths",
+     "Githyanki Knight||githyanki knights"
+    ],
+    "description": "The Gith Alphabet\nThe gith use a written language composed of alphabetic symbols arranged in circular clusters called tir'su. Each \"spoke\" on the wheel corresponds to a letter of the alphabet. Each cluster of characters represents a single word, and multiple tir'su connect to form phrases and sentences.\nGithyanki and githzerai both speak Gith, but each race has a distinct dialect and accent. Similarly, the two races of gith differentiate their language by how they write it. Githyanki write a tir'su clockwise, starting at the top. Githzerai use the same letter symbols but write their tir'su counterclockwise, starting from the bottom."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Gnoll",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Gnoll||gnolls",
+     "Gnoll Pack Lord||gnoll pack lords",
+     "Gnoll Fang of Yeenoghu||gnoll fangs of Yeenoghu"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Gnomish",
+   "data": {
+    "languageType": "standard",
+    "script": "Dwarvish",
+    "typicalSpeakers": [
+     "Zilargo"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Gnomish",
+   "data": {
+    "languageType": "standard",
+    "script": "Dwarvish",
+    "typicalSpeakers": [
+     "gnomes|bestiary|type=humanoid|tag=any race;gnome"
+    ],
+    "description": "The Gnomish language, which uses the Dwarvish script, is renowned for its technical treatises and its catalogs of knowledge about the natural world."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Goblin",
+   "data": {
+    "languageType": "standard",
+    "script": "Goblin",
+    "typicalSpeakers": [
+     "Darguun",
+     "Droaam",
+     "Shadow Marches",
+     "monsters of Khorvaire"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Goblin",
+   "data": {
+    "languageType": "standard",
+    "script": "Common",
+    "typicalSpeakers": [
+     "goblins|bestiary|tag=any race|source=GGR"
+    ],
+    "description": "In Ravnica, Goblin is a simplistic language with a limited vocabulary and fluid rules of grammar, unsuited for any sophisticated conversation."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Goblin",
+   "data": {
+    "languageType": "standard",
+    "script": "Dwarvish",
+    "typicalSpeakers": [
+     "goblinoids|bestiary|tag=goblinoid"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Grell",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Grell||grells"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Grung",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Grung|VGM|grungs",
+     "Grung Wildling|VGM|grung wildlings",
+     "Grung Elite Warrior|VGM|grung elite warriors"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Guran",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Gur ethnic group"
+    ],
+    "description": "A patois of Roushoum|SCAG and Rashemi|SCAG.\nOption: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Halfling",
+   "data": {
+    "languageType": "standard",
+    "script": "Common",
+    "typicalSpeakers": [
+     "Talenta Plains"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Halfling",
+   "data": {
+    "languageType": "standard",
+    "script": "Common",
+    "typicalSpeakers": [
+     "halflings|bestiary|type=humanoid|tag=any race;halfling"
+    ],
+    "description": "The Halfling language isn't secret, but halflings are loath to share it with others. They write very little, so they don't have a rich body of literature. Their oral tradition, however, is very strong. Almost all halflings speak Common to converse with the people in whose lands they dwell or through which they are traveling."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Halruaan",
+   "data": {
+    "languageType": "",
+    "script": "Draconic",
+    "typicalSpeakers": [
+     "Halruaan ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Hook Horror",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Hook Horror||hook horrors"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Illuskan",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Illuskan",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Illuskan ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Infernal",
+   "data": {
+    "languageType": "exotic",
+    "script": "Infernal",
+    "typicalSpeakers": [
+     "fiends|bestiary|type=fiend|source=ERLW"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Infernal",
+   "data": {
+    "languageType": "exotic",
+    "script": "Infernal",
+    "typicalSpeakers": [
+     "devils|bestiary|tag=devil"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Kraul",
+   "data": {
+    "languageType": "standard",
+    "script": "Kraul",
+    "typicalSpeakers": [
+     "kraul",
+     "Kraul Warrior|GGR|kraul warriors",
+     "Kraul Death Priest|GGR|kraul death priests",
+     "Devkarin Lich|GGR|devkarin liches"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Kruthik",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Young Kruthik|MTF|young kruthiks",
+     "Adult Kruthik|MTF|adult kruthiks",
+     "Kruthik Hive Lord|MTF|kruthik hive lords"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Lantanese",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Leonin",
+   "data": {
+    "languageType": "",
+    "script": "Common",
+    "typicalSpeakers": [
+     "Leonin"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Loxodon",
+   "data": {
+    "languageType": "standard",
+    "script": "Elvish",
+    "typicalSpeakers": [
+     "loxodons|bestiary|tag=any race|source=GGR"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Marquesian",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": "The Menagerie Coast was settled by colonists from the arid land of Marquet, and their language now holds an unusual position in the Clovis Concord. It is the language of high society, as many Clovis elite are descended from Marquesians, but it is also the language of piracy, since countless lower-class Marquesians defected from the Concord and formed the Revelry pirates."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Merfolk",
+   "data": {
+    "languageType": "standard",
+    "script": "Merfolk",
+    "typicalSpeakers": [
+     "merfolk|bestiary|source=GGR|tag=any race;merfolk"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Midani",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Midani",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Bedine ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Minotaur",
+   "data": {
+    "languageType": "standard",
+    "script": "Minotaur",
+    "typicalSpeakers": [
+     "minotaur|ggr|minotaurs"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Minotaur",
+   "data": {
+    "languageType": "",
+    "script": "Minotaur",
+    "typicalSpeakers": [
+     "Minotaurs"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Modron",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Monodrone||monodrones",
+     "Duodrone||duodrones",
+     "Tridrone||tridrones",
+     "Quadrone||quadrones",
+     "Pentadrone||pentadrones"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Mulhorandi",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Mulhorandi",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Mulan ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Naush",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": "Originally spoken by the Ki'Nau islanders native to the Menagerie Coast, Naush is a thriving language within the multicultural cities of the Clovis Concord. Even sailors who only speak Common incorporate dozens of Naush words into their nautical jargon."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Netherese",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Orc",
+   "data": {
+    "languageType": "exotic",
+    "script": "Goblin",
+    "typicalSpeakers": [
+     "isolated orc tribes"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Orc",
+   "data": {
+    "languageType": "standard",
+    "script": "Dwarvish",
+    "typicalSpeakers": [
+     "orcs|bestiary|tag=orc"
+    ],
+    "description": "Orc is a harsh, grating language with hard consonants. It has no script of its own but is written in the Dwarvish script."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Otyugh",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Otyugh||otyughs"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Primordial",
+   "data": {
+    "languageType": "exotic",
+    "script": "Primordial",
+    "typicalSpeakers": [
+     "elementals|bestiary|type=elemental"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Primordial",
+   "data": {
+    "languageType": "",
+    "script": "Common",
+    "typicalSpeakers": [
+     "Tritons"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Primordial",
+   "data": {
+    "languageType": "exotic",
+    "script": "Dwarvish",
+    "typicalSpeakers": [
+     "elementals|bestiary|type=elemental"
+    ],
+    "description": "Primordial is a guttural language, filled with harsh syllables and hard consonants."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Qualith",
+   "data": {
+    "languageType": "",
+    "script": "Qualith",
+    "typicalSpeakers": [
+     "Mind Flayer||Mind Flayers"
+    ],
+    "description": "The \"writing\" of mind flayers, known as Qualith, isn't as simple as a set of symbols representing sounds or ideas. An inscription in Qualith captures the thoughts of its creator and psionically transmits the thoughts to a mind flayer who later reads the inscription by touching it with its tentacles. Mind flayers write in Qualith by psionically imprinting their messages on nonmagical, nonliving material they grasp or caress with their tentacles. The imprinting causes imperceptible surface changes to the object, and abrasion or degradation of the material can cause the inscription to fade and fail.\nAn expression in Qualith is made up of four-line stanzas packed into interlocking blocks, creating complex patterns that are indecipherable by other creatures. Someone that touches a Qualith inscription, however, can receive fragmentary insight into the multilayered thoughts contained within it. A non-illithid that wants to understand a Qualith inscription can make an Intelligence check (DC based on the complexity of the contained thoughts) to try to derive some of the inscription's meaning. Multiple successful attempts might uncover different aspects about the illithid author, its intended meaning, and its intended audience. A failed attempt results in a crushing headache and, in extreme cases, madness. A comprehend languages spell provides understanding of the inscription roughly equivalent to what a mind flayer would get from it."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Quori",
+   "data": {
+    "languageType": "exotic",
+    "script": "Quori",
+    "typicalSpeakers": [
+     "inspired|ERLW",
+     "kalashtar",
+     "quori|bestiary|source=ERLW|search=quori"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Rashemi",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Rashemi",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Rashemi ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Reghedjic",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Riedran",
+   "data": {
+    "languageType": "standard",
+    "script": "Common",
+    "typicalSpeakers": [
+     "people of Sarlona"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Roushoum",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Imaskari ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Sahuagin",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "sahuagin",
+     "Sahuagin Priestess||sahuagin priestesses",
+     "Sahuagin Baron||sahuagin barons"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Sespech",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Shaaran",
+   "data": {
+    "languageType": "",
+    "script": "Dethek",
+    "typicalSpeakers": [
+     "Shaaran ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Shou",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Shou ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Slaad",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Slaad Tadpole||slaad tadpoles",
+     "Red Slaad||red slaadi",
+     "Blue Slaad||blue slaadi",
+     "Green Slaad||green slaadi",
+     "Gray Slaad||gray slaadi",
+     "Death Slaad||death slaadi"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Sphinx",
+   "data": {
+    "languageType": "standard",
+    "script": "none",
+    "typicalSpeakers": [
+     "Sphinx of Judgment|ggr|sphinxes"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Sphinx",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Gynosphinx||gynosphinxes",
+     "Androsphinx||androsphinxes"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Sphinx",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Sphinxes"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Sylvan",
+   "data": {
+    "languageType": "exotic",
+    "script": "Elvish",
+    "typicalSpeakers": [
+     "fey creatures|bestiary|type=fey|source=ERLW"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Sylvan",
+   "data": {
+    "languageType": "standard",
+    "script": "Elvish",
+    "typicalSpeakers": [
+     "centaur|ggr|centaurs",
+     "Conclave Dryad|ggr|dryads"
+    ],
+    "description": "Sylvan is widely spoken in the Selesnya Conclave, for it is rich in vocabulary to describe natural phenomena and spiritual forces."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Sylvan",
+   "data": {
+    "languageType": "",
+    "script": "Elvish",
+    "typicalSpeakers": [
+     "Centaurs, satyrs|bestiary|source=MOT|search=satyr"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Sylvan",
+   "data": {
+    "languageType": "exotic",
+    "script": "Elvish",
+    "typicalSpeakers": [
+     "fey creatures|bestiary|type=fey"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Thayan",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Thayan",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Mulan ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Thieves' Cant",
+   "data": {
+    "languageType": "secret",
+    "script": "",
+    "typicalSpeakers": [
+     "street gangs",
+     "Dimir rogue||rogues",
+     "Golgari rogue||rogues"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Thieves' Cant",
+   "data": {
+    "languageType": "secret",
+    "script": "",
+    "typicalSpeakers": [
+     "assassin||assassins",
+     "rogue||rogues"
+    ],
+    "description": "Thieves' cant is a secret mix of dialect, jargon, and code that allows messages to be hidden in seemingly normal conversation. Only a creature that knows thieves' cant understands such messages. It takes four times longer to convey such a message than it does to speak the same idea plainly."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Thri-kreen",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "thri-kreen"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Tlincalli",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "tlincalli|VGM"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Troglodyte",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Troglodyte||troglodytes"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Tuigan",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Tuigan ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Turmic",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Turmic",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Turami ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Uluik",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Ulutiun ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Umber Hulk",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Umber Hulk||umber hulks"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Undercommon",
+   "data": {
+    "languageType": "exotic",
+    "script": "Elvish",
+    "typicalSpeakers": [
+     "underdark traders"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Untheric",
+   "data": {
+    "languageType": "standard",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Untheric",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Mulan ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Vedalken",
+   "data": {
+    "languageType": "standard",
+    "script": "Vedalken",
+    "typicalSpeakers": [
+     "Vedalken|ggr"
+    ],
+    "description": "The Vedalken language is renowned for its technical treatises and its catalogs of knowledge about the natural world and the aether that pervades it."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Vegepygmy",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Vegepygmy|VGM|vegepygmies",
+     "Vegepygmy Chief|VGM|vegepygmy chiefs"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Waelan",
+   "data": {
+    "languageType": "",
+    "script": "Thorass",
+    "typicalSpeakers": [
+     "Ffolk ethnic group"
+    ],
+    "description": "Option: Human Languages\nMany human ethnicities and nations in Faer\u00fbn have their own language, in addition to Common. Most human languages are written in Thorass, the alphabet of Old Common, derived from the Chondathan language that traders used as their common tongue. A few human languages use other alphabets, including Draconic, Dethek, and Espruar.\nIf your Dungeon Master allows this option, then any human from an ethnic group that has its own language is assumed to know that language as well as Common. This ethnic language is treated as a free additional language for such individuals."
+   }
+  },
+  {
+   "type": "language",
+   "name": "Winter Wolf",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Winter Wolf||winter wolves"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Worg",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Worg||worgs"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Yeti",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [
+     "Yeti||yetis",
+     "Abominable Yeti||abominable yetis"
+    ],
+    "description": ""
+   }
+  },
+  {
+   "type": "language",
+   "name": "Zemnian",
+   "data": {
+    "languageType": "",
+    "script": "",
+    "typicalSpeakers": [],
+    "description": "This ancient language was spoken by the people of Zemniaz in the Age of Arcanum. That ancient culture has long since crumbled, but its language and its people live on in the Dwendalian Empire. Many ancient scrolls were written in Zemnian, but it is a language now largely spoken by farmers, as Common is the default language of the empire."
+   }
+  }
+ ]
+}
