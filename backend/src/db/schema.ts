@@ -81,6 +81,10 @@ export const characters = sqliteTable("characters", {
   name: text("name").notNull(),
   system: text("system").notNull().default("generic"),
   portraitFilename: text("portrait_filename"),
+  // AI-generated (or hand-written) backstory prose. Kept as a column rather than inside
+  // sheetData because it applies to every system, not just dnd5e, and the AI routes write it
+  // directly without round-tripping the whole sheet payload.
+  backstory: text("backstory"),
   hpCurrent: integer("hp_current"),
   hpMax: integer("hp_max"),
   notes: text("notes"),

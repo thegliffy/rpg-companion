@@ -57,6 +57,7 @@ function toCharacter(
     hpCurrent: row.hpCurrent,
     hpMax: row.hpMax,
     notes: row.notes,
+    backstory: row.backstory,
     sheetData: JSON.parse(row.sheetData) as unknown,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -195,7 +196,7 @@ export async function createCharacter(
 
 export async function updateCharacter(
   id: number,
-  updates: { name?: string; hpCurrent?: number | null; hpMax?: number | null; notes?: string; sheetData?: unknown },
+  updates: { name?: string; hpCurrent?: number | null; hpMax?: number | null; notes?: string; backstory?: string | null; sheetData?: unknown },
   options?: { expectedUpdatedAt?: string },
 ) {
   const dbUpdates: Record<string, unknown> = { updatedAt: new Date().toISOString() };
@@ -203,6 +204,7 @@ export async function updateCharacter(
   if (updates.hpCurrent !== undefined) dbUpdates.hpCurrent = updates.hpCurrent;
   if (updates.hpMax !== undefined) dbUpdates.hpMax = updates.hpMax;
   if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+  if (updates.backstory !== undefined) dbUpdates.backstory = updates.backstory;
   if (updates.sheetData !== undefined) dbUpdates.sheetData = JSON.stringify(updates.sheetData);
 
   const conditions = [eq(characters.id, id)];

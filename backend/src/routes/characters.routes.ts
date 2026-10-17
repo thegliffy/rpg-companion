@@ -25,6 +25,8 @@ import {
 } from "../services/characters.service.js";
 import { getMembership } from "../services/campaigns.service.js";
 import { isGlobalAdmin } from "../services/users.service.js";
+import { buildFacts, generateBackstory, generatePortrait, AiUnavailableError } from "../services/ai.service.js";
+import { rateLimit } from "../middleware/rateLimit.js";
 import { findActiveCombatantForCharacter, syncCombatantConditions } from "../services/encounters.service.js";
 import { emitToCampaign } from "../sockets/index.js";
 import {
@@ -255,4 +257,50 @@ charactersRouter.get("/:id/portrait", requireCharacterViewable, (req, res) => {
   res.setHeader("Content-Type", mimeTypeForFilename(filename));
   res.setHeader("Cache-Control", "private, max-age=60");
   fs.createReadStream(filePath).pipe(res);
+});
+
+// --- AI generation (owner/DM only, rate-limited per user) -------------------------------
+// Both endpoints condition on the character's own sheet facts; `instructions` is an optional
+// free-text steering line. Backstory writes the generated prose to the backstory column;
+// portrait queues a ComfyUI txt2img job and saves the result through the same storage path as
+// manual uploads. These are long-running (LLM completion / GPU queue), hence the generous
+// limiter: a handful of generations per minute per user.
+
+const aiLimit = rateLimit({ name: "ai-generate", windowMs: 60_000, max: 6 });
+
+charactersRouter.post("/:id/ai/backstory", requireCharacterOwnerOrDM, aiLimit, async (req, res, next) => {
+  const instructions = typeof req.body?.instructions === "string" ? req.body.instructions.trim().slice(0, 500) : "";
+  const facts = buildFacts(req.characterRow!, req.characterRow!.sheetData ? JSON.parse(req.characterRow!.sheetData) : undefined);
+  try {
+    const backstory = await generateBackstory(facts, instructions || undefined);
+    const character = await updateCharacter(req.characterRow!.id, { backstory });
+    res.json({ backstory, character: redactPrivateNotesIfNotOwner(character, req.authUserId!) });
+  } catch (err) {
+    if (err instanceof AiUnavailableError) {
+      res.status(err.status).json({ error: err.message });
+      return;
+    }
+    next(err);
+  }
+});
+
+charactersRouter.post("/:id/ai/portrait", requireCharacterOwnerOrDM, aiLimit, async (req, res, next) => {
+  const instructions = typeof req.body?.instructions === "string" ? req.body.instructions.trim().slice(0, 500) : "";
+  const seed = typeof req.body?.seed === "number" && Number.isInteger(req.body.seed) ? req.body.seed : undefined;
+  const facts = buildFacts(req.characterRow!, req.characterRow!.sheetData ? JSON.parse(req.characterRow!.sheetData) : undefined);
+  try {
+    await generatePortrait(req.characterRow!.id, facts, {
+      instructions: instructions || undefined,
+      seed,
+      setPortrait: setCharacterPortrait,
+    });
+    const character = getCharacter(req.characterRow!.id)!;
+    res.status(201).json({ character: redactPrivateNotesIfNotOwner(character, req.authUserId!) });
+  } catch (err) {
+    if (err instanceof AiUnavailableError) {
+      res.status(err.status).json({ error: err.message });
+      return;
+    }
+    next(err);
+  }
 });

@@ -116,6 +116,8 @@ export interface Character {
   hpCurrent: number | null;
   hpMax: number | null;
   notes: string | null;
+  /** AI-generated or hand-written backstory prose; null when never set. */
+  backstory: string | null;
   /** Per-system sheet payload; shape depends on `system` (SheetField[] for generic). */
   sheetData: unknown;
   createdAt: string;

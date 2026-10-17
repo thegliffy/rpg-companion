@@ -134,6 +134,13 @@
       "when": 1785711853883,
       "tag": "0018_lovely_titania",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1792199963957,
+      "tag": "0019_elite_lorna_dane",
+      "breakpoints": true
     }
   ]
 }

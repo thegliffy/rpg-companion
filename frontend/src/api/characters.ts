@@ -25,6 +25,7 @@ export interface CharacterInput {
   hpCurrent?: number | null;
   hpMax?: number | null;
   notes?: string;
+  backstory?: string | null;
   sheetData?: unknown;
   expectedUpdatedAt?: string;
 }
@@ -127,4 +128,28 @@ export async function getSharedCharacter(token: string): Promise<Character> {
 
 export function sharedPortraitUrl(token: string): string {
   return `/api/shared/characters/${token}/portrait`;
+}
+
+// --- AI generation -----------------------------------------------------------------------
+// Long-running calls (LLM completion / GPU queue) — callers show a spinner and handle the
+// ApiError (502/503/504 when the backend is down or the job fails).
+
+export async function generateBackstory(id: number, instructions?: string): Promise<string> {
+  const res = await fetch(`/api/characters/${id}/ai/backstory`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ instructions: instructions ?? "" }),
+  });
+  const data = await parseOrThrow(res);
+  return data.backstory as string;
+}
+
+export async function generatePortrait(id: number, instructions?: string): Promise<Character> {
+  const res = await fetch(`/api/characters/${id}/ai/portrait`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ instructions: instructions ?? "" }),
+  });
+  const data = await parseOrThrow(res);
+  return data.character;
 }

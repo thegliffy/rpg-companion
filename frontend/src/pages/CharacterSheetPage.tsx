@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import type { Character, Dnd5eSheetData } from "shared";
 import * as charactersApi from "../api/characters";
 import { useAuth } from "../context/AuthContext";
+import { AiStudioPanel } from "../components/AiStudioPanel";
 
 const Dnd5eSheet = lazy(() =>
   import("../components/systems/Dnd5eSheet").then((m) => ({ default: m.Dnd5eSheet })),
@@ -100,6 +101,7 @@ export function CharacterSheetPage({
           </span>
         )}
       </div>
+      {showPrivateNotes && <AiStudioPanel character={character} onBackstorySaved={setCharacter} />}
       {readOnly && viewMode === "edit" && (
         <p className="no-print" style={{ background: "var(--warning-bg)", padding: "0.5rem 1rem", borderRadius: 6 }}>
           This character is retired or deceased — read-only memorial view. Reactivate below to resume editing.
