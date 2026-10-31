@@ -4,7 +4,7 @@ import { naturalD20 } from "shared";
 import type { RollGroupResult } from "./DiceRollContext";
 import "./dice.css";
 import { modalOverlay as overlayStyle, modalDialog } from "../styles";
-const dialogStyle = { ...modalDialog, width: "min(360px, 92vw)" };
+const dialogStyle = { ...modalDialog, width: "min(640px, 94vw)" };
 
 // Above this many dice in one term, faces give way to a compact numbered grid (#137) -- a
 // Meteor Swarm rolling 20d6 as twenty full polygons would overflow the box.
