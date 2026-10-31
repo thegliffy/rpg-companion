@@ -579,6 +579,18 @@
   font-weight: 850;
 }
 
+/* The score is the headline number on the card -- styled to sit above the modifier in visual
+ * weight, while staying a plain editable input. */
+.ability-card__score {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.7rem;
+  font-weight: 850;
+  color: var(--text-heading);
+  text-align: center;
+  padding: 0.25rem 0.35rem;
+}
+
 .ability-card__save {
   color: var(--text-muted);
   font-size: 0.78rem;

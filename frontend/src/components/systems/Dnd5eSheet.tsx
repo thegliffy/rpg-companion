@@ -1710,7 +1710,7 @@ export function Dnd5eSheet({
                       max={30}
                       value={sheet.abilities[a]}
                       onChange={(e) => setAbility(a, e.target.value)}
-                      style={numInput}
+                      className="ability-card__score"
                     />
                     {eqBonus !== 0 && (
                       <small style={{ color: "var(--text-muted)" }} title="Bonus from equipped items">
