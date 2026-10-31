@@ -1301,8 +1301,18 @@ export function Dnd5eSheet({
               <span className="stat-cell__label">AC</span>
             </div>
             <div className="stat-cell">
-              <span className="stat-cell__value">{formatModifier(initiativeBonus(sheet))}</span>
+              <span
+                className="stat-cell__value"
+                style={{ cursor: "pointer", textDecoration: "underline dotted" }}
+                title="Click to roll"
+                onClick={() => rollCheck("initiative", initiativeBonus(sheet), "Initiative")}
+              >{formatModifier(initiativeBonus(sheet))}</span>
               <span className="stat-cell__label">Initiative</span>
+              {rollResults["initiative"] && (
+                <div style={{ marginTop: "0.2rem" }}>
+                  <small style={{ color: "var(--text-muted)" }}>{rollResults["initiative"]}</small>
+                </div>
+              )}
             </div>
             <div className="stat-cell">
               <span className="stat-cell__value">{effectiveSpeed(sheet)} ft.</span>
@@ -1898,7 +1908,14 @@ export function Dnd5eSheet({
               )}
             </span>
             <span>Initiative</span>
-            <strong title="Dexterity modifier plus any feat/feature initiative bonus (e.g. Alert)">{formatModifier(initiativeBonus(sheet))}</strong>
+            <strong
+              title="Dexterity modifier plus any feat/feature initiative bonus (e.g. Alert) — click to roll"
+              style={{ cursor: "pointer", textDecoration: "underline dotted" }}
+              onClick={() => rollCheck("initiative", initiativeBonus(sheet), "Initiative")}
+            >{formatModifier(initiativeBonus(sheet))}</strong>
+            {rollResults["initiative"] && (
+              <small style={{ color: "var(--text-muted)" }}>{rollResults["initiative"]}</small>
+            )}
             <span>Speed</span>
             <span>
               <input type="number" value={sheet.speed} onChange={(e) => set("speed", Number(e.target.value) || 0)} style={numInput} />
