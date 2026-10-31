@@ -545,6 +545,10 @@ export const dnd5eSheetSchema = z.object({
   // consumption: "once" effects, and cleared by breakConcentration()/a long rest for
   // endsWithConcentration ones.
   activeEffects: z.array(activeEffectSchema).max(10).default([]),
+  // Pinned sheet layout archetype (#ui) -- "auto" follows the class via sheetUiForClass(); any
+  // other value overrides it. Persisted inside sheet_data (no column) so the existing debounced
+  // sheet autosave carries it with zero backend changes.
+  uiVariant: z.enum(["auto", "martial", "arcane", "divine", "hybrid"]).default("auto"),
 });
 
 export type Dnd5eSheetData = z.infer<typeof dnd5eSheetSchema>;

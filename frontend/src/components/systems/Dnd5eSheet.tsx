@@ -118,6 +118,9 @@ import {
   effectiveSpeed,
   initiativeBonus,
   d20Formula,
+  SHEET_LAYOUTS,
+  SHEET_LAYOUT_IDS,
+  sheetUiForClass,
 } from "shared";
 import * as charactersApi from "../../api/characters";
 import { useDiceRoll } from "../../dice/DiceRollContext";
@@ -142,6 +145,19 @@ import { panel as box, card, cardRaised, badge } from "../../styles";
 
 const numInput: React.CSSProperties = { width: "3.5rem", textAlign: "center" };
 
+// #ui: labels for the navs, keyed by tab id -- the ORDER of both navs comes from the sheet's
+// effective layout archetype (shared SHEET_LAYOUTS), the labels live here.
+const VIEW_TAB_LABELS: Record<"combat" | "equipment" | "feats" | "overview", string> = {
+  combat: "⚔️ Combat",
+  equipment: "🎒 Equipment",
+  feats: "🌟 Feats & Traits",
+  overview: "📜 Overview",
+};
+const COMBAT_SUB_LABELS: Record<"martial" | "magic", string> = {
+  martial: "⚔️ Martial",
+  magic: "✨ Magic",
+};
+
 // Pact of the Blade: a single fixed-id attacks[] row so "Create pact weapon" is idempotent and
 // switching away from Pact of the Blade can find-and-remove it. Pact of the Tome: cantrips added
 // from the Book of Shadows picker are tagged with this id prefix for the same reason.
@@ -161,8 +177,15 @@ export function Dnd5eSheet({
   const { roll: diceRoll } = useDiceRoll();
   const isOwner = user?.id === character.ownerUserId;
   const [sheet, setSheet] = useState<Dnd5eSheetData>(() => dnd5eSheetSchema.parse(character.sheetData ?? {}));
-  const [view, setView] = useState<"combat" | "equipment" | "feats" | "overview">("combat");
-  const [combatSub, setCombatSub] = useState<"martial" | "magic">("martial");
+  // #ui: effective layout = the character's pinned override if set, else its class archetype.
+  const sheetUi = sheetUiForClass(sheet.class);
+  const sheetLayout = SHEET_LAYOUTS[sheet.uiVariant !== "auto" ? sheet.uiVariant : sheetUi.layout];
+  const [view, setView] = useState<"combat" | "equipment" | "feats" | "overview">(() =>
+    SHEET_LAYOUTS[sheetUiForClass(sheet.class).layout].tabOrder[0],
+  );
+  const [combatSub, setCombatSub] = useState<"martial" | "magic">(
+    () => SHEET_LAYOUTS[sheetUiForClass(sheet.class).layout].combatSubOrder[0],
+  );
   const [name, setName] = useState(character.name);
   const [hpCurrent, setHpCurrent] = useState(character.hpCurrent != null ? String(character.hpCurrent) : "");
   const [hpMax, setHpMax] = useState(character.hpMax != null ? String(character.hpMax) : "");
@@ -398,6 +421,14 @@ export function Dnd5eSheet({
 
   function set<K extends keyof Dnd5eSheetData>(key: K, value: Dnd5eSheetData[K]) {
     setSheet((prev) => ({ ...prev, [key]: value }));
+  }
+
+  // #ui: layout toggle. Pins the archetype on THIS character ("auto" hands it back to the class
+  // default). Also jumps the combat sub-nav to the picked layout's landing panel -- switching
+  // layout should visibly switch you over, not leave you on the old panel.
+  function setUiVariant(v: Dnd5eSheetData["uiVariant"]) {
+    set("uiVariant", v);
+    setCombatSub(SHEET_LAYOUTS[v === "auto" ? sheetUiForClass(sheet.class).layout : v].combatSubOrder[0]);
   }
 
   // Spends one use of a limited martial resource (Rage, Action Surge, Indomitable, Ki Points) --
@@ -1222,7 +1253,21 @@ export function Dnd5eSheet({
   }
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexDirection: "column", gap: "1rem" }}>
+    <div
+      style={
+        {
+          maxWidth: 1100,
+          margin: "0 auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+          // #ui: per-class accent (shared CLASS_UI) -- overrides the theme's --accent for
+          // everything inside the sheet only. Null for unknown/homebrew classes: those keep the
+          // theme accent, which is the point of having themes.
+          ...(sheetUi.accent ? { "--accent": sheetUi.accent } : {}),
+        } as React.CSSProperties
+      }
+    >
       {/* Status: always interactive even in read-only mode, so Reactivate can escape it */}
       {view === "overview" && (<>
       <div style={box}>
@@ -1495,12 +1540,23 @@ export function Dnd5eSheet({
         </div>
       </div>
       <nav className="view-nav">
-        {([["combat", "⚔️ Combat"], ["equipment", "🎒 Equipment"], ["feats", "🌟 Feats & Traits"], ["overview", "📜 Overview"]] as const).map(
-          ([id, label]) => (
-            <button key={id} type="button" className={view === id ? "is-selected" : ""} onClick={() => setView(id)}>
-              {label}
-            </button>
-          ),
+        {sheetLayout.tabOrder.map((id) => (
+          <button key={id} type="button" className={view === id ? "is-selected" : ""} onClick={() => setView(id)}>
+            {VIEW_TAB_LABELS[id]}
+          </button>
+        ))}
+        {!readOnly && (
+          <label style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.8rem", color: "var(--text-muted)" }}>
+            Layout
+            <select value={sheet.uiVariant} onChange={(e) => setUiVariant(e.target.value as Dnd5eSheetData["uiVariant"])} style={{ width: "10rem" }}>
+              <option value="auto">Auto — {SHEET_LAYOUTS[sheetUi.layout].label}</option>
+              {SHEET_LAYOUT_IDS.map((l) => (
+                <option key={l} value={l}>
+                  {SHEET_LAYOUTS[l].label}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
       </nav>
 
@@ -1644,13 +1700,11 @@ export function Dnd5eSheet({
 
       {view === "combat" && (<>
       <nav className="sub-nav">
-        {([["martial", "⚔️ Martial"], ["magic", "✨ Magic"]] as const).map(
-          ([id, label]) => (
-            <button key={id} type="button" className={combatSub === id ? "is-selected" : ""} onClick={() => setCombatSub(id)}>
-              {label}
-            </button>
-          ),
-        )}
+        {sheetLayout.combatSubOrder.map((id) => (
+          <button key={id} type="button" className={combatSub === id ? "is-selected" : ""} onClick={() => setCombatSub(id)}>
+            {COMBAT_SUB_LABELS[id]}
+          </button>
+        ))}
       </nav>
       {/* Resource tracker strip (reference's combat-header trackers) */}
       {(sheet.spellSlots.length > 0 || sheet.concentratingOn || martialPools.length > 0) && (
