@@ -159,12 +159,13 @@ textarea::placeholder {
   color: var(--text-dim);
 }
 
-/* Labels wrapping their control (the pattern across the sheet and admin forms) need a gap;
+/* Labels wrapping their control (the pattern across the auth pages and admin forms) need a gap;
    without it the label text sits flush against the enlarged control. Scoped via :has so labels
-   that sit beside checkboxes/radios keep their inline layout. */
-label:has(input:not([type="checkbox"]):not([type="radio"])),
-label:has(select),
-label:has(textarea) {
+   that sit beside checkboxes/radios keep their inline layout, and :not(:has(br)) leaves the
+   sheet's label+<br>+control stacks exactly as they were laid out. */
+label:has(input:not([type="checkbox"]):not([type="radio"])):not(:has(br)),
+label:has(select):not(:has(br)),
+label:has(textarea):not(:has(br)) {
   display: grid;
   gap: 0.3rem;
   color: var(--text-muted);
