@@ -10,6 +10,8 @@ export const users = sqliteTable("users", {
   // Selected UI theme (#154) -- the app's first user preference. Nullable rather than defaulted so
   // existing rows need no backfill; null reads as "default" everywhere.
   theme: text("theme"),
+  // Selected dice model (#162) -- second user preference, same null-means-default rule.
+  diceModel: text("dice_model"),
   createdAt: text("created_at").notNull().default(sql`(current_timestamp)`),
 });
 

@@ -25,6 +25,45 @@ export const THEME_DESCRIPTIONS: Record<ThemeId, string> = {
   folio: "Warm parchment palette with elevated card layout.",
 };
 
+// Dice models (#162) -- the dice-set palette the roll modal paints its polygons with. Same shape
+// as themes: "default" keeps the app's token-driven look and has no override block; every other
+// model is a pure token block in dice.css. Stored on the user via /api/auth/preferences;
+// null/absent means default.
+export const DICE_MODEL_IDS = ["default", "casino", "bone", "bloodstone", "arcane", "jade", "brass"] as const;
+export type DiceModelId = (typeof DICE_MODEL_IDS)[number];
+
+export const DICE_MODEL_LABELS: Record<DiceModelId, string> = {
+  default: "Default",
+  casino: "Casino",
+  bone: "Bone",
+  bloodstone: "Bloodstone",
+  arcane: "Arcane",
+  jade: "Jade",
+  brass: "Brass",
+};
+
+export const DICE_MODEL_DESCRIPTIONS: Record<DiceModelId, string> = {
+  default: "Follow the current theme.",
+  casino: "Ivory faces, jet pips.",
+  bone: "Bone with oxblood engraving.",
+  bloodstone: "Deep crimson, bone pips.",
+  arcane: "Midnight violet with glow pips.",
+  jade: "Imperial green with pale pips.",
+  brass: "Forged metal, hot gold pips.",
+};
+
+// Swatch colours for the picker, duplicated deliberately -- the picker must render every model's
+// look while a different one is applied, so it cannot read the live --dice-* tokens.
+export const DICE_MODEL_SWATCHES: Record<DiceModelId, { face: string; pip: string; edge: string }> = {
+  default: { face: "#1a2230", pip: "#e8e2d4", edge: "#8b8375" },
+  casino: { face: "#f2efe6", pip: "#1c1a17", edge: "#b8b3a4" },
+  bone: { face: "#e8e0cc", pip: "#6d3719", edge: "#c9bfa4" },
+  bloodstone: { face: "#7a2430", pip: "#f0e6d2", edge: "#a85462" },
+  arcane: { face: "#2e2450", pip: "#c9b6ff", edge: "#5747a0" },
+  jade: { face: "#1f4d3a", pip: "#d6f0df", edge: "#3f7a5f" },
+  brass: { face: "#6b5320", pip: "#f5e3ae", edge: "#9c7c38" },
+};
+
 export interface PublicUser {
   id: number;
   username: string;
@@ -33,6 +72,8 @@ export interface PublicUser {
   // Null for users who've never chosen one -- the picker and ThemeProvider both read that as
   // "default" rather than backfilling every existing row.
   theme: ThemeId | null;
+  // Selected dice model (#162), same null-means-default rule.
+  diceModel: DiceModelId | null;
 }
 
 export type CustomContentType = "race" | "class" | "background" | "subrace" | "subclass" | "feat" | "spell" | "item" | "monster" | "deity" | "language";

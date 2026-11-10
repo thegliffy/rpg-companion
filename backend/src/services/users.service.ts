@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { eq, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { users, characters, campaigns, campaignMemberships, customContent, diceRolls, notes, apiTokens } from "../db/schema.js";
-import type { PublicUser, GlobalRole, AdminUserDependants, ThemeId } from "shared";
+import type { PublicUser, GlobalRole, AdminUserDependants, ThemeId, DiceModelId } from "shared";
 
 const SALT_ROUNDS = 12;
 
@@ -15,6 +15,7 @@ export function toPublicUser(user: typeof users.$inferSelect): PublicUser {
     role: user.role as GlobalRole,
     createdAt: user.createdAt,
     theme: (user.theme as ThemeId | null) ?? null,
+    diceModel: (user.diceModel as DiceModelId | null) ?? null,
   };
 }
 
@@ -24,6 +25,16 @@ export async function updateUserTheme(id: number, theme: ThemeId) {
   const [updated] = await db
     .update(users)
     .set({ theme: theme === "default" ? null : theme })
+    .where(eq(users.id, id))
+    .returning();
+  return updated;
+}
+
+export async function updateUserDiceModel(id: number, diceModel: DiceModelId) {
+  // Same null-means-default convention as updateUserTheme above.
+  const [updated] = await db
+    .update(users)
+    .set({ diceModel: diceModel === "default" ? null : diceModel })
     .where(eq(users.id, id))
     .returning();
   return updated;

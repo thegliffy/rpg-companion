@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `dice_model` text;

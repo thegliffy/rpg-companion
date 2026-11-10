@@ -2,6 +2,56 @@
   animation: dice-tumble 0.35s ease-out;
 }
 
+/* Dice models (#162) -- the dice-set palette, same architecture as themes: components read these
+ * tokens and never branch on the model. Default follows the theme; every named model is a pure
+ * token block on data-dice-model (mirrored from DICE_MODEL_SWATCHES in shared -- keep in step). */
+:root {
+  --dice-face: var(--surface-sunken);
+  --dice-pip: var(--text);
+  --dice-edge: var(--text-dim);
+}
+
+:root[data-dice-model="casino"] {
+  --dice-face: #f2efe6;
+  --dice-pip: #1c1a17;
+  --dice-edge: #b8b3a4;
+}
+
+:root[data-dice-model="bone"] {
+  --dice-face: #e8e0cc;
+  --dice-pip: #6d3719;
+  --dice-edge: #c9bfa4;
+}
+
+:root[data-dice-model="bloodstone"] {
+  --dice-face: #7a2430;
+  --dice-pip: #f0e6d2;
+  --dice-edge: #a85462;
+}
+
+:root[data-dice-model="arcane"] {
+  --dice-face: #2e2450;
+  --dice-pip: #c9b6ff;
+  --dice-edge: #5747a0;
+}
+
+:root[data-dice-model="jade"] {
+  --dice-face: #1f4d3a;
+  --dice-pip: #d6f0df;
+  --dice-edge: #3f7a5f;
+}
+
+:root[data-dice-model="brass"] {
+  --dice-face: #6b5320;
+  --dice-pip: #f5e3ae;
+  --dice-edge: #9c7c38;
+}
+
+/* Depth: dice sit on the panel, not in it. One shared treatment so every model gets it. */
+.dice-die {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+}
+
 @keyframes dice-tumble {
   0% {
     transform: rotate(-25deg) scale(0.6);

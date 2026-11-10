@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { THEME_IDS } from "./types.js";
+import { THEME_IDS, DICE_MODEL_IDS } from "./types.js";
 
 export const registerSchema = z.object({
   username: z.string().trim().min(3).max(32),
@@ -37,9 +37,10 @@ export type ReassignCharacterOwnerInput = z.infer<typeof reassignCharacterOwnerS
 
 // The app's first user preference (#154). Deliberately shaped as "preferences" rather than
 // "set theme" so the next one (the dice-modal opt-out deferred during #139) extends this instead
-// of adding a second endpoint.
+// of adding a second endpoint. Dice models (#162) were the second one.
 export const updatePreferencesSchema = z.object({
   theme: z.enum(THEME_IDS).optional(),
+  diceModel: z.enum(DICE_MODEL_IDS).optional(),
 });
 export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>;
 

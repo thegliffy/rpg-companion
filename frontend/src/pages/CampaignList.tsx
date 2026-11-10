@@ -8,6 +8,7 @@ import { DiceRoller } from "../components/DiceRoller";
 import { ApiTokensPanel } from "../components/ApiTokensPanel";
 import { PasswordChangePanel } from "../components/PasswordChangePanel";
 import { ThemePicker } from "../components/ThemePicker";
+import { DiceModelPicker } from "../components/DiceModelPicker";
 import { NotesSection } from "../components/NotesSection";
 import { InitiativeTracker } from "../components/InitiativeTracker";
 
@@ -94,6 +95,7 @@ export function CampaignList({
         {user && <NotesSection campaignId={null} currentUserId={user.id} role={null} />}
         <InitiativeTracker campaignId={null} role={null} />
         <ThemePicker />
+        <DiceModelPicker />
         <PasswordChangePanel />
 
         {/* DM/admin only -- tokens exist for scripted custom-content upload, which is already

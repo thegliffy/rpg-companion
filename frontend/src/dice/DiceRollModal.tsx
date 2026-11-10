@@ -61,9 +61,9 @@ function DieFace({
   // for highlighting purposes -- it wasn't the die that decided anything.
   const isNat20 = kept && sides === 20 && value === 20;
   const isNat1 = kept && sides === 20 && value === 1;
-  const fill = !kept ? "var(--surface-sunken)" : isNat20 ? "var(--surface-sunken)" : isNat1 ? "var(--surface-sunken)" : "var(--surface-sunken)";
-  const stroke = !kept ? "var(--border)" : isNat20 ? "var(--success)" : isNat1 ? "var(--danger)" : "var(--text-dim)";
-  const textColor = !kept ? "var(--text-dim)" : isNat20 ? "var(--success)" : isNat1 ? "var(--danger)" : "var(--text)";
+  const fill = !kept ? "var(--surface-sunken)" : "var(--dice-face, var(--surface-sunken))";
+  const stroke = !kept ? "var(--border)" : isNat20 ? "var(--success)" : isNat1 ? "var(--danger)" : "var(--dice-edge, var(--text-dim))";
+  const textColor = !kept ? "var(--text-dim)" : isNat20 ? "var(--success)" : isNat1 ? "var(--danger)" : "var(--dice-pip, var(--text))";
 
   return (
     <svg
@@ -72,7 +72,7 @@ function DieFace({
       viewBox="0 0 100 100"
       role="img"
       aria-label={`d${sides} showing ${value}${kept ? "" : ", dropped"}`}
-      className={animate ? "dice-die-tumble" : undefined}
+      className={["dice-die", animate ? "dice-die-tumble" : ""].filter(Boolean).join(" ")}
       opacity={kept ? 1 : 0.6}
     >
       <polygon points={diePolygonPoints(sides)} fill={fill} stroke={stroke} strokeWidth={3} strokeLinejoin="round" />

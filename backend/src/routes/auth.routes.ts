@@ -8,6 +8,7 @@ import {
   changeUserPassword,
   toPublicUser,
   updateUserTheme,
+  updateUserDiceModel,
   UsernameTakenError,
 } from "../services/users.service.js";
 import { rateLimit } from "../middleware/rateLimit.js";
@@ -146,15 +147,25 @@ authRouter.patch("/preferences", requireAuth, async (req, res) => {
     return;
   }
 
-  if (parsed.data.theme === undefined) {
-    res.json({ user: toPublicUser(findUserById(req.authUserId!)!) });
+  if (parsed.data.theme !== undefined) {
+    const updated = await updateUserTheme(req.authUserId!, parsed.data.theme);
+    if (!updated) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.json({ user: toPublicUser(updated) });
     return;
   }
 
-  const updated = await updateUserTheme(req.authUserId!, parsed.data.theme);
-  if (!updated) {
-    res.status(404).json({ error: "User not found" });
+  if (parsed.data.diceModel !== undefined) {
+    const updated = await updateUserDiceModel(req.authUserId!, parsed.data.diceModel);
+    if (!updated) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.json({ user: toPublicUser(updated) });
     return;
   }
-  res.json({ user: toPublicUser(updated) });
+
+  res.json({ user: toPublicUser(findUserById(req.authUserId!)!) });
 });
