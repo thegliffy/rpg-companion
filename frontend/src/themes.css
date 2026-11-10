@@ -9,6 +9,7 @@
 
 /* Ledger — ruled off-white, oxblood for pending/corrections, ink blue for approvals. */
 :root[data-theme="ledger"] {
+  color-scheme: light;
   --surface: #f6f2e8;
   --surface-raised: #fffdf7;
   --surface-sunken: #ece5d5;
@@ -52,6 +53,7 @@
 
 /* Vellum — aged warm paper; the heaviest of the paper set. */
 :root[data-theme="vellum"] {
+  color-scheme: light;
   --surface: #e5d7b8;
   --surface-raised: #efe4ca;
   --surface-sunken: #d8c6a1;
@@ -92,6 +94,7 @@
 
 /* Graph — blueprint white with a real grid, plan blue and pencil brown. */
 :root[data-theme="graph"] {
+  color-scheme: light;
   --surface: #fbfaf7;
   --surface-raised: #ffffff;
   --surface-sunken: #eef3f8;
@@ -134,6 +137,7 @@
  * This is the theme that surfaces any literal colour #152 missed: a stray #ccc border glows
  * bright against this ground. */
 :root[data-theme="console"] {
+  color-scheme: dark;
   --surface: #0e1418;
   --surface-raised: #161f26;
   --surface-sunken: #0a1013;
@@ -178,6 +182,7 @@
 /* High contrast — near-black on white, heavy borders, no decorative tint.
  * Held to WCAG AA on body text and on both semantic colours. */
 :root[data-theme="contrast"] {
+  color-scheme: light;
   --surface: #ffffff;
   --surface-raised: #ffffff;
   --surface-sunken: #f2f2f2;
@@ -218,6 +223,7 @@
  * individually bordered (unshadowed) unit cards. Palette measured directly from a reference
  * character-sheet app's computed styles, not eyeballed. */
 :root[data-theme="folio"] {
+  color-scheme: light;
   --surface: #ded6c9;
   --surface-raised: rgba(250, 246, 238, 0.95);
   --surface-sunken: #f2ede4;

@@ -64,6 +64,8 @@ export const modalOverlay: CSSProperties = {
   position: "fixed",
   inset: 0,
   background: "var(--overlay)",
+  backdropFilter: "blur(4px)",
+  WebkitBackdropFilter: "blur(4px)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",

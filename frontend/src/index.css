@@ -14,6 +14,12 @@
 :root {
   /* Default theme restyled after the Statkeeper reference: dark navy canvas, warm cream text,
    * gold accent, serif display face. Values lifted from the reference's own design tokens. */
+
+  /* Native widgets (select popups, scrollbars, date pickers) render dark on the dark themes --
+   * without this, a themed page still pops a white OS dropdown, which is the loudest remaining
+   * "unstyled" signal. Light themes in themes.css set `light` explicitly. */
+  color-scheme: dark;
+
   --surface: #10161f;
   --surface-raised: #171e2a;
   --surface-sunken: #0c1119;
@@ -52,8 +58,11 @@
   --font-data: ui-monospace, Consolas, monospace;
   --radius: 12px;
 
-  /* Decorative page texture -- only the paper/grid themes set these. */
-  --surface-texture: none;
+  /* Decorative page texture. The default carries a faint warm vignette (every app audited grounds
+   * its canvas with texture, never flat fill); paper/grid themes set their own. */
+  --surface-texture:
+    radial-gradient(ellipse at 22% 4%, rgba(215, 171, 99, 0.05), transparent 52%),
+    radial-gradient(ellipse at 80% 96%, rgba(120, 51, 47, 0.07), transparent 55%);
   --surface-texture-size: auto;
 
   /* Elevation for raised cards -- only Folio sets a real shadow; every other theme stays flat. */
@@ -128,7 +137,9 @@ p {
 }
 
 /* Form controls don't inherit font or colour, so without this they stay browser-default under every
- * theme -- the single most visible way a dark theme looks half-applied. */
+ * theme -- the single most visible way a dark theme looks half-applied. Controls also carry the
+ * hover/focus/press feedback every leading TTRPG app (Foundry, Quest Portal, D&D Beyond) ships:
+ * a dark canvas with feedback-less native controls reads as unfinished whatever the palette does. */
 input,
 select,
 textarea,
@@ -137,17 +148,88 @@ button {
   color: var(--text);
   background-color: var(--surface-raised);
   border: 1px solid var(--border-strong);
-  border-radius: 4px;
-  padding: 0.2rem 0.35rem;
+  border-radius: calc(var(--radius) * 0.4);
+  padding: 0.4rem 0.7rem;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease,
+    transform 120ms ease;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-dim);
+}
+
+/* Labels wrapping their control (the pattern across the sheet and admin forms) need a gap;
+   without it the label text sits flush against the enlarged control. Scoped via :has so labels
+   that sit beside checkboxes/radios keep their inline layout. */
+label:has(input:not([type="checkbox"]):not([type="radio"])),
+label:has(select),
+label:has(textarea) {
+  display: grid;
+  gap: 0.3rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 650;
+  margin: 0.5rem 0;
+}
+
+form > div {
+  margin-bottom: 0.75rem;
+}
+
+button[type="submit"],
+form > button {
+  margin-top: 0.4rem;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
 button {
   cursor: pointer;
+  font-weight: 650;
+  border-radius: 999px;
+  padding: 0.42rem 0.95rem;
+}
+
+button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-strong));
+  background-color: color-mix(in srgb, var(--surface-raised) 88%, var(--accent) 10%);
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Submit is the form's primary action, so it takes the accent fill -- the convention across
+   every app audited (primary = accent, secondary = outlined, tertiary = bare). */
+button[type="submit"] {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+button[type="submit"]:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--accent) 88%, #ffffff 12%);
+  border-color: color-mix(in srgb, var(--accent) 88%, #ffffff 12%);
 }
 
 button:disabled {
   cursor: default;
   opacity: 0.6;
+}
+
+a {
+  color: var(--accent);
+}
+
+a:hover {
+  filter: brightness(1.15);
 }
 
 :focus-visible {
