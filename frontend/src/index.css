@@ -190,6 +190,26 @@ textarea:focus {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
+/* The global scrollbar-color only lands in Firefox; Chromium needs the -webkit
+   pseudo-elements or every dark page ships a bright grey OS scrollbar. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
 button {
   cursor: pointer;
   font-weight: 650;
