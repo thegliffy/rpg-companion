@@ -1,4 +1,4 @@
-FROM node:20-slim AS build
+FROM node:22-slim AS build
 ARG APP_VERSION=dev
 ARG GIT_SHA=dev
 WORKDIR /app
@@ -14,14 +14,14 @@ RUN npm run build -w shared
 RUN VITE_APP_VERSION="$APP_VERSION" VITE_GIT_SHA="$GIT_SHA" npm run build -w frontend
 RUN npm run build -w backend
 
-FROM node:20-slim AS prod-deps
+FROM node:22-slim AS prod-deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY shared/package.json shared/package.json
 COPY backend/package.json backend/package.json
 RUN npm ci --omit=dev --workspace=backend --workspace=shared --include-workspace-root
 
-FROM node:20-slim AS runtime
+FROM node:22-slim AS runtime
 ARG APP_VERSION=dev
 ARG GIT_SHA=dev
 WORKDIR /app
