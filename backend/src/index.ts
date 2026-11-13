@@ -23,9 +23,7 @@ import { createSocketServer } from "./sockets/index.js";
 const app = express();
 const port = process.env.PORT ? Number(process.env.PORT) : 3001;
 
-if (process.env.NODE_ENV === "production") {
-  app.set("trust proxy", 1);
-}
+app.set("trust proxy", 1);
 
 const sessionMiddleware = createSessionMiddleware();
 
@@ -37,6 +35,19 @@ app.use(sessionMiddleware);
 // Mounted app-wide so no future router forgets it; GETs are exempt since they never mutate.
 app.use((req, res, next) => {
   if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") return next();
+  // The CSRF check compares Origin against the request's own host. Behind the Vite dev proxy
+  // those always differ (:5173 vs :3001) even though nothing cross-origin happened, so dev
+  // trusts Sec-Fetch-Site alone (production is same-origin end-to-end behind Caddy). The
+  // exemption additionally requires `Sec-Fetch-Site: same-origin` — an unforgeable header a real
+  // browser only sends for genuine same-site requests — so it can't be used to smuggle a
+  // cross-site POST. DEV_VITE_PROXY is set in backend/.env (dev only; never in the image).
+  if (
+    process.env.DEV_VITE_PROXY &&
+    req.get("sec-fetch-site") === "same-origin" &&
+    req.get("origin")?.includes(":5173")
+  ) {
+    return next();
+  }
   return requireSameSiteOrigin()(req, res, next);
 });
 // Resolves caller identity from a bearer token or the session cookie into req.authUserId (#147).

@@ -271,6 +271,19 @@
   border-color: var(--accent);
 }
 
+/* Current-location marker for the app header nav (#gui-rework). Same solid-accent shape as
+   .btn--primary — one accent, one meaning: this is where you are. */
+.btn--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.btn--active:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
 .btn:disabled {
   cursor: default;
   opacity: 0.6;

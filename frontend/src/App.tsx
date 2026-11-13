@@ -22,7 +22,9 @@ export type View =
   | { name: "admin" }
   | { name: "custom-content"; editContentId?: number; back?: View }
   | { name: "bestiary" }
-  | { name: "arena" };
+  | { name: "arena" }
+  /** Home's Settings tab, reachable directly from the header (#gui-rework). */
+  | { name: "settings" };
 
 function App() {
   const { user, loading, logout } = useAuth();
@@ -44,29 +46,33 @@ function App() {
           <span className="brand__wordmark">RPG Companion</span>
         </span>
         <span className="app-header__nav">
-          <span style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginRight: "0.5rem" }}>
-            Signed in as <strong style={{ color: "var(--text-heading)" }}>{user.username}</strong>
-          </span>
-          {view.name !== "bestiary" && (
-            <button className="btn" onClick={() => setView({ name: "bestiary" })}>
-              Bestiary
-            </button>
-          )}
-          {view.name !== "arena" && (
-            <button className="btn" onClick={() => setView({ name: "arena" })}>
-              Arena
-            </button>
-          )}
-          {(user.role === "dm" || user.role === "admin") && view.name !== "custom-content" && (
-            <button className="btn" onClick={() => setView({ name: "custom-content" })}>
+          {/* Header is a real nav now: every destination is always visible and the current one
+              is marked, instead of buttons that hide themselves when you are already there. */}
+          <button className={`btn${view.name === "home" || view.name === "campaign" || view.name === "character" || view.name === "create-character" ? " btn--active" : ""}`} onClick={() => setView({ name: "home" })}>
+            Home
+          </button>
+          <button className={`btn${view.name === "bestiary" ? " btn--active" : ""}`} onClick={() => setView({ name: "bestiary" })}>
+            Bestiary
+          </button>
+          <button className={`btn${view.name === "arena" ? " btn--active" : ""}`} onClick={() => setView({ name: "arena" })}>
+            Arena
+          </button>
+          {(user.role === "dm" || user.role === "admin") && (
+            <button className={`btn${view.name === "custom-content" ? " btn--active" : ""}`} onClick={() => setView({ name: "custom-content" })}>
               My custom content
             </button>
           )}
-          {user.role === "admin" && view.name !== "admin" && (
-            <button className="btn" onClick={() => setView({ name: "admin" })}>
+          {user.role === "admin" && (
+            <button className={`btn${view.name === "admin" ? " btn--active" : ""}`} onClick={() => setView({ name: "admin" })}>
               Admin panel
             </button>
           )}
+          <button className={`btn${view.name === "settings" ? " btn--active" : ""}`} onClick={() => setView({ name: "settings" })}>
+            Settings
+          </button>
+          <span style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginLeft: "0.25rem" }}>
+            {user.username}
+          </span>
           <button className="btn" onClick={() => logout()}>
             Log out
           </button>
@@ -78,6 +84,14 @@ function App() {
           onOpenCampaign={(campaignId) => setView({ name: "campaign", campaignId })}
           onOpenCharacter={(characterId) => setView({ name: "character", characterId, back: view })}
           onCreateCharacter={() => setView({ name: "create-character", campaignId: null, back: view })}
+        />
+      )}
+      {view.name === "settings" && (
+        <CampaignList
+          initialTab="settings"
+          onOpenCampaign={(campaignId) => setView({ name: "campaign", campaignId })}
+          onOpenCharacter={(characterId) => setView({ name: "character", characterId, back: { name: "home" } })}
+          onCreateCharacter={() => setView({ name: "create-character", campaignId: null, back: { name: "home" } })}
         />
       )}
       {view.name === "campaign" && (

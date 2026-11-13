@@ -61,16 +61,16 @@ export function CampaignDashboard({
   if (!campaign) return <p>Loading…</p>;
 
   return (
-    <div style={{ maxWidth: 640, margin: "2rem auto" }}>
-      <button onClick={onBack}>&larr; Back to campaigns</button>
-      <h1>{campaign.name}</h1>
+    <div className="page-shell">
+      <button className="btn" onClick={onBack}>&larr; Back to campaigns</button>
+      <h1 style={{ marginTop: "0.75rem" }}>{campaign.name}</h1>
       {campaign.description && <p>{campaign.description}</p>}
       <p>Your role: {campaign.role}</p>
 
       {campaign.inviteCode && (
         <p>
           Invite code: <code>{campaign.inviteCode}</code>{" "}
-          <button onClick={handleRegenerate}>Regenerate</button>
+          <button className="btn" onClick={handleRegenerate}>Regenerate</button>
         </p>
       )}
 
