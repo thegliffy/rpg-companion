@@ -4,8 +4,8 @@ name: CI
 # The docker-image workflow alone does NOT catch type errors: `npm ci` succeeds even when
 # `tsc` fails, so a broken build ships silently. This job is the gate.
 #
-# Note: backend tests are NOT run here — better-sqlite3@11 has no prebuilt binary for the
-# Node majors on the runner and fails to compile from source (see README). The backend's
+# Note: backend tests are NOT run here — better-sqlite3 had no prebuilt binary for the
+# Node majors on the runner and fails to compile from source. Upgraded to v12 + node:22 in 08bb590; CI can now run the DB-backed tests. The backend's
 # hardening integration test is exercised in the Docker build path (node:20) instead.
 
 on:
