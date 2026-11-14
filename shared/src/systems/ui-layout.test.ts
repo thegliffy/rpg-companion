@@ -17,6 +17,7 @@ describe("sheetUiForClass", () => {
   it("covers every layout archetype so each has at least one class using it", () => {
     const used = new Set(DND5E_CLASSES.map((c) => sheetUiForClass(c.name).layout));
     for (const id of SHEET_LAYOUT_IDS) {
+      if (id === "roll20") continue; // visual skin, never a class default
       assert.ok(used.has(id), `no class maps to ${id}`);
     }
   });
@@ -42,7 +43,7 @@ describe("sheetUiForClass", () => {
 
   it("every archetype genuinely differs from the shipped one (choosing one does something)", () => {
     for (const id of SHEET_LAYOUT_IDS) {
-      if (id === "martial") continue;
+      if (id === "martial" || id === "roll20") continue;
       const c = SHEET_LAYOUTS.martial;
       const l = SHEET_LAYOUTS[id];
       assert.ok(

@@ -162,6 +162,14 @@ const COMBAT_SUB_LABELS: Record<"martial" | "magic", string> = {
 // switching away from Pact of the Blade can find-and-remove it. Pact of the Tome: cantrips added
 // from the Book of Shadows picker are tagged with this id prefix for the same reason.
 const PACT_WEAPON_ATTACK_ID = "pact-weapon";
+
+function isSkillProficient(sheet: Dnd5eSheetData, skillId: string): boolean {
+  return sheet.skillProficiencies.includes(skillId);
+}
+
+function isSaveProficient(sheet: Dnd5eSheetData, ability: string): boolean {
+  return sheet.saveProficiencies.includes(ability as never);
+}
 const TOME_CANTRIP_PREFIX = "tome-cantrip-";
 
 export function Dnd5eSheet({
@@ -1698,7 +1706,307 @@ export function Dnd5eSheet({
         </div>
       )}
 
-      {view === "combat" && (<>
+      {sheet.uiVariant === "roll20" && (<>
+      {/* #gui-rework: Roll20-style layout — flat bordered panels, boxed ability/save grids, a
+          left skill rail with clickable bonuses, centered HP bar with round +/- buttons under the
+          name header, and Defenses/Senses/Conditions/Proficiencies in a right rail. All numbers
+          come from the same shared helpers the classic layout uses; nothing here re-derives them. */}
+      <div className="r20-sheet">
+        {/* Resource bar sits directly under the name plate (rendered above), Roll20-style. */}
+        <div className="panel" style={{ ...cardRaised, padding: "0.6rem 0.75rem" }}>
+          <div className="r20-resource-bar">
+            <div className="r20-res">
+              <button type="button" className="r20-circle-btn" onClick={heal} disabled={hpAmount === "" || Number(hpAmount) <= 0}>+</button>
+              <span className="r20-hp-value">
+                <input
+                  type="number"
+                  value={hpCurrent}
+                  onChange={(e) => setHpCurrent(e.target.value)}
+                  placeholder={String(computeHpMax(sheet))}
+                  aria-label="Current HP"
+                />
+                <span style={{ color: "var(--text-muted)" }}>/</span>
+                <input
+                  type="number"
+                  value={hpMax}
+                  onChange={(e) => setHpMax(e.target.value)}
+                  placeholder={String(computeHpMax(sheet))}
+                  aria-label="Max HP"
+                  style={{ width: "3.2rem" }}
+                />
+              </span>
+              <button type="button" className="r20-circle-btn" onClick={takeDamage} disabled={hpAmount === "" || Number(hpAmount) <= 0}>−</button>
+              <input
+                type="number"
+                min={1}
+                value={hpAmount}
+                onChange={(e) => setHpAmount(e.target.value)}
+                placeholder="amount"
+                aria-label="HP amount"
+                onKeyDown={(e) => e.key === "Enter" && takeDamage()}
+                style={{ width: "4.5rem", marginLeft: "0.25rem" }}
+              />
+            </div>
+            <span className="tracker-pill">AC {effectiveAC(sheet)}</span>
+            <span className="tracker-pill">PB {formatModifier(pb)}</span>
+            <span
+              className="tracker-pill"
+              style={{ cursor: "pointer", textDecoration: "underline dotted" }}
+              title="Click to roll"
+              onClick={() => rollCheck("initiative", initiativeBonus(sheet), "Initiative")}
+            >Init {formatModifier(initiativeBonus(sheet))}</span>
+            <span className="tracker-pill">Speed {effectiveSpeed(sheet)} ft.</span>
+            {sheet.tempHp > 0 && <span className="tracker-pill tracker-pill--active">Temp {sheet.tempHp}</span>}
+          </div>
+          {(hpMessage || rollResults["initiative"]) && (
+            <p style={{ margin: "0.4rem 0 0", textAlign: "center" }}>
+              <small style={{ color: "var(--text-muted)" }}>{[hpMessage, rollResults["initiative"]].filter(Boolean).join(" · ")}</small>
+            </p>
+          )}
+        </div>
+
+      <div className="r20-columns">
+          {/* Left rail: skills as a dense clickable bonus list (Roll20's skill column). */}
+          <aside className="r20-rail">
+            <div className="r20-panel">
+              <h3 className="r20-panel__title">Skills</h3>
+              {(() => {
+                const grantedSkillIds = effectSkillProficiencies(sheet);
+                return DND5E_SKILLS.map((s) => {
+                  const bonus = skillBonus(sheet, s.id);
+                  const prof = isSkillProficient(sheet, s.id);
+                  const effectGranted = grantedSkillIds.includes(s.id) && !sheet.skillProficiencies.includes(s.id);
+                  return (
+                    <div key={s.id}>
+                      <div className="r20-skill-row">
+                        <span
+                          className={`r20-skill-bonus${prof ? " r20-skill-bonus--prof" : ""}`}
+                          title="Click to roll"
+                          onClick={() => rollCheck(`skill-${s.id}`, bonus, `${s.name} check`)}
+                        >{formatModifier(bonus)}</span>
+                        <span className={`r20-skill-name${prof ? " r20-skill-name--prof" : ""}`}>
+                          {s.name}
+                          {effectGranted && (
+                            <small style={{ color: "var(--text-muted)" }} title="Granted by a feat/feature/invocation"> *</small>
+                          )}
+                          {s.id === "stealth" && hasArmorStealthDisadvantage(sheet) && (
+                            <small style={{ color: "var(--danger)" }} title="Equipped armor imposes Stealth disadvantage"> (dis.)</small>
+                          )}
+                        </span>
+                      </div>
+                      {rollResults[`skill-${s.id}`] && (
+                        <div style={{ marginLeft: "2.6rem" }}>
+                          <small style={{ color: "var(--text-muted)" }}>{rollResults[`skill-${s.id}`]}</small>
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </aside>
+
+          {/* Center column: abilities/saves grid, then Attacks. */}
+          <div className="r20-rail">
+            <div>
+              <div className="r20-ability-grid">
+                {DND5E_ABILITIES.map((a) => (
+                  <div key={a} className="r20-ability">
+                    <div className="r20-ability__abbr">{DND5E_ABILITY_NAMES[a]}</div>
+                    <div
+                      className="r20-ability__mod"
+                      title="Click to roll a check"
+                      onClick={() => rollCheck(`ability-${a}`, abilityModifier(effectiveAbilityScore(sheet, a)), `${DND5E_ABILITY_NAMES[a]} check`)}
+                    >{formatModifier(abilityModifier(effectiveAbilityScore(sheet, a)))}</div>
+                    <input
+                      className="r20-ability__score"
+                      type="number"
+                      min={1}
+                      max={30}
+                      value={sheet.abilities[a]}
+                      onChange={(e) => setAbility(a, e.target.value)}
+                      aria-label={`${DND5E_ABILITY_NAMES[a]} score`}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="r20-save-grid">
+                {DND5E_ABILITIES.map((a) => (
+                  <div
+                    key={a}
+                    className="r20-save"
+                    title={`Saving throw — click to roll; ${isSaveProficient(sheet, a) ? "proficient" : "not proficient"} (click the star on the Edit tab's classic layout to toggle)`}
+                    onClick={() => rollCheck(`save-${a}`, saveBonus(sheet, a), `${DND5E_ABILITY_NAMES[a]} saving throw`)}
+                  >
+                    {isSaveProficient(sheet, a) && <span className="r20-save__star">★</span>}
+                    {formatModifier(saveBonus(sheet, a))}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="r20-panel">
+              <h3 className="r20-panel__title">Attacks</h3>
+              {sheet.attacks.length === 0 && (
+                <p style={{ margin: 0 }}><small style={{ color: "var(--text-muted)" }}>No attacks yet — add them on the Combat tab.</small></p>
+              )}
+              {sheet.attacks.map((atk) => (
+                <div key={atk.id} className="r20-attack-row">
+                  {!readOnly && (
+                    <AttackRollControl
+                      name={atk.name}
+                      attackBonus={attackBonus(sheet, atk)}
+                      magicBonus={attackDamageBonus(sheet, atk)}
+                      damageDice={atk.damageDice}
+                      damageType={atk.damageType}
+                      campaignId={character.campaignId}
+                      extraAttackDice={activeEffectAttackDice(sheet)}
+                      critThreshold={sheet.critThreshold}
+                      extraCritDice={totalExtraCritDice}
+                      optionalModifiers={featOptionalAttackModifiers(sheet)}
+                    />
+                  )}
+                  <small style={{ color: "var(--text-muted)" }}>{atk.damageDice || ""}</small>
+                </div>
+              ))}
+              {sheet.attacks.some((a) => rollResults[`attack-${a.id}`]) && (
+                <p style={{ margin: "0.4rem 0 0" }}>
+                  <small style={{ color: "var(--text-muted)" }}>
+                    {sheet.attacks.map((a) => rollResults[`attack-${a.id}`] ? `${a.name}: ${rollResults[`attack-${a.id}`]}` : null).filter(Boolean).join(" · ")}
+                  </small>
+                </p>
+              )}
+            </div>
+
+          </div>
+            {/* Everything the classic layout carries, unchanged, below the Roll20 chrome. */}
+            <div style={{ display: "grid", gap: "0.75rem" }}>
+      <nav className="sub-nav">
+        {sheetLayout.combatSubOrder.map((id) => (
+          <button key={id} type="button" className={combatSub === id ? "is-selected" : ""} onClick={() => setCombatSub(id)}>
+            {COMBAT_SUB_LABELS[id]}
+          </button>
+        ))}
+      </nav>
+
+              {view === "combat" && (<>
+                <div className="r20-panel">
+                  <h3 className="r20-panel__title">Actions &amp; Effects</h3>
+                  <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                    <RollModeSelect value={rollMode} onChange={setRollMode} label="Next d20 roll:" />
+                    <button type="button" onClick={shortRest} disabled={restBusy || sheet.hitDiceAvailable < 1}>Short rest</button>
+                    <button type="button" onClick={longRest}>Long rest</button>
+                  </div>
+                  {sheet.activeEffects.length > 0 && (
+                    <ul style={{ margin: "0.5rem 0 0", paddingLeft: "1.2rem" }}>
+                      {sheet.activeEffects.map((e) => (
+                        <li key={e.id}>
+                          <strong>{e.name}</strong>{" "}
+                          
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {restMessage && (
+                    <p style={{ margin: "0.4rem 0 0" }}>
+                      <small style={{ color: "var(--text-muted)" }}>{restMessage}</small>
+                    </p>
+                  )}
+                </div>
+                </>)}
+            </div>
+
+          {/* Right rail: Defenses, Conditions, Senses, Proficiencies — Roll20's info column. */}
+          <aside className="r20-rail">
+            <div className="r20-panel">
+              <h3 className="r20-panel__title">Defenses</h3>
+              <dl className="r20-kv">
+                <dt>Armor Class</dt>
+                <dd title={acBreakdownText(sheet) ?? undefined}>{effectiveAC(sheet)}</dd>
+                <dt>Speed</dt>
+                <dd>{effectiveSpeed(sheet)} ft.{sheet.climbSpeed ? ` · climb ${sheet.climbSpeed}` : ""}{sheet.swimSpeed ? ` · swim ${sheet.swimSpeed}` : ""}{(sheet.flySpeed ?? 0) > 0 ? ` · fly ${sheet.flySpeed}` : ""}{sheet.burrowSpeed ? ` · burrow ${sheet.burrowSpeed}` : ""}</dd>
+                <dt>Resist.</dt>
+                <dd>{effectiveDamageResistances(sheet).length > 0 ? effectiveDamageResistances(sheet).join(", ") : "—"}</dd>
+              </dl>
+            </div>
+
+            <div className="r20-panel">
+              <h3 className="r20-panel__title">Conditions</h3>
+              {(() => {
+                const active = sheet.conditions.map((c) => DND5E_CONDITION_LABELS[c]);
+                return (
+                  <>
+                    <p style={{ margin: "0 0 0.4rem" }}>
+                      {active.length > 0 ? <strong>{active.join(", ")}</strong> : <small style={{ color: "var(--text-muted)" }}>None</small>}
+                      {sheet.exhaustionLevel > 0 && <> · Exhaustion {sheet.exhaustionLevel}</>}
+                    </p>
+                    <div style={{ columnCount: 2, columnGap: "0.75rem", fontSize: "0.8rem" }}>
+                      {DND5E_CONDITIONS.map((c) => (
+                        <label key={c} style={{ display: "flex", alignItems: "center", gap: "0.3rem", breakInside: "avoid" }}>
+                          <input type="checkbox" checked={sheet.conditions.includes(c)} onChange={() => toggleCondition(c)} />
+                          {DND5E_CONDITION_LABELS[c]}
+                        </label>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            <div className="r20-panel">
+              <h3 className="r20-panel__title">Senses</h3>
+              <dl className="r20-kv">
+                <dt>Passive Perception</dt>
+                <dd>{10 + skillBonus(sheet, "perception")}</dd>
+                <dt>Darkvision</dt>
+                <dd>{effectiveDarkvision(sheet) > 0 ? `${effectiveDarkvision(sheet)} ft.` : "—"}</dd>
+              </dl>
+            </div>
+
+            <div className="r20-panel">
+              <h3 className="r20-panel__title">Proficiencies &amp; Languages</h3>
+              <p style={{ margin: 0, whiteSpace: "pre-wrap", fontSize: "0.85rem" }}>
+                {sheet.proficienciesText || <small style={{ color: "var(--text-muted)" }}>None recorded yet — add them on the Feats tab.</small>}
+              </p>
+            </div>
+          </aside>
+        </div>
+
+      {/* Resource tracker strip (reference's combat-header trackers) */}
+      {(sheet.spellSlots.length > 0 || sheet.concentratingOn || martialPools.length > 0) && (
+        <div className="tracker-strip">
+          {sheet.spellSlots.map((s) => (
+            <span key={s.level} className={`tracker-pill${s.available > 0 ? " tracker-pill--active" : ""}`}>
+              L{s.level}
+              <span className="tracker-pill__value">
+                {s.available} / {s.total}
+              </span>
+            </span>
+          ))}
+          <span className={`tracker-pill${sheet.concentratingOn ? " tracker-pill--active" : ""}`}>
+            Concentration
+            <span className="tracker-pill__value">{sheet.concentratingOn ? sheet.concentratingOn.spellName : "—"}</span>
+          </span>
+          {martialPools.map((pool, poolIndex) => {
+            const available = martialResourceAvailable(sheet, pool);
+            const unlimited = available === -1;
+            return (
+              <span key={`strip-${pool.key}-${poolIndex}`} className={`tracker-pill${available > 0 || unlimited ? " tracker-pill--active" : ""}`}>
+                {pool.label}
+                <span className="tracker-pill__value">{unlimited ? "∞" : `${available} / ${pool.max}`}</span>
+                {!unlimited && (
+                  <button type="button" className="btn" onClick={() => useMartialResource(pool)} disabled={available <= 0}>
+                    Use
+                  </button>
+                )}
+              </span>
+            );
+          })}
+        </div>
+      )}
+      </div>
+      </>)}
+      {sheet.uiVariant !== "roll20" && view === "combat" && (<>
       <nav className="sub-nav">
         {sheetLayout.combatSubOrder.map((id) => (
           <button key={id} type="button" className={combatSub === id ? "is-selected" : ""} onClick={() => setCombatSub(id)}>
@@ -1738,6 +2046,8 @@ export function Dnd5eSheet({
           })}
         </div>
       )}
+      </>)}
+
       {combatSub === "martial" && (<>
       <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
         {/* Ability rail: one card per ability, holding score, modifier, and save */}
@@ -2399,9 +2709,8 @@ export function Dnd5eSheet({
           {restMessage && <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", maxWidth: "16rem" }}>{restMessage}</p>}
         </div>
       </div>
-      </>)}
-      </>)}
 
+      </>)}
       {/* Attacks */}
       {view === "combat" && combatSub === "martial" && (<>
       <div style={cardRaised}>

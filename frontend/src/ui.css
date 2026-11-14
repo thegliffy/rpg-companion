@@ -686,3 +686,239 @@
   display: grid;
   gap: 0.35rem;
 }
+
+/* ---- Roll20-style character sheet (#gui-rework, roll20 layout) ------------
+ * Reference: the Roll20 5e sheet — flat dark panels with a thin border and NO rounded corners,
+ * small-caps section headers, big boxed ability/saving-throw grids, a left skill rail with
+ * clickable bonuses, and a centered HP bar with round +/- buttons under the name header.
+ * Everything resolves through theme tokens so all themes keep working; the square-cornered,
+ * bordered look is the part that reads as "Roll20". */
+
+.r20-sheet {
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* The name header row: identity + resource bar share one panel, Roll20-style. */
+.r20-resource-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.r20-res {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Round +/- buttons around the HP value — Roll20's signature current/max control. */
+.r20-circle-btn {
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-sunken);
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.r20-circle-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.r20-circle-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.r20-hp-value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.r20-hp-value input {
+  width: 3.2rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* Three-column sheet body: skill rail | main panels | info rail. */
+.r20-columns {
+  display: grid;
+  grid-template-columns: minmax(190px, 230px) minmax(0, 1fr) minmax(210px, 260px);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+@media (max-width: 1000px) {
+  .r20-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* A flat bordered panel with a small-caps header — the Roll20 "section" look. */
+.r20-panel {
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  padding: 0.6rem 0.75rem;
+}
+
+.r20-panel + .r20-panel,
+.r20-rail > * + * {
+  margin-top: 0.75rem;
+}
+
+.r20-panel__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Ability grid: big modifier, tiny SCORE label, abbr — Roll20's ability boxes. */
+.r20-ability-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--border-strong);
+  border: 1px solid var(--border-strong);
+}
+
+.r20-ability {
+  background: var(--surface);
+  padding: 0.5rem 0.35rem;
+  text-align: center;
+}
+
+.r20-ability__abbr {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.r20-ability__mod {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--text-heading);
+  cursor: pointer;
+  text-decoration: underline dotted;
+}
+
+.r20-ability__score {
+  display: block;
+  width: 3rem;
+  margin: 0.15rem auto 0;
+  text-align: center;
+  font-size: 0.8rem;
+  padding: 0.05rem 0.2rem;
+}
+
+/* Saving throws directly under abilities, same grid rhythm, star = proficient. */
+.r20-save-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--border-strong);
+  border: 1px solid var(--border-strong);
+  border-top: none;
+}
+
+.r20-save {
+  background: var(--surface);
+  padding: 0.3rem 0.25rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.r20-save__star {
+  color: var(--accent);
+  margin-right: 0.15rem;
+}
+
+/* Skill rail: dense clickable bonus list, bold = proficient — Roll20's left column. */
+.r20-skill-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.18rem 0.1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.r20-skill-row:last-child {
+  border-bottom: none;
+}
+
+.r20-skill-bonus {
+  min-width: 2.4rem;
+  text-align: right;
+  font-weight: 700;
+  color: var(--text-heading);
+  cursor: pointer;
+  text-decoration: underline dotted;
+  font-variant-numeric: tabular-nums;
+}
+
+.r20-skill-bonus--prof {
+  color: var(--accent);
+}
+
+.r20-skill-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.85rem;
+}
+
+.r20-skill-name--prof {
+  font-weight: 700;
+}
+
+/* Right-rail key/value rows (Defenses, Senses). */
+.r20-kv {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.15rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.r20-kv dt {
+  color: var(--text-muted);
+}
+
+.r20-kv dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Attack rows: name + bonus on the left, damage on the right. */
+.r20-attack-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.r20-attack-row:last-child {
+  border-bottom: none;
+}

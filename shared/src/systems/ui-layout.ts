@@ -14,7 +14,7 @@ export type SheetViewTab = "combat" | "equipment" | "feats" | "overview";
 /** Sub-tab ids of the Combat view -- mirrors Dnd5eSheet's combatSub keys. */
 export type SheetCombatSub = "martial" | "magic";
 
-export const SHEET_LAYOUT_IDS = ["martial", "arcane", "divine", "hybrid"] as const;
+export const SHEET_LAYOUT_IDS = ["martial", "arcane", "divine", "hybrid", "roll20"] as const;
 export type SheetLayoutId = (typeof SHEET_LAYOUT_IDS)[number];
 
 export interface SheetLayoutDef {
@@ -34,6 +34,7 @@ export const SHEET_LAYOUTS: Record<SheetLayoutId, SheetLayoutDef> = {
   arcane: { label: "Arcane", tabOrder: ["combat", "feats", "overview", "equipment"], combatSubOrder: ["magic", "martial"] },
   divine: { label: "Divine", tabOrder: ["combat", "feats", "equipment", "overview"], combatSubOrder: ["magic", "martial"] },
   hybrid: { label: "Hybrid", tabOrder: ["combat", "equipment", "overview", "feats"], combatSubOrder: ["martial", "magic"] },
+  roll20: { label: "Roll20", tabOrder: ["combat", "equipment", "feats", "overview"], combatSubOrder: ["martial", "magic"] },
 };
 
 /**

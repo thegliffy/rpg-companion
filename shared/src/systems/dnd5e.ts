@@ -548,7 +548,7 @@ export const dnd5eSheetSchema = z.object({
   // Pinned sheet layout archetype (#ui) -- "auto" follows the class via sheetUiForClass(); any
   // other value overrides it. Persisted inside sheet_data (no column) so the existing debounced
   // sheet autosave carries it with zero backend changes.
-  uiVariant: z.enum(["auto", "martial", "arcane", "divine", "hybrid"]).default("auto"),
+  uiVariant: z.enum(["auto", "martial", "arcane", "divine", "hybrid", "roll20"]).default("auto"),
 });
 
 export type Dnd5eSheetData = z.infer<typeof dnd5eSheetSchema>;
